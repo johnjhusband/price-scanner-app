@@ -1,0 +1,15 @@
+node_modules/
+build/
+dist/
+coverage/
+.expo/
+web-build/
+*.min.js
+*.bundle.js
+android/
+ios/
+.git/
+.vscode/
+.idea/
+*.log
+test-images/

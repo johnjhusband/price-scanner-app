@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
 import { 
   Button, 
   Card, 
@@ -12,16 +12,56 @@ import {
 } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import * as Animatable from 'react-native-animatable';
+import { checkServerHealth, getCurrentApiUrl } from '../services/apiService';
 
 export default function HomeScreen({ navigation }) {
   const theme = useTheme();
+  const [isServerConnected, setIsServerConnected] = useState(null);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const checkConnection = async () => {
+    try {
+      await checkServerHealth();
+      setIsServerConnected(true);
+    } catch (error) {
+      setIsServerConnected(false);
+    }
+  };
+
+  useEffect(() => {
+    checkConnection();
+  }, []);
+
+  const onRefresh = async () => {
+    setIsRefreshing(true);
+    await checkConnection();
+    setIsRefreshing(false);
+  };
 
   const handleScanPress = () => {
+    if (isServerConnected === false) {
+      Alert.alert(
+        'Connection Error',
+        `Unable to connect to server. Please ensure the backend is running at ${getCurrentApiUrl()}`,
+        [{ text: 'OK' }]
+      );
+      return;
+    }
     navigation.navigate('Camera');
   };
 
   return (
-    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+    <ScrollView 
+      style={styles.container} 
+      showsVerticalScrollIndicator={false}
+      refreshControl={
+        <RefreshControl
+          refreshing={isRefreshing}
+          onRefresh={onRefresh}
+          colors={[theme.colors.primary]}
+        />
+      }
+    >
       <LinearGradient
         colors={[theme.colors.primary, theme.colors.primaryContainer]}
         style={styles.headerGradient}
@@ -34,7 +74,7 @@ export default function HomeScreen({ navigation }) {
               iconColor={theme.colors.onPrimary}
             />
             <Title style={[styles.headerTitle, { color: theme.colors.onPrimary }]}>
-              Price Scanner
+              My Thrifting Buddy
             </Title>
             <Paragraph style={[styles.headerSubtitle, { color: theme.colors.onPrimary }]}>
               Discover the resale value of secondhand items instantly
@@ -68,6 +108,28 @@ export default function HomeScreen({ navigation }) {
               </Button>
             </Card.Content>
           </Surface>
+          
+          {isServerConnected === false && (
+            <Surface style={styles.warningCard} elevation={2}>
+              <Card.Content>
+                <View style={styles.warningRow}>
+                  <IconButton 
+                    icon="alert-circle" 
+                    size={24} 
+                    iconColor={theme.colors.error}
+                  />
+                  <View style={styles.warningText}>
+                    <Paragraph style={styles.warningMessage}>
+                      Backend server not connected
+                    </Paragraph>
+                    <Paragraph style={styles.warningDetail}>
+                      Pull down to refresh
+                    </Paragraph>
+                  </View>
+                </View>
+              </Card.Content>
+            </Surface>
+          )}
         </Animatable.View>
 
         <Animatable.View animation="fadeInUp" duration={1000} delay={600}>
@@ -240,5 +302,26 @@ const styles = StyleSheet.create({
   platformText: {
     fontSize: 14,
     fontWeight: '500',
+  },
+  warningCard: {
+    borderRadius: 12,
+    marginTop: 12,
+    backgroundColor: '#FFF3E0',
+  },
+  warningRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  warningText: {
+    flex: 1,
+  },
+  warningMessage: {
+    fontWeight: 'bold',
+    color: '#E65100',
+  },
+  warningDetail: {
+    fontSize: 12,
+    color: '#BF360C',
+    marginTop: 2,
   },
 }); 

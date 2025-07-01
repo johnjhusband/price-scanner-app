@@ -8,6 +8,11 @@ import HomeScreen from './src/screens/HomeScreen';
 import CameraScreen from './src/screens/CameraScreen';
 import ResultsScreen from './src/screens/ResultsScreen';
 
+import ErrorBoundary from './src/components/ErrorBoundary';
+import { AuthProvider } from './src/contexts/AuthContext';
+import { AppStateProvider } from './src/contexts/AppStateContext';
+import { ScanHistoryProvider } from './src/contexts/ScanHistoryContext';
+
 const Stack = createStackNavigator();
 
 const theme = {
@@ -29,51 +34,65 @@ const theme = {
   },
 };
 
+function AppNavigator() {
+  return (
+    <Stack.Navigator
+      initialRouteName="Home"
+      screenOptions={{
+        headerStyle: {
+          backgroundColor: theme.colors.primary,
+        },
+        headerTintColor: theme.colors.onPrimary,
+        headerTitleStyle: {
+          fontWeight: 'bold',
+        },
+      }}
+    >
+      <Stack.Screen 
+        name="Home" 
+        component={HomeScreen}
+        options={{ 
+          title: 'My Thrifting Buddy',
+          headerStyle: {
+            backgroundColor: theme.colors.primary,
+          },
+        }}
+      />
+      <Stack.Screen 
+        name="Camera" 
+        component={CameraScreen}
+        options={{ 
+          title: 'Scan Item',
+          headerBackTitleVisible: false,
+        }}
+      />
+      <Stack.Screen 
+        name="Results" 
+        component={ResultsScreen}
+        options={{ 
+          title: 'Price Analysis',
+          headerBackTitleVisible: false,
+        }}
+      />
+    </Stack.Navigator>
+  );
+}
+
 export default function App() {
   return (
-    <PaperProvider theme={theme}>
-      <NavigationContainer>
-        <StatusBar style="auto" />
-        <Stack.Navigator
-          initialRouteName="Home"
-          screenOptions={{
-            headerStyle: {
-              backgroundColor: theme.colors.primary,
-            },
-            headerTintColor: theme.colors.onPrimary,
-            headerTitleStyle: {
-              fontWeight: 'bold',
-            },
-          }}
-        >
-          <Stack.Screen 
-            name="Home" 
-            component={HomeScreen}
-            options={{ 
-              title: 'Price Scanner',
-              headerStyle: {
-                backgroundColor: theme.colors.primary,
-              },
-            }}
-          />
-          <Stack.Screen 
-            name="Camera" 
-            component={CameraScreen}
-            options={{ 
-              title: 'Scan Item',
-              headerBackTitleVisible: false,
-            }}
-          />
-          <Stack.Screen 
-            name="Results" 
-            component={ResultsScreen}
-            options={{ 
-              title: 'Price Analysis',
-              headerBackTitleVisible: false,
-            }}
-          />
-        </Stack.Navigator>
-      </NavigationContainer>
-    </PaperProvider>
+    <ErrorBoundary>
+      <AppStateProvider>
+        <AuthProvider>
+          <ScanHistoryProvider>
+            <PaperProvider theme={theme}>
+              <NavigationContainer>
+                <StatusBar style="auto" />
+                <AppNavigator />
+              </NavigationContainer>
+            </PaperProvider>
+          </ScanHistoryProvider>
+        </AuthProvider>
+      </AppStateProvider>
+    </ErrorBoundary>
   );
 } 

@@ -16,6 +16,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 export default function ResultsScreen({ route, navigation }) {
   const { analysisData, imageUri } = route.params;
   const theme = useTheme();
+  
+  // Handle both old and new data structures
+  const data = analysisData.analysis || analysisData;
+  const item = data.item || data.item_identification || {};
+  const pricing = data.pricing || data.selling_platforms || {};
+  const conditionTips = data.condition_tips || [];
+  const estimatedValue = data.estimated_value || data.price_range || 'N/A';
+  const confidenceScore = data.confidence_score || 
+    (data.confidence === 'High' ? 85 : data.confidence === 'Medium' ? 65 : 45);
 
   const handleScanAnother = () => {
     navigation.navigate('Camera');
@@ -44,18 +53,24 @@ export default function ResultsScreen({ route, navigation }) {
         <View style={styles.headerContent}>
           <Image source={{ uri: imageUri }} style={styles.itemImage} />
           <View style={styles.itemInfo}>
-            <Title style={styles.itemName}>{analysisData.item.name}</Title>
-            <Paragraph style={styles.itemCategory}>{analysisData.item.category}</Paragraph>
-            <Paragraph style={styles.itemBrand}>Brand: {analysisData.item.brand}</Paragraph>
+            <Title style={styles.itemName}>
+              {item.name || item.item_identification || 'Unknown Item'}
+            </Title>
+            <Paragraph style={styles.itemCategory}>
+              {item.category || 'General'}
+            </Paragraph>
+            {item.brand && (
+              <Paragraph style={styles.itemBrand}>Brand: {item.brand}</Paragraph>
+            )}
             
             {/* Confidence Score */}
             <View style={styles.confidenceContainer}>
               <Chip 
                 icon="check-circle"
-                style={[styles.confidenceChip, { backgroundColor: getConfidenceColor(analysisData.confidence_score) }]}
+                style={[styles.confidenceChip, { backgroundColor: getConfidenceColor(confidenceScore) }]}
                 textStyle={{ color: 'white', fontWeight: 'bold' }}
               >
-                {getConfidenceText(analysisData.confidence_score)} ({analysisData.confidence_score}%)
+                {getConfidenceText(confidenceScore)} ({confidenceScore}%)
               </Chip>
             </View>
           </View>
@@ -74,7 +89,7 @@ export default function ResultsScreen({ route, navigation }) {
             iconColor="white"
           />
           <Title style={styles.valueTitle}>Estimated Value</Title>
-          <Title style={styles.valueAmount}>{analysisData.estimated_value}</Title>
+          <Title style={styles.valueAmount}>{estimatedValue}</Title>
         </View>
       </LinearGradient>
 
@@ -83,7 +98,7 @@ export default function ResultsScreen({ route, navigation }) {
         <Card.Content>
           <Title style={styles.sectionTitle}>Platform Pricing</Title>
           <View style={styles.pricingGrid}>
-            {Object.entries(analysisData.pricing).map(([platform, price]) => (
+            {Object.entries(pricing).map(([platform, price]) => (
               <Surface key={platform} style={styles.priceCard} elevation={2}>
                 <View style={styles.priceContent}>
                   <Paragraph style={styles.platformName}>
@@ -103,7 +118,21 @@ export default function ResultsScreen({ route, navigation }) {
       <Card style={styles.sectionCard}>
         <Card.Content>
           <Title style={styles.sectionTitle}>Condition Assessment Tips</Title>
-          {analysisData.condition_tips.map((tip, index) => (
+          {conditionTips.length > 0 ? conditionTips.map((tip, index) => (
+            <View key={index} style={styles.tipContainer}>
+              <IconButton 
+                icon="lightbulb-outline" 
+                size={20} 
+                iconColor={theme.colors.primary}
+                style={styles.tipIcon}
+              />
+              <Paragraph style={styles.tipText}>{tip}</Paragraph>
+            </View>
+          )) : (
+            <Paragraph style={styles.tipText}>
+              {data.condition_assessment || 'Check the item for any wear, damage, or missing parts.'}
+            </Paragraph>
+          )}
             <View key={index} style={styles.tipContainer}>
               <IconButton 
                 icon="lightbulb-outline" 

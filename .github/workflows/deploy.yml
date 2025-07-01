@@ -1,0 +1,102 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  deploy-backend:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to Heroku
+      if: env.HEROKU_API_KEY != ''
+      env:
+        HEROKU_API_KEY: ${{ secrets.HEROKU_API_KEY }}
+        HEROKU_APP_NAME: ${{ secrets.HEROKU_APP_NAME }}
+      run: |
+        if [ -n "$HEROKU_API_KEY" ] && [ -n "$HEROKU_APP_NAME" ]; then
+          # Install Heroku CLI
+          curl https://cli-assets.heroku.com/install.sh | sh
+          
+          # Deploy backend
+          cd backend
+          git init
+          git add .
+          git commit -m "Deploy to Heroku"
+          heroku git:remote -a $HEROKU_APP_NAME
+          git push heroku master --force
+        else
+          echo "Heroku deployment skipped - missing credentials"
+        fi
+
+    - name: Deploy to AWS (Alternative)
+      if: env.AWS_ACCESS_KEY_ID != ''
+      env:
+        AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        AWS_REGION: ${{ secrets.AWS_REGION || 'us-east-1' }}
+      run: |
+        if [ -n "$AWS_ACCESS_KEY_ID" ]; then
+          echo "AWS deployment configuration would go here"
+          # Example: Deploy to Elastic Beanstalk, ECS, or Lambda
+        else
+          echo "AWS deployment skipped - missing credentials"
+        fi
+
+  publish-mobile:
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: 18.x
+        cache: 'npm'
+        cache-dependency-path: mobile-app/package-lock.json
+    
+    - name: Setup Expo
+      uses: expo/expo-github-action@v8
+      with:
+        expo-version: latest
+        token: ${{ secrets.EXPO_TOKEN }}
+    
+    - name: Install dependencies
+      working-directory: ./mobile-app
+      run: npm ci
+    
+    - name: Update API URL for production
+      working-directory: ./mobile-app
+      run: |
+        # Update the production URL in apiService.js
+        sed -i "s|https://your-production-url.com|${{ secrets.PRODUCTION_API_URL || 'https://your-production-url.com' }}|g" src/services/apiService.js
+    
+    - name: Publish to Expo
+      if: env.EXPO_TOKEN != ''
+      working-directory: ./mobile-app
+      env:
+        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      run: |
+        if [ -n "$EXPO_TOKEN" ]; then
+          npx expo publish --non-interactive
+        else
+          echo "Expo publish skipped - missing token"
+        fi
+
+    - name: Build for App Stores
+      if: env.EXPO_TOKEN != '' && github.event_name == 'workflow_dispatch'
+      working-directory: ./mobile-app
+      env:
+        EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+      run: |
+        echo "To build for app stores, run:"
+        echo "eas build --platform all"
+        echo "This requires EAS CLI setup and configuration"

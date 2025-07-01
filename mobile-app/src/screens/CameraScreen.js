@@ -1,77 +1,171 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, Alert } from 'react-native';
-import { Button, Title, Paragraph, useTheme } from 'react-native-paper';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, StyleSheet, Alert, Text, TouchableOpacity, Image } from 'react-native';
+import { Camera } from 'expo-camera';
+import { Button, IconButton, useTheme, ActivityIndicator } from 'react-native-paper';
+import { MaterialIcons } from '@expo/vector-icons';
+import * as ImageManipulator from 'expo-image-manipulator';
 import { analyzeImage } from '../services/apiService';
 
 export default function CameraScreen({ navigation }) {
+  const [hasPermission, setHasPermission] = useState(null);
+  const [type, setType] = useState(Camera.Constants.Type.back);
+  const [capturedImage, setCapturedImage] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const cameraRef = useRef(null);
   const theme = useTheme();
 
-  const handleTestAnalysis = async () => {
-    setIsAnalyzing(true);
-    
-    // For now, we'll simulate an analysis
-    // In the full version, this would capture camera image
-    try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      // Navigate to results with mock data
-      navigation.navigate('Results', {
-        analysisData: {
-          item: {
-            name: "Vintage Band T-Shirt",
-            category: "Clothing",
-            brand: "Unknown",
-            description: "Black vintage band t-shirt in good condition",
-            notable_features: ["Vintage", "Band merchandise"]
-          },
-          pricing: {
-            ebay: "$15-25",
-            facebook: "$10-20",
-            poshmark: "$18-28",
-            mercari: "$12-22",
-            whatnot: "N/A"
-          },
-          condition_tips: [
-            "Check for holes or stains",
-            "Verify print quality and fading",
-            "Examine seams and collar"
-          ],
-          estimated_value: "$15-25",
-          market_insights: "Band t-shirts are popular on resale platforms",
-          confidence_score: 85,
-          platforms_with_data: ["ebay", "facebook", "poshmark", "mercari"],
-          timestamp: new Date().toISOString()
-        },
-        imageUri: "https://via.placeholder.com/300x300/6200EE/FFFFFF?text=Sample+Item"
-      });
-    } catch (error) {
-      Alert.alert('Error', 'Failed to analyze image');
-    } finally {
-      setIsAnalyzing(false);
+  useEffect(() => {
+    (async () => {
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+    })();
+  }, []);
+
+  const takePicture = async () => {
+    if (cameraRef.current) {
+      try {
+        const photo = await cameraRef.current.takePictureAsync({
+          quality: 0.8,
+          base64: true,
+        });
+        
+        // Compress image to reduce size
+        const compressedPhoto = await ImageManipulator.manipulateAsync(
+          photo.uri,
+          [{ resize: { width: 1200 } }],
+          { compress: 0.7, format: ImageManipulator.SaveFormat.JPEG, base64: true }
+        );
+        
+        setCapturedImage({
+          uri: compressedPhoto.uri,
+          base64: compressedPhoto.base64,
+        });
+      } catch (error) {
+        Alert.alert('Error', 'Failed to capture photo');
+        console.error('Camera capture error:', error);
+      }
     }
   };
 
-  return (
-    <View style={styles.container}>
-      <View style={styles.content}>
-        <Title style={styles.title}>Camera Screen</Title>
-        <Paragraph style={styles.description}>
-          Camera functionality will be implemented here.
-          For now, you can test with a sample analysis.
-        </Paragraph>
-        
-        <Button
-          mode="contained"
-          onPress={handleTestAnalysis}
-          loading={isAnalyzing}
-          disabled={isAnalyzing}
-          style={styles.button}
-        >
-          {isAnalyzing ? 'Analyzing...' : 'Test Analysis'}
+  const retakePicture = () => {
+    setCapturedImage(null);
+  };
+
+  const analyzePhoto = async () => {
+    if (!capturedImage || !capturedImage.base64) {
+      Alert.alert('Error', 'No image to analyze');
+      return;
+    }
+
+    setIsAnalyzing(true);
+    
+    try {
+      const result = await analyzeImage(capturedImage.uri, capturedImage.base64);
+      
+      // Navigate to results with the analysis data
+      navigation.navigate('Results', {
+        analysisData: result.analysis || result,
+        imageUri: capturedImage.uri
+      });
+    } catch (error) {
+      console.error('Analysis error:', error);
+      Alert.alert(
+        'Analysis Failed', 
+        'Unable to analyze the image. Please check your internet connection and try again.',
+        [{ text: 'OK' }]
+      );
+    } finally {
+      setIsAnalyzing(false);
+      setCapturedImage(null);
+    }
+  };
+
+  if (hasPermission === null) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color={theme.colors.primary} />
+      </View>
+    );
+  }
+
+  if (hasPermission === false) {
+    return (
+      <View style={styles.container}>
+        <Text style={styles.permissionText}>Camera permission is required</Text>
+        <Button mode="contained" onPress={() => Camera.requestCameraPermissionsAsync()}>
+          Grant Permission
         </Button>
       </View>
+    );
+  }
+
+  // If image is captured, show preview
+  if (capturedImage) {
+    return (
+      <View style={styles.container}>
+        <Image source={{ uri: capturedImage.uri }} style={styles.preview} />
+        <View style={styles.previewControls}>
+          <Button
+            mode="outlined"
+            onPress={retakePicture}
+            style={styles.previewButton}
+            disabled={isAnalyzing}
+          >
+            Retake
+          </Button>
+          <Button
+            mode="contained"
+            onPress={analyzePhoto}
+            loading={isAnalyzing}
+            disabled={isAnalyzing}
+            style={styles.previewButton}
+          >
+            {isAnalyzing ? 'Analyzing...' : 'Analyze'}
+          </Button>
+        </View>
+      </View>
+    );
+  }
+
+  // Camera view
+  return (
+    <View style={styles.container}>
+      <Camera style={styles.camera} type={type} ref={cameraRef}>
+        <View style={styles.cameraOverlay}>
+          <View style={styles.topControls}>
+            <IconButton
+              icon="close"
+              iconColor="white"
+              size={30}
+              onPress={() => navigation.goBack()}
+            />
+            <IconButton
+              icon="camera-flip"
+              iconColor="white"
+              size={30}
+              onPress={() => {
+                setType(
+                  type === Camera.Constants.Type.back
+                    ? Camera.Constants.Type.front
+                    : Camera.Constants.Type.back
+                );
+              }}
+            />
+          </View>
+          
+          <View style={styles.bottomControls}>
+            <TouchableOpacity style={styles.captureButton} onPress={takePicture}>
+              <View style={styles.captureButtonInner} />
+            </TouchableOpacity>
+          </View>
+          
+          <View style={styles.helpText}>
+            <Text style={styles.helpTextContent}>
+              Center the item in frame for best results
+            </Text>
+          </View>
+        </View>
+      </Camera>
     </View>
   );
 }
@@ -79,27 +173,77 @@ export default function CameraScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFBFE',
-  },
-  content: {
-    flex: 1,
+    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
   },
-  title: {
-    fontSize: 24,
-    marginBottom: 16,
-    textAlign: 'center',
+  camera: {
+    flex: 1,
+    width: '100%',
   },
-  description: {
-    textAlign: 'center',
-    marginBottom: 32,
-    fontSize: 16,
-    lineHeight: 24,
+  cameraOverlay: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    justifyContent: 'space-between',
   },
-  button: {
-    borderRadius: 25,
+  topControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingTop: 50,
     paddingHorizontal: 20,
   },
-}); 
+  bottomControls: {
+    alignItems: 'center',
+    paddingBottom: 50,
+  },
+  captureButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: 'rgba(255, 255, 255, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  captureButtonInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'white',
+  },
+  helpText: {
+    position: 'absolute',
+    bottom: 150,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  helpTextContent: {
+    color: 'white',
+    fontSize: 16,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  preview: {
+    width: '90%',
+    height: '70%',
+    resizeMode: 'contain',
+  },
+  previewControls: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: '100%',
+    paddingHorizontal: 20,
+    marginTop: 20,
+  },
+  previewButton: {
+    minWidth: 120,
+  },
+  permissionText: {
+    fontSize: 18,
+    marginBottom: 20,
+    textAlign: 'center',
+    color: '#666',
+  },
+});

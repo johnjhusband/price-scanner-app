@@ -1,4 +1,4 @@
-# Price Scanner App
+# My Thrifting Buddy
 
 A mobile application that helps users estimate the resale value of secondhand items using AI-powered image analysis.
 
@@ -31,7 +31,7 @@ A mobile application that helps users estimate the resale value of secondhand it
 1. Clone the repository
 ```bash
 git clone [repository-url]
-cd price-scanner-app
+cd my-thrifting-buddy
 ```
 
 2. Install backend dependencies

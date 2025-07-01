@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Thrifting Buddy Backend Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            margin: 20px 0;
+            background-color: #fafafa;
+        }
+        .upload-area.dragover {
+            border-color: #007bff;
+            background-color: #e3f2fd;
+        }
+        input[type="file"] {
+            margin: 20px 0;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 5px;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+            margin: 20px 0;
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+            border-left: 4px solid #007bff;
+        }
+        .error {
+            color: #dc3545;
+            background-color: #f8d7da;
+            border-left-color: #dc3545;
+        }
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            border-left-color: #28a745;
+        }
+        .image-preview {
+            max-width: 300px;
+            max-height: 300px;
+            margin: 20px auto;
+            display: block;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+        }
+        pre {
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+        .key-results {
+            background-color: #e8f5e8;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+        }
+        .key-results h3 {
+            margin-top: 0;
+            color: #2d5a2d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 My Thrifting Buddy Backend Test</h1>
+        
+        <div class="upload-area" id="uploadArea">
+            <p>📁 Drag and drop an image here or click to select</p>
+            <input type="file" id="fileInput" accept="image/*" style="display: none;">
+            <button onclick="document.getElementById('fileInput').click()">Choose Image</button>
+        </div>
+
+        <div>
+            <button id="analyzeBtn" onclick="analyzeImage()" disabled>🚀 Analyze Image</button>
+            <button onclick="testServerHealth()">🏥 Test Server Health</button>
+            <button onclick="clearResults()">🧹 Clear Results</button>
+        </div>
+
+        <div id="imagePreview"></div>
+        <div id="loading" class="loading" style="display: none;">
+            <p>🔄 Analyzing image... This may take 10-30 seconds.</p>
+        </div>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const SERVER_URL = 'http://localhost:8000';
+        let selectedFile = null;
+
+        // File input handling
+        document.getElementById('fileInput').addEventListener('change', handleFileSelect);
+        
+        // Drag and drop handling
+        const uploadArea = document.getElementById('uploadArea');
+        uploadArea.addEventListener('dragover', handleDragOver);
+        uploadArea.addEventListener('drop', handleDrop);
+        uploadArea.addEventListener('dragleave', handleDragLeave);
+
+        function handleFileSelect(event) {
+            selectedFile = event.target.files[0];
+            if (selectedFile) {
+                showImagePreview(selectedFile);
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            uploadArea.classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            uploadArea.classList.remove('dragover');
+        }
+
+        function handleDrop(event) {
+            event.preventDefault();
+            uploadArea.classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0 && files[0].type.startsWith('image/')) {
+                selectedFile = files[0];
+                showImagePreview(selectedFile);
+                document.getElementById('analyzeBtn').disabled = false;
+            }
+        }
+
+        function showImagePreview(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('imagePreview').innerHTML = 
+                    `<img src="${e.target.result}" alt="Preview" class="image-preview">
+                     <p><strong>File:</strong> ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)</p>`;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        async function testServerHealth() {
+            const resultsDiv = document.getElementById('results');
+            try {
+                const response = await fetch(`${SERVER_URL}/health`);
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultsDiv.innerHTML = `
+                        <div class="results success">
+                            <h3>✅ Server Health Check Passed</h3>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>`;
+                } else {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="results error">
+                        <h3>❌ Server Health Check Failed</h3>
+                        <p>Error: ${error.message}</p>
+                        <p>Make sure the backend server is running on http://localhost:8000</p>
+                        <p>Start it with: <code>npm start</code> in the backend directory</p>
+                    </div>`;
+            }
+        }
+
+        async function analyzeImage() {
+            if (!selectedFile) {
+                alert('Please select an image first');
+                return;
+            }
+
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            const loading = document.getElementById('loading');
+            const resultsDiv = document.getElementById('results');
+
+            analyzeBtn.disabled = true;
+            loading.style.display = 'block';
+            resultsDiv.innerHTML = '';
+
+            try {
+                const formData = new FormData();
+                formData.append('image', selectedFile);
+
+                const response = await fetch(`${SERVER_URL}/api/scan`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Display key results
+                    let keyResults = '';
+                    if (data.analysis) {
+                        keyResults = `
+                            <div class="key-results">
+                                <h3>📊 Key Results</h3>
+                                <p><strong>🏷️ Item:</strong> ${data.analysis.item_identification || 'Unknown'}</p>
+                                <p><strong>💰 Estimated Value:</strong> ${data.analysis.price_range || 'Not determined'}</p>
+                                <p><strong>⭐ Condition:</strong> ${data.analysis.condition_assessment || 'Not assessed'}</p>
+                                <p><strong>🔍 Confidence:</strong> ${data.confidence || 'Not provided'}</p>
+                            </div>`;
+                    }
+
+                    resultsDiv.innerHTML = `
+                        <div class="results success">
+                            <h3>✅ Analysis Complete!</h3>
+                            ${keyResults}
+                            <h4>📄 Full Response:</h4>
+                            <pre>${JSON.stringify(data, null, 2)}</pre>
+                        </div>`;
+                } else {
+                    throw new Error(data.message || data.error || 'Analysis failed');
+                }
+            } catch (error) {
+                resultsDiv.innerHTML = `
+                    <div class="results error">
+                        <h3>❌ Analysis Failed</h3>
+                        <p>Error: ${error.message}</p>
+                        <p>Make sure:</p>
+                        <ul>
+                            <li>The backend server is running</li>
+                            <li>Your OpenAI API key is configured</li>
+                            <li>The image file is valid</li>
+                        </ul>
+                    </div>`;
+            } finally {
+                analyzeBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        }
+
+        function clearResults() {
+            document.getElementById('results').innerHTML = '';
+            document.getElementById('imagePreview').innerHTML = '';
+            document.getElementById('fileInput').value = '';
+            document.getElementById('analyzeBtn').disabled = true;
+            selectedFile = null;
+        }
+
+        // Test server health on page load
+        window.addEventListener('load', testServerHealth);
+    </script>
+</body>
+</html> 
