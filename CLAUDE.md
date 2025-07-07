@@ -255,7 +255,79 @@ Networks:
 ```
 
 ### Docker Commands
+
+#### CRITICAL: Pre-Docker Checklist
+Before creating or modifying Docker configurations:
+1. **Verify dependencies**: Check all require() statements in the code match package.json dependencies
+2. **Test locally**: Ensure the application runs successfully outside Docker first
+3. **Build test**: Always build and run Docker images locally before committing
+
+#### CRITICAL: When Writing Code
+When adding new code or modifying existing code:
+1. **Update package.json immediately**: When adding any require() or import statement for an npm package, add it to package.json BEFORE moving on
+2. **Run npm install**: ALWAYS run npm install after modifying package.json to update package-lock.json
+3. **Commit both files**: Always commit package.json and package-lock.json together
+4. **Test the code runs**: Actually run the code (npm start) to verify all dependencies are present
+5. **Never assume packages exist**: Always check package.json before using a package in code
+
+#### CRITICAL: Package-Lock Management
+**NEVER modify package.json without updating package-lock.json:**
+1. After ANY change to package.json, run `npm install` immediately
+2. Docker builds use `npm ci` which REQUIRES package-lock.json to be in sync
+3. If package-lock.json is out of sync, Docker builds WILL FAIL
+4. Always commit package.json and package-lock.json in the same commit
+
+### Docker Best Practices
+
+#### 1. Base Image Selection
+- Use official and verified images from trusted repositories
+- Choose minimal base images that match requirements
+- Avoid using 'latest' tag - use specific version tags
+- Prefer Alpine or slim variants for smaller size
+
+#### 2. Layer Optimization
+- Minimize the number of layers by combining RUN commands
+- Sort multi-line arguments alphabetically for maintainability
+- Each RUN instruction creates a new layer - concatenate where possible
+
+#### 3. Build Cache Optimization
+- Order instructions from least to most frequently changing
+- Put RUN commands near the top, COPY commands near the bottom
+- Put CMD/ENTRYPOINT at the end
+- Docker reuses cached layers when possible
+
+#### 4. Package Management
+- Only install necessary packages
+- Use --no-install-recommends flag to avoid redundant dependencies
+- Always combine apt-get update with apt-get install in same RUN statement
+- Clean up package manager cache after installation
+
+#### 5. Multi-stage Builds
+- Use multi-stage builds to create smaller final images
+- Build/compile in one stage, copy only necessary artifacts to final stage
+- Reduces image size by excluding build dependencies
+
+#### 6. File Management
+- Use .dockerignore file to exclude unnecessary files
+- Similar to .gitignore, prevents unwanted files from entering build context
+- Reduces build context size and improves build performance
+
+#### 7. User Permissions
+- Run containers as non-root user
+- Create user with UID above 10,000
+- Set proper file permissions for the user
+
+#### 8. General Practices
+- Lint Dockerfiles as part of CI pipeline
+- Never include secrets or credentials in Dockerfile
+- Document your Dockerfiles with comments
+- Keep images small and focused on single purpose
+
 ```bash
+# Pre-Docker verification (MUST DO FIRST)
+cd backend && npm install && npm start    # Verify backend starts
+cd mobile-app && npm install && npm start # Verify frontend starts
+
 # Development
 docker-compose up                    # Start all services
 docker-compose logs -f backend       # Follow backend logs
@@ -329,6 +401,14 @@ docker run -p 80:80 thrifting-buddy/frontend
    - CDN setup for images pending
 
 ## Code Conventions
+
+### CRITICAL: Dependency Management
+1. **Before using ANY npm package**: Check if it exists in package.json
+2. **When adding require('package-name')**: Immediately add to package.json dependencies
+3. **ALWAYS run npm install** after modifying package.json to update package-lock.json
+4. **Never commit code** without verifying it runs (npm start)
+5. **Commit package.json and package-lock.json together** - NEVER commit one without the other
+6. **Docker requirement**: Docker builds use `npm ci` which fails if package-lock.json is out of sync
 
 ### Backend
 - CommonJS modules (require/module.exports)

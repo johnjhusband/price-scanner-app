@@ -1,0 +1,61 @@
+Backend Container Error Log
+=========================
+Date: 2025-07-07
+Issue: Backend container fails to start
+
+Error Message:
+--------------
+Error: Cannot find module 'compression'
+Require stack:
+- /app/server.js
+
+Error: Cannot find module 'morgan'
+Require stack:
+- /app/server.js
+
+Missing Packages:
+-----------------
+1. compression - Required in server.js line 6
+2. morgan - Required in server.js line 7
+
+Current package.json dependencies do not include these packages.
+Container exits immediately on startup due to missing dependencies.
+
+UPDATE - Docker Build Error:
+----------------------------
+Date: 2025-07-07
+Issue: npm ci fails during Docker build
+
+Error: package.json and package-lock.json are out of sync
+The following packages were added to package.json but are missing from package-lock.json:
+- @sentry/node@7.120.3
+- aws-sdk@2.1692.0
+- compression@1.8.0
+- morgan@1.10.0
+- sharp@0.33.5
+- winston@3.17.0
+Plus multiple sub-dependencies
+
+Docker build fails at step: RUN npm ci
+Solution needed: Run 'npm install' locally to update package-lock.json before building Docker image
+
+RESOLUTION - Implemented:
+-------------------------
+Date: 2025-07-07
+Actions taken:
+1. Ran 'npm install' in backend directory
+2. Successfully installed 537 packages including:
+   - @sentry/node
+   - aws-sdk
+   - compression
+   - morgan
+   - sharp
+   - winston
+3. package-lock.json updated and ready for commit
+
+Note: Some deprecation warnings were shown:
+- multer 1.x has vulnerabilities (should upgrade to 2.x)
+- Several other packages have newer versions available
+
+Status: RESOLVED - package.json and package-lock.json are now in sync
+Next step: Commit both files together and rebuild Docker image

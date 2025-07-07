@@ -1,22 +1,23 @@
 # Build stage for React Native mobile app
 FROM node:20-alpine AS builder
 
-# Install system dependencies
+# Install system dependencies and clean cache
 RUN apk add --no-cache \
     python3 \
     make \
     g++ \
-    git
+    git && \
+    rm -rf /var/cache/apk/*
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better cache utilization
 COPY package*.json ./
 
 # Install all dependencies (including dev dependencies for build)
 RUN npm ci
 
-# Copy all source files
+# Copy all source files after dependencies are installed
 COPY . .
 
 # Build the app for production
@@ -25,73 +26,35 @@ RUN npx expo export --platform web --output-dir dist
 # Production stage
 FROM nginx:alpine
 
-# Install runtime dependencies
+# Install runtime dependencies and clean cache
 RUN apk add --no-cache \
     curl \
-    ca-certificates
+    ca-certificates && \
+    rm -rf /var/cache/apk/*
+
+# Copy nginx configuration file
+COPY nginx-default.conf /etc/nginx/conf.d/default.conf
 
 # Copy built assets from builder stage
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copy nginx configuration for SPA routing
-RUN echo 'server { \
-    listen 80; \
-    server_name localhost; \
-    root /usr/share/nginx/html; \
-    index index.html; \
-    \
-    # Security headers \
-    add_header X-Frame-Options "SAMEORIGIN" always; \
-    add_header X-Content-Type-Options "nosniff" always; \
-    add_header X-XSS-Protection "1; mode=block" always; \
-    add_header Referrer-Policy "strict-origin-when-cross-origin" always; \
-    add_header Content-Security-Policy "default-src '\''self'\''; script-src '\''self'\'' '\''unsafe-inline'\'' '\''unsafe-eval'\''; style-src '\''self'\'' '\''unsafe-inline'\''; img-src '\''self'\'' data: https:; font-src '\''self'\'' data:; connect-src '\''self'\'' https://api.thriftingbuddy.com wss://localhost:* ws://localhost:*;" always; \
-    \
-    # Gzip compression \
-    gzip on; \
-    gzip_vary on; \
-    gzip_min_length 1024; \
-    gzip_types text/plain text/css text/xml text/javascript application/javascript application/xml+rss application/json; \
-    \
-    # SPA routing \
-    location / { \
-        try_files $uri $uri/ /index.html; \
-    } \
-    \
-    # API proxy (optional - if not using separate API domain) \
-    location /api { \
-        proxy_pass http://backend:3000; \
-        proxy_http_version 1.1; \
-        proxy_set_header Upgrade $http_upgrade; \
-        proxy_set_header Connection "upgrade"; \
-        proxy_set_header Host $host; \
-        proxy_set_header X-Real-IP $remote_addr; \
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for; \
-        proxy_set_header X-Forwarded-Proto $scheme; \
-    } \
-    \
-    # Health check endpoint \
-    location /health { \
-        access_log off; \
-        return 200 "healthy\n"; \
-        add_header Content-Type text/plain; \
-    } \
-}' > /etc/nginx/conf.d/default.conf
-
-# Create non-root user
-RUN addgroup -g 1001 -S nginx-user && \
-    adduser -S nginx-user -u 1001 -G nginx-user
-
-# Change ownership of nginx directories
-RUN chown -R nginx-user:nginx-user /var/cache/nginx && \
+# Create non-root user with UID > 10000 and set permissions in one layer
+RUN addgroup -g 10001 -S nginx-user && \
+    adduser -S nginx-user -u 10001 -G nginx-user && \
+    # Change ownership of nginx directories
+    chown -R nginx-user:nginx-user /var/cache/nginx && \
     chown -R nginx-user:nginx-user /var/log/nginx && \
     chown -R nginx-user:nginx-user /etc/nginx/conf.d && \
     touch /var/run/nginx.pid && \
     chown -R nginx-user:nginx-user /var/run/nginx.pid && \
-    chown -R nginx-user:nginx-user /usr/share/nginx/html
+    chown -R nginx-user:nginx-user /usr/share/nginx/html && \
+    # Update nginx config to run as non-root
+    sed -i 's/user nginx;/user nginx-user;/g' /etc/nginx/nginx.conf
 
-# Update nginx config to run as non-root
-RUN sed -i 's/user nginx;/user nginx-user;/g' /etc/nginx/nginx.conf
+# Add metadata labels
+LABEL maintainer="My Thrifting Buddy Team" \
+      version="1.0.0" \
+      description="Frontend web app for My Thrifting Buddy - AI-powered resale value estimation"
 
 EXPOSE 80
 

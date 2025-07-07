@@ -1,7 +1,7 @@
 # Multi-stage build for optimized production image
 FROM node:20-alpine AS builder
 
-# Install build dependencies
+# Install build dependencies and clean up cache
 RUN apk add --no-cache \
     python3 \
     make \
@@ -11,17 +11,18 @@ RUN apk add --no-cache \
     pango-dev \
     giflib-dev \
     pixman-dev \
-    libc6-compat
+    libc6-compat && \
+    rm -rf /var/cache/apk/*
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files first for better cache utilization
 COPY package*.json ./
 
 # Install all dependencies (including dev for building native modules)
 RUN npm ci
 
-# Copy source files
+# Copy source files after dependencies are installed
 COPY . .
 
 # Prune dev dependencies
@@ -30,7 +31,7 @@ RUN npm prune --production
 # Production stage
 FROM node:20-alpine
 
-# Install runtime dependencies only
+# Install runtime dependencies only and clean cache
 RUN apk add --no-cache \
     cairo \
     jpeg \
@@ -38,11 +39,10 @@ RUN apk add --no-cache \
     giflib \
     pixman \
     libc6-compat \
-    # Additional tools for debugging and health checks
     curl \
-    ca-certificates \
-    # Security updates
-    && apk upgrade --no-cache
+    ca-certificates && \
+    apk upgrade --no-cache && \
+    rm -rf /var/cache/apk/*
 
 WORKDIR /app
 
@@ -51,16 +51,15 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app ./
 
-# Create non-root user
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nodejs -u 1001 -G nodejs
+# Create non-root user with UID > 10000
+RUN addgroup -g 10001 -S nodejs && \
+    adduser -S nodejs -u 10001 -G nodejs
 
-# Create necessary directories with proper permissions
+# Create necessary directories and clean up in one layer
 RUN mkdir -p /app/logs /app/uploads /app/temp && \
-    chown -R nodejs:nodejs /app
-
-# Security: Remove unnecessary files
-RUN rm -rf /app/.git /app/.gitignore /app/README.md /app/test /app/*.test.js
+    chown -R nodejs:nodejs /app && \
+    # Security: Remove unnecessary files
+    rm -rf /app/.git /app/.gitignore /app/README.md /app/test /app/*.test.js /app/.dockerignore
 
 # Switch to non-root user
 USER nodejs
