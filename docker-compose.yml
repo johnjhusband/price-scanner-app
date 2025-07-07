@@ -40,7 +40,7 @@ services:
   backend:
     build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.backend
     container_name: thrifting_buddy_api
     restart: unless-stopped
     depends_on:

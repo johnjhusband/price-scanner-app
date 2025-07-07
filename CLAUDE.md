@@ -206,6 +206,93 @@ LOG_TO_FILE=true
    - Update mobile app API client
    - Test backward compatibility
 
+## Docker Configuration
+
+### Docker Files
+The project uses separate Dockerfiles for frontend and backend to ensure clear separation of concerns:
+
+- **Backend**: `backend/Dockerfile.backend`
+  - Multi-stage build for optimized image size
+  - Includes all runtime dependencies (Cairo, image processing libs)
+  - Non-root user for security
+  - Health checks included
+  - Production-ready with proper error handling
+
+- **Frontend**: `mobile-app/Dockerfile.frontend`
+  - Multi-stage build with Expo web export
+  - Nginx for static file serving
+  - Security headers and CSP configured
+  - SPA routing support
+  - Gzip compression enabled
+
+### Docker Compose Files
+- **Development**: `docker-compose.yml`
+  - Hot-reloading with volume mounts
+  - All services exposed for debugging
+  - Simplified configuration
+
+- **Production**: `docker-compose.prod.yml`
+  - Resource limits and reservations
+  - Health checks on all services
+  - Network isolation (backend network is internal only)
+  - Automated backup service
+  - Logging configuration
+  - Scaling support with replicas
+
+### Services Architecture
+```yaml
+Services:
+├── postgres (PostgreSQL 15 Alpine)
+├── redis (Redis 7 Alpine with persistence)
+├── backend (Node.js Express API)
+├── frontend (React Native Web via Nginx)
+├── nginx (Load balancer/Reverse proxy)
+└── backup (Automated database backups)
+
+Networks:
+├── frontend (172.20.0.0/24) - Public facing
+└── backend (172.21.0.0/24) - Internal only
+```
+
+### Docker Commands
+```bash
+# Development
+docker-compose up                    # Start all services
+docker-compose logs -f backend       # Follow backend logs
+docker-compose exec backend sh       # Access backend shell
+
+# Production
+docker-compose -f docker-compose.prod.yml up -d     # Deploy in detached mode
+docker-compose -f docker-compose.prod.yml ps        # Check service status
+docker-compose -f docker-compose.prod.yml down      # Stop all services
+
+# Building images
+docker build -f backend/Dockerfile.backend -t thrifting-buddy/backend:latest ./backend
+docker build -f mobile-app/Dockerfile.frontend -t thrifting-buddy/frontend:latest ./mobile-app
+
+# Individual services (without compose)
+docker run -p 3000:3000 --env-file .env thrifting-buddy/backend
+docker run -p 80:80 thrifting-buddy/frontend
+```
+
+### Docker Security
+1. **Non-root users** in all containers
+2. **Read-only root filesystems** where possible
+3. **Security headers** in Nginx configuration
+4. **Network isolation** - Backend services on internal network
+5. **.dockerignore files** prevent sensitive files from being included
+6. **Health checks** on all services for monitoring
+
+### Docker Best Practices Implemented
+- Multi-stage builds for smaller images
+- Layer caching optimization
+- Explicit COPY instructions (no COPY .)
+- Fixed versions for base images
+- Proper signal handling for graceful shutdown
+- Resource limits to prevent container sprawl
+- Volume mounts for persistent data
+- Named volumes for better management
+
 ## Performance Optimizations
 
 ### Backend

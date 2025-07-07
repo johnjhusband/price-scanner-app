@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: thriftingbuddy
+      POSTGRES_PASSWORD: changeme
+      POSTGRES_DB: thrifting_buddy
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # Backend API
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.backend
+    depends_on:
+      - postgres
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://thriftingbuddy:changeme@postgres:5432/thrifting_buddy
+      JWT_ACCESS_SECRET: your-secret-key-here
+      JWT_REFRESH_SECRET: your-refresh-secret-here
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  # Frontend Web App
+  frontend:
+    build:
+      context: ./mobile-app
+      dockerfile: Dockerfile.frontend
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+    environment:
+      REACT_APP_API_URL: http://localhost:3000
+
+volumes:
+  postgres_data:
