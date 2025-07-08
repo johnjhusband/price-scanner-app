@@ -31,7 +31,12 @@
       "Bash(/dev/null)",
       "Bash(echo:*)",
       "Bash(echo \"Port $port available\")",
-      "Bash(done)"
+      "Bash(done)",
+      "Bash(rg:*)",
+      "Bash(curl:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker stop:*)",
+      "Bash(docker logs:*)"
     ],
     "deny": []
   }

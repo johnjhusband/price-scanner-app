@@ -9,6 +9,20 @@ const getApiBaseUrl = () => {
   const PRODUCTION_URL = 'https://your-production-url.com';
   
   if (__DEV__) {
+    // Check if running in Docker container (web build)
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      // When running in Docker, use the backend container name
+      // If accessed via browser, use the browser's location
+      const hostname = window.location.hostname;
+      if (hostname === 'localhost' || hostname === '127.0.0.1') {
+        // User is accessing from host machine, backend is on same host
+        return 'http://localhost:3000';
+      } else {
+        // User is accessing from network, use same hostname
+        return `http://${hostname}:3000`;
+      }
+    }
+    
     // In development, use the machine's IP address
     const { manifest } = Constants;
     const debuggerHost = manifest?.debuggerHost?.split(':').shift();
@@ -28,6 +42,7 @@ const getApiBaseUrl = () => {
 };
 
 const API_BASE_URL = getApiBaseUrl();
+console.log('API Base URL:', API_BASE_URL);
 
 // Retry configuration
 const MAX_RETRIES = 3;

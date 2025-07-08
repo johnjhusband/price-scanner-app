@@ -1,0 +1,31 @@
+# Development overrides - auto-loaded when using 'docker compose up'
+# This file provides hot-reload for development
+# For production, use: docker compose -f docker-compose.yml up
+
+services:
+  # Backend with hot reload for development
+  backend:
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+    environment:
+      NODE_ENV: development
+    command: npm run dev
+
+  # Mobile web development server (optional - remove if using production build)
+  mobile-web-dev:
+    build:
+      context: ./mobile-app
+      dockerfile: Dockerfile.web
+    container_name: thrifting_buddy_mobile_web_dev
+    ports:
+      - "19007:19006"  # Different port to avoid conflict
+    volumes:
+      - ./mobile-app:/app
+      - /app/node_modules
+    environment:
+      EXPO_DEVTOOLS_LISTEN_ADDRESS: 0.0.0.0
+      REACT_NATIVE_PACKAGER_HOSTNAME: ${SERVER_IP:-localhost}
+    command: npx expo start --web --port 19006
+    profiles:
+      - dev  # Only starts when using --profile dev
