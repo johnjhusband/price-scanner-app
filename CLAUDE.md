@@ -66,8 +66,11 @@ npm run lint                            # Run ESLint
 ```bash
 cd mobile-app
 npm install                             # Install dependencies
+# CRITICAL: Install web dependencies for Docker support
+npx expo install react-native-web react-dom @expo/metro-runtime
 npx expo start                          # Start Expo development server
 npx expo start --clear                  # Start with cleared cache
+npx expo start --web                    # Start web version
 npx expo run:ios                        # Run on iOS simulator
 npx expo run:android                    # Run on Android emulator
 npx expo build:ios                      # Build iOS app
@@ -89,6 +92,11 @@ npm run test:e2e                        # Run E2E tests
 ```
 
 ## Environment Configuration
+
+### CRITICAL: Environment File Location
+- **Backend**: The `.env` file MUST be placed in the `/backend` directory, NOT at the project root
+- **Frontend**: The mobile app does not require a `.env` file - it uses dynamic API URL detection
+- **Docker**: The backend Dockerfile expects `.env` to be in the backend directory for proper build context
 
 ### Backend `.env` variables:
 ```bash
@@ -258,9 +266,16 @@ Networks:
 
 #### CRITICAL: Pre-Docker Checklist
 Before creating or modifying Docker configurations:
-1. **Verify dependencies**: Check all require() statements in the code match package.json dependencies
-2. **Test locally**: Ensure the application runs successfully outside Docker first
-3. **Build test**: Always build and run Docker images locally before committing
+1. **Install web dependencies for mobile app**:
+   ```bash
+   cd mobile-app
+   npx expo install react-native-web react-dom @expo/metro-runtime
+   npm install  # Update package-lock.json
+   npx expo start --web  # Test web support works
+   ```
+2. **Verify dependencies**: Check all require() statements in the code match package.json dependencies
+3. **Test locally**: Ensure the application runs successfully outside Docker first
+4. **Build test**: Always build and run Docker images locally before committing
 
 #### CRITICAL: When Writing Code
 When adding new code or modifying existing code:
@@ -276,6 +291,28 @@ When adding new code or modifying existing code:
 2. Docker builds use `npm ci` which REQUIRES package-lock.json to be in sync
 3. If package-lock.json is out of sync, Docker builds WILL FAIL
 4. Always commit package.json and package-lock.json in the same commit
+
+#### CRITICAL: Docker Space Management
+**Docker accumulates layers and cache that MUST be cleaned regularly:**
+1. **After failed builds**: ALWAYS run cleanup commands
+   ```bash
+   docker system prune -f        # Remove stopped containers, dangling images
+   docker builder prune -f       # Remove build cache
+   ```
+2. **Check space before building**: Run `df -h` to ensure adequate space
+3. **Monitor Docker usage**: Run `docker system df` to see what's using space
+4. **Failed build cleanup sequence**:
+   ```bash
+   # After any failed Docker build, run this sequence:
+   docker ps -a                  # Check for failed containers
+   docker container prune -f     # Remove stopped containers
+   docker images                 # Check for dangling images
+   docker image prune -f         # Remove dangling images
+   docker builder prune -f       # Clean build cache
+   ```
+5. **Manual cleanup approach**: Clean up when you know it's needed (after failures, before builds)
+6. **Space requirements**: Docker builds need 2-3x the final image size in temporary space
+7. **No automated cleanup**: Don't set up automated cleanup - be intentional about when to clean
 
 ### Docker Best Practices
 
@@ -328,6 +365,26 @@ When adding new code or modifying existing code:
 cd backend && npm install && npm start    # Verify backend starts
 cd mobile-app && npm install && npm start # Verify frontend starts
 
+# CRITICAL: Docker Build Process with Housekeeping
+# Always follow this sequence for builds:
+
+# 1. Check disk space
+df -h                                # Ensure adequate space (need 2-3x image size)
+
+# 2. Clean up before building
+docker ps -a                         # Check what's running
+docker system prune -f               # Clean stopped containers and dangling images
+docker builder prune -f              # Clean build cache
+
+# 3. Build your images
+docker-compose build                 # For development
+# OR
+docker build -f backend/Dockerfile.backend -t thrifting-buddy/backend:latest ./backend
+docker build -f mobile-app/Dockerfile.frontend -t thrifting-buddy/frontend:latest ./mobile-app
+
+# 4. Clean up after successful build
+docker image prune -f                # Remove old dangling images
+
 # Development
 docker-compose up                    # Start all services
 docker-compose logs -f backend       # Follow backend logs
@@ -337,10 +394,6 @@ docker-compose exec backend sh       # Access backend shell
 docker-compose -f docker-compose.prod.yml up -d     # Deploy in detached mode
 docker-compose -f docker-compose.prod.yml ps        # Check service status
 docker-compose -f docker-compose.prod.yml down      # Stop all services
-
-# Building images
-docker build -f backend/Dockerfile.backend -t thrifting-buddy/backend:latest ./backend
-docker build -f mobile-app/Dockerfile.frontend -t thrifting-buddy/frontend:latest ./mobile-app
 
 # Individual services (without compose)
 docker run -p 3000:3000 --env-file .env thrifting-buddy/backend
@@ -461,7 +514,9 @@ docker run -p 80:80 thrifting-buddy/frontend
 
 ## Deployment Checklist
 
+- [ ] Install web dependencies in mobile-app: `npx expo install react-native-web react-dom @expo/metro-runtime`
 - [ ] Set all production environment variables
+- [ ] Place .env file in backend directory (NOT project root)
 - [ ] Run database migrations
 - [ ] Configure S3 bucket and CloudFront
 - [ ] Set up monitoring (Sentry, logs)

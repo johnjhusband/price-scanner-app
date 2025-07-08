@@ -129,6 +129,23 @@ app.use(express.json({
 }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
+// Serve uploaded files statically
+app.use('/uploads', express.static('uploads', {
+  maxAge: '30d',
+  setHeaders: (res, path) => {
+    // Set appropriate headers for images
+    if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
+      res.setHeader('Content-Type', 'image/jpeg');
+    } else if (path.endsWith('.png')) {
+      res.setHeader('Content-Type', 'image/png');
+    } else if (path.endsWith('.webp')) {
+      res.setHeader('Content-Type', 'image/webp');
+    }
+    // Add cache headers
+    res.setHeader('Cache-Control', 'public, max-age=2592000'); // 30 days
+  }
+}));
+
 // Import routes
 const scanRoutes = require('./src/routes/scan');
 const analyzeRoutes = require('./src/routes/analyze');

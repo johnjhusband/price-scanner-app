@@ -1,28 +1,36 @@
-const AWS = require('aws-sdk');
 const sharp = require('sharp');
 const crypto = require('crypto');
 const { promisify } = require('util');
 const randomBytes = promisify(crypto.randomBytes);
-
-// Configure AWS
-AWS.config.update({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: process.env.AWS_REGION || 'us-east-1',
-});
-
-const s3 = new AWS.S3();
+const fs = require('fs').promises;
+const path = require('path');
 
 class UploadService {
   constructor() {
-    this.bucketName = process.env.S3_BUCKET_NAME;
-    this.cloudFrontUrl = process.env.CLOUDFRONT_URL;
+    // Local storage configuration
+    this.uploadDir = process.env.UPLOAD_DIR || path.join(__dirname, '../../uploads');
+    this.imageDir = path.join(this.uploadDir, 'images');
+    this.thumbnailDir = path.join(this.uploadDir, 'thumbnails');
+    this.baseUrl = process.env.UPLOAD_BASE_URL || '/uploads';
     
     // Image constraints
     this.maxWidth = 2000;
     this.maxHeight = 2000;
     this.thumbnailSize = 300;
     this.quality = 85;
+    
+    // Ensure directories exist
+    this.ensureDirectories();
+  }
+
+  // Create upload directories if they don't exist
+  async ensureDirectories() {
+    try {
+      await fs.mkdir(this.imageDir, { recursive: true });
+      await fs.mkdir(this.thumbnailDir, { recursive: true });
+    } catch (error) {
+      console.error('Failed to create upload directories:', error);
+    }
   }
 
   // Generate unique filename
@@ -97,63 +105,32 @@ class UploadService {
     }
   }
 
-  // Upload to S3
-  async uploadToS3(buffer, filename, contentType = 'image/jpeg') {
-    const params = {
-      Bucket: this.bucketName,
-      Key: filename,
-      Body: buffer,
-      ContentType: contentType,
-      ACL: 'private', // Use CloudFront for public access
-      ServerSideEncryption: 'AES256',
-      Metadata: {
-        'uploaded-by': 'thrifting-buddy',
-        'upload-date': new Date().toISOString(),
-      },
-    };
-
+  // Save file to local storage
+  async saveToLocal(buffer, filename, directory) {
+    const filepath = path.join(directory, filename);
+    
     try {
-      const result = await s3.upload(params).promise();
+      await fs.writeFile(filepath, buffer);
       return {
-        key: result.Key,
-        location: result.Location,
-        etag: result.ETag,
-        bucket: result.Bucket,
+        filename,
+        filepath,
+        size: buffer.length,
       };
     } catch (error) {
-      console.error('S3 upload error:', error);
-      throw new Error('Failed to upload to storage');
+      console.error('Local storage error:', error);
+      throw new Error('Failed to save file to storage');
     }
   }
 
-  // Generate signed URL for temporary access
-  async generateSignedUrl(key, expiresIn = 3600) {
-    const params = {
-      Bucket: this.bucketName,
-      Key: key,
-      Expires: expiresIn,
-    };
-
+  // Delete from local storage
+  async deleteFromLocal(filename, directory) {
+    const filepath = path.join(directory, filename);
+    
     try {
-      return await s3.getSignedUrlPromise('getObject', params);
-    } catch (error) {
-      console.error('Signed URL generation error:', error);
-      throw new Error('Failed to generate access URL');
-    }
-  }
-
-  // Delete from S3
-  async deleteFromS3(key) {
-    const params = {
-      Bucket: this.bucketName,
-      Key: key,
-    };
-
-    try {
-      await s3.deleteObject(params).promise();
+      await fs.unlink(filepath);
       return true;
     } catch (error) {
-      console.error('S3 deletion error:', error);
+      console.error('File deletion error:', error);
       return false;
     }
   }
@@ -161,10 +138,8 @@ class UploadService {
   // Main upload handler
   async uploadImage(buffer, originalName, userId) {
     try {
-      // Generate filenames
-      const imageFilename = await this.generateFilename(originalName);
-      const thumbnailFilename = `thumbnails/${imageFilename}`;
-      const fullImageFilename = `images/${imageFilename}`;
+      // Generate filename
+      const filename = await this.generateFilename(originalName);
 
       // Process main image
       const processedImage = await this.processImage(buffer);
@@ -172,26 +147,43 @@ class UploadService {
       // Create thumbnail
       const thumbnail = await this.createThumbnail(processedImage);
 
-      // Upload both to S3
-      const [imageUpload, thumbnailUpload] = await Promise.all([
-        this.uploadToS3(processedImage, fullImageFilename),
-        this.uploadToS3(thumbnail, thumbnailFilename),
+      // Save both to local storage
+      const [imageResult, thumbnailResult] = await Promise.all([
+        this.saveToLocal(processedImage, filename, this.imageDir),
+        this.saveToLocal(thumbnail, filename, this.thumbnailDir),
       ]);
 
-      // Generate URLs
-      const baseUrl = this.cloudFrontUrl || `https://${this.bucketName}.s3.amazonaws.com`;
-      
+      // Generate URLs for accessing the files
       return {
-        imageUrl: `${baseUrl}/${fullImageFilename}`,
-        thumbnailUrl: `${baseUrl}/${thumbnailFilename}`,
-        imageKey: imageUpload.key,
-        thumbnailKey: thumbnailUpload.key,
-        size: processedImage.length,
-        thumbnailSize: thumbnail.length,
+        imageUrl: `${this.baseUrl}/images/${filename}`,
+        thumbnailUrl: `${this.baseUrl}/thumbnails/${filename}`,
+        imageKey: `images/${filename}`,
+        thumbnailKey: `thumbnails/${filename}`,
+        size: imageResult.size,
+        thumbnailSize: thumbnailResult.size,
       };
     } catch (error) {
       console.error('Upload service error:', error);
       throw error;
+    }
+  }
+
+  // Delete uploaded files
+  async deleteUpload(imageKey, thumbnailKey) {
+    try {
+      // Extract filenames from keys
+      const imageFilename = path.basename(imageKey);
+      const thumbnailFilename = path.basename(thumbnailKey);
+
+      const results = await Promise.all([
+        this.deleteFromLocal(imageFilename, this.imageDir),
+        this.deleteFromLocal(thumbnailFilename, this.thumbnailDir),
+      ]);
+
+      return results.every(result => result === true);
+    } catch (error) {
+      console.error('Delete upload error:', error);
+      return false;
     }
   }
 
@@ -226,6 +218,42 @@ class UploadService {
     // In production, implement with database tracking
     // This would delete old uploads beyond the keep limit
     console.log(`Cleanup for user ${userId}, keeping last ${keepLast} uploads`);
+  }
+
+  // Get upload statistics
+  async getStorageStats() {
+    try {
+      const imageFiles = await fs.readdir(this.imageDir);
+      const thumbnailFiles = await fs.readdir(this.thumbnailDir);
+      
+      let totalSize = 0;
+      
+      // Calculate total size
+      for (const file of imageFiles) {
+        const stats = await fs.stat(path.join(this.imageDir, file));
+        totalSize += stats.size;
+      }
+      
+      for (const file of thumbnailFiles) {
+        const stats = await fs.stat(path.join(this.thumbnailDir, file));
+        totalSize += stats.size;
+      }
+      
+      return {
+        imageCount: imageFiles.length,
+        thumbnailCount: thumbnailFiles.length,
+        totalSize,
+        totalSizeMB: (totalSize / (1024 * 1024)).toFixed(2),
+      };
+    } catch (error) {
+      console.error('Storage stats error:', error);
+      return {
+        imageCount: 0,
+        thumbnailCount: 0,
+        totalSize: 0,
+        totalSizeMB: '0.00',
+      };
+    }
   }
 }
 
