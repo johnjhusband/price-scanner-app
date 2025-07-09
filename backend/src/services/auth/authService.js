@@ -3,9 +3,28 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const { promisify } = require('util');
 const randomBytes = promisify(crypto.randomBytes);
+const winston = require('winston');
 
-// Import database connection (to be implemented)
-// const db = require('../../config/database');
+// Import database connection
+const { users, refreshTokens, transaction, dbLogger } = require('../../config/database');
+
+// Create auth logger
+const authLogger = winston.createLogger({
+  level: 'debug',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    }),
+    new winston.transports.File({ filename: 'auth-telemetry.log' })
+  ]
+});
 
 // Error classes
 class AuthError extends Error {
@@ -19,6 +38,8 @@ class AuthError extends Error {
 
 class AuthService {
   constructor() {
+    authLogger.info('=== AUTH SERVICE INITIALIZATION ===');
+    
     // Validate required environment variables
     const requiredEnvVars = [
       'JWT_ACCESS_SECRET',
@@ -30,12 +51,22 @@ class AuthService {
 
     for (const envVar of requiredEnvVars) {
       if (!process.env[envVar]) {
+        authLogger.error(`Missing required environment variable: ${envVar}`);
         throw new Error(`Missing required environment variable: ${envVar}`);
       }
+      authLogger.debug(`Environment variable ${envVar} is set`, {
+        value: envVar.includes('SECRET') ? '***REDACTED***' : process.env[envVar]
+      });
     }
 
     this.saltRounds = parseInt(process.env.BCRYPT_ROUNDS) || 12;
     this.loginAttempts = new Map(); // Track failed login attempts
+    
+    authLogger.info('Auth service initialized successfully', {
+      saltRounds: this.saltRounds,
+      jwtAccessExpiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
+      jwtRefreshExpiresIn: process.env.JWT_REFRESH_EXPIRES_IN
+    });
   }
 
   // Generate secure tokens
@@ -122,7 +153,27 @@ class AuthService {
   }
 
   async verifyPassword(password, hash) {
-    return await bcrypt.compare(password, hash);
+    authLogger.debug('Verifying password');
+    const startTime = Date.now();
+    
+    try {
+      const isValid = await bcrypt.compare(password, hash);
+      const duration = Date.now() - startTime;
+      
+      authLogger.info('Password verification completed', {
+        isValid,
+        duration: `${duration}ms`
+      });
+      
+      return isValid;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      authLogger.error('Password verification failed', {
+        error: error.message,
+        duration: `${duration}ms`
+      });
+      throw error;
+    }
   }
 
   // Password strength validation
@@ -231,14 +282,37 @@ class AuthService {
 
   // Middleware for authentication
   authenticate = async (req, res, next) => {
+    const startTime = Date.now();
+    authLogger.info('Authentication middleware triggered', {
+      path: req.path,
+      method: req.method,
+      ip: req.ip
+    });
+    
     try {
       const token = this.extractToken(req);
       
       if (!token) {
+        authLogger.warn('No token provided in request', {
+          path: req.path,
+          headers: Object.keys(req.headers)
+        });
         throw new AuthError('No token provided', 401, 'NO_TOKEN');
       }
 
+      authLogger.debug('Token extracted, verifying...', { 
+        tokenLength: token.length,
+        tokenPrefix: token.substring(0, 10) + '...'
+      });
+
       const decoded = this.verifyAccessToken(token);
+      
+      authLogger.info('Token verified successfully', {
+        userId: decoded.userId,
+        tokenType: decoded.type,
+        issuedAt: new Date(decoded.iat * 1000).toISOString(),
+        expiresAt: decoded.exp ? new Date(decoded.exp * 1000).toISOString() : 'never'
+      });
       
       // In production, fetch user from database
       // const user = await db.users.findById(decoded.userId);
@@ -249,8 +323,21 @@ class AuthService {
       req.user = { id: decoded.userId, ...decoded };
       req.token = token;
       
+      const duration = Date.now() - startTime;
+      authLogger.info('Authentication successful', {
+        userId: decoded.userId,
+        duration: `${duration}ms`
+      });
+      
       next();
     } catch (error) {
+      const duration = Date.now() - startTime;
+      authLogger.error('Authentication failed', {
+        error: error.message,
+        code: error.code,
+        path: req.path,
+        duration: `${duration}ms`
+      });
       next(error);
     }
   };

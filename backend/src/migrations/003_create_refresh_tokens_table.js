@@ -6,7 +6,7 @@ exports.up = (knex) => {
     table.string('family', 64).index();
     table.string('fingerprint', 64);
     table.jsonb('device_info').defaultTo('{}');
-    table.inet('ip_address');
+    table.string('ip_address', 45); // Supports both IPv4 and IPv6
     table.boolean('used').defaultTo(false);
     table.timestamp('last_used_at');
     table.timestamp('expires_at').notNullable().index();

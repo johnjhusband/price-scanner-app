@@ -13,13 +13,13 @@ This is "My Thrifting Buddy" - a full-stack application that helps users estimat
 - **Main entry**: `server.js`
 - **Database**: PostgreSQL with Knex.js ORM
 - **Authentication**: JWT with access/refresh token pattern
-- **File Storage**: AWS S3 with image optimization
+- **File Storage**: Local file storage with image optimization
 - **Monitoring**: Winston logging, Sentry error tracking
 - **Security**: Helmet, CORS, rate limiting, input validation
 - **Key Services**:
   - `authService.js` - JWT authentication with refresh tokens
   - `openaiService.js` - OpenAI Vision API integration
-  - `uploadService.js` - Secure file upload with S3
+  - `uploadService.js` - Secure file upload with local storage
   - `tokenService.js` - Token management and rotation
 
 ### Mobile App (`/mobile-app`)
@@ -53,7 +53,7 @@ refresh_tokens (id, user_id, token, family, fingerprint, used, expires_at)
 ```bash
 cd backend
 npm install                              # Install dependencies
-cp env.example .env                      # Create environment file
+# .env file already exists with configuration
 npm run migrate                          # Run database migrations
 npm run seed                             # Seed database (dev only)
 npm start                               # Start production server
@@ -117,11 +117,9 @@ BCRYPT_ROUNDS=12
 # OpenAI
 OPENAI_API_KEY=your_openai_api_key_here
 
-# AWS S3
-AWS_ACCESS_KEY_ID=your_aws_key
-AWS_SECRET_ACCESS_KEY=your_aws_secret
-S3_BUCKET_NAME=thrifting-buddy-images
-AWS_REGION=us-east-1
+# File Upload
+UPLOAD_DIR=./uploads
+UPLOAD_BASE_URL=/uploads
 
 # Security
 ALLOWED_ORIGINS=http://localhost:19006,exp://localhost:19000
@@ -173,7 +171,7 @@ LOG_TO_FILE=true
    - File type validation
    - Size limits
    - Virus scanning placeholder
-   - S3 private storage
+   - Local storage with proper permissions
 
 3. **API Security**:
    - Rate limiting per endpoint
@@ -234,18 +232,11 @@ The project uses separate Dockerfiles for frontend and backend to ensure clear s
   - Gzip compression enabled
 
 ### Docker Compose Files
-- **Development**: `docker-compose.yml`
-  - Hot-reloading with volume mounts
-  - All services exposed for debugging
-  - Simplified configuration
-
-- **Production**: `docker-compose.prod.yml`
-  - Resource limits and reservations
+- **Main Configuration**: `docker-compose.yml`
+  - All services defined (postgres, redis, backend, frontend, nginx, mobile-web)
   - Health checks on all services
-  - Network isolation (backend network is internal only)
-  - Automated backup service
-  - Logging configuration
-  - Scaling support with replicas
+  - Simple configuration for MVP development
+  - Uses environment variables with sensible defaults
 
 ### Services Architecture
 ```yaml
@@ -261,6 +252,29 @@ Networks:
 ├── frontend (172.20.0.0/24) - Public facing
 └── backend (172.21.0.0/24) - Internal only
 ```
+
+### Error Log Monitoring
+
+A monitoring script is available to watch for new entries in the error log:
+
+```bash
+# Run the error log monitor (from project directory)
+cd /root/price-scanner-app
+./monitor-error-log.sh
+```
+
+This script will:
+- Display current line count
+- Check every 5 seconds for new entries  
+- Show only new entries when detected
+- Highlight new entries in yellow
+- Press Ctrl+C to stop monitoring
+
+Use this when:
+- Debugging deployment issues
+- Monitoring for real-time errors
+- Tracking DevOps fixes and updates
+- Waiting for infrastructure team actions
 
 ### Docker Commands
 
@@ -377,7 +391,7 @@ docker system prune -f               # Clean stopped containers and dangling ima
 docker builder prune -f              # Clean build cache
 
 # 3. Build your images
-docker-compose build                 # For development
+docker compose build                 # For development
 # OR
 docker build -f backend/Dockerfile.backend -t thrifting-buddy/backend:latest ./backend
 docker build -f mobile-app/Dockerfile.frontend -t thrifting-buddy/frontend:latest ./mobile-app
@@ -386,17 +400,14 @@ docker build -f mobile-app/Dockerfile.frontend -t thrifting-buddy/frontend:lates
 docker image prune -f                # Remove old dangling images
 
 # Development
-docker-compose up                    # Start all services
-docker-compose logs -f backend       # Follow backend logs
-docker-compose exec backend sh       # Access backend shell
-
-# Production
-docker-compose -f docker-compose.prod.yml up -d     # Deploy in detached mode
-docker-compose -f docker-compose.prod.yml ps        # Check service status
-docker-compose -f docker-compose.prod.yml down      # Stop all services
+docker compose up                    # Start all services
+docker compose logs -f backend       # Follow backend logs
+docker compose exec backend sh       # Access backend shell
+docker compose down                  # Stop all services
+docker compose down -v               # Stop and remove volumes
 
 # Individual services (without compose)
-docker run -p 3000:3000 --env-file .env thrifting-buddy/backend
+docker run -p 3000:3000 --env-file backend/.env thrifting-buddy/backend
 docker run -p 80:80 thrifting-buddy/frontend
 ```
 
@@ -421,7 +432,7 @@ docker run -p 80:80 thrifting-buddy/frontend
 ## Performance Optimizations
 
 ### Backend
-- Connection pooling (database, S3)
+- Connection pooling (database)
 - Response compression (gzip)
 - Image optimization with Sharp
 - Graceful shutdown handling
@@ -508,21 +519,16 @@ docker run -p 80:80 thrifting-buddy/frontend
 
 4. **Image Upload Failures**:
    - Check file size limits
-   - Verify S3 credentials
-   - Check CORS policy on S3
+   - Verify upload directory permissions
+   - Check disk space available
    - Review image format support
 
 ## Deployment Checklist
 
 - [ ] Install web dependencies in mobile-app: `npx expo install react-native-web react-dom @expo/metro-runtime`
-- [ ] Set all production environment variables
-- [ ] Place .env file in backend directory (NOT project root)
+- [ ] Ensure .env file in backend directory has all required variables
 - [ ] Run database migrations
-- [ ] Configure S3 bucket and CloudFront
-- [ ] Set up monitoring (Sentry, logs)
-- [ ] Configure rate limiting for production
-- [ ] Update mobile app API URLs
+- [ ] Set up monitoring (Sentry, logs) if needed
 - [ ] Test all critical paths
-- [ ] Set up CI/CD pipeline
-- [ ] Configure SSL certificates
-- [ ] Set up database backups
+- [ ] Configure SSL certificates if needed
+- [ ] Set up database backups if needed

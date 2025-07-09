@@ -1,5 +1,31 @@
 const { Pool } = require('pg');
 const knex = require('knex');
+const winston = require('winston');
+
+// Create logger for database operations
+const dbLogger = winston.createLogger({
+  level: 'debug',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    }),
+    new winston.transports.File({ filename: 'database-telemetry.log' })
+  ]
+});
+
+// Log environment and configuration
+dbLogger.info('=== DATABASE CONFIGURATION INITIALIZATION ===');
+dbLogger.info('Environment:', { NODE_ENV: process.env.NODE_ENV });
+dbLogger.info('Database URL:', { 
+  url: process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:[^:]*@/, ':****@') : 'NOT SET'
+});
 
 // Database configuration
 const dbConfig = {
@@ -24,6 +50,22 @@ const dbConfig = {
     seeds: {
       directory: './src/seeds',
     },
+    // Enable query logging
+    debug: true,
+    log: {
+      warn(message) {
+        dbLogger.warn('Knex Warning:', message);
+      },
+      error(message) {
+        dbLogger.error('Knex Error:', message);
+      },
+      deprecate(message) {
+        dbLogger.warn('Knex Deprecation:', message);
+      },
+      debug(message) {
+        dbLogger.debug('Knex Debug:', message);
+      }
+    }
   },
   production: {
     client: 'postgresql',
@@ -43,16 +85,79 @@ const dbConfig = {
 
 // Create Knex instance
 const environment = process.env.NODE_ENV || 'development';
+dbLogger.info('Creating Knex instance', { environment, config: dbConfig[environment] });
+
 const db = knex(dbConfig[environment]);
+
+// Add query event listeners for telemetry
+db.on('query', (queryData) => {
+  dbLogger.debug('SQL Query:', {
+    sql: queryData.sql,
+    bindings: queryData.bindings,
+    method: queryData.method
+  });
+});
+
+db.on('query-error', (error, queryData) => {
+  dbLogger.error('SQL Query Error:', {
+    error: error.message,
+    code: error.code,
+    sql: queryData.sql,
+    bindings: queryData.bindings
+  });
+});
+
+db.on('query-response', (response, queryData) => {
+  dbLogger.debug('SQL Query Response:', {
+    sql: queryData.sql,
+    rowCount: Array.isArray(response) ? response.length : 'N/A',
+    duration: queryData.queryContext ? queryData.queryContext.duration : 'unknown'
+  });
+});
 
 // Database health check
 const checkDatabaseConnection = async () => {
+  dbLogger.info('Starting database connection check...');
+  const startTime = Date.now();
+  
   try {
-    await db.raw('SELECT 1');
-    console.log('✅ Database connection successful');
+    dbLogger.debug('Executing test query: SELECT 1');
+    const result = await db.raw('SELECT 1 as test, version() as version, current_database() as database');
+    const duration = Date.now() - startTime;
+    
+    dbLogger.info('✅ Database connection successful', {
+      duration: `${duration}ms`,
+      version: result.rows[0].version,
+      database: result.rows[0].database
+    });
+    
+    // Test if tables exist
+    try {
+      const tables = await db.raw(`
+        SELECT table_name 
+        FROM information_schema.tables 
+        WHERE table_schema = 'public'
+      `);
+      dbLogger.info('Database tables found:', {
+        tables: tables.rows.map(r => r.table_name),
+        count: tables.rows.length
+      });
+    } catch (tableError) {
+      dbLogger.error('Failed to list tables:', tableError.message);
+    }
+    
     return true;
   } catch (error) {
-    console.error('❌ Database connection failed:', error.message);
+    const duration = Date.now() - startTime;
+    dbLogger.error('❌ Database connection failed:', {
+      error: error.message,
+      code: error.code,
+      detail: error.detail,
+      host: error.host,
+      port: error.port,
+      duration: `${duration}ms`,
+      stack: error.stack
+    });
     return false;
   }
 };
@@ -61,15 +166,37 @@ const checkDatabaseConnection = async () => {
 const users = {
   // Create new user
   create: async (userData) => {
-    const [user] = await db('users')
-      .insert({
-        ...userData,
-        created_at: new Date(),
-        updated_at: new Date(),
-      })
-      .returning(['id', 'email', 'username', 'full_name', 'is_active', 'email_verified', 'created_at']);
+    dbLogger.info('Creating new user', { email: userData.email, username: userData.username });
+    const startTime = Date.now();
     
-    return user;
+    try {
+      const [user] = await db('users')
+        .insert({
+          ...userData,
+          created_at: new Date(),
+          updated_at: new Date(),
+        })
+        .returning(['id', 'email', 'username', 'full_name', 'is_active', 'email_verified', 'created_at']);
+      
+      const duration = Date.now() - startTime;
+      dbLogger.info('User created successfully', { 
+        userId: user.id, 
+        email: user.email,
+        duration: `${duration}ms`
+      });
+      
+      return user;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      dbLogger.error('Failed to create user', {
+        email: userData.email,
+        error: error.message,
+        code: error.code,
+        detail: error.detail,
+        duration: `${duration}ms`
+      });
+      throw error;
+    }
   },
 
   // Find user by ID
@@ -101,12 +228,34 @@ const users = {
 
   // Find by email or username
   findByEmailOrUsername: async (identifier) => {
-    const user = await db('users')
-      .where('email', identifier.toLowerCase())
-      .orWhere('username', identifier.toLowerCase())
-      .first();
+    dbLogger.info('Finding user by email or username', { identifier });
+    const startTime = Date.now();
     
-    return user;
+    try {
+      const user = await db('users')
+        .where('email', identifier.toLowerCase())
+        .orWhere('username', identifier.toLowerCase())
+        .first();
+      
+      const duration = Date.now() - startTime;
+      dbLogger.info('User lookup completed', {
+        identifier,
+        found: !!user,
+        userId: user?.id,
+        duration: `${duration}ms`
+      });
+      
+      return user;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+      dbLogger.error('Failed to find user', {
+        identifier,
+        error: error.message,
+        code: error.code,
+        duration: `${duration}ms`
+      });
+      throw error;
+    }
   },
 
   // Update user
@@ -316,6 +465,7 @@ const transaction = async (callback) => {
 
 module.exports = {
   db,
+  dbLogger,
   checkDatabaseConnection,
   users,
   scanHistory,

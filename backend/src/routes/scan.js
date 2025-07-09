@@ -116,6 +116,22 @@ const scanRateLimiter = (req, res, next) => {
   next();
 };
 
+// GET /api/scan/health - Check scan service health (PUBLIC - no auth required)
+// This route MUST come first to avoid auth middleware
+router.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    service: 'Price Scanner Analysis',
+    timestamp: new Date().toISOString(),
+    features: {
+      imageAnalysis: true,
+      historyTracking: true,
+      duplicateDetection: true,
+      secureUpload: true,
+    }
+  });
+});
+
 // POST /api/scan - Analyze image and get price estimates
 router.post('/', 
   authService.optionalAuth,
@@ -364,20 +380,5 @@ router.get('/search',
     }
   }
 );
-
-// GET /api/scan/health - Check scan service health
-router.get('/health', (req, res) => {
-  res.json({ 
-    status: 'OK', 
-    service: 'Price Scanner Analysis',
-    timestamp: new Date().toISOString(),
-    features: {
-      imageAnalysis: true,
-      historyTracking: true,
-      duplicateDetection: true,
-      secureUpload: true,
-    }
-  });
-});
 
 module.exports = router;

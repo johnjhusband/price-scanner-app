@@ -6,7 +6,7 @@ services:
     restart: unless-stopped
     environment:
       POSTGRES_USER: thriftingbuddy
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-changeme}
+      POSTGRES_PASSWORD: dev_password_123
       POSTGRES_DB: thrifting_buddy
     volumes:
       - postgres_data:/var/lib/postgresql/data
@@ -23,13 +23,13 @@ services:
     image: redis:7-alpine
     container_name: thrifting_buddy_redis
     restart: unless-stopped
-    command: redis-server --requirepass ${REDIS_PASSWORD:-changeme}
+    command: redis-server --requirepass redis_dev_123
     ports:
       - "6379:6379"
     volumes:
       - redis_data:/data
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "redis_dev_123", "ping"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -39,6 +39,7 @@ services:
     build:
       context: ./backend
       dockerfile: Dockerfile.backend
+    image: thrifting-buddy/backend:latest
     container_name: thrifting_buddy_api
     restart: unless-stopped
     depends_on:
@@ -49,31 +50,39 @@ services:
     env_file:
       - ./backend/.env
     environment:
-      # Override DATABASE_URL to use container names instead of localhost
+      # Override DATABASE_URL and REDIS_URL to use container networking
       DATABASE_URL: postgresql://thriftingbuddy:dev_password_123@postgres:5432/thrifting_buddy
       REDIS_URL: redis://:redis_dev_123@redis:6379
     ports:
       - "3000:3000"
-    volumes:
-      - ./backend:/app
-      - /app/node_modules
-    command: npm start
-
-  # Frontend Web Application
-  frontend:
-    image: thrifting-buddy/frontend:latest
-    container_name: thrifting_buddy_frontend
-    restart: unless-stopped
-    ports:
-      - "8080:80"  # Internal port for direct access if needed
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:80"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })"]
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 40s
+
+  # Frontend Web Application
+  frontend:
+    build:
+      context: ./mobile-app
+      dockerfile: Dockerfile.frontend
+    image: thrifting-buddy/frontend:latest
+    container_name: thrifting_buddy_frontend
+    restart: unless-stopped
+    # No external ports - accessed via nginx proxy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:80/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   # Nginx Reverse Proxy (containerized with config)
   nginx:
+    build:
+      context: ./nginx
+      dockerfile: Dockerfile
     image: thrifting-buddy/nginx:latest
     container_name: thrifting_buddy_nginx
     restart: unless-stopped
@@ -90,9 +99,13 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 10s
 
   # Mobile App Web Server (production containerized)
   mobile-web:
+    build:
+      context: ./mobile-app
+      dockerfile: Dockerfile.mobile-web
     image: thrifting-buddy/mobile-web:latest
     container_name: thrifting_buddy_mobile_web
     restart: unless-stopped
@@ -103,6 +116,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+      start_period: 20s
 
 volumes:
   postgres_data:

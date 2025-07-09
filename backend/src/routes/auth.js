@@ -2,8 +2,28 @@ const express = require('express');
 const router = express.Router();
 const authService = require('../services/auth/authService');
 const tokenService = require('../services/auth/tokenService');
+const { users, dbLogger } = require('../config/database');
 const { body, validationResult } = require('express-validator');
 const rateLimit = require('express-rate-limit');
+const winston = require('winston');
+
+// Create routes logger
+const routeLogger = winston.createLogger({
+  level: 'debug',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json()
+  ),
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    }),
+    new winston.transports.File({ filename: 'auth-routes-telemetry.log' })
+  ]
+});
 
 // Rate limiters for different endpoints
 const loginLimiter = rateLimit({
@@ -65,12 +85,26 @@ const handleValidationErrors = (req, res, next) => {
 
 // POST /api/auth/register - Register new user
 router.post('/register', registerLimiter, validateRegistration, handleValidationErrors, async (req, res, next) => {
+  const startTime = Date.now();
+  const { email, username, password, fullName } = req.body;
+  
+  routeLogger.info('=== REGISTRATION ATTEMPT ===', {
+    email,
+    username,
+    ip: req.ip,
+    userAgent: req.get('user-agent')
+  });
+  
   try {
-    const { email, username, password, fullName } = req.body;
-
     // Additional password validation
+    routeLogger.debug('Validating password strength');
     const passwordValidation = authService.validatePasswordStrength(password);
     if (!passwordValidation.isValid) {
+      routeLogger.warn('Registration failed: weak password', {
+        email,
+        passwordScore: passwordValidation.score,
+        errors: passwordValidation.errors
+      });
       return res.status(400).json({
         error: 'Weak password',
         details: passwordValidation.errors,
@@ -78,42 +112,39 @@ router.post('/register', registerLimiter, validateRegistration, handleValidation
     }
 
     // Check for compromised password
+    routeLogger.debug('Checking for compromised password');
     const isCompromised = await authService.checkCompromisedPassword(password);
     if (isCompromised) {
+      routeLogger.warn('Registration failed: compromised password', { email });
       return res.status(400).json({
         error: 'This password has been found in data breaches. Please choose a different password.',
       });
     }
 
     // Hash password
+    routeLogger.debug('Hashing password');
     const passwordHash = await authService.hashPassword(password);
+    routeLogger.debug('Password hashed successfully');
 
-    // In production: Create user in database
-    // const user = await db.users.create({
-    //   email: email.toLowerCase(),
-    //   username: username.toLowerCase(),
-    //   passwordHash,
-    //   fullName,
-    // });
-
-    // For now, simulate user creation
-    const user = {
-      id: `user_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+    // Create user in database
+    routeLogger.info('Creating user in database', { email, username });
+    const user = await users.create({
       email: email.toLowerCase(),
       username: username.toLowerCase(),
-      fullName,
-      isActive: true,
-      emailVerified: false,
-      createdAt: new Date(),
-    };
+      password_hash: passwordHash,
+      full_name: fullName,
+    });
+    routeLogger.info('User created successfully', { userId: user.id });
 
     // Generate tokens
+    routeLogger.debug('Generating authentication tokens');
     const { accessToken, refreshToken } = authService.generateTokens(user.id, {
       email: user.email,
       username: user.username,
     });
 
     // Store refresh token
+    routeLogger.debug('Storing refresh token');
     const fingerprint = authService.createSessionFingerprint(req);
     await tokenService.storeRefreshToken(user.id, refreshToken, {
       fingerprint,
@@ -129,6 +160,12 @@ router.post('/register', registerLimiter, validateRegistration, handleValidation
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
+    const duration = Date.now() - startTime;
+    routeLogger.info('✅ Registration completed successfully', {
+      userId: user.id,
+      email: user.email,
+      duration: `${duration}ms`
+    });
     console.log('✅ User registered successfully:', user.email);
 
     res.status(201).json({
@@ -138,45 +175,67 @@ router.post('/register', registerLimiter, validateRegistration, handleValidation
         id: user.id,
         email: user.email,
         username: user.username,
-        fullName: user.fullName,
+        fullName: user.full_name,
       },
       accessToken,
       expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
     });
 
   } catch (error) {
+    const duration = Date.now() - startTime;
+    routeLogger.error('❌ Registration failed with error', {
+      email,
+      error: error.message,
+      code: error.code,
+      detail: error.detail,
+      stack: error.stack,
+      duration: `${duration}ms`
+    });
     next(error);
   }
 });
 
 // POST /api/auth/login - Login user
 router.post('/login', loginLimiter, validateLogin, handleValidationErrors, async (req, res, next) => {
+  const startTime = Date.now();
+  const { emailOrUsername, password } = req.body;
+  const identifier = emailOrUsername.toLowerCase();
+  
+  routeLogger.info('=== LOGIN ATTEMPT ===', {
+    identifier,
+    ip: req.ip,
+    userAgent: req.get('user-agent')
+  });
+  
   try {
-    const { emailOrUsername, password } = req.body;
-    const identifier = emailOrUsername.toLowerCase();
-
     // Check login attempts
+    routeLogger.debug('Checking login attempt limits', { identifier });
     authService.checkLoginAttempts(identifier);
 
-    // In production: Find user in database
-    // const user = await db.users.findByEmailOrUsername(identifier);
-    
-    // For now, simulate user lookup
-    const user = null; // This would be the actual user from DB
+    // Find user in database
+    routeLogger.info('Looking up user in database', { identifier });
+    const user = await users.findByEmailOrUsername(identifier);
 
     if (!user) {
+      routeLogger.warn('Login failed: user not found', { identifier });
       authService.recordFailedLogin(identifier);
       return res.status(401).json({
         error: 'Invalid credentials',
         remainingAttempts: authService.checkLoginAttempts(identifier).remainingAttempts - 1,
       });
     }
+    
+    routeLogger.debug('User found', { userId: user.id, email: user.email });
 
     // Verify password
-    // const isValidPassword = await authService.verifyPassword(password, user.passwordHash);
-    const isValidPassword = false; // This would be the actual check
+    routeLogger.debug('Verifying password');
+    const isValidPassword = await authService.verifyPassword(password, user.password_hash);
 
     if (!isValidPassword) {
+      routeLogger.warn('Login failed: invalid password', { 
+        identifier,
+        userId: user.id 
+      });
       authService.recordFailedLogin(identifier);
       return res.status(401).json({
         error: 'Invalid credentials',
@@ -185,16 +244,22 @@ router.post('/login', loginLimiter, validateLogin, handleValidationErrors, async
     }
 
     // Check if user is active
-    if (!user.isActive) {
+    if (!user.is_active) {
+      routeLogger.warn('Login failed: account deactivated', {
+        identifier,
+        userId: user.id
+      });
       return res.status(401).json({
         error: 'Account is deactivated',
       });
     }
 
     // Clear failed login attempts
+    routeLogger.debug('Clearing failed login attempts');
     authService.clearFailedLogins(identifier);
 
     // Generate tokens
+    routeLogger.debug('Generating authentication tokens');
     const { accessToken, refreshToken } = authService.generateTokens(user.id, {
       email: user.email,
       username: user.username,
@@ -202,6 +267,7 @@ router.post('/login', loginLimiter, validateLogin, handleValidationErrors, async
     });
 
     // Store refresh token
+    routeLogger.debug('Storing refresh token');
     const fingerprint = authService.createSessionFingerprint(req);
     await tokenService.storeRefreshToken(user.id, refreshToken, {
       fingerprint,
@@ -217,6 +283,12 @@ router.post('/login', loginLimiter, validateLogin, handleValidationErrors, async
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
+    const duration = Date.now() - startTime;
+    routeLogger.info('✅ Login completed successfully', {
+      userId: user.id,
+      email: user.email,
+      duration: `${duration}ms`
+    });
     console.log('✅ User logged in successfully:', user.email);
 
     res.json({
@@ -226,13 +298,22 @@ router.post('/login', loginLimiter, validateLogin, handleValidationErrors, async
         id: user.id,
         email: user.email,
         username: user.username,
-        fullName: user.fullName,
+        fullName: user.full_name,
       },
       accessToken,
       expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
     });
 
   } catch (error) {
+    const duration = Date.now() - startTime;
+    routeLogger.error('❌ Login failed with error', {
+      identifier,
+      error: error.message,
+      code: error.code,
+      detail: error.detail,
+      stack: error.stack,
+      duration: `${duration}ms`
+    });
     next(error);
   }
 });
@@ -348,16 +429,22 @@ router.post('/logout-all', authService.authenticate, async (req, res, next) => {
 // GET /api/auth/me - Get current user
 router.get('/me', authService.authenticate, async (req, res, next) => {
   try {
-    // In production: Fetch fresh user data from database
-    // const user = await db.users.findById(req.user.id);
+    // Fetch fresh user data from database
+    const user = await users.findById(req.user.userId);
+
+    if (!user) {
+      return res.status(404).json({
+        error: 'User not found',
+      });
+    }
 
     res.json({
       success: true,
       user: {
-        id: req.user.id,
-        email: req.user.email,
-        username: req.user.username,
-        role: req.user.role,
+        id: user.id,
+        email: user.email,
+        username: user.username,
+        fullName: user.full_name,
       },
     });
 

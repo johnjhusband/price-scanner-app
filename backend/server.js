@@ -88,6 +88,96 @@ app.use((req, res, next) => {
   next();
 });
 
+// Comprehensive request/response logging middleware
+app.use((req, res, next) => {
+  const startTime = Date.now();
+  const originalSend = res.send;
+  const originalJson = res.json;
+  
+  // Log incoming request
+  req.logger.info('=== INCOMING REQUEST ===', {
+    method: req.method,
+    path: req.path,
+    url: req.url,
+    query: req.query,
+    headers: {
+      'user-agent': req.get('user-agent'),
+      'content-type': req.get('content-type'),
+      'content-length': req.get('content-length'),
+      authorization: req.get('authorization') ? 'Bearer ***' : undefined,
+      origin: req.get('origin'),
+      referer: req.get('referer')
+    },
+    ip: req.ip,
+    ips: req.ips,
+    protocol: req.protocol,
+    secure: req.secure,
+    xhr: req.xhr,
+    httpVersion: req.httpVersion,
+    body: req.body && Object.keys(req.body).length ? {
+      ...req.body,
+      password: req.body.password ? '***REDACTED***' : undefined
+    } : undefined
+  });
+  
+  // Override response methods to capture response data
+  res.send = function(data) {
+    res.responseBody = data;
+    return originalSend.apply(res, arguments);
+  };
+  
+  res.json = function(data) {
+    res.responseBody = data;
+    return originalJson.apply(res, arguments);
+  };
+  
+  // Log response when finished
+  res.on('finish', () => {
+    const duration = Date.now() - startTime;
+    const logData = {
+      method: req.method,
+      path: req.path,
+      statusCode: res.statusCode,
+      statusMessage: res.statusMessage,
+      duration: `${duration}ms`,
+      contentLength: res.get('content-length'),
+      headers: {
+        'content-type': res.get('content-type'),
+        'x-request-id': res.get('x-request-id')
+      }
+    };
+    
+    // Add response body for non-successful responses or debug mode
+    if (res.statusCode >= 400 || process.env.LOG_LEVEL === 'debug') {
+      if (res.responseBody) {
+        try {
+          const body = typeof res.responseBody === 'string' ? 
+            JSON.parse(res.responseBody) : res.responseBody;
+          logData.responseBody = {
+            ...body,
+            accessToken: body.accessToken ? '***REDACTED***' : undefined,
+            refreshToken: body.refreshToken ? '***REDACTED***' : undefined
+          };
+        } catch (e) {
+          logData.responseBody = res.responseBody;
+        }
+      }
+    }
+    
+    if (res.statusCode >= 500) {
+      req.logger.error('=== RESPONSE ERROR ===', logData);
+    } else if (res.statusCode >= 400) {
+      req.logger.warn('=== RESPONSE CLIENT ERROR ===', logData);
+    } else if (res.statusCode >= 300) {
+      req.logger.info('=== RESPONSE REDIRECT ===', logData);
+    } else {
+      req.logger.info('=== RESPONSE SUCCESS ===', logData);
+    }
+  });
+  
+  next();
+});
+
 // Rate limiting
 const createRateLimiter = (windowMs, max, message) => {
   return rateLimit({
@@ -249,10 +339,34 @@ const server = app.listen(PORT, '0.0.0.0', async () => {
   logger.info(`🔍 API Documentation: http://localhost:${PORT}/api-docs`);
   logger.info(`🌐 Server binding to all interfaces (0.0.0.0:${PORT})`);
   
+  // Log environment variables (sanitized)
+  logger.info('=== ENVIRONMENT CONFIGURATION ===', {
+    NODE_ENV: process.env.NODE_ENV,
+    PORT: process.env.PORT,
+    DATABASE_URL: process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:[^:]*@/, ':****@') : 'NOT SET',
+    REDIS_URL: process.env.REDIS_URL ? process.env.REDIS_URL.replace(/:[^:]*@/, ':****@') : 'NOT SET',
+    JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN,
+    JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN,
+    BCRYPT_ROUNDS: process.env.BCRYPT_ROUNDS,
+    ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
+    RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
+    RATE_LIMIT_MAX_REQUESTS: process.env.RATE_LIMIT_MAX_REQUESTS,
+    LOG_LEVEL: process.env.LOG_LEVEL || 'info'
+  });
+  
   // Check database connection
+  logger.info('Checking database connection...');
   const dbConnected = await checkDatabaseConnection();
   if (!dbConnected) {
     logger.error('⚠️  Database connection failed - running in degraded mode');
+    logger.error('Database diagnostics:', {
+      DATABASE_URL_SET: !!process.env.DATABASE_URL,
+      DATABASE_URL_FORMAT: process.env.DATABASE_URL ? 
+        (process.env.DATABASE_URL.includes('@') ? 'Valid format' : 'Invalid format') : 
+        'Not set'
+    });
+  } else {
+    logger.info('✅ Database connection successful');
   }
   
   // Start cleanup tasks

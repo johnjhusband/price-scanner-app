@@ -68,7 +68,7 @@ environment:
 # GOOD: Use env_file, override only networking
 env_file: .env
 environment:
-  DATABASE_URL: postgresql://user:pass@postgres:5432/db
+  DATABASE_URL: postgresql://${DB_USER:-dbuser}:${DB_PASSWORD:-dbpass}@postgres:5432/db
 ```
 
 ## Deployment Documentation

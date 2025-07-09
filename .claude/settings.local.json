@@ -36,7 +36,20 @@
       "Bash(curl:*)",
       "Bash(docker logs:*)",
       "Bash(docker stop:*)",
-      "Bash(docker logs:*)"
+      "Bash(docker logs:*)",
+      "Bash(git commit:*)",
+      "Bash(curl:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker logs:*)",
+      "Bash(docker exec:*)",
+      "Bash(curl:*)",
+      "Bash(docker exec:*)",
+      "Bash(./monitor-error-log.sh:*)",
+      "Bash(bash:*)",
+      "Bash(rg:*)",
+      "Bash(./validate-deployment.sh)",
+      "Bash(./monitor-error-log.sh:*)",
+      "Bash(./monitor-error-log.sh:*)"
     ],
     "deny": []
   }
