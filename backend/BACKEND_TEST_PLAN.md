@@ -66,7 +66,7 @@ describe('OpenAIService', () => {
 **Test Cases**:
 - File type validation (MIME type and magic numbers)
 - File size limit enforcement (10MB default)
-- S3 upload with proper permissions
+- Local file storage (S3 removed)
 - Image optimization with Sharp
 - Virus scanning placeholder
 - Duplicate detection via SHA-256 hash
@@ -94,6 +94,19 @@ describe('OpenAIService', () => {
 - Database transaction rollbacks
 - Connection pool management
 - Migration execution and rollback
+
+### 6. Telemetry Tests (`src/config/__tests__/telemetry.test.js`)
+**Status**: Not implemented
+
+**Test Cases**:
+- Database query logging with timing
+- Authentication flow telemetry
+- Request/response middleware logging
+- Error logging with stack traces
+- Sensitive data sanitization in logs
+- Log file creation and rotation
+- Winston transport configuration
+- Environment variable logging (sanitized)
 
 ## Integration Tests
 
@@ -302,7 +315,7 @@ AWS_SECRET_ACCESS_KEY=test-secret
 
 ### 2. Mock Services
 - Mock OpenAI responses
-- LocalStack for S3 testing
+- Local file system for storage testing
 - In-memory database for unit tests
 
 ## Continuous Improvement

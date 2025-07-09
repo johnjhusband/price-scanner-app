@@ -89,6 +89,10 @@ describe('AuthContext', () => {
 - FormData for image upload
 - Base64 fallback for image upload
 - Cache management
+- Telemetry logging for all requests
+- Error storage in SecureStore
+- Network state detection
+- Request ID generation and tracking
 
 **Example Test**:
 ```javascript
@@ -135,6 +139,19 @@ describe('ApiService', () => {
 - Image compression settings
 - Retake functionality
 - Loading states during analysis
+- Platform detection for camera vs file picker routing
+
+#### FilePickerScreen Components (`__tests__/unit/components/FilePicker.test.js`)
+**Status**: Not implemented
+
+**Test Cases**:
+- File input rendering on web platform
+- Image file type validation (JPG, PNG, GIF, WebP)
+- Image preview functionality
+- Image compression to 1200px width
+- Error handling for invalid file types
+- Loading states during file selection
+- Navigation to results after analysis
 
 #### LoadingOverlay (`__tests__/unit/components/LoadingOverlay.test.js`)
 **Status**: Not implemented
@@ -190,6 +207,18 @@ describe('ApiService', () => {
 - Image analysis integration
 - Navigation to results on success
 - Error alerts on failure
+- Platform routing: Camera on mobile, FilePicker on web
+
+#### FilePickerScreen (`__tests__/integration/screens/FilePickerScreen.test.js`)
+**Status**: Not implemented
+
+**Test Cases**:
+- Full file selection flow on web platform
+- Image preview after selection
+- Image compression before upload
+- Analysis API integration
+- Navigation to results on success
+- Error alerts for invalid files or API failures
 
 #### ResultsScreen (`__tests__/integration/screens/ResultsScreen.test.js`)
 **Status**: Not implemented
@@ -307,6 +336,9 @@ describe('Error Recovery', () => {
 - Mouse/keyboard interactions
 - Browser compatibility
 - PWA functionality
+- File picker functionality instead of camera
+- Image preview and compression
+- Expo SecureStore compatibility (BUG #015 fix verification)
 
 ## Accessibility Tests
 

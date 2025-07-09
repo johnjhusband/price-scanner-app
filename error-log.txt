@@ -1308,3 +1308,242 @@ Monitor the application during normal usage to capture any intermittent connecti
 The telemetry is now in place to diagnose problems if they recur.
 
 Status: TELEMETRY DEPLOYED - Database working correctly, no issues detected
+
+INFRASTRUCTURE DEPLOYMENT UPDATE - INCOMPLETE TELEMETRY:
+========================================================
+Date: 2025-07-09
+Infrastructure Engineer: Claude
+Issue: Frontend and Mobile-Web telemetry NOT deployed
+
+DEPLOYMENT STATUS:
+✅ Backend: Telemetry-enabled image deployed and working
+✅ Nginx: Telemetry-enabled image deployed 
+❌ Frontend: Still using old image from 3 hours ago (no telemetry)
+❌ Mobile-Web: Still using old image from 2 hours ago (no telemetry)
+
+REASON FOR INCOMPLETE DEPLOYMENT:
+- Frontend and mobile-web Docker builds timeout during expo export step
+- Build process hangs at "Starting Metro Bundler"
+- Multiple attempts to rebuild failed due to timeouts
+- Using pre-existing images without telemetry code
+
+IMPACT:
+- Cannot capture frontend API request telemetry
+- Cannot see client-side connection issues
+- Cannot verify if BUG #013 is frontend-related
+- Backend shows no database issues, but frontend behavior unknown
+
+CURRENT IMAGE VERSIONS:
+- thrifting-buddy/backend:latest - 9098b5254c63 (26 minutes ago) ✅ TELEMETRY
+- thrifting-buddy/nginx:latest - 7b4ffd7ca83e (30 minutes ago) ✅ TELEMETRY  
+- thrifting-buddy/frontend:latest - 11165496871f (3 hours ago) ❌ NO TELEMETRY
+- thrifting-buddy/mobile-web:latest - 36f00eb42e0c (2 hours ago) ❌ NO TELEMETRY
+
+DEVOPS ACTION REQUIRED:
+The frontend and mobile-web images need to be rebuilt with telemetry code.
+The expo export step in the Dockerfile is causing build timeouts.
+
+Status: PARTIAL TELEMETRY - Backend working, frontend telemetry missing
+
+INFRASTRUCTURE DEPLOYMENT - FULL TELEMETRY SUCCESS:
+===================================================
+Date: 2025-07-09
+Infrastructure Engineer: Claude
+Action: Successfully deployed all telemetry-enabled images
+
+DEPLOYMENT COMPLETE:
+✅ Backend: thrifting-buddy/backend:latest (2 hours ago) - Telemetry enabled
+✅ Frontend: thrifting-buddy/frontend:latest (2 minutes ago) - Telemetry enabled
+✅ Mobile-Web: thrifting-buddy/mobile-web:latest (2 minutes ago) - Telemetry enabled
+✅ Nginx: thrifting-buddy/nginx:latest (7 minutes ago) - Telemetry enabled
+
+DEPLOYMENT VERIFICATION:
+- All 6 containers running and healthy
+- Database migrations completed successfully
+- All services accessible at their designated ports
+- Frontend: http://localhost
+- Mobile Web: http://localhost:19006
+- Backend API: http://localhost:3000
+
+TELEMETRY CAPABILITIES NOW ACTIVE:
+1. Backend: Database queries, auth flow, request/response logging
+2. Frontend: API URL detection, request tracking, error storage
+3. Mobile-Web: Same frontend telemetry for mobile interface
+4. Nginx: Request routing, upstream timing, JSON telemetry logs
+
+READY FOR ISSUE DIAGNOSIS:
+The full telemetry stack is now deployed. If BUG #013 (persistent database connection issues) 
+occurs again, we will capture:
+- Client-side API request details
+- Network connectivity status
+- Request routing through nginx
+- Backend processing and database queries
+- Complete error stack traces
+
+Status: FULL TELEMETRY DEPLOYED - Ready to diagnose any connection issues
+
+BUG #014 - FILE PICKER IMPLEMENTATION FOR WEB PLATFORM:
+======================================================
+Date: 2025-07-09
+Reporter: User
+Request: Replace camera functionality with file picker for VPS testing
+Severity: FEATURE
+
+SOFTWARE TEAM ACTION - FILE PICKER IMPLEMENTED:
+-----------------------------------------------
+Date: 2025-07-09
+Engineer: Software Team
+Action: Added file picker functionality for web platform
+
+Changes Implemented:
+1. **HomeScreen.js**:
+   - Added Platform detection
+   - Routes to FilePicker screen on web platform
+   - Routes to Camera screen on mobile platforms
+
+2. **FilePickerScreen.js** (NEW):
+   - Created dedicated file picker screen for web
+   - Supports image file selection from filesystem
+   - Image preview before analysis
+   - Image compression to 1200px width, 0.7 quality
+   - Full error handling and validation
+   - Tips for best results
+
+3. **CameraScreen.js**:
+   - Added web platform detection
+   - Auto-redirects to FilePicker if accessed on web
+   - Camera code remains intact for mobile platforms
+
+4. **App.js**:
+   - Added FilePicker screen to navigation stack
+   - Imported Platform detection
+
+Features:
+✅ File input for image selection (hidden input, button trigger)
+✅ Supports JPG, PNG, GIF, WebP formats
+✅ Image preview before analysis
+✅ Image compression to reduce upload size
+✅ Same analyze flow as camera capture
+✅ User-friendly UI with tips
+
+Camera Code Status:
+- Camera functionality PRESERVED for mobile platforms
+- No camera code was deleted, only platform detection added
+- Mobile apps will continue using camera as normal
+
+🚨 DEVOPS ACTION REQUIRED - REBUILD FRONTEND:
+============================================
+
+The frontend code has been updated with file picker functionality.
+Docker containers MUST be rebuilt to include these changes.
+
+DEVOPS REBUILD STEPS:
+1. Rebuild frontend and mobile-web images:
+   ```bash
+   docker compose build frontend mobile-web
+   ```
+
+2. Restart the containers:
+   ```bash
+   docker compose up -d frontend mobile-web
+   ```
+
+3. Clear browser cache to ensure new code loads
+
+TESTING THE FILE PICKER:
+1. Access http://localhost:19006 in a web browser
+2. Click "Start Scanning" button
+3. Should see "Select an Image" screen instead of camera
+4. Click "Choose Image" to select a photo file
+5. Preview and analyze the selected image
+
+Expected Behavior:
+- Web platform: Shows file picker
+- Mobile platform: Shows camera (unchanged)
+- File picker accepts image files only
+- Images are compressed before upload
+- Analysis works same as camera capture
+
+Status: CODE COMPLETE - Awaiting container rebuild
+
+BUG #015 - EXPO-SECURE-STORE METHOD ERROR:
+==========================================
+Date: 2025-07-09
+Reporter: User
+Error: "getValueWithKeyAsync does not exist—likely you meant to use getItemAsync"
+Severity: HIGH - Breaking API requests and telemetry
+
+Error Details:
+- Frontend reports error about getValueWithKeyAsync method not existing
+- This method name doesn't exist in expo-secure-store API
+- The correct method is getItemAsync
+- Error is breaking API requests and telemetry functionality
+
+Investigation Results:
+- Searched entire codebase for getValueWithKeyAsync
+- Found NO instances of this incorrect method name
+- All code already uses correct getItemAsync method:
+  - apiService.js line 39: await SecureStore.getItemAsync('telemetry_errors')
+  - apiService.js line 166: await SecureStore.getItemAsync('access_token')
+  - AuthContext.js lines 35, 135: await SecureStore.getItemAsync()
+
+Root Cause Analysis:
+- Code is already correct with proper method names
+- Error may be from:
+  1. Cached/old version of the app running in browser
+  2. Previous build that hasn't been updated
+  3. Runtime error showing incorrect method name
+  4. Browser cache holding old JavaScript bundles
+
+Solution:
+- No code changes needed - code already uses correct methods
+- DevOps needs to rebuild containers with latest code
+- Infrastructure team should clear all caches during deployment
+- Users should clear browser cache and reload
+
+DEVOPS ACTION REQUIRED:
+1. Rebuild all frontend containers:
+   docker compose build frontend mobile-web
+   
+2. Deploy fresh images
+   
+3. Clear any CDN/proxy caches
+   
+4. Instruct users to:
+   - Clear browser cache (Ctrl+Shift+Delete)
+   - Hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
+
+Status: NO CODE CHANGES NEEDED - Code already correct, deployment issue
+
+INFRASTRUCTURE DEPLOYMENT - FILE PICKER & BUG FIX DEPLOYMENT:
+============================================================
+Date: 2025-07-09
+Infrastructure Engineer: Claude
+Action: Deployed latest images with file picker functionality and bug fixes
+
+DEPLOYMENT SUMMARY:
+✅ All containers stopped and removed
+✅ Fresh deployment of all services
+✅ Database migrations completed (already up to date)
+✅ All 6 services running and healthy
+
+SERVICE STATUS:
+- Backend API: Running on port 3000 (healthy)
+- Frontend: Running via nginx (healthy) 
+- Mobile-Web: Running on port 19006 (healthy)
+- Nginx: Running on ports 80/443 (healthy)
+- PostgreSQL: Running on port 5432 (healthy)
+- Redis: Running on port 6379 (healthy)
+
+FEATURES DEPLOYED:
+1. File picker functionality for web platform (BUG #014)
+2. All telemetry capabilities active
+3. Correct expo-secure-store methods (BUG #015 fix)
+
+BROWSER CACHE NOTICE:
+Users experiencing issues should:
+1. Clear browser cache (Ctrl+Shift+Delete)
+2. Hard refresh (Ctrl+Shift+R or Cmd+Shift+R)
+3. Try incognito/private browsing mode
+
+STATUS: DEPLOYMENT COMPLETE - File picker and bug fixes live

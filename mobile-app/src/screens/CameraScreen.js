@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, Alert, Text, TouchableOpacity, Image } from 'react-native';
+import { View, StyleSheet, Alert, Text, TouchableOpacity, Image, Platform } from 'react-native';
 import { Camera } from 'expo-camera';
 import { Button, IconButton, useTheme, ActivityIndicator } from 'react-native-paper';
 import { MaterialIcons } from '@expo/vector-icons';
@@ -14,8 +14,19 @@ export default function CameraScreen({ navigation }) {
   const cameraRef = useRef(null);
   const theme = useTheme();
 
+  // Redirect to FilePicker if on web platform
+  useEffect(() => {
+    if (Platform.OS === 'web') {
+      navigation.replace('FilePicker');
+      return;
+    }
+  }, [navigation]);
+
   useEffect(() => {
     (async () => {
+      // Skip camera permission request on web
+      if (Platform.OS === 'web') return;
+      
       const { status } = await Camera.requestCameraPermissionsAsync();
       setHasPermission(status === 'granted');
     })();

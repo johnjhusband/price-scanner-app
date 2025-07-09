@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Alert } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Alert, Platform } from 'react-native';
 import { 
   Button, 
   Card, 
@@ -47,7 +47,13 @@ export default function HomeScreen({ navigation }) {
       );
       return;
     }
-    navigation.navigate('Camera');
+    
+    // For web platform, navigate to FilePicker screen instead of Camera
+    if (Platform.OS === 'web') {
+      navigation.navigate('FilePicker');
+    } else {
+      navigation.navigate('Camera');
+    }
   };
 
   return (

@@ -3,10 +3,12 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { Provider as PaperProvider, MD3LightTheme } from 'react-native-paper';
 import { StatusBar } from 'expo-status-bar';
+import { Platform } from 'react-native';
 
 import HomeScreen from './src/screens/HomeScreen';
 import CameraScreen from './src/screens/CameraScreen';
 import ResultsScreen from './src/screens/ResultsScreen';
+import FilePickerScreen from './src/screens/FilePickerScreen';
 
 import ErrorBoundary from './src/components/ErrorBoundary';
 import { AuthProvider } from './src/contexts/AuthContext';
@@ -63,6 +65,14 @@ function AppNavigator() {
         component={CameraScreen}
         options={{ 
           title: 'Scan Item',
+          headerBackTitleVisible: false,
+        }}
+      />
+      <Stack.Screen 
+        name="FilePicker" 
+        component={FilePickerScreen}
+        options={{ 
+          title: 'Select Image',
           headerBackTitleVisible: false,
         }}
       />
