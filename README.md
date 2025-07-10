@@ -1,79 +1,77 @@
 # My Thrifting Buddy
 
-A mobile application that helps users estimate the resale value of secondhand items using AI-powered image analysis.
+A simple app that analyzes photos of items and provides resale price estimates using AI.
 
-## Features
+## Version 0.1
 
-- 📸 Camera integration for capturing item photos
-- 🤖 AI-powered image analysis using OpenAI Vision API
-- 💰 Price estimation from multiple platforms:
-  - eBay
-  - Facebook Marketplace
-  - WhatNot
-  - Poshmark
-- 📱 Cross-platform support (iOS and Android)
-- 🎨 Modern, intuitive user interface
+This is a minimal viable product (MVP) with:
+- Single-file backend (90 lines)
+- Single-file frontend (170 lines)
+- No database, no authentication, no complexity
+- Direct OpenAI Vision API integration
 
-## Project Structure
+## Quick Start
 
-- `/backend` - Node.js/Express server with OpenAI integration
-- `/mobile-app` - React Native mobile application
+### Backend
 
-## Prerequisites
-
-- Node.js 16+
-- React Native development environment
-- OpenAI API key
-- iOS/Android development tools
-
-## Getting Started
-
-1. Clone the repository
-```bash
-git clone [repository-url]
-cd my-thrifting-buddy
-```
-
-2. Install backend dependencies
 ```bash
 cd backend
 npm install
-cp env.example .env  # Configure your environment variables
+# Add your OpenAI API key to .env file
+npm start
 ```
 
-3. Install mobile app dependencies
+### Frontend
+
 ```bash
-cd ../mobile-app
+cd mobile-app
 npm install
+npm run web
 ```
 
-4. Start the backend server
-```bash
-cd ../backend
-npm start
+Open http://localhost:8080 in your browser.
+
+## Architecture
+
+```
+backend/
+  server.js      # Express API server
+  package.json   # Only 5 dependencies
+  .env          # Contains OPENAI_API_KEY
+
+mobile-app/
+  App.js        # React Native app
+  package.json  # Expo dependencies
+  app.json      # Expo configuration
 ```
 
-5. Run the mobile app
-```bash
-cd ../mobile-app
-npm start
-```
+## How It Works
 
-## Environment Configuration
+1. User selects/takes a photo
+2. Frontend sends image to backend
+3. Backend calls OpenAI Vision API
+4. AI analyzes the item and estimates resale value
+5. Results displayed to user
 
-The backend requires the following environment variables:
-- `OPENAI_API_KEY` - Your OpenAI API key
-- `PORT` - Server port (default: 3000)
-- `NODE_ENV` - Environment (development/production)
+## API Endpoints
 
-## Contributing
+- `GET /health` - Health check
+- `POST /api/scan` - Image analysis
 
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## Docker
+
+Simple two-container setup:
+- Backend on port 3000
+- Frontend on port 8080
+
+See deployment/docker-compose.yml for details.
+
+## Requirements
+
+- Node.js 18+
+- OpenAI API key
+- npm or yarn
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details. 
+MIT

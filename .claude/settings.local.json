@@ -49,7 +49,21 @@
       "Bash(rg:*)",
       "Bash(./validate-deployment.sh)",
       "Bash(./monitor-error-log.sh:*)",
-      "Bash(./monitor-error-log.sh:*)"
+      "Bash(./monitor-error-log.sh:*)",
+      "WebFetch(domain:www.pexels.com)",
+      "WebFetch(domain:pixabay.com)",
+      "Bash(systemctl list-units:*)",
+      "Bash(apt:*)",
+      "Bash(apt install:*)",
+      "Bash(cp:*)",
+      "Bash(useradd:*)",
+      "Bash(ln:*)",
+      "Bash(chown:*)",
+      "Bash(systemctl restart:*)",
+      "Bash(systemctl:*)",
+      "Bash(cat:*)",
+      "Bash(docker:*)",
+      "Bash(git commit:*)"
     ],
     "deny": []
   }

@@ -1,400 +1,109 @@
 const express = require('express');
+const multer = require('multer');
 const cors = require('cors');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const cookieParser = require('cookie-parser');
-const compression = require('compression');
-const morgan = require('morgan');
+const { OpenAI } = require('openai');
 require('dotenv').config();
 
-// Import utilities and middleware
-const logger = require('./src/utils/logger');
-const { errorHandler, notFoundHandler, initializeErrorMonitoring } = require('./src/middleware/errorHandler');
-const { checkDatabaseConnection } = require('./src/config/database');
-const tokenService = require('./src/services/auth/tokenService');
-
-// Initialize error monitoring
-const Sentry = initializeErrorMonitoring();
-
 const app = express();
-const PORT = process.env.PORT || 3000;
+const upload = multer({ 
+  memory: true,
+  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+});
 
-// Trust proxy
-app.set('trust proxy', 1);
-
-// Sentry request handler (must be first)
-if (Sentry) {
-  app.use(Sentry.Handlers.requestHandler());
+// Environment validation
+if (!process.env.OPENAI_API_KEY) {
+  console.error('ERROR: OPENAI_API_KEY is not set in .env file');
+  process.exit(1);
 }
 
-// Security middleware
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc: ["'self'"],
-      styleSrc: ["'self'", "'unsafe-inline'"],
-      scriptSrc: ["'self'"],
-      imgSrc: ["'self'", "data:", "https:"],
-    },
-  },
-  hsts: {
-    maxAge: 31536000,
-    includeSubDomains: true,
-    preload: true,
-  },
-}));
-
-// Compression middleware
-app.use(compression({
-  filter: (req, res) => {
-    if (req.headers['x-no-compression']) {
-      return false;
-    }
-    return compression.filter(req, res);
-  },
-  level: 6,
-}));
-
-// CORS configuration
-const allowedOrigins = process.env.ALLOWED_ORIGINS ? 
-  process.env.ALLOWED_ORIGINS.split(',') : 
-  ['http://localhost:8081', 'http://localhost:19006', 'exp://localhost:19000', 'http://localhost:3000'];
-
+// Middleware
 app.use(cors({
-  origin: (origin, callback) => {
-    // Allow requests with no origin (mobile apps, Postman, etc.)
-    if (!origin) return callback(null, true);
-    
-    // Check if the origin is allowed
-    if (allowedOrigins.some(allowed => origin.startsWith(allowed))) {
-      callback(null, true);
-    } else {
-      logger.warn('CORS blocked origin', { origin });
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  maxAge: 86400, // 24 hours
+  origin: ['http://localhost:8080', 'http://localhost:3000'],
+  credentials: true
 }));
+app.use(express.json());
 
-// Request logging
-app.use(morgan('combined', { stream: logger.stream }));
-
-// Request ID middleware
-app.use((req, res, next) => {
-  req.id = req.headers['x-request-id'] || `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-  res.setHeader('X-Request-ID', req.id);
-  req.logger = logger.addRequestId(req.id);
-  next();
+// OpenAI setup
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 });
 
-// Comprehensive request/response logging middleware
-app.use((req, res, next) => {
-  const startTime = Date.now();
-  const originalSend = res.send;
-  const originalJson = res.json;
-  
-  // Log incoming request
-  req.logger.info('=== INCOMING REQUEST ===', {
-    method: req.method,
-    path: req.path,
-    url: req.url,
-    query: req.query,
-    headers: {
-      'user-agent': req.get('user-agent'),
-      'content-type': req.get('content-type'),
-      'content-length': req.get('content-length'),
-      authorization: req.get('authorization') ? 'Bearer ***' : undefined,
-      origin: req.get('origin'),
-      referer: req.get('referer')
-    },
-    ip: req.ip,
-    ips: req.ips,
-    protocol: req.protocol,
-    secure: req.secure,
-    xhr: req.xhr,
-    httpVersion: req.httpVersion,
-    body: req.body && Object.keys(req.body).length ? {
-      ...req.body,
-      password: req.body.password ? '***REDACTED***' : undefined
-    } : undefined
-  });
-  
-  // Override response methods to capture response data
-  res.send = function(data) {
-    res.responseBody = data;
-    return originalSend.apply(res, arguments);
-  };
-  
-  res.json = function(data) {
-    res.responseBody = data;
-    return originalJson.apply(res, arguments);
-  };
-  
-  // Log response when finished
-  res.on('finish', () => {
-    const duration = Date.now() - startTime;
-    const logData = {
-      method: req.method,
-      path: req.path,
-      statusCode: res.statusCode,
-      statusMessage: res.statusMessage,
-      duration: `${duration}ms`,
-      contentLength: res.get('content-length'),
-      headers: {
-        'content-type': res.get('content-type'),
-        'x-request-id': res.get('x-request-id')
-      }
-    };
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Image analysis endpoint
+app.post('/api/scan', upload.single('image'), async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No image provided' });
+    }
+
+    // Get image buffer
+    const imageBuffer = req.file.buffer;
     
-    // Add response body for non-successful responses or debug mode
-    if (res.statusCode >= 400 || process.env.LOG_LEVEL === 'debug') {
-      if (res.responseBody) {
-        try {
-          const body = typeof res.responseBody === 'string' ? 
-            JSON.parse(res.responseBody) : res.responseBody;
-          logData.responseBody = {
-            ...body,
-            accessToken: body.accessToken ? '***REDACTED***' : undefined,
-            refreshToken: body.refreshToken ? '***REDACTED***' : undefined
-          };
-        } catch (e) {
-          logData.responseBody = res.responseBody;
+    // Call OpenAI Vision API
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: "Analyze this item and provide: 1) What the item is, 2) Estimated resale value range, 3) Best platform to sell it on (eBay, Poshmark, Facebook, etc), 4) Condition assessment. Respond ONLY with valid JSON in this exact format: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"recommended_platform\": \"platform\", \"condition\": \"condition\"}"
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${imageBuffer.toString('base64')}`
+              }
+            }
+          ]
         }
-      }
-    }
+      ],
+      max_tokens: 300
+    });
+
+    // Parse the response
+    const content = response.choices[0].message.content;
+    let analysis;
     
-    if (res.statusCode >= 500) {
-      req.logger.error('=== RESPONSE ERROR ===', logData);
-    } else if (res.statusCode >= 400) {
-      req.logger.warn('=== RESPONSE CLIENT ERROR ===', logData);
-    } else if (res.statusCode >= 300) {
-      req.logger.info('=== RESPONSE REDIRECT ===', logData);
-    } else {
-      req.logger.info('=== RESPONSE SUCCESS ===', logData);
-    }
-  });
-  
-  next();
-});
-
-// Rate limiting
-const createRateLimiter = (windowMs, max, message) => {
-  return rateLimit({
-    windowMs,
-    max,
-    message,
-    standardHeaders: true,
-    legacyHeaders: false,
-    handler: (req, res) => {
-      logger.warn('Rate limit exceeded', {
-        ip: req.ip,
-        path: req.path,
-        user: req.user?.id,
-      });
-      res.status(429).json({
-        error: message,
-        retryAfter: Math.ceil(windowMs / 1000),
-      });
-    },
-  });
-};
-
-// Global rate limiter
-app.use(createRateLimiter(
-  parseInt(process.env.RATE_LIMIT_WINDOW_MS) || 900000, // 15 minutes
-  parseInt(process.env.RATE_LIMIT_MAX_REQUESTS) || 100,
-  'Too many requests, please try again later'
-));
-
-// Cookie parser middleware
-app.use(cookieParser());
-
-// Body parsing middleware
-app.use(express.json({ 
-  limit: '10mb',
-  verify: (req, res, buf) => {
-    req.rawBody = buf.toString('utf8');
-  }
-}));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Serve uploaded files statically
-app.use('/uploads', express.static('uploads', {
-  maxAge: '30d',
-  setHeaders: (res, path) => {
-    // Set appropriate headers for images
-    if (path.endsWith('.jpg') || path.endsWith('.jpeg')) {
-      res.setHeader('Content-Type', 'image/jpeg');
-    } else if (path.endsWith('.png')) {
-      res.setHeader('Content-Type', 'image/png');
-    } else if (path.endsWith('.webp')) {
-      res.setHeader('Content-Type', 'image/webp');
-    }
-    // Add cache headers
-    res.setHeader('Cache-Control', 'public, max-age=2592000'); // 30 days
-  }
-}));
-
-// Import routes
-const scanRoutes = require('./src/routes/scan');
-const analyzeRoutes = require('./src/routes/analyze');
-const authRoutes = require('./src/routes/auth');
-
-// Health check endpoint
-app.get('/health', async (req, res) => {
-  const dbConnected = await checkDatabaseConnection();
-  
-  const health = {
-    status: dbConnected ? 'healthy' : 'degraded',
-    timestamp: new Date().toISOString(),
-    uptime: process.uptime(),
-    environment: process.env.NODE_ENV,
-    version: process.env.npm_package_version || '1.0.0',
-    services: {
-      database: dbConnected ? 'connected' : 'disconnected',
-      cache: 'not implemented', // Update when Redis is added
-    },
-  };
-
-  res.status(dbConnected ? 200 : 503).json(health);
-});
-
-// Use routes
-app.use('/api/auth', authRoutes);
-app.use('/api/scan', scanRoutes);
-app.use('/api', analyzeRoutes);
-
-// Root endpoint
-app.get('/', (req, res) => {
-  res.json({ 
-    message: 'My Thrifting Buddy API', 
-    version: '1.0.0',
-    documentation: '/api-docs',
-    endpoints: {
-      health: '/health',
-      auth: {
-        register: '/api/auth/register',
-        login: '/api/auth/login',
-        refresh: '/api/auth/refresh',
-        logout: '/api/auth/logout',
-        me: '/api/auth/me',
-        sessions: '/api/auth/sessions'
-      },
-      scan: {
-        analyze: 'POST /api/scan',
-        history: 'GET /api/scan/history',
-        search: 'GET /api/scan/search',
-        details: 'GET /api/scan/:id',
-        update: 'PUT /api/scan/:id',
-        delete: 'DELETE /api/scan/:id'
-      }
-    }
-  });
-});
-
-// Sentry error handler (must be before other error handlers)
-if (Sentry) {
-  app.use(Sentry.Handlers.errorHandler());
-}
-
-// 404 handler
-app.use(notFoundHandler);
-
-// Error handling middleware
-app.use(errorHandler);
-
-// Graceful shutdown
-const gracefulShutdown = async (signal) => {
-  logger.info(`${signal} received, starting graceful shutdown`);
-  
-  // Stop accepting new connections
-  server.close(async () => {
     try {
-      // Close database connections
-      const { db } = require('./src/config/database');
-      await db.destroy();
-      
-      // Close any other connections (Redis, etc.)
-      
-      logger.info('Graceful shutdown complete');
-      process.exit(0);
+      // Clean up the response (remove markdown, extra text)
+      const jsonMatch = content.match(/\{.*\}/s);
+      if (jsonMatch) {
+        analysis = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No JSON found in response');
+      }
     } catch (error) {
-      logger.error('Error during graceful shutdown', error);
-      process.exit(1);
+      console.error('Failed to parse OpenAI response:', content);
+      // If not valid JSON, create a structured response
+      analysis = {
+        item_name: "Unknown Item",
+        price_range: "$10-$50",
+        recommended_platform: "eBay",
+        condition: "Good",
+        raw_response: content
+      };
     }
-  });
-  
-  // Force shutdown after 30 seconds
-  setTimeout(() => {
-    logger.error('Forced shutdown after timeout');
-    process.exit(1);
-  }, 30000);
-};
+
+    res.json({ success: true, analysis });
+
+  } catch (error) {
+    console.error('Analysis error:', error);
+    res.status(500).json({ 
+      error: 'Failed to analyze image',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
 
 // Start server
-const server = app.listen(PORT, '0.0.0.0', async () => {
-  logger.info(`🚀 My Thrifting Buddy Backend running on port ${PORT}`);
-  logger.info(`📱 Environment: ${process.env.NODE_ENV}`);
-  logger.info(`🔍 API Documentation: http://localhost:${PORT}/api-docs`);
-  logger.info(`🌐 Server binding to all interfaces (0.0.0.0:${PORT})`);
-  
-  // Log environment variables (sanitized)
-  logger.info('=== ENVIRONMENT CONFIGURATION ===', {
-    NODE_ENV: process.env.NODE_ENV,
-    PORT: process.env.PORT,
-    DATABASE_URL: process.env.DATABASE_URL ? process.env.DATABASE_URL.replace(/:[^:]*@/, ':****@') : 'NOT SET',
-    REDIS_URL: process.env.REDIS_URL ? process.env.REDIS_URL.replace(/:[^:]*@/, ':****@') : 'NOT SET',
-    JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN,
-    JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN,
-    BCRYPT_ROUNDS: process.env.BCRYPT_ROUNDS,
-    ALLOWED_ORIGINS: process.env.ALLOWED_ORIGINS,
-    RATE_LIMIT_WINDOW_MS: process.env.RATE_LIMIT_WINDOW_MS,
-    RATE_LIMIT_MAX_REQUESTS: process.env.RATE_LIMIT_MAX_REQUESTS,
-    LOG_LEVEL: process.env.LOG_LEVEL || 'info'
-  });
-  
-  // Check database connection
-  logger.info('Checking database connection...');
-  const dbConnected = await checkDatabaseConnection();
-  if (!dbConnected) {
-    logger.error('⚠️  Database connection failed - running in degraded mode');
-    logger.error('Database diagnostics:', {
-      DATABASE_URL_SET: !!process.env.DATABASE_URL,
-      DATABASE_URL_FORMAT: process.env.DATABASE_URL ? 
-        (process.env.DATABASE_URL.includes('@') ? 'Valid format' : 'Invalid format') : 
-        'Not set'
-    });
-  } else {
-    logger.info('✅ Database connection successful');
-  }
-  
-  // Start cleanup tasks
-  tokenService.startCleanupTask();
-  
-  // Log security configuration
-  logger.info('🔒 Security features enabled:', {
-    helmet: true,
-    cors: true,
-    rateLimiting: true,
-    compression: true,
-    cookieParser: true,
-  });
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+  console.log(`OpenAI API Key: ${process.env.OPENAI_API_KEY ? 'Set' : 'Not set'}`);
 });
-
-// Handle shutdown signals
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
-
-// Handle uncaught errors
-process.on('uncaughtException', (error) => {
-  logger.error('Uncaught Exception', error);
-  gracefulShutdown('UNCAUGHT_EXCEPTION');
-});
-
-process.on('unhandledRejection', (reason, promise) => {
-  logger.error('Unhandled Rejection', { reason, promise });
-  gracefulShutdown('UNHANDLED_REJECTION');
-});
-
-module.exports = app;

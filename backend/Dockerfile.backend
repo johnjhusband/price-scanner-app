@@ -1,83 +1,20 @@
-# Multi-stage build for optimized production image
-FROM node:20-alpine AS builder
-
-# Install build dependencies and clean up cache
-RUN apk add --no-cache \
-    python3 \
-    make \
-    g++ \
-    cairo-dev \
-    jpeg-dev \
-    pango-dev \
-    giflib-dev \
-    pixman-dev \
-    libc6-compat && \
-    rm -rf /var/cache/apk/*
-
-WORKDIR /app
-
-# Copy package files first for better cache utilization
-COPY package*.json ./
-
-# Install all dependencies (including dev for building native modules)
-RUN npm ci
-
-# Copy source files after dependencies are installed
-COPY . .
-
-# Prune dev dependencies
-RUN npm prune --production
-
-# Production stage
+# Simplified backend - VERSION 0.1.0
 FROM node:20-alpine
 
-# Install runtime dependencies only and clean cache
-RUN apk add --no-cache \
-    cairo \
-    jpeg \
-    pango \
-    giflib \
-    pixman \
-    libc6-compat \
-    curl \
-    ca-certificates && \
-    apk upgrade --no-cache && \
-    rm -rf /var/cache/apk/*
-
 WORKDIR /app
 
-# Copy built application from builder stage
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app ./
+# Copy package files
+COPY package*.json ./
 
-# Create non-root user with UID > 10000
-RUN addgroup -g 10001 -S nodejs && \
-    adduser -S nodejs -u 10001 -G nodejs
+# Install production dependencies only
+RUN npm ci --only=production
 
-# Create necessary directories and clean up in one layer
-RUN mkdir -p /app/logs /app/uploads /app/temp && \
-    chown -R nodejs:nodejs /app && \
-    # Security: Remove unnecessary files
-    rm -rf /app/.git /app/.gitignore /app/README.md /app/test /app/*.test.js /app/.dockerignore
+# Copy application file
+COPY server.js .
 
-# Switch to non-root user
-USER nodejs
+# Note: .env file is NOT copied into image for security
+# It should be provided via env_file in docker-compose
 
-# Expose application port
 EXPOSE 3000
 
-# Health check with proper interval
-HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:3000/health', (res) => { process.exit(res.statusCode === 200 ? 0 : 1); })" || exit 1
-
-# Set NODE_ENV to production by default
-ENV NODE_ENV=production
-
-# Add metadata labels
-LABEL maintainer="My Thrifting Buddy Team" \
-      version="1.0.0" \
-      description="Backend API for My Thrifting Buddy - AI-powered resale value estimation"
-
-# Run the application
 CMD ["node", "server.js"]
