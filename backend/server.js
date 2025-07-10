@@ -52,7 +52,7 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
           content: [
             {
               type: "text",
-              text: "Analyze this item and provide: 1) What the item is, 2) Estimated resale value range, 3) Best platform to sell it on (eBay, Poshmark, Facebook, etc), 4) Condition assessment. Respond ONLY with valid JSON in this exact format: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"recommended_platform\": \"platform\", \"condition\": \"condition\"}"
+              text: "Analyze this item and provide: 1) What the item is, 2) Estimated resale value range, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best platform to sell it on (eBay, Poshmark, Facebook, Mercari, The RealReal, Vestiaire, etc - choose based on tier), 5) Condition assessment. Respond ONLY with valid JSON in this exact format: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"condition\": \"condition\"}"
             },
             {
               type: "image_url",
@@ -84,10 +84,29 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
       analysis = {
         item_name: "Unknown Item",
         price_range: "$10-$50",
+        style_tier: "Entry",
         recommended_platform: "eBay",
         condition: "Good",
         raw_response: content
       };
+    }
+
+    // Calculate buy price (resale price / 5)
+    let buy_price = null;
+    if (analysis.price_range) {
+      // Extract numbers from price range (e.g., "$50-$150" -> 50 and 150)
+      const priceMatch = analysis.price_range.match(/\$?(\d+)-\$?(\d+)/);
+      if (priceMatch) {
+        const lowPrice = parseInt(priceMatch[1]);
+        const highPrice = parseInt(priceMatch[2]);
+        const avgPrice = (lowPrice + highPrice) / 2;
+        const buyPrice = Math.round(avgPrice / 5);
+        buy_price = `$${buyPrice}`;
+        
+        // Add to analysis object
+        analysis.buy_price = buy_price;
+        analysis.resale_average = `$${Math.round(avgPrice)}`;
+      }
     }
 
     res.json({ success: true, analysis });

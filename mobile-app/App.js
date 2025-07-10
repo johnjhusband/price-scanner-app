@@ -121,10 +121,26 @@ export default function App() {
       {results && (
         <View style={styles.results}>
           <Text style={styles.resultTitle}>Results:</Text>
-          <Text>Item: {results.item_name}</Text>
-          <Text>Estimated Value: {results.price_range}</Text>
-          <Text>Best Platform: {results.recommended_platform}</Text>
-          <Text>Condition: {results.condition}</Text>
+          <Text style={styles.itemName}>Item: {results.item_name}</Text>
+          
+          {results.style_tier && (
+            <View style={styles.tierContainer}>
+              <Text style={styles.label}>Style Tier: </Text>
+              <View style={[styles.tierBadge, styles[`tier${results.style_tier}`]]}>
+                <Text style={styles.tierText}>{results.style_tier}</Text>
+              </View>
+            </View>
+          )}
+          
+          <Text style={styles.resultRow}>Resale Value: {results.price_range}</Text>
+          {results.buy_price && (
+            <Text style={[styles.resultRow, styles.buyPrice]}>
+              Max Buy Price: {results.buy_price} (÷5 rule)
+            </Text>
+          )}
+          
+          <Text style={styles.resultRow}>Best Platform: {results.recommended_platform}</Text>
+          <Text style={styles.resultRow}>Condition: {results.condition}</Text>
         </View>
       )}
     </ScrollView>
@@ -171,5 +187,49 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+  },
+  itemName: {
+    fontSize: 16,
+    marginBottom: 8,
+    fontWeight: '600',
+  },
+  resultRow: {
+    fontSize: 15,
+    marginBottom: 5,
+  },
+  buyPrice: {
+    fontWeight: 'bold',
+    color: '#2e7d32',
+    fontSize: 16,
+    marginTop: 5,
+    marginBottom: 10,
+  },
+  tierContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  label: {
+    fontSize: 15,
+  },
+  tierBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  tierEntry: {
+    backgroundColor: '#e3f2fd',
+  },
+  tierDesigner: {
+    backgroundColor: '#f3e5f5',
+  },
+  tierLuxury: {
+    backgroundColor: '#fff3e0',
+  },
+  tierText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#333',
   },
 });
