@@ -18,7 +18,7 @@ if (!process.env.OPENAI_API_KEY) {
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:8080', 'http://localhost:3000'],
+  origin: true, // Allow all origins in development
   credentials: true
 }));
 app.use(express.json());

@@ -1,39 +1,216 @@
-import React, { useState } from 'react';
-import { View, Text, Button, Image, StyleSheet, Alert, Platform, ScrollView } from 'react-native';
+import React, { useState, useRef, useEffect } from 'react';
+import { View, Text, Button, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
 const API_URL = Platform.OS === 'web' 
-  ? 'http://localhost:3000' 
+  ? '' // Same domain - Traefik routes /api to backend
   : Platform.OS === 'ios'
     ? 'http://localhost:3000' // iOS simulator
     : 'http://10.0.2.2:3000'; // Android emulator
+
+// Web Camera Component for mobile browsers
+const WebCameraView = ({ onCapture, onCancel }) => {
+  const [hasPermission, setHasPermission] = useState(null);
+  const [isReady, setIsReady] = useState(false);
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
+  const streamRef = useRef(null);
+
+  useEffect(() => {
+    initializeCamera();
+    return () => {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, []);
+
+  const initializeCamera = async () => {
+    try {
+      // Check if getUserMedia is supported
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        setHasPermission(false);
+        Alert.alert('Camera Error', 'Camera access is not supported in this browser.');
+        return;
+      }
+
+      // Check if we're on HTTPS (required for camera access)
+      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
+        setHasPermission(false);
+        Alert.alert('Security Error', 'Camera access requires HTTPS connection.');
+        return;
+      }
+
+      // Request camera permission
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { 
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        }
+      });
+      
+      streamRef.current = stream;
+      
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          setIsReady(true);
+          console.log('Camera ready');
+        };
+      }
+      setHasPermission(true);
+    } catch (err) {
+      console.error('Camera initialization error:', err);
+      setHasPermission(false);
+      
+      // Provide specific error messages
+      let errorMessage = 'Unable to access camera.';
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        errorMessage = 'Camera permission was denied. Please allow camera access and reload the page.';
+      } else if (err.name === 'NotFoundError') {
+        errorMessage = 'No camera found on this device.';
+      } else if (err.name === 'NotReadableError') {
+        errorMessage = 'Camera is already in use by another application.';
+      } else if (err.name === 'OverconstrainedError') {
+        errorMessage = 'Camera does not support the requested settings.';
+      } else if (err.name === 'SecurityError') {
+        errorMessage = 'Camera access is not allowed due to security restrictions. Please use HTTPS.';
+      }
+      
+      Alert.alert('Camera Error', errorMessage);
+    }
+  };
+
+  const capturePhoto = () => {
+    if (!videoRef.current || !canvasRef.current) return;
+
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0);
+    
+    const imageData = canvas.toDataURL('image/jpeg', 0.7);
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+    }
+    onCapture(imageData);
+  };
+
+  if (hasPermission === false) {
+    return (
+      <View style={styles.cameraContainer}>
+        <View style={styles.errorContainer}>
+          <Text style={styles.errorText}>Camera Access Issue</Text>
+          <Text style={styles.errorMessage}>
+            {window.location.protocol !== 'https:' && window.location.hostname !== 'localhost' 
+              ? '🔒 Camera requires HTTPS connection.\nThis site is using HTTP.'
+              : '📷 Please allow camera access when prompted by your browser.'}
+          </Text>
+          <Text style={styles.errorHint}>
+            For now, please use the "Choose Image" button to select photos from your gallery.
+          </Text>
+          <TouchableOpacity style={styles.button} onPress={onCancel}>
+            <Text style={styles.buttonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.cameraContainer}>
+      <View style={styles.cameraHeader}>
+        <Text style={styles.cameraTitle}>Take Photo</Text>
+        <TouchableOpacity onPress={onCancel}>
+          <Text style={styles.cancelText}>Cancel</Text>
+        </TouchableOpacity>
+      </View>
+      
+      <View style={styles.videoWrapper}>
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+        />
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
+      </View>
+      
+      {!isReady && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#fff" />
+          <Text style={styles.loadingText}>Initializing camera...</Text>
+        </View>
+      )}
+      
+      <View style={styles.captureContainer}>
+        <TouchableOpacity 
+          style={[styles.captureButton, !isReady && styles.captureButtonDisabled]} 
+          onPress={capturePhoto}
+          disabled={!isReady}
+        >
+          <View style={styles.captureButtonInner} />
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+};
 
 export default function App() {
   const [image, setImage] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [results, setResults] = useState(null);
+  const [showWebCamera, setShowWebCamera] = useState(false);
+
+  // Check if running on mobile web browser
+  const isMobileWeb = () => {
+    return Platform.OS === 'web' && 
+           /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  };
 
   const pickImage = async () => {
     if (Platform.OS === 'web') {
-      // Web file input
+      // Always use the file picker approach for web
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
+      
+      // Add camera capture for mobile browsers
+      if (isMobileWeb()) {
+        input.capture = 'environment';
+      }
+      
       input.onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
+          // Log for debugging
+          console.log('File selected:', file.name, file.type, file.size);
+          
           const reader = new FileReader();
-          reader.onload = (e) => {
-            setImage(e.target.result);
-            analyzeImage(e.target.result);
+          reader.onload = (event) => {
+            setImage(event.target.result);
+            analyzeImage(event.target.result);
+          };
+          reader.onerror = (error) => {
+            console.error('FileReader error:', error);
+            Alert.alert('Error', 'Failed to read file');
           };
           reader.readAsDataURL(file);
         }
       };
-      input.click();
+      
+      // Ensure the click happens
+      setTimeout(() => {
+        input.click();
+      }, 100);
     } else {
-      // Mobile camera
+      // Native mobile camera
       const { status } = await Camera.requestCameraPermissionsAsync();
       if (status !== 'granted') {
         Alert.alert('Sorry, we need camera permissions!');
@@ -99,16 +276,48 @@ export default function App() {
     }
   };
 
+  const handleWebCameraCapture = (imageData) => {
+    setImage(imageData);
+    setShowWebCamera(false);
+    analyzeImage(imageData);
+  };
+
+  // Show camera interface if active
+  if (showWebCamera) {
+    return (
+      <WebCameraView
+        onCapture={handleWebCameraCapture}
+        onCancel={() => setShowWebCamera(false)}
+      />
+    );
+  }
+
   return (
     <ScrollView style={styles.container}>
       <Text style={styles.title}>My Thrifting Buddy</Text>
       <Text style={styles.subtitle}>Upload a photo to get resale prices</Text>
 
-      <Button 
-        title={Platform.OS === 'web' ? "Choose Image" : "Take Photo"}
+      <TouchableOpacity 
+        style={[styles.uploadButton, analyzing && styles.uploadButtonDisabled]}
         onPress={pickImage}
         disabled={analyzing}
-      />
+        activeOpacity={0.7}
+      >
+        <Text style={styles.uploadButtonText}>
+          {Platform.OS === 'web' ? "Choose Image" : "Take Photo"}
+        </Text>
+      </TouchableOpacity>
+      
+      {Platform.OS === 'web' && isMobileWeb() && (
+        <TouchableOpacity 
+          style={[styles.cameraButton, analyzing && styles.uploadButtonDisabled]}
+          onPress={() => setShowWebCamera(true)}
+          disabled={analyzing}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.cameraButtonText}>Use Web Camera (Beta)</Text>
+        </TouchableOpacity>
+      )}
 
       {image && (
         <Image source={{ uri: image }} style={styles.image} />
@@ -231,5 +440,126 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '600',
     color: '#333',
+  },
+  // Camera styles
+  cameraContainer: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
+  cameraHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+  },
+  cameraTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  cancelText: {
+    color: '#fff',
+    fontSize: 16,
+  },
+  videoWrapper: {
+    flex: 1,
+    position: 'relative',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  loadingText: {
+    color: '#fff',
+    marginTop: 10,
+  },
+  captureContainer: {
+    position: 'absolute',
+    bottom: 50,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+  },
+  captureButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#fff',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  captureButtonDisabled: {
+    opacity: 0.5,
+  },
+  captureButtonInner: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: '#000',
+  },
+  errorText: {
+    color: '#fff',
+    fontSize: 22,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  errorMessage: {
+    color: '#fff',
+    fontSize: 16,
+    textAlign: 'center',
+    marginBottom: 20,
+    lineHeight: 24,
+  },
+  errorHint: {
+    color: '#ccc',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 30,
+    fontStyle: 'italic',
+  },
+  button: {
+    backgroundColor: '#fff',
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    borderRadius: 5,
+  },
+  buttonText: {
+    color: '#000',
+    fontSize: 16,
+  },
+  uploadButton: {
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 20,
+  },
+  uploadButtonDisabled: {
+    backgroundColor: '#ccc',
+  },
+  uploadButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cameraButton: {
+    backgroundColor: '#34C759',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginTop: 10,
+  },
+  cameraButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
