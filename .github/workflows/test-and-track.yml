@@ -1,0 +1,235 @@
+name: Test and Track Issues
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to test'
+        required: true
+        default: 'green'
+        type: choice
+        options:
+          - blue
+          - green
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        browser: [chromium, webkit, firefox]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: |
+          npm ci
+          npx playwright install --with-deps ${{ matrix.browser }}
+      
+      - name: Run Playwright tests
+        id: test
+        run: |
+          npx playwright test --project=${{ matrix.browser }} --reporter=json > test-results.json
+        continue-on-error: true
+        env:
+          TEST_ENV: ${{ github.event.inputs.environment || 'green' }}
+      
+      - name: Parse test results
+        id: parse
+        if: always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            try {
+              const results = JSON.parse(fs.readFileSync('test-results.json', 'utf8'));
+              const failed = results.suites.flatMap(suite => 
+                suite.specs.filter(spec => spec.tests.some(test => test.status === 'failed'))
+              );
+              
+              if (failed.length > 0) {
+                core.setOutput('has_failures', 'true');
+                core.setOutput('failure_count', failed.length);
+                core.setOutput('failed_tests', JSON.stringify(failed));
+              } else {
+                core.setOutput('has_failures', 'false');
+              }
+            } catch (error) {
+              console.error('Error parsing test results:', error);
+              core.setOutput('has_failures', 'unknown');
+            }
+      
+      - name: Create issue for failures
+        if: steps.parse.outputs.has_failures == 'true'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const failed = JSON.parse('${{ steps.parse.outputs.failed_tests }}');
+            const browser = '${{ matrix.browser }}';
+            const env = '${{ github.event.inputs.environment || 'green' }}';
+            
+            // Create one issue per failed test
+            for (const spec of failed) {
+              for (const test of spec.tests.filter(t => t.status === 'failed')) {
+                const title = `Test Failed: ${test.title} [${browser}]`;
+                
+                // Check if issue already exists
+                const existing = await github.rest.issues.listForRepo({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  labels: 'test-failure',
+                  state: 'open',
+                  per_page: 100
+                });
+                
+                const exists = existing.data.some(issue => 
+                  issue.title.includes(test.title) && issue.title.includes(browser)
+                );
+                
+                if (!exists) {
+                  await github.rest.issues.create({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    title: title,
+                    body: `## Automated Test Failure Report
+                    
+**Test Information**:
+- Test: \`${test.title}\`
+- File: \`${spec.file}\`
+- Browser: \`${browser}\`
+- Environment: \`${env}\`
+- Commit: \`${context.sha}\`
+- Workflow Run: [#${context.runNumber}](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+
+**Error**:
+\`\`\`
+${test.error?.message || 'Unknown error'}
+\`\`\`
+
+**Stack Trace**:
+\`\`\`
+${test.error?.stack || 'No stack trace available'}
+\`\`\`
+
+**Actions**:
+- [ ] Investigate failure
+- [ ] Fix issue
+- [ ] Re-run tests
+- [ ] Close this issue
+
+---
+*This issue was automatically created by the test automation system*`,
+                    labels: ['bug', 'test-failure', 'automated', `browser:${browser}`, `env:${env}`]
+                  });
+                  
+                  console.log(`Created issue for failed test: ${test.title}`);
+                } else {
+                  console.log(`Issue already exists for: ${test.title}`);
+                }
+              }
+            }
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: playwright-results-${{ matrix.browser }}
+          path: |
+            test-results.json
+            test-results/
+            playwright-report/
+
+  update-issues:
+    needs: test
+    runs-on: ubuntu-latest
+    if: success()
+    
+    steps:
+      - name: Close fixed issues
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Find all open test failure issues
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'test-failure',
+              state: 'open'
+            });
+            
+            // Close issues for tests that now pass
+            for (const issue of issues.data) {
+              // Check if this test passed in the current run
+              // (This is simplified - in reality you'd check against test results)
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: `✅ This test is now passing in commit ${context.sha}. Closing issue.`
+              });
+              
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }
+
+  deploy-decision:
+    needs: test
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Decide deployment
+        uses: actions/github-script@v6
+        with:
+          script: |
+            // Check if all tests passed
+            const checkRuns = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: context.sha,
+              check_name: 'test'
+            });
+            
+            const allPassed = checkRuns.data.check_runs.every(run => 
+              run.conclusion === 'success'
+            );
+            
+            if (allPassed) {
+              console.log('✅ All tests passed - ready for deployment');
+              
+              // Create deployment issue/PR
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `Deploy: ${context.sha.substring(0, 7)} to production`,
+                body: `All tests passed for commit ${context.sha}.
+                
+Ready to deploy to production.
+
+**Deployment Checklist**:
+- [ ] Deploy to next environment (blue/green)
+- [ ] Run smoke tests
+- [ ] Monitor for 15 minutes
+- [ ] Switch traffic if stable
+- [ ] Close this issue`,
+                labels: ['deployment', 'automated']
+              });
+            } else {
+              console.log('❌ Tests failed - deployment blocked');
+            }

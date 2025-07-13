@@ -249,6 +249,8 @@ NEVER proactively create documentation files (*.md) or README files. Only create
 - **Get to the point immediately**
 - **No walls of text unless requested**
 - **If asked "how", give the shortest working answer**
+- **Answer the question first, then offer to expand if needed**
+- **Use bullet points for clarity when listing multiple items**
 
 ### Example of FAILED approach (what you've been doing):
 1. Try to add blue environment

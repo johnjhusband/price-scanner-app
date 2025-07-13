@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "My Thrifting Buddy",
+    "slug": "my-thrifting-buddy",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera to scan items for price analysis.",
+        "NSPhotoLibraryUsageDescription": "This app accesses your photo library to select images for price analysis."
+      }
+    },
+    "android": {
+      "permissions": [
+        "android.permission.CAMERA"
+      ]
+    },
+    "web": {},
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow My Thrifting Buddy to access your camera to scan items for price analysis."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Allow My Thrifting Buddy to access your photos to select images for price analysis."
+        }
+      ]
+    ]
+  }
+} 

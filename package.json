@@ -1,0 +1,26 @@
+{
+  "name": "price-scanner-app",
+  "version": "1.0.0",
+  "description": "A simple app that analyzes photos of items and provides resale price estimates using AI.",
+  "main": ".eslintrc.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/johnjhusband/price-scanner-app.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/johnjhusband/price-scanner-app/issues"
+  },
+  "homepage": "https://github.com/johnjhusband/price-scanner-app#readme",
+  "devDependencies": {
+    "@playwright/test": "^1.54.1"
+  }
+}

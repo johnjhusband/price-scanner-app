@@ -1,0 +1,44 @@
+version: '3'
+
+services:
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    image: thrifting-buddy/backend:blue
+    container_name: blue_backend
+    restart: unless-stopped
+    env_file:
+      - ../../../shared/.env
+    networks:
+      - blue_network
+      - proxy_network
+    environment:
+      - VIRTUAL_HOST=blue.flippi.ai
+      - VIRTUAL_PATH=/api,/health
+      - VIRTUAL_PORT=3000
+      - LETSENCRYPT_HOST=blue.flippi.ai
+      - LETSENCRYPT_EMAIL=admin@flippi.ai
+
+  frontend:
+    build:
+      context: ../mobile-app
+      dockerfile: Dockerfile
+    image: thrifting-buddy/frontend:blue
+    container_name: blue_frontend
+    restart: unless-stopped
+    networks:
+      - blue_network
+      - proxy_network
+    environment:
+      - VIRTUAL_HOST=blue.flippi.ai
+      - VIRTUAL_PATH=/
+      - VIRTUAL_PORT=8080
+      - LETSENCRYPT_HOST=blue.flippi.ai
+      - LETSENCRYPT_EMAIL=admin@flippi.ai
+
+networks:
+  blue_network:
+    name: blue_network
+  proxy_network:
+    external: true
