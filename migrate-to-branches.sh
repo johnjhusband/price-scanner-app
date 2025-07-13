@@ -16,7 +16,7 @@ if [ ! -d "blue" ] || [ ! -d "green" ] || [ ! -d "prod" ]; then
 fi
 
 # Check for uncommitted changes
-if ! git diff-index --quiet HEAD --; then
+if [ -n "$(git status --porcelain)" ]; then
     echo "❌ Error: You have uncommitted changes!"
     echo "Please commit or stash your changes first"
     exit 1
