@@ -1,0 +1,23 @@
+name: Deploy Develop to Blue
+
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to blue.flippi.ai
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: blue.flippi.ai
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /path/to/app
+            git fetch origin
+            git checkout develop
+            git pull origin develop
+            docker-compose down
+            docker-compose up -d --build
