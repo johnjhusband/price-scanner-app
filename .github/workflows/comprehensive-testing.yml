@@ -1,0 +1,517 @@
+name: Comprehensive Testing Suite
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  # 1. API Testing with curl
+  api-tests:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+      
+      - name: Install dependencies
+        run: |
+          # Find backend directory
+          if [ -d "backend" ]; then
+            cd backend
+          elif [ -d "prod/backend" ]; then
+            cd prod/backend
+          else
+            echo "No backend directory found"
+            exit 1
+          fi
+          npm ci
+      
+      - name: Start server
+        run: |
+          # Find backend directory
+          if [ -d "backend" ]; then
+            cd backend
+          elif [ -d "prod/backend" ]; then
+            cd prod/backend
+          fi
+          npm start &
+          echo $! > server.pid
+          sleep 10  # Wait for server to start
+        env:
+          NODE_ENV: test
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY || 'test-key' }}
+          PORT: 3000
+      
+      - name: Test Health Endpoint
+        run: |
+          echo "Testing health endpoint..."
+          response=$(curl -s -w "\n%{http_code}" http://localhost:3000/health)
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+          
+          if [ "$http_code" != "200" ]; then
+            echo "Health check failed with status $http_code"
+            echo "Response: $body"
+            exit 1
+          fi
+          
+          echo "✓ Health check passed"
+      
+      - name: Test Scan Endpoint
+        run: |
+          echo "Testing scan endpoint..."
+          
+          # Create a test image
+          convert -size 100x100 xc:white test-image.jpg
+          
+          # Test the scan endpoint
+          response=$(curl -s -w "\n%{http_code}" -X POST \
+            -F "image=@test-image.jpg" \
+            http://localhost:3000/api/scan)
+          
+          http_code=$(echo "$response" | tail -n1)
+          body=$(echo "$response" | head -n-1)
+          
+          if [ "$http_code" != "200" ]; then
+            echo "Scan endpoint failed with status $http_code"
+            echo "Response: $body"
+            exit 1
+          fi
+          
+          # Check if response contains expected fields
+          echo "$body" | jq -e '.item_description' || exit 1
+          echo "$body" | jq -e '.resale_value' || exit 1
+          
+          echo "✓ Scan endpoint passed"
+      
+      - name: Performance Test
+        run: |
+          echo "Running performance test..."
+          
+          # Install Apache Bench
+          sudo apt-get update && sudo apt-get install -y apache2-utils
+          
+          # Run load test
+          ab -n 100 -c 10 -T 'application/json' \
+            http://localhost:3000/health > perf-results.txt
+          
+          # Extract and check metrics
+          avg_time=$(grep "Time per request:" perf-results.txt | head -1 | awk '{print $4}')
+          echo "Average response time: ${avg_time}ms"
+          
+          # Fail if average response time > 500ms
+          if (( $(echo "$avg_time > 500" | bc -l) )); then
+            echo "❌ Performance degraded! Average response time: ${avg_time}ms"
+            cat perf-results.txt
+            exit 1
+          fi
+          
+          echo "✓ Performance test passed"
+      
+      - name: Cleanup
+        if: always()
+        run: |
+          if [ -f server.pid ]; then
+            kill $(cat server.pid) || true
+          fi
+
+  # 4. Security Scanning
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Check for exposed secrets
+        run: |
+          echo "Checking for exposed secrets..."
+          
+          # Define patterns to search for
+          patterns=(
+            "OPENAI_API_KEY"
+            "sk-[a-zA-Z0-9]{48}"
+            "password.*=.*['\"][^'\"]+['\"]"
+            "secret.*=.*['\"][^'\"]+['\"]"
+            "token.*=.*['\"][^'\"]+['\"]"
+          )
+          
+          # Check each pattern
+          for pattern in "${patterns[@]}"; do
+            echo "Checking for: $pattern"
+            
+            # Search but exclude .env files and node_modules
+            if grep -r "$pattern" . \
+              --exclude-dir=node_modules \
+              --exclude-dir=.git \
+              --exclude="*.env*" \
+              --exclude=".github/workflows/*" | grep -v "example\|dummy\|test"; then
+              echo "❌ Found exposed secret matching pattern: $pattern"
+              exit 1
+            fi
+          done
+          
+          echo "✓ No exposed secrets found"
+      
+      - name: Security audit
+        run: |
+          # Find backend directory
+          if [ -d "backend" ]; then
+            cd backend
+          elif [ -d "prod/backend" ]; then
+            cd prod/backend
+          else
+            echo "No backend directory found"
+            exit 1
+          fi
+          
+          echo "Running security audit..."
+          
+          # Run npm audit
+          npm audit --production --json > audit-results.json || true
+          
+          # Check for high/critical vulnerabilities
+          high_vulns=$(jq '.metadata.vulnerabilities.high // 0' audit-results.json)
+          critical_vulns=$(jq '.metadata.vulnerabilities.critical // 0' audit-results.json)
+          
+          echo "Found $high_vulns high and $critical_vulns critical vulnerabilities"
+          
+          if [ "$critical_vulns" -gt 0 ]; then
+            echo "❌ Critical vulnerabilities found!"
+            npm audit --production
+            exit 1
+          fi
+          
+          echo "✓ Security audit passed"
+      
+
+  # 5. AI-Powered Code Quality Check
+  ai-code-review:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Get full history for diff
+      
+      - name: Get changed files
+        id: changed-files
+        run: |
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # Get files changed in PR
+            git diff --name-only origin/${{ github.base_ref }}...HEAD > changed-files.txt
+          else
+            # Get files changed in last commit
+            git diff --name-only HEAD~1..HEAD > changed-files.txt
+          fi
+          
+          # Filter for JavaScript files
+          grep -E '\.(js|jsx|ts|tsx)$' changed-files.txt > js-files.txt || true
+          
+          echo "Changed JavaScript files:"
+          cat js-files.txt
+      
+      - name: Analyze code quality with AI
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          # Create analysis script
+          cat > analyze-code.js << 'EOF'
+          const fs = require('fs');
+          const https = require('https');
+          
+          const API_KEY = process.env.OPENAI_API_KEY;
+          const files = fs.readFileSync('js-files.txt', 'utf-8').split('\n').filter(f => f);
+          
+          const codeStandards = `
+          Please analyze this code for:
+          1. Security vulnerabilities (XSS, injection, exposed secrets)
+          2. Performance issues (memory leaks, inefficient algorithms)
+          3. Code maintainability (complexity, readability)
+          4. Best practices (error handling, naming conventions)
+          5. Potential bugs or edge cases
+          
+          Rate each file on a scale of 1-10 and provide specific actionable feedback.
+          Focus on critical issues that could affect production.
+          `;
+          
+          async function analyzeFile(filePath) {
+            if (!fs.existsSync(filePath)) return null;
+            
+            const code = fs.readFileSync(filePath, 'utf-8');
+            if (code.length > 8000) {
+              console.log(`Skipping ${filePath} - too large`);
+              return null;
+            }
+            
+            const prompt = `${codeStandards}\n\nFile: ${filePath}\n\nCode:\n\`\`\`javascript\n${code}\n\`\`\``;
+            
+            const requestData = JSON.stringify({
+              model: 'gpt-4o-mini',
+              messages: [
+                { role: 'system', content: 'You are a senior software engineer reviewing code.' },
+                { role: 'user', content: prompt }
+              ],
+              max_tokens: 1000,
+              temperature: 0.3
+            });
+            
+            return new Promise((resolve, reject) => {
+              const req = https.request({
+                hostname: 'api.openai.com',
+                path: '/v1/chat/completions',
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${API_KEY}`,
+                  'Content-Length': Buffer.byteLength(requestData)
+                }
+              }, (res) => {
+                let data = '';
+                res.on('data', chunk => data += chunk);
+                res.on('end', () => {
+                  try {
+                    const response = JSON.parse(data);
+                    resolve({
+                      file: filePath,
+                      analysis: response.choices[0].message.content
+                    });
+                  } catch (e) {
+                    reject(e);
+                  }
+                });
+              });
+              
+              req.on('error', reject);
+              req.write(requestData);
+              req.end();
+            });
+          }
+          
+          async function main() {
+            console.log('Starting AI code review...');
+            
+            let criticalIssues = [];
+            let suggestions = [];
+            
+            for (const file of files) {
+              console.log(`Analyzing ${file}...`);
+              try {
+                const result = await analyzeFile(file);
+                if (result) {
+                  console.log(`\n=== ${result.file} ===`);
+                  console.log(result.analysis);
+                  
+                  // Extract critical issues
+                  if (result.analysis.toLowerCase().includes('security') || 
+                      result.analysis.toLowerCase().includes('vulnerability') ||
+                      result.analysis.includes('1/10') || 
+                      result.analysis.includes('2/10') ||
+                      result.analysis.includes('3/10')) {
+                    criticalIssues.push(result);
+                  } else {
+                    suggestions.push(result);
+                  }
+                }
+              } catch (e) {
+                console.error(`Error analyzing ${file}:`, e.message);
+              }
+              
+              // Rate limit
+              await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+            
+            // Create summary report
+            const report = {
+              timestamp: new Date().toISOString(),
+              filesAnalyzed: files.length,
+              criticalIssues: criticalIssues.length,
+              suggestions: suggestions.length,
+              details: {
+                critical: criticalIssues,
+                suggestions: suggestions
+              }
+            };
+            
+            fs.writeFileSync('ai-review-report.json', JSON.stringify(report, null, 2));
+            
+            if (criticalIssues.length > 0) {
+              console.error('\n❌ Critical issues found!');
+              process.exit(1);
+            } else {
+              console.log('\n✓ No critical issues found');
+            }
+          }
+          
+          if (files.length === 0) {
+            console.log('No JavaScript files to analyze');
+            process.exit(0);
+          }
+          
+          main().catch(console.error);
+          EOF
+          
+          # Run the analysis
+          node analyze-code.js
+      
+      - name: Post review comment
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            
+            try {
+              const report = JSON.parse(fs.readFileSync('ai-review-report.json', 'utf-8'));
+              
+              let comment = '## 🤖 AI Code Review Report\n\n';
+              comment += `- Files analyzed: ${report.filesAnalyzed}\n`;
+              comment += `- Critical issues: ${report.criticalIssues}\n`;
+              comment += `- Suggestions: ${report.suggestions}\n\n`;
+              
+              if (report.criticalIssues > 0) {
+                comment += '### ❌ Critical Issues\n\n';
+                for (const issue of report.details.critical) {
+                  comment += `**${issue.file}**\n`;
+                  comment += issue.analysis + '\n\n';
+                }
+              }
+              
+              if (report.suggestions > 0) {
+                comment += '### 💡 Suggestions\n\n';
+                for (const suggestion of report.details.suggestions) {
+                  comment += `**${suggestion.file}**\n`;
+                  comment += suggestion.analysis + '\n\n';
+                }
+              }
+              
+              // Post comment on PR
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            } catch (e) {
+              console.log('No AI review report found');
+            }
+
+  # 6. Deployment Smoke Tests
+  deployment-smoke-tests:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Test Production Environment
+        id: test-prod
+        continue-on-error: true
+        run: |
+          echo "Testing production environment..."
+          
+          # Test main app
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://app.flippi.ai/health || echo "000")
+          if [ "$response" = "200" ]; then
+            echo "✓ Production (app.flippi.ai) is UP"
+            echo "prod_status=up" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Production (app.flippi.ai) is DOWN (Status: $response)"
+            echo "prod_status=down" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Test Blue Environment
+        id: test-blue
+        continue-on-error: true
+        run: |
+          echo "Testing blue environment..."
+          
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai/health || echo "000")
+          if [ "$response" = "200" ]; then
+            echo "✓ Blue environment is UP"
+            echo "blue_status=up" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Blue environment is DOWN (Status: $response)"
+            echo "blue_status=down" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Test Green Environment  
+        id: test-green
+        continue-on-error: true
+        run: |
+          echo "Testing green environment..."
+          
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://green.flippi.ai/health || echo "000")
+          if [ "$response" = "200" ]; then
+            echo "✓ Green environment is UP"
+            echo "green_status=up" >> $GITHUB_OUTPUT
+          else
+            echo "❌ Green environment is DOWN (Status: $response)"
+            echo "green_status=down" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Report deployment readiness
+        run: |
+          echo "## Deployment Smoke Test Results"
+          echo ""
+          echo "Production: ${{ steps.test-prod.outputs.prod_status }}"
+          echo "Blue: ${{ steps.test-blue.outputs.blue_status }}"
+          echo "Green: ${{ steps.test-green.outputs.green_status }}"
+          echo ""
+          
+          if [ "${{ steps.test-prod.outputs.prod_status }}" = "down" ]; then
+            echo "⚠️ Warning: Production is currently down"
+            exit 1
+          fi
+          
+          echo "✅ Deployment smoke tests passed"
+
+  # Summary job
+  test-summary:
+    needs: [api-tests, security-scan, ai-code-review, deployment-smoke-tests]
+    if: always()
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Generate summary
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const jobs = [
+              { name: 'API Tests', status: '${{ needs.api-tests.result }}' },
+              { name: 'Security Scan', status: '${{ needs.security-scan.result }}' },
+              { name: 'AI Code Review', status: '${{ needs.ai-code-review.result }}' },
+              { name: 'Deployment Smoke Tests', status: '${{ needs.deployment-smoke-tests.result }}' }
+            ];
+            
+            let summary = '## 📊 Test Summary\n\n';
+            let allPassed = true;
+            
+            for (const job of jobs) {
+              const icon = job.status === 'success' ? '✅' : 
+                          job.status === 'skipped' ? '⏭️' : '❌';
+              summary += `- ${icon} ${job.name}: ${job.status}\n`;
+              
+              if (job.status === 'failure') allPassed = false;
+            }
+            
+            summary += '\n';
+            summary += allPassed ? '### ✅ All tests passed!' : '### ❌ Some tests failed';
+            
+            // Write to summary
+            await core.summary
+              .addRaw(summary)
+              .write();
+            
+            // Fail the workflow if any job failed
+            if (!allPassed) {
+              core.setFailed('Some tests failed');
+            }
