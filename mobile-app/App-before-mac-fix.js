@@ -177,21 +177,6 @@ const getAuthenticityColor = (score) => {
   return "#d32f2f"; // Red - Likely fake
 };
 
-// Enhanced file type checking for Mac
-const isImageFile = (file) => {
-  if (!file) return false;
-  
-  // Check MIME type
-  const imageTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/bmp', 'image/svg', 'image/heic', 'image/heif'];
-  if (file.type && imageTypes.some(type => file.type.toLowerCase().startsWith(type))) {
-    return true;
-  }
-  
-  // Fallback to file name extension check (important for Mac)
-  const fileName = file.name || '';
-  return /\.(jpg|jpeg|png|gif|webp|bmp|svg|heic|heif)$/i.test(fileName);
-};
-
 export default function App() {
   const [image, setImage] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
@@ -221,58 +206,32 @@ export default function App() {
     }
   };
 
-  // Enhanced paste handler for Mac compatibility
-  const handlePaste = (event) => {
-    console.log('Paste event triggered');
-    event.preventDefault(); // Important for Mac
-    
-    // Try multiple ways to access clipboard data for better compatibility
-    const clipboardData = event.clipboardData || window.clipboardData;
-    if (!clipboardData) {
-      console.log('No clipboard data available');
-      return;
-    }
-
-    // Check items first (modern browsers)
-    if (clipboardData.items) {
-      const items = Array.from(clipboardData.items);
-      console.log('Clipboard items:', items.map(item => item.type));
-      
-      for (let item of items) {
-        if (item.type.indexOf('image') !== -1 || item.kind === 'file') {
-          const file = item.getAsFile();
-          if (file) {
-            console.log('Processing pasted file:', file.name, file.type, file.size);
-            processImageFile(file);
-            return;
-          }
-        }
-      }
-    }
-
-    // Fallback to files (older browsers)
-    if (clipboardData.files && clipboardData.files.length > 0) {
-      const file = clipboardData.files[0];
-      if (isImageFile(file)) {
-        console.log('Processing pasted file (fallback):', file.name, file.type);
-        processImageFile(file);
-      }
-    }
-  };
-
-  // Setup paste listener with Mac-specific options
+  // Setup paste listener (v2.0 feature)
   const setupPasteListener = () => {
     if (Platform.OS === 'web') {
-      // Use capture phase and non-passive for better Mac compatibility
-      document.addEventListener('paste', handlePaste, { capture: true, passive: false });
-      console.log('Paste listener added');
+      document.addEventListener('paste', handlePaste);
     }
   };
 
   const removePasteListener = () => {
     if (Platform.OS === 'web') {
-      document.removeEventListener('paste', handlePaste, { capture: true });
-      console.log('Paste listener removed');
+      document.removeEventListener('paste', handlePaste);
+    }
+  };
+
+  // Handle paste event (v2.0 feature)
+  const handlePaste = (event) => {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (let item of items) {
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile();
+        if (file) {
+          processImageFile(file);
+        }
+        break;
+      }
     }
   };
 
@@ -280,14 +239,8 @@ export default function App() {
   const processImageFile = (file) => {
     console.log('Processing file:', file.name, file.type, file.size);
     
-    if (!isImageFile(file)) {
-      Alert.alert('Error', 'Please select an image file (JPEG, PNG, GIF, WEBP, HEIC, or HEIF)');
-      return;
-    }
-
-    // Check file size
-    if (file.size > 10 * 1024 * 1024) {
-      Alert.alert('Error', 'Image file is too large. Please select an image under 10MB.');
+    if (!file.type.startsWith('image/')) {
+      Alert.alert('Error', 'Please select an image file');
       return;
     }
 
@@ -303,17 +256,10 @@ export default function App() {
     reader.readAsDataURL(file);
   };
 
-  // Enhanced drag and drop handlers for Mac
+  // Drag and drop handlers (v2.0 feature)
   const handleDragOver = (e) => {
     if (Platform.OS === 'web') {
       e.preventDefault();
-      e.stopPropagation();
-      
-      // Set the drop effect for better visual feedback on Mac
-      if (e.dataTransfer) {
-        e.dataTransfer.dropEffect = 'copy';
-      }
-      
       setIsDragOver(true);
     }
   };
@@ -321,75 +267,21 @@ export default function App() {
   const handleDragLeave = (e) => {
     if (Platform.OS === 'web') {
       e.preventDefault();
-      e.stopPropagation();
-      
-      // Check if we're actually leaving the drop zone
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX;
-      const y = e.clientY;
-      
-      if (x <= rect.left || x >= rect.right || y <= rect.top || y >= rect.bottom) {
-        setIsDragOver(false);
-      }
+      setIsDragOver(false);
     }
   };
 
   const handleDrop = (e) => {
     if (Platform.OS === 'web') {
       e.preventDefault();
-      e.stopPropagation();
       setIsDragOver(false);
       
-      console.log('Drop event triggered');
-      
-      const dataTransfer = e.dataTransfer;
-      if (!dataTransfer) return;
-
-      // Try items first (modern approach, better for Mac)
-      if (dataTransfer.items && dataTransfer.items.length > 0) {
-        const items = Array.from(dataTransfer.items);
-        console.log('Dropped items:', items.map(item => `${item.kind}: ${item.type}`));
-        
-        for (let item of items) {
-          if (item.kind === 'file') {
-            const file = item.getAsFile();
-            if (file && isImageFile(file)) {
-              processImageFile(file);
-              return;
-            }
-          }
-        }
-      }
-
-      // Fallback to files
-      if (dataTransfer.files && dataTransfer.files.length > 0) {
-        const file = dataTransfer.files[0];
-        console.log('Dropped file:', file.name, file.type);
-        if (isImageFile(file)) {
-          processImageFile(file);
-        }
+      const files = e.dataTransfer.files;
+      if (files.length > 0) {
+        processImageFile(files[0]);
       }
     }
   };
-
-  // Prevent default drag behavior on the entire document for Mac
-  useEffect(() => {
-    if (Platform.OS === 'web') {
-      const preventDragDefault = (e) => {
-        if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
-          e.preventDefault();
-        }
-      };
-
-      document.addEventListener('dragover', preventDragDefault);
-      document.addEventListener('drop', preventDragDefault);
-
-      return () => {
-        document.removeEventListener('dragover', preventDragDefault);
-        document.removeEventListener('drop', preventDragDefault);
-      };
-    }
-  }, []);
 
   // Initialize v2.0 features
   useEffect(() => {
@@ -531,7 +423,7 @@ export default function App() {
           Drag and drop an image here, or click to browse
         </Text>
         <Text style={styles.uploadHint}>
-          You can also paste an image (Ctrl+V or Cmd+V) or use your camera
+          You can also paste an image (Ctrl+V) or use your camera
         </Text>
         
         <View style={styles.uploadButtons}>
