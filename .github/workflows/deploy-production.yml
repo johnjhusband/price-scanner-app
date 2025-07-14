@@ -8,18 +8,6 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
-      
-      - name: Build Docker images
-        run: |
-          docker build -t thrifting-buddy/backend:v0.1.1 -f backend/Dockerfile ./backend
-          docker build -t thrifting-buddy/frontend:v0.1.1 -f mobile-app/Dockerfile ./mobile-app
-      
-      - name: Save Docker images
-        run: |
-          docker save thrifting-buddy/backend:v0.1.1 thrifting-buddy/frontend:v0.1.1 | gzip > images.tar.gz
-      
       - name: Deploy to production
         uses: appleboy/ssh-action@v0.1.5
         with:
@@ -27,5 +15,12 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            # Note: This requires SSH key setup and proper server access
-            echo "This workflow requires SSH_PRIVATE_KEY secret to be configured"
+            cd /var/www/app.flippi.ai
+            git pull origin master
+            cd backend && npm install --production
+            cd ../mobile-app && npm install
+            EXPO_PUBLIC_API_URL="" npx expo build:web
+            pm2 restart prod-backend
+            pm2 restart prod-frontend
+            sleep 5
+            curl -f https://app.flippi.ai/health || exit 1

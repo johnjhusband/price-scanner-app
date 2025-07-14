@@ -8,16 +8,19 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to blue.flippi.ai
+      - name: Deploy to development
         uses: appleboy/ssh-action@v0.1.5
         with:
-          host: blue.flippi.ai
+          host: app.flippi.ai
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /path/to/app
-            git fetch origin
-            git checkout develop
+            cd /var/www/blue.flippi.ai
             git pull origin develop
-            docker-compose down
-            docker-compose up -d --build
+            cd backend && npm install --production
+            cd ../mobile-app && npm install
+            EXPO_PUBLIC_API_URL="" npx expo build:web
+            pm2 restart dev-backend
+            pm2 restart dev-frontend
+            sleep 5
+            curl -f https://blue.flippi.ai/health || exit 1
