@@ -511,21 +511,16 @@ export default function App() {
   }
 
   return (
-    <ScrollView style={styles.container}>
-      <Text style={styles.title}>My Thrifting Buddy</Text>
-      <Text style={styles.subtitle}>Upload a photo to get resale prices</Text>
-
-      {/* ChatGPT-style upload area (v2.0 feature) */}
-      <View 
-        style={[
-          styles.uploadArea, 
-          isDragOver && styles.uploadAreaDragOver,
-          analyzing && styles.uploadAreaDisabled
-        ]}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
+    <ScrollView style={Platform.OS === 'web' ? { backgroundColor: 'transparent', minHeight: '100vh' } : styles.container} contentContainerStyle={Platform.OS === 'web' ? { alignItems: 'center', justifyContent: 'flex-start', paddingTop: 60 } : {}}>
+      <View style={Platform.OS === 'web' ? { width: '100%', display: 'flex', alignItems: 'center' } : styles.header}>
+        <View className={Platform.OS === 'web' ? 'card-panel' : ''} style={Platform.OS === 'web' ? { marginTop: 0, marginBottom: 32, width: '100%', maxWidth: 480 } : {}}>
+          <Text className={Platform.OS === 'web' ? 'headline' : ''} style={Platform.OS === 'web' ? {} : styles.logoText}>
+            flippi<Text style={{ color: '#BFC2C4', fontWeight: '400' }}>.ai</Text>
+          </Text>
+          <Text className={Platform.OS === 'web' ? 'subtitle' : styles.subtitle}>Never over pay again!</Text>
+        </View>
+      </View>
+      <View className={Platform.OS === 'web' ? 'card-panel upload-area' : ''} style={Platform.OS === 'web' ? { width: '100%', maxWidth: 480 } : styles.uploadArea}>
         <Text style={styles.uploadIcon}>📷</Text>
         <Text style={styles.uploadText}>
           Drag and drop an image here, or click to browse
@@ -955,5 +950,17 @@ const styles = StyleSheet.create({
   buttonText: {
     color: '#000',
     fontSize: 16,
+  },
+  header: {
+    width: '100%',
+    padding: 20,
+    backgroundColor: 'transparent',
+    alignItems: 'center',
+  },
+  logoText: {
+    fontSize: 36,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginBottom: 10,
   },
 });
