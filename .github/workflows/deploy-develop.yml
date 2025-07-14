@@ -18,4 +18,11 @@ jobs:
             git pull origin develop
             cd backend && npm install --production
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
-            pm2 restart dev-backend dev-frontend
+            # Check what PM2 is actually serving
+            pm2 describe dev-frontend | grep -E "script|args"
+            # Stop and restart with correct path
+            pm2 stop dev-frontend
+            pm2 delete dev-frontend
+            pm2 start npx --name "dev-frontend" -- serve -s /var/www/blue.flippi.ai/mobile-app/dist -l 8082
+            pm2 restart dev-backend
+            pm2 save
