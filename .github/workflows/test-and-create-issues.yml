@@ -2,11 +2,9 @@ name: Test and Create Issues
 
 on:
   push:
-    branches: [ main, master, develop ]
+    branches: [ main, master, develop, staging, test ]
   pull_request:
-    branches: [ main, master, develop ]
-  schedule:
-    - cron: '*/30 * * * *'  # Every 30 minutes
+    branches: [ main, master, develop, staging, test ]
   workflow_dispatch:
 
 jobs:
@@ -15,14 +13,14 @@ jobs:
     
     strategy:
       matrix:
-        environment: [production, blue, green]
+        environment: [dev, test, prod]
         include:
-          - environment: production
-            url: https://app.flippi.ai
-          - environment: blue  
+          - environment: dev
             url: https://blue.flippi.ai
-          - environment: green
+          - environment: test  
             url: https://green.flippi.ai
+          - environment: prod
+            url: https://app.flippi.ai
     
     steps:
       - name: Checkout code
