@@ -27,3 +27,5 @@ jobs:
             ls -la /var/www/blue.flippi.ai/mobile-app/dist/ | head -5 || true
             # Just restart, don't delete
             pm2 restart dev-backend dev-frontend
+            # Clear nginx cache
+            nginx -s reload
