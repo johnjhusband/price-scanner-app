@@ -1,44 +1,128 @@
 /* Web-specific styles for Flippi.ai branding */
 /* These styles only apply on web browsers */
 
-@media (hover: hover) {
-  /* Button hover effects */
-  .brand-button-primary:hover {
-    background-color: #2C68D0 !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(52, 120, 246, 0.3);
-  }
+body, html {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #4A5A5F 0%, #23292C 100%);
+  margin: 0;
+  padding: 0;
+}
 
-  .brand-button-secondary:hover {
-    background-color: #A5A8AA !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 8px rgba(191, 194, 196, 0.3);
-  }
+.container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 60px;
+  background: none;
+}
 
-  /* Upload area hover effects */
-  .upload-area:hover {
-    border-color: #3478F6 !important;
-    background-color: #F0F4FF !important;
-    transform: scale(1.01);
-    transition: all 0.2s ease;
-  }
+.card-panel {
+  background: #fff;
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(44, 104, 208, 0.10), 0 1.5px 6px rgba(35,41,44,0.08);
+  padding: 48px 32px 32px 32px;
+  max-width: 480px;
+  width: 100%;
+  margin: 0 auto 32px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: box-shadow 0.2s;
+}
 
-  /* Interactive elements hover */
-  .flippi-logo:hover {
-    transform: scale(1.05);
-    transition: transform 0.2s ease;
-  }
+.card-panel:hover {
+  box-shadow: 0 12px 40px rgba(44, 104, 208, 0.16), 0 2px 8px rgba(35,41,44,0.10);
+}
 
-  /* Camera button hover */
-  .capture-button:hover {
-    transform: scale(1.1);
-    transition: transform 0.2s ease;
-  }
+h1, .headline {
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: #23292C;
+  margin-bottom: 0.5em;
+  letter-spacing: -1px;
+  text-align: center;
+}
 
-  .capture-button:hover .capture-button-inner {
-    background-color: #f0f0f0;
-    transition: background-color 0.2s ease;
-  }
+.subtitle {
+  font-size: 1.4rem;
+  font-weight: 400;
+  color: #4A5A5F;
+  margin-bottom: 1.5em;
+  text-align: center;
+}
+
+.brand-button-primary, .brand-button-secondary {
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 16px 36px;
+  box-shadow: 0 2px 8px rgba(52,120,246,0.10);
+  transition: background 0.2s, box-shadow 0.2s, transform 0.1s;
+}
+
+.brand-button-primary {
+  background: linear-gradient(90deg, #3478F6 60%, #2C68D0 100%);
+  color: #fff;
+  border: none;
+}
+
+.brand-button-primary:hover {
+  background: linear-gradient(90deg, #2C68D0 0%, #3478F6 100%);
+  box-shadow: 0 4px 16px rgba(52,120,246,0.18);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.brand-button-secondary {
+  background: linear-gradient(90deg, #BFC2C4 60%, #A5A8AA 100%);
+  color: #23292C;
+  border: none;
+}
+
+.brand-button-secondary:hover {
+  background: linear-gradient(90deg, #A5A8AA 0%, #BFC2C4 100%);
+  box-shadow: 0 4px 16px rgba(191,194,196,0.18);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.upload-area, .results-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 2px 12px rgba(35,41,44,0.08);
+  border: none;
+  padding: 32px 24px;
+  margin-bottom: 24px;
+  transition: box-shadow 0.2s;
+}
+
+.upload-area:hover, .results-card:hover {
+  box-shadow: 0 6px 24px rgba(52,120,246,0.10);
+}
+
+.upload-icon {
+  font-size: 3rem;
+  margin-bottom: 0.5em;
+}
+
+.upload-text {
+  font-size: 1.2rem;
+  font-weight: 500;
+  color: #23292C;
+  margin-bottom: 0.2em;
+}
+
+.upload-hint {
+  font-size: 1rem;
+  color: #4A5A5F;
+  margin-bottom: 1.2em;
+}
+
+.analyzing {
+  font-size: 1.1rem;
+  color: #3478F6;
+  font-weight: 600;
+  animation: pulse 1.5s ease-in-out infinite;
 }
 
 /* Web-specific font loading */
@@ -79,7 +163,7 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #BFC2C4;
+  background: #3478F6;
   border-radius: 4px;
 }
 
@@ -99,10 +183,6 @@
   0% { opacity: 1; }
   50% { opacity: 0.5; }
   100% { opacity: 1; }
-}
-
-.analyzing {
-  animation: pulse 1.5s ease-in-out infinite;
 }
 
 /* Web-specific image preview improvements */
