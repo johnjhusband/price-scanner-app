@@ -28,7 +28,7 @@ jobs:
             echo "📥 Pulling latest code..."
             git fetch origin
             git checkout develop
-            git pull origin develop
+            git reset --hard origin/develop
             
             # Backend deployment
             echo "🔧 Updating backend..."
