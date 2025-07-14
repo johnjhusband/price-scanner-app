@@ -4,16 +4,23 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is "My Thrifting Buddy" - a **simplified v0.1.0 proof-of-concept** application that helps users estimate resale values of secondhand items using AI-powered image analysis. The project consists of a minimal Node.js/Express backend API and a basic React Native mobile app.
+"My Thrifting Buddy" - A **v2.0 production application** that helps users estimate resale values of secondhand items using AI-powered image analysis. The project consists of an enhanced Node.js/Express backend API and a feature-rich React Native mobile app with web deployment.
 
-## Current Architecture (v0.1.0)
+## Current Architecture (v2.0)
 
 ### Backend (`/backend`)
-- **Framework**: Express.js (minimal setup)
-- **Main entry**: `server.js` (109 lines)
-- **Database**: None implemented
-- **Authentication**: None implemented
+- **Framework**: Express.js with enhanced middleware
+- **Main entry**: `server.js` 
+- **Version**: 2.0.0
+- **Database**: None (stateless design)
+- **Authentication**: None (open API)
 - **File Storage**: In-memory processing only
+- **Key Features**:
+  - Enhanced error handling and validation
+  - Request timing middleware
+  - Mac compatibility fixes
+  - Improved CORS configuration
+  - Comprehensive health endpoint
 - **Dependencies**: 
   - cors
   - dotenv
@@ -23,322 +30,379 @@ This is "My Thrifting Buddy" - a **simplified v0.1.0 proof-of-concept** applicat
 
 ### Mobile App (`/mobile-app`)
 - **Framework**: React Native with Expo SDK 50
-- **Main entry**: `App.js` (175 lines)
-- **State Management**: Basic React useState
+- **Main entry**: `App.js`
+- **Version**: 2.0.0
+- **State Management**: React hooks (useState, useEffect)
 - **Features**:
   - Camera/image picker integration
-  - Simple API call to backend
-  - Basic UI for displaying results
+  - Paste support (Ctrl/Cmd+V)
+  - Drag and drop support
+  - Enhanced UI with loading states
+  - Error handling and retry logic
+  - Mac compatibility fixes
+
+## Infrastructure & Deployment
+
+### Server Architecture
+- **Host**: DigitalOcean Droplet (157.245.142.145)
+- **OS**: Ubuntu 24.10
+- **Web Server**: Nginx (native, not containerized)
+- **Process Manager**: PM2 (not Docker)
+- **SSL**: Let's Encrypt certificates
+- **Node.js**: Version 18.x
+
+### Three-Environment Setup
+1. **Production** (app.flippi.ai)
+   - Branch: master
+   - Backend Port: 3000
+   - Frontend Port: 8080
+   - Status: Stable v2.0
+
+2. **Staging** (green.flippi.ai)
+   - Branch: staging
+   - Backend Port: 3001
+   - Frontend Port: 8081
+   - Status: Testing v2.0
+
+3. **Development** (blue.flippi.ai)
+   - Branch: develop
+   - Backend Port: 3002
+   - Frontend Port: 8082
+   - Status: Active development
 
 ## Essential Commands
 
-### Backend Development
+### Local Development
+
+#### Backend
 ```bash
 cd backend
-npm install                              # Install dependencies
-npm start                               # Start server (port 3000)
-npm run dev                             # Start with nodemon auto-reload
+npm install                    # Install dependencies
+npm start                      # Start server (port 3000)
+npm run dev                    # Start with nodemon auto-reload
 ```
 
-### Mobile App Development
+#### Mobile App
 ```bash
 cd mobile-app
-npm install                             # Install dependencies
-# CRITICAL: Install web dependencies for Docker support
+npm install                    # Install dependencies
+# CRITICAL: Install web dependencies for production deployment
 npx expo install react-native-web react-dom @expo/metro-runtime
-npx expo start                          # Start Expo development server
-npx expo start --web                    # Start web version
+npx expo start                 # Start Expo development server
+npx expo start --web           # Start web version
+npx expo export:web            # Build for web deployment (creates dist/)
+```
+
+### Server Deployment
+
+#### SSH Access
+```bash
+ssh root@157.245.142.145
+# Password stored securely
+```
+
+#### PM2 Commands
+```bash
+pm2 list                       # View all running services
+pm2 logs                       # View all logs
+pm2 restart all                # Restart all services
+pm2 save                       # Save current process list
+pm2 monit                      # Real-time monitoring
+```
+
+#### Service Management
+```bash
+# Backend services
+pm2 restart prod-backend       # Restart production backend
+pm2 restart staging-backend    # Restart staging backend
+pm2 restart dev-backend        # Restart development backend
+
+# Frontend services
+pm2 restart prod-frontend      # Restart production frontend
+pm2 restart staging-frontend   # Restart staging frontend
+pm2 restart dev-frontend       # Restart development frontend
 ```
 
 ## Environment Configuration
 
-### Backend `.env` variables (minimal):
+### Backend `.env` Variables
 ```bash
 # Required
 OPENAI_API_KEY=your_openai_api_key_here
 
+# Environment-specific ports
+PORT=3000                      # 3001 for staging, 3002 for dev
+
 # Optional
-PORT=3000
-NODE_ENV=development
+NODE_ENV=production            # or development, staging
 ```
 
-**CRITICAL**: The `.env` file MUST be placed in the `/backend` directory
+**CRITICAL**: Each environment has its own `.env` file:
+- `/var/www/app.flippi.ai/backend/.env` (PORT=3000)
+- `/var/www/green.flippi.ai/backend/.env` (PORT=3001)
+- `/var/www/blue.flippi.ai/backend/.env` (PORT=3002)
 
 ## API Endpoints
 
-### Current Implementation (v0.1.0)
-- `GET /health` - Server health check
-- `POST /api/scan` - Analyze image (multipart/form-data)
+### Current Implementation (v2.0)
 
-## Docker Configuration
- Docker Deployment Best Practices - ALWAYS FOLLOW
+#### Health Check
+```
+GET /health
 
-  Building Docker Images for Deployment
+Response:
+{
+  "status": "OK",
+  "timestamp": "2025-07-14T00:00:00.000Z",
+  "version": "2.0",
+  "features": {
+    "imageAnalysis": true,
+    "cameraSupport": true,
+    "pasteSupport": true,
+    "dragDropSupport": true,
+    "enhancedAI": true
+  }
+}
+```
 
-  ALWAYS use --no-cache when building for deployment:
-  docker compose build --no-cache backend
-  docker compose build --no-cache frontend
-  # OR
-  docker compose build --no-cache
+#### Image Analysis
+```
+POST /api/scan
+Content-Type: multipart/form-data
 
-  Pre-Deployment Verification
+Request:
+- image: File (max 10MB)
 
-  ALWAYS verify your changes are in the image BEFORE deploying:
-  # Check that your code changes are actually in the built image
-  docker run --rm <image-name> cat /app/server.js | grep "your-changed-line"
+Success Response:
+{
+  "success": true,
+  "data": {
+    "item": "Vintage Leather Jacket",
+    "estimatedValue": "$45-65",
+    "condition": "Good - minor wear on sleeves",
+    "marketability": "High - vintage leather is in demand",
+    "suggestedPrice": "$55",
+    "profitPotential": "$30-40"
+  }
+}
 
-  Image Tagging
+Error Response:
+{
+  "success": false,
+  "error": "Error description"
+}
+```
 
-  ALWAYS check what image tags the server expects:
-  ssh server "cat /path/to/docker-compose.yml | grep image:"
+## Deployment Process
 
-  ALWAYS tag your images to match:
-  # If server uses :v0.1.1, tag accordingly
-  docker tag thrifting-buddy/backend:latest thrifting-buddy/backend:v0.1.1
-  docker tag thrifting-buddy/frontend:latest thrifting-buddy/frontend:v0.1.1
+### Current Process (Manual with PM2)
 
-  Deployment Commands
-
-  ALWAYS save and deploy with the correct tags:
-  # Save with version tag that matches server's docker-compose.yml
-  docker save thrifting-buddy/backend:v0.1.1 thrifting-buddy/frontend:v0.1.1 | gzip > images.tar.gz
-  scp images.tar.gz root@server:/root/
-  ssh root@server "gunzip -c images.tar.gz | docker load && cd /project && docker compose down && docker     
-   compose up -d"
-
-  Post-Deployment Verification
-
-  ALWAYS verify the fix is actually running:
-  ssh server "docker exec <container-name> cat /app/server.js | grep 'changed-line'"
-
-  Summary: The Golden Rule
-
-  Never trust Docker's cache when deploying fixes. Always build with --no-cache and verify changes are       
-  in the image before AND after deployment.
-
-### Docker Files
-- **Backend**: `backend/Dockerfile.backend` - Simple Node.js container
-- **Frontend**: `mobile-app/Dockerfile.frontend-node` - Expo web build
-
-### Docker Compose
-- **Location**: `deployment/docker-compose.yml`
-- **Services**: backend (port 3000) and frontend (port 8080)
-- **No databases or additional services**
-
-### Docker Commands
+1. **Update code on server**
 ```bash
-# From deployment directory
-cd deployment
-docker-compose up                    # Start both services
-docker-compose down                  # Stop services
+# Connect to server
+ssh root@157.245.142.145
 
-# Individual builds
-docker build -f backend/Dockerfile.backend -t thrifting-buddy/backend:latest ./backend
-docker build -f mobile-app/Dockerfile.frontend-node -t thrifting-buddy/frontend:latest ./mobile-app
+# Navigate to environment
+cd /var/www/app.flippi.ai      # or green.flippi.ai, blue.flippi.ai
+
+# Update backend
+cd backend
+# (manually update files or use scp from local)
+npm install --production
+pm2 restart prod-backend
+
+# Update frontend
+cd ../mobile-app
+# (manually update files or use scp from local)
+npm install
+npx expo export:web
+pm2 restart prod-frontend
 ```
 
-## Current Limitations (v0.1.0)
+### Intended Process (Git-based)
 
-### NOT Implemented:
-- PostgreSQL database
-- Redis caching
-- JWT authentication
-- User accounts/registration
-- S3 file storage
-- Search history
-- Rate limiting
-- Comprehensive error logging
-- Nginx reverse proxy
-- Testing infrastructure
-- Database migrations
-- Multiple API endpoints
-
-### What Works:
-- Basic image upload and analysis
-- OpenAI Vision API integration
-- Simple mobile/web UI
-- Basic Docker containerization
-
-## Development Notes
-
-1. **Simplicity First**: This is a minimal proof-of-concept
-2. **No Database**: All processing is stateless
-3. **No Auth**: Completely open API
-4. **Basic Error Handling**: Minimal error responses
-5. **In-Memory Only**: No persistent storage
-
-## Troubleshooting
-
-### Common Issues
-
-1. **OpenAI API Key Missing**:
-   - Ensure OPENAI_API_KEY is set in backend/.env
-   - Restart backend after adding key
-
-2. **CORS Errors**:
-   - Backend allows localhost:8080 and localhost:3000
-   - Check if frontend is running on expected port
-
-3. **Docker Build Failures**:
-   - Ensure web dependencies installed: `npx expo install react-native-web react-dom @expo/metro-runtime`
-   - Clean Docker cache: `docker system prune -f`
-
-## Future Roadmap
-
-This v0.1.0 is a simplified foundation. Future versions may add:
-- Database integration
-- User authentication
-- File storage
-- Search history
-- Advanced features documented in other files
-
-# important-instruction-reminders
-Do what has been asked; nothing more, nothing less.
-NEVER create files unless they're absolutely necessary for achieving your goal.
-ALWAYS prefer editing an existing file to creating a new one.
-NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
-
-## CRITICAL: Deep Planning and Dependency Analysis
-
-**STOP. THINK. PLAN. EXECUTE.**
-
-### You MUST follow this process for EVERY change:
-
-1. **DEEP ANALYSIS PHASE** (Think for at least 30 seconds):
-   - What is the current state of ALL environments?
-   - What exactly needs to change?
-   - What are ALL the dependencies?
-   - What could break?
-   - What are the unintended consequences?
-   - Will this affect other environments (prod, test, dev)?
-
-2. **COMPREHENSIVE PLANNING**:
-   - Write out EVERY step needed
-   - Map ALL configuration changes
-   - Identify ALL files that need modification
-   - List ALL commands in exact order
-   - Plan for rollback if something fails
-   - Consider port conflicts, network conflicts, DNS issues
-   - Think about SSL certificates, nginx routing, Docker networks
-
-3. **DEPENDENCY MAPPING**:
-   - Frontend → API communication paths
-   - Port mappings (what's using 80, 443, 3000, 8080?)
-   - Docker container names and networks
-   - SSL certificate paths and domains
-   - Environment variables in all components
-   - Nginx routing rules for each domain
-
-4. **RISK ASSESSMENT**:
-   - **NEVER bring down production**
-   - What happens if this fails halfway?
-   - How do we rollback?
-   - Are we affecting any running services?
-   - Will this break existing functionality?
-
-5. **EXECUTION RULES**:
-   - Create a SINGLE comprehensive script
-   - Test commands locally first if possible
-   - Include verification steps
-   - No iterative guessing - get it right the first time
-   - If you're not 100% sure, ASK the user
-
-### COMMUNICATION RULES:
-- **DEFAULT TO SIMPLE ANSWERS** - One paragraph or less
-- **Only provide detailed explanations when explicitly asked**
-- **Get to the point immediately**
-- **No walls of text unless requested**
-- **If asked "how", give the shortest working answer**
-
-### Example of FAILED approach (what you've been doing):
-1. Try to add blue environment
-2. Breaks production
-3. Try to fix production
-4. Breaks blue
-5. Try random nginx configs
-6. More breaking
-7. Hours wasted
-
-### Example of CORRECT approach:
-1. Analyze: Production on ports 80/443, need blue on separate ports
-2. Plan: Blue on 8080/8443, separate Docker network, no conflicts
-3. Map: All container names, networks, ports documented
-4. Risk: Production untouched, blue isolated
-5. Execute: One script, works first time
-
-**NEVER assume a change is isolated. ALWAYS trace through the full request flow.**
-**NEVER make changes without a complete plan.**
-**NEVER bring down production.**
-
-## Blue-Green Deployment Strategy
-
-### Environment Structure:
-1. **PRODUCTION**: app.flippi.ai (only updated after management approval)
-2. **TEST**: Alternates between blue.flippi.ai OR green.flippi.ai (stable version for testing)
-3. **DEV**: Alternates between blue.flippi.ai OR green.flippi.ai (in-progress development)
-
-### Current State:
-- **Production**: app.flippi.ai → Green code (v0.1.0)
-- **Test**: green.flippi.ai → Green code (stable)
-- **Dev**: blue.flippi.ai → Blue code (development)
-
-### Code Organization:
-```
-price-scanner-app/
-├── CLAUDE.md (AI instructions - always in root)
-├── prod/
-│   ├── backend/
-│   │   ├── server.js
-│   │   ├── package.json
-│   │   ├── Dockerfile
-│   │   └── README.md (backend-specific docs)
-│   ├── mobile-app/
-│   │   ├── App.js
-│   │   ├── package.json
-│   │   ├── Dockerfile
-│   │   └── README.md (frontend-specific docs)
-│   └── deployment/
-│       ├── docker-compose.yml
-│       ├── nginx.conf
-│       └── DEPLOYMENT.md (deployment instructions)
-├── blue/
-│   └── [complete copy with own documentation]
-├── green/
-│   └── [complete copy with own documentation]
-├── scripts/
-│   ├── deploy-*.sh
-│   └── README.md (script usage)
-├── shared/
-│   └── .env (sensitive configs)
-└── docs/
-    ├── STANDARDS.md (coding standards only)
-    ├── BEST_PRACTICES.md (guidelines only)
-    └── ARCHITECTURE.md (system design only)
+1. **Push to GitHub**
+```bash
+git add .
+git commit -m "Feature: description"
+git push origin develop         # or staging, master
 ```
 
-### Documentation Rules:
-1. **CLAUDE.md** stays in root for AI access
-2. **Co-located docs** - Documentation lives WITH the code it describes
-3. **Version-specific** - Each environment (prod/blue/green) has its own docs
-4. **No orphaned docs** - When code moves, docs move with it
-5. **Standards separate** - Only best practices and standards in /docs
-6. **Implementation docs** - README.md and DEPLOYMENT.md travel with code
+2. **Deploy via Git pull** (to be implemented)
+```bash
+# On server
+cd /var/www/blue.flippi.ai     # or appropriate environment
+git pull origin develop
+cd backend && npm install --production
+cd ../mobile-app && npm install && npx expo export:web
+pm2 restart dev-backend dev-frontend
+```
 
-### File Organization Rules:
-1. **Complete separation** - prod, blue, and green are isolated
-2. **No root pollution** - Only CLAUDE.md and folders in root
-3. **Clean up after yourself** - Delete temporary files after use
-4. **Single source** - Each environment is self-contained
+## GitHub Integration
 
-### Deployment Cycle:
-1. **Develop** on current Dev environment (blue or green)
-2. When features are complete, **Dev becomes Test** for thorough testing
-3. The other color **becomes new Dev** environment
-4. After testing + management approval, **Test graduates to Production**
-5. **Alternate** between blue and green for Dev/Test roles
+### Branch Strategy
+- **master**: Production-ready code
+- **staging**: Testing and QA
+- **develop**: Active development
 
-### Key Rules:
-- Production (app.flippi.ai) ONLY updates with explicit management approval
-- Never modify stable code directly - always work in the Dev environment
-- All changes must go through Dev → Test → Production pipeline
-- Blue and Green code/containers are kept separate until promotion
+### GitHub Actions Workflows
+1. **backend-ci.yml**: Runs on push to any branch
+   - Tests across Node 16, 18, 20
+   - Linting and security audit
+   - Unit tests (when implemented)
+
+2. **test-and-track.yml**: E2E testing with issue creation
+   - Playwright tests
+   - Automatic issue creation for failures
+   - Auto-closes issues when fixed
+
+3. **issue-automation.yml**: Manages GitHub issues
+   - Auto-assigns issues
+   - Labels based on content
+   - Links related PRs
+
+## Nginx Configuration
+
+### Site Structure
+Each domain has its own nginx configuration:
+- `/etc/nginx/sites-available/app.flippi.ai`
+- `/etc/nginx/sites-available/green.flippi.ai`
+- `/etc/nginx/sites-available/blue.flippi.ai`
+
+### Routing Pattern
+```nginx
+# API routes
+location /api {
+    proxy_pass http://localhost:3000;  # or 3001, 3002
+}
+
+# Health check
+location /health {
+    proxy_pass http://localhost:3000;  # or 3001, 3002
+}
+
+# Frontend (everything else)
+location / {
+    proxy_pass http://localhost:8080;  # or 8081, 8082
+}
+```
+
+## PM2 Ecosystem Configuration
+
+Located at `/var/www/ecosystem.config.js`:
+```javascript
+module.exports = {
+  apps: [
+    // Production
+    {
+      name: 'prod-backend',
+      script: '/var/www/app.flippi.ai/backend/server.js',
+      cwd: '/var/www/app.flippi.ai/backend',
+      env: { NODE_ENV: 'production', PORT: 3000 }
+    },
+    {
+      name: 'prod-frontend',
+      script: 'serve',
+      args: '-s /var/www/app.flippi.ai/mobile-app/dist -l 8080',
+      interpreter: 'npx'
+    },
+    // Staging and Dev follow same pattern...
+  ]
+};
+```
+
+## Monitoring & Debugging
+
+### Check Service Status
+```bash
+# All services
+pm2 status
+
+# Specific service logs
+pm2 logs prod-backend
+pm2 logs prod-frontend
+
+# Nginx logs
+tail -f /var/log/nginx/error.log
+tail -f /var/log/nginx/access.log
+```
+
+### Test Endpoints
+```bash
+# From server
+curl http://localhost:3000/health
+curl http://localhost:3001/health
+curl http://localhost:3002/health
+
+# From external
+curl https://app.flippi.ai/health
+curl https://green.flippi.ai/health
+curl https://blue.flippi.ai/health
+```
+
+## Security Considerations
+
+1. **API Keys**: Stored in environment variables, never committed
+2. **CORS**: Restricted to known domains
+3. **File Uploads**: Limited to 10MB, images only
+4. **SSL**: All production traffic uses HTTPS
+5. **Firewall**: Only ports 22, 80, 443 open
+
+## Common Issues & Solutions
+
+### Frontend Returns 404
+```bash
+cd /var/www/[environment]/mobile-app
+npx expo export:web
+pm2 restart [environment]-frontend
+```
+
+### Backend Fails to Start
+```bash
+# Check logs
+pm2 logs [environment]-backend
+
+# Common issues:
+# - Missing .env file
+# - Missing OPENAI_API_KEY
+# - Port already in use
+```
+
+### SSL Certificate Issues
+```bash
+# Check certificate status
+certbot certificates
+
+# Renew if needed
+certbot renew
+```
+
+## Important Notes
+
+1. **NO DOCKER**: We use PM2 and native services, not Docker
+2. **Git Deployment**: Currently manual, transitioning to git-based
+3. **Version**: All components are v2.0.0
+4. **Stateless**: No database, all processing in-memory
+5. **Blue-Green**: Environments rotate between blue/green for zero-downtime deployments
+
+## Development Workflow
+
+1. Work in develop branch (blue.flippi.ai)
+2. Test thoroughly in development
+3. Merge to staging branch (green.flippi.ai)
+4. QA and testing in staging
+5. After approval, merge to master (app.flippi.ai)
+6. Production deployment only with management approval
+
+## Future Enhancements (Roadmap)
+
+- [ ] Automated git-based deployment
+- [ ] Database integration for history
+- [ ] User authentication system
+- [ ] Batch image processing
+- [ ] API rate limiting
+- [ ] Comprehensive test suites
+- [ ] Performance monitoring
+- [ ] Auto-scaling capabilities
+
+Remember: Always test in development first, then staging, before any production deployment!
