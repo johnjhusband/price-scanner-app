@@ -16,11 +16,19 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/blue.flippi.ai
+            # Force clean state
+            git reset --hard
+            git clean -fd
             git pull origin develop
+            # Backend
             cd backend && npm install --production
-            cd ../mobile-app && npm install
-            EXPO_PUBLIC_API_URL="" npx expo build:web
-            pm2 restart dev-backend
-            pm2 restart dev-frontend
+            # Frontend
+            cd ../mobile-app 
+            npm install
+            # Use branded App if exists
+            [ -f App-branded.js ] && cp App-branded.js App.js
+            npx expo export --platform web
+            # Restart
+            pm2 restart dev-backend dev-frontend
             sleep 5
             curl -f https://blue.flippi.ai/health || exit 1
