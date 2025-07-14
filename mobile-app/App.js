@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Button, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Button, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
@@ -200,6 +200,7 @@ export default function App() {
   const [hasCamera, setHasCamera] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const [showDetails, setShowDetails] = useState(false);
+  const [userPrompt, setUserPrompt] = useState('');
 
   // Check if running on mobile web browser
   const isMobileWeb = () => {
@@ -461,6 +462,7 @@ export default function App() {
           name: 'photo.jpg',
         });
       }
+      formData.append('userPrompt', userPrompt);
 
       console.log("Sending request to:", `${API_URL}/api/scan`);
       
@@ -528,7 +530,6 @@ export default function App() {
         <Text style={styles.uploadHint}>
           You can also paste an image (Ctrl+V or Cmd+V) or use your camera
         </Text>
-        
         <View style={styles.uploadButtons}>
           <TouchableOpacity 
             style={[styles.uploadButton, analyzing && styles.uploadButtonDisabled]}
@@ -551,6 +552,25 @@ export default function App() {
           )}
         </View>
       </View>
+      {/* Move the text input here, below the upload area */}
+      <Text style={{ fontWeight: '600', marginBottom: 6, marginTop: 8 }}>Tell me what you see</Text>
+      <TextInput
+        style={{
+          borderWidth: 1,
+          borderColor: '#BFC2C4',
+          borderRadius: 8,
+          padding: 10,
+          marginBottom: 16,
+          width: '100%',
+          maxWidth: 400,
+          fontSize: 16,
+          backgroundColor: '#fff',
+        }}
+        placeholder="Describe the item, brand, or any details..."
+        value={userPrompt}
+        onChangeText={setUserPrompt}
+        editable={!analyzing}
+      />
 
       {image && (
         <Image source={{ uri: image }} style={styles.image} />
