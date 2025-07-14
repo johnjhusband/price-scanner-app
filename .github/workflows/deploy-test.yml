@@ -1,0 +1,84 @@
+name: Deploy to Test Environment
+
+on:
+  push:
+    branches: [ staging ]
+  workflow_dispatch:
+
+jobs:
+  deploy-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Deploy to test (green.flippi.ai)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 157.245.142.145
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            set -e
+            
+            echo "🚀 Deploying staging branch to green.flippi.ai..."
+            
+            # Navigate to test environment
+            cd /var/www/green.flippi.ai
+            
+            # Pull latest code
+            echo "📥 Pulling latest code..."
+            git fetch origin
+            git checkout staging
+            git pull origin staging
+            
+            # Backend deployment
+            echo "🔧 Updating backend..."
+            cd backend
+            npm install --production
+            
+            # Frontend deployment  
+            echo "🎨 Building frontend..."
+            cd ../mobile-app
+            npm install
+            npx expo export:web
+            
+            # Restart services
+            echo "🔄 Restarting services..."
+            pm2 restart staging-backend
+            pm2 restart staging-frontend
+            
+            # Health check
+            echo "🏥 Checking health..."
+            sleep 5
+            curl -f https://green.flippi.ai/health || exit 1
+            
+            echo "✅ Test deployment complete!"
+            pm2 status | grep -E "(staging-backend|staging-frontend)"
+
+      - name: Create deployment issue if failed
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Test Deployment Failed',
+              body: `## Deployment Failure Report
+              
+**Environment**: Test (green.flippi.ai)
+**Branch**: staging
+**Commit**: ${context.sha}
+**Time**: ${new Date().toISOString()}
+
+### Quick Debug:
+\`\`\`bash
+ssh root@157.245.142.145
+cd /var/www/green.flippi.ai
+git status
+pm2 logs staging-backend
+pm2 logs staging-frontend
+\`\`\`
+
+**For AI Coder**: Please investigate and fix the test deployment failure.`,
+              labels: ['bug', 'deployment-failure', 'env:test', 'automated', 'p1-critical']
+            });

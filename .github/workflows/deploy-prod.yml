@@ -1,0 +1,90 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Deploy to production (app.flippi.ai)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: 157.245.142.145
+          username: root
+          password: ${{ secrets.SERVER_PASSWORD }}
+          script: |
+            set -e
+            
+            echo "🚀 Deploying master branch to app.flippi.ai..."
+            
+            # Navigate to production environment
+            cd /var/www/app.flippi.ai
+            
+            # Pull latest code
+            echo "📥 Pulling latest code..."
+            git fetch origin
+            git checkout master
+            git pull origin master
+            
+            # Backend deployment
+            echo "🔧 Updating backend..."
+            cd backend
+            npm install --production
+            
+            # Frontend deployment  
+            echo "🎨 Building frontend..."
+            cd ../mobile-app
+            npm install
+            npx expo export:web
+            
+            # Restart services
+            echo "🔄 Restarting services..."
+            pm2 restart prod-backend
+            pm2 restart prod-frontend
+            
+            # Health check
+            echo "🏥 Checking health..."
+            sleep 5
+            curl -f https://app.flippi.ai/health || exit 1
+            
+            echo "✅ Production deployment complete!"
+            pm2 status | grep -E "(prod-backend|prod-frontend)"
+
+      - name: Create deployment issue if failed
+        if: failure()
+        uses: actions/github-script@v6
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 PRODUCTION Deployment Failed',
+              body: `## CRITICAL: Production Deployment Failure
+              
+**Environment**: Production (app.flippi.ai)
+**Branch**: master
+**Commit**: ${context.sha}
+**Time**: ${new Date().toISOString()}
+
+### Immediate Actions Required:
+1. Check if production is still serving traffic
+2. Investigate deployment failure
+3. Rollback if necessary
+
+### Quick Debug:
+\`\`\`bash
+ssh root@157.245.142.145
+cd /var/www/app.flippi.ai
+git status
+pm2 logs prod-backend
+pm2 logs prod-frontend
+curl https://app.flippi.ai/health
+\`\`\`
+
+**For AI Coder**: URGENT - Production deployment failed. Investigate immediately.`,
+              labels: ['bug', 'deployment-failure', 'env:prod', 'automated', 'p0-critical']
+            });
