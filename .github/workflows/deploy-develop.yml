@@ -16,8 +16,12 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/blue.flippi.ai
+            # Save .env file
+            cp backend/.env /tmp/.env.backup || true
             git reset --hard origin/develop
             git clean -fd
+            # Restore .env file
+            cp /tmp/.env.backup backend/.env || true
             cd backend && npm install --production
             cd ../mobile-app && npm install
             npx expo export --platform web
