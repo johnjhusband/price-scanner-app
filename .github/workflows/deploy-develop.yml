@@ -20,10 +20,6 @@ jobs:
             git pull origin develop
             cd backend && npm install --production
             cd ../mobile-app && npm install
-            # Use branded App if it exists
-            if [ -f App-branded.js ]; then
-              cp App-branded.js App.js
-            fi
             npx expo export --platform web
             pm2 restart dev-backend
             pm2 restart dev-frontend
