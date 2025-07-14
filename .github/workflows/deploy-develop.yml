@@ -16,8 +16,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/blue.flippi.ai
-            git stash
-            git pull origin develop
+            git reset --hard origin/develop
+            git clean -fd
             cd backend && npm install --production
             cd ../mobile-app && npm install
             npx expo export --platform web
