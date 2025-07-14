@@ -17,5 +17,5 @@ jobs:
             cd /var/www/blue.flippi.ai
             git pull origin develop
             cd backend && npm install --production
-            cd ../mobile-app && npm install && npx expo export:web
+            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
             pm2 restart dev-backend dev-frontend
