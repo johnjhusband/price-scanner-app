@@ -1,5 +1,4 @@
-name: Deploy Develop to Blue
-
+name: Deploy Development
 on:
   push:
     branches: [develop]
@@ -8,24 +7,15 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to development
+      - name: Deploy to blue.flippi.ai
         uses: appleboy/ssh-action@v0.1.5
         with:
-          host: app.flippi.ai
+          host: 157.245.142.145
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/blue.flippi.ai
-            # Save .env file
-            cp backend/.env /tmp/.env.backup || true
-            git reset --hard origin/develop
-            git clean -fd
-            # Restore .env file
-            cp /tmp/.env.backup backend/.env || true
+            git pull origin develop
             cd backend && npm install --production
-            cd ../mobile-app && npm install
-            npx expo export --platform web
-            pm2 restart dev-backend
-            pm2 restart dev-frontend
-            sleep 5
-            curl -f https://blue.flippi.ai/health || exit 1
+            cd ../mobile-app && npm install && npx expo export:web
+            pm2 restart dev-backend dev-frontend
