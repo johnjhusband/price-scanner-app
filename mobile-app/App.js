@@ -61,8 +61,12 @@ const WebCameraView = ({ onCapture, onCancel }) => {
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         videoRef.current.onloadedmetadata = () => {
-          setIsReady(true);
-          console.log('Camera ready');
+          videoRef.current.play().then(() => {
+            setIsReady(true);
+            console.log('Camera ready and playing');
+          }).catch(err => {
+            console.error('Error playing video:', err);
+          });
         };
       }
       setHasPermission(true);
@@ -135,7 +139,13 @@ const WebCameraView = ({ onCapture, onCancel }) => {
     <View style={[styles.cameraContainer, { backgroundColor: brandColors.background }]}>
       <video
         ref={videoRef}
-        style={styles.cameraPreview}
+        style={{
+          width: '100%',
+          maxWidth: 600,
+          height: 400,
+          backgroundColor: 'black',
+          objectFit: 'cover'
+        }}
         autoPlay
         playsInline
         muted
@@ -148,7 +158,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
           variant="secondary"
         />
         <BrandButton 
-          title="Capture" 
+          title="Capture Photo" 
           onPress={capturePhoto} 
           disabled={!isReady}
         />
