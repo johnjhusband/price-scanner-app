@@ -415,6 +415,9 @@ export default function App() {
   // Debug analysisResult changes
   useEffect(() => {
     console.log('analysisResult changed:', analysisResult);
+    console.log('analysisResult is null?', analysisResult === null);
+    console.log('analysisResult is undefined?', analysisResult === undefined);
+    console.log('analysisResult keys:', analysisResult ? Object.keys(analysisResult) : 'no keys');
   }, [analysisResult]);
 
   const pickImage = async () => {
@@ -541,7 +544,12 @@ export default function App() {
           console.log('Parsed data:', data);
           if (data.success && data.data) {
             console.log('Setting analysis result:', data.data);
-            setAnalysisResult(data.data);
+            console.log('Type of data.data:', typeof data.data);
+            console.log('data.data keys:', Object.keys(data.data));
+            
+            // Create a new object to ensure React detects the change
+            const newResult = { ...data.data };
+            setAnalysisResult(newResult);
             console.log('Analysis result state should be set now');
           } else {
             throw new Error(data.error || 'Invalid response format');
@@ -560,9 +568,8 @@ export default function App() {
         error.message || 'Unable to analyze image. Please try again.'
       );
     } finally {
-      console.log('Setting loading to false');
+      console.log('Setting loading to false in finally block');
       setIsLoading(false);
-      console.log('Final loading state:', isLoading);
     }
   };
 
