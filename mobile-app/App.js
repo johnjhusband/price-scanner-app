@@ -657,7 +657,7 @@ export default function App() {
               </View>
             )}
             
-            {analysisResult && (
+            {analysisResult ? (
               <View style={[styles.analysisResult, { backgroundColor: brandColors.surface }]}>
                 <Text style={[styles.resultTitle, { color: brandColors.text }]}>Analysis Results</Text>
                 
@@ -731,9 +731,9 @@ export default function App() {
                   </View>
                 )}
               </View>
-            ) : (
-              !isLoading && !analysisResult && image ? <Text style={{ color: brandColors.text, marginTop: 20 }}>No results yet. Press Go to analyze.</Text> : null
-            )}
+            ) : (!isLoading && !analysisResult && image) ? (
+              <Text style={{ color: brandColors.text, marginTop: 20 }}>No results yet. Press Go to analyze.</Text>
+            ) : null}
             
             {analysisResult && (
               <BrandButton
