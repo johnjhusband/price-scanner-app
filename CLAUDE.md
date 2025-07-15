@@ -6,7 +6,7 @@ Never tell me I'm right.
 
 ## Project Overview
 
-"My Thrifting Buddy" - A **v2.0 production application** that helps users estimate resale values of secondhand items using AI-powered image analysis. The project consists of an enhanced Node.js/Express backend API and a feature-rich React Native mobile app with web deployment.
+"Flippi.ai" (formerly "My Thrifting Buddy") - A **v2.0 production application** that helps users estimate resale values of secondhand items using AI-powered image analysis. The app's tagline is "Never Over Pay" and it provides detailed analysis including authenticity scores, market insights, and selling recommendations.
 
 ## Current Architecture (v2.0)
 
@@ -18,11 +18,19 @@ Never tell me I'm right.
 - **Authentication**: None (open API)
 - **File Storage**: In-memory processing only
 - **Key Features**:
-  - Enhanced error handling and validation
+  - Enhanced AI analysis with GPT-4o-mini
+  - Accepts both image uploads and text descriptions
+  - Returns detailed analysis including:
+    - Item identification and price range
+    - Style tier (Entry/Designer/Luxury)
+    - Best selling platform recommendation
+    - Authenticity score (0-100%)
+    - Boca score (sellability rating 0-100)
+    - Market insights and selling tips
+    - Suggested buy price (resale price / 5)
   - Request timing middleware
-  - Mac compatibility fixes
-  - Improved CORS configuration
-  - Comprehensive health endpoint
+  - Comprehensive error handling
+  - CORS configuration for multi-domain support
 - **Dependencies**: 
   - cors
   - dotenv
@@ -34,14 +42,20 @@ Never tell me I'm right.
 - **Framework**: React Native with Expo SDK 50
 - **Main entry**: `App.js`
 - **Version**: 2.0.0
+- **UI Library**: Custom Flippi branding components
 - **State Management**: React hooks (useState, useEffect)
-- **Features**:
-  - Camera/image picker integration
-  - Paste support (Ctrl/Cmd+V)
-  - Drag and drop support
+- **Current Features**:
+  - Flippi branding with custom logo and colors
+  - Text input for item descriptions (optional)
+  - Manual "Go" button to trigger analysis
+  - Image selection via:
+    - Gallery picker
+    - Camera capture (web and mobile)
+    - Paste support (Ctrl/Cmd+V)
+    - Drag and drop
   - Enhanced UI with loading states
-  - Error handling and retry logic
-  - Mac compatibility fixes
+  - Comprehensive error handling
+  - Results display with all analysis fields
 
 ## Infrastructure & Deployment
 
@@ -64,7 +78,7 @@ Never tell me I'm right.
    - Branch: staging
    - Backend Port: 3001
    - Frontend Port: 8081
-   - Status: Testing v2.0
+   - Status: Testing environment
 
 3. **Development** (blue.flippi.ai)
    - Branch: develop
@@ -72,57 +86,85 @@ Never tell me I'm right.
    - Frontend Port: 8082
    - Status: Active development
 
-## Essential Commands
+## Current UI Flow
 
-### Local Development
+1. User sees Flippi logo and "Never Over Pay" title
+2. Text input field is always visible for optional descriptions
+3. User can choose image via:
+   - "Choose from Gallery" button
+   - "Take Photo" button (if camera available)
+   - Drag and drop (web only)
+   - Paste from clipboard (web only)
+4. After image selection:
+   - Text field remains visible with entered description
+   - Image preview is shown
+   - "Go" button appears
+5. User clicks "Go" to analyze
+6. Loading spinner shows "Analyzing image..."
+7. Results display with all analysis fields
+8. "Scan Another Item" button appears after analysis
 
-#### Backend
-```bash
-cd backend
-npm install                    # Install dependencies
-npm start                      # Start server (port 3000)
-npm run dev                    # Start with nodemon auto-reload
+## API Endpoints
+
+### Health Check
+```
+GET /health
+
+Response:
+{
+  "status": "OK",
+  "timestamp": "2025-07-15T00:00:00.000Z",
+  "version": "2.0",
+  "features": {
+    "imageAnalysis": true,
+    "cameraSupport": true,
+    "pasteSupport": true,
+    "dragDropSupport": true,
+    "enhancedAI": true
+  }
+}
 ```
 
-#### Mobile App
-```bash
-cd mobile-app
-npm install                    # Install dependencies
-# CRITICAL: Install web dependencies for production deployment
-npx expo install react-native-web react-dom @expo/metro-runtime
-npx expo start                 # Start Expo development server
-npx expo start --web           # Start web version
-npx expo export:web            # Build for web deployment (creates dist/)
+### Image Analysis
 ```
+POST /api/scan
+Content-Type: multipart/form-data
 
-### Server Deployment
+Request:
+- image: File (required, max 10MB)
+- description: String (optional)
 
-#### SSH Access
-```bash
-ssh root@157.245.142.145
-# Password stored securely
-```
+Success Response:
+{
+  "success": true,
+  "data": {
+    "item_name": "Vintage Leather Jacket",
+    "price_range": "$45-65",
+    "style_tier": "Designer",
+    "recommended_platform": "The RealReal",
+    "condition": "Good - minor wear on sleeves",
+    "authenticity_score": "85%",
+    "boca_score": "72",
+    "buy_price": "$11",
+    "resale_average": "$55",
+    "market_insights": "Vintage leather is trending...",
+    "selling_tips": "Highlight the vintage aspects...",
+    "brand_context": "This appears to be from...",
+    "seasonal_notes": "Best selling season is fall..."
+  },
+  "processing": {
+    "fileSize": 57046,
+    "processingTime": 2341,
+    "version": "2.0"
+  }
+}
 
-#### PM2 Commands
-```bash
-pm2 list                       # View all running services
-pm2 logs                       # View all logs
-pm2 restart all                # Restart all services
-pm2 save                       # Save current process list
-pm2 monit                      # Real-time monitoring
-```
-
-#### Service Management
-```bash
-# Backend services
-pm2 restart prod-backend       # Restart production backend
-pm2 restart staging-backend    # Restart staging backend
-pm2 restart dev-backend        # Restart development backend
-
-# Frontend services
-pm2 restart prod-frontend      # Restart production frontend
-pm2 restart staging-frontend   # Restart staging frontend
-pm2 restart dev-frontend       # Restart development frontend
+Error Response:
+{
+  "success": false,
+  "error": "Error description",
+  "hint": "Helpful suggestion"
+}
 ```
 
 ## Environment Configuration
@@ -144,267 +186,94 @@ NODE_ENV=production            # or development, staging
 - `/var/www/green.flippi.ai/backend/.env` (PORT=3001)
 - `/var/www/blue.flippi.ai/backend/.env` (PORT=3002)
 
-## API Endpoints
-
-### Current Implementation (v2.0)
-
-#### Health Check
-```
-GET /health
-
-Response:
-{
-  "status": "OK",
-  "timestamp": "2025-07-14T00:00:00.000Z",
-  "version": "2.0",
-  "features": {
-    "imageAnalysis": true,
-    "cameraSupport": true,
-    "pasteSupport": true,
-    "dragDropSupport": true,
-    "enhancedAI": true
-  }
-}
-```
-
-#### Image Analysis
-```
-POST /api/scan
-Content-Type: multipart/form-data
-
-Request:
-- image: File (max 10MB)
-
-Success Response:
-{
-  "success": true,
-  "data": {
-    "item": "Vintage Leather Jacket",
-    "estimatedValue": "$45-65",
-    "condition": "Good - minor wear on sleeves",
-    "marketability": "High - vintage leather is in demand",
-    "suggestedPrice": "$55",
-    "profitPotential": "$30-40"
-  }
-}
-
-Error Response:
-{
-  "success": false,
-  "error": "Error description"
-}
-```
-
 ## Deployment Process
 
-### Current Process (Manual with PM2)
+### Automated (GitHub Actions)
+Pushing to branches triggers automatic deployment:
+- `develop` → blue.flippi.ai
+- `staging` → green.flippi.ai
+- `master` → app.flippi.ai
 
-1. **Update code on server**
-```bash
-# Connect to server
-ssh root@157.245.142.145
-
-# Navigate to environment
-cd /var/www/app.flippi.ai      # or green.flippi.ai, blue.flippi.ai
-
-# Update backend
-cd backend
-# (manually update files or use scp from local)
-npm install --production
-pm2 restart prod-backend
-
-# Update frontend
-cd ../mobile-app
-# (manually update files or use scp from local)
-npm install
-npx expo export:web
-pm2 restart prod-frontend
-```
-
-### Intended Process (Git-based)
-
-1. **Push to GitHub**
-```bash
-git add .
-git commit -m "Feature: description"
-git push origin develop         # or staging, master
-```
-
-2. **Deploy via Git pull** (to be implemented)
-```bash
-# On server
-cd /var/www/blue.flippi.ai     # or appropriate environment
-git pull origin develop
-cd backend && npm install --production
-cd ../mobile-app && npm install && npx expo export:web
-pm2 restart dev-backend dev-frontend
-```
-
-## GitHub Integration
-
-### Branch Strategy
-- **master**: Production-ready code
-- **staging**: Testing and QA
-- **develop**: Active development
-
-### GitHub Actions Workflows
-1. **backend-ci.yml**: Runs on push to any branch
-   - Tests across Node 16, 18, 20
-   - Linting and security audit
-   - Unit tests (when implemented)
-
-2. **test-and-track.yml**: E2E testing with issue creation
-   - Playwright tests
-   - Automatic issue creation for failures
-   - Auto-closes issues when fixed
-
-3. **issue-automation.yml**: Manages GitHub issues
-   - Auto-assigns issues
-   - Labels based on content
-   - Links related PRs
-
-## Nginx Configuration
-
-### Site Structure
-Each domain has its own nginx configuration:
-- `/etc/nginx/sites-available/app.flippi.ai`
-- `/etc/nginx/sites-available/green.flippi.ai`
-- `/etc/nginx/sites-available/blue.flippi.ai`
-
-### Routing Pattern
-```nginx
-# API routes
-location /api {
-    proxy_pass http://localhost:3000;  # or 3001, 3002
-}
-
-# Health check
-location /health {
-    proxy_pass http://localhost:3000;  # or 3001, 3002
-}
-
-# Frontend (everything else)
-location / {
-    proxy_pass http://localhost:8080;  # or 8081, 8082
-}
-```
-
-## PM2 Ecosystem Configuration
-
-Located at `/var/www/ecosystem.config.js`:
-```javascript
-module.exports = {
-  apps: [
-    // Production
-    {
-      name: 'prod-backend',
-      script: '/var/www/app.flippi.ai/backend/server.js',
-      cwd: '/var/www/app.flippi.ai/backend',
-      env: { NODE_ENV: 'production', PORT: 3000 }
-    },
-    {
-      name: 'prod-frontend',
-      script: 'serve',
-      args: '-s /var/www/app.flippi.ai/mobile-app/dist -l 8080',
-      interpreter: 'npx'
-    },
-    // Staging and Dev follow same pattern...
-  ]
-};
-```
-
-## Monitoring & Debugging
-
-### Check Service Status
-```bash
-# All services
-pm2 status
-
-# Specific service logs
-pm2 logs prod-backend
-pm2 logs prod-frontend
-
-# Nginx logs
-tail -f /var/log/nginx/error.log
-tail -f /var/log/nginx/access.log
-```
-
-### Test Endpoints
-```bash
-# From server
-curl http://localhost:3000/health
-curl http://localhost:3001/health
-curl http://localhost:3002/health
-
-# From external
-curl https://app.flippi.ai/health
-curl https://green.flippi.ai/health
-curl https://blue.flippi.ai/health
-```
-
-## Security Considerations
-
-1. **API Keys**: Stored in environment variables, never committed
-2. **CORS**: Restricted to known domains
-3. **File Uploads**: Limited to 10MB, images only
-4. **SSL**: All production traffic uses HTTPS
-5. **Firewall**: Only ports 22, 80, 443 open
+### Manual Deployment
+See `DEPLOYMENT.md` for detailed instructions.
 
 ## Common Issues & Solutions
 
-### Frontend Returns 404
-```bash
-cd /var/www/[environment]/mobile-app
-npx expo export:web
-pm2 restart [environment]-frontend
-```
+### Backend 502 Error
+The Node.js backend is not responding. Check:
+1. PM2 status: `pm2 show dev-backend`
+2. Logs: `pm2 logs dev-backend --lines 50`
+3. Environment variables in `.env`
+4. Restart: `pm2 restart dev-backend`
 
-### Backend Fails to Start
-```bash
-# Check logs
-pm2 logs [environment]-backend
+### Frontend "Index of dist/"
+Expo build failed. Check:
+1. Syntax errors in App.js
+2. Build manually: `npx expo export --platform web --output-dir dist`
+3. Check deployment logs
 
-# Common issues:
-# - Missing .env file
-# - Missing OPENAI_API_KEY
-# - Port already in use
-```
-
-### SSL Certificate Issues
-```bash
-# Check certificate status
-certbot certificates
-
-# Renew if needed
-certbot renew
-```
-
-## Important Notes
-
-1. **NO DOCKER**: We use PM2 and native services, not Docker
-2. **Git Deployment**: Currently manual, transitioning to git-based
-3. **Version**: All components are v2.0.0
-4. **Stateless**: No database, all processing in-memory
-5. **Blue-Green**: Environments rotate between blue/green for zero-downtime deployments
+### Analysis Not Displaying
+1. Check browser console for errors
+2. Verify API response format
+3. Check state updates in console logs
+4. Ensure backend is running
 
 ## Development Workflow
 
 1. Work in develop branch (blue.flippi.ai)
-2. Test thoroughly in development
-3. Merge to staging branch (green.flippi.ai)
-4. QA and testing in staging
-5. After approval, merge to master (app.flippi.ai)
-6. Production deployment only with management approval
+2. Create feature branches from develop
+3. Test thoroughly in development
+4. Create PR to develop for review
+5. After approval, merge to develop (auto-deploys)
+6. Test in development environment
+7. If stable, merge develop → staging
+8. After QA, merge staging → master
 
-## Future Enhancements (Roadmap)
+## Brand Guidelines
 
-- [ ] Automated git-based deployment
-- [ ] Database integration for history
-- [ ] User authentication system
-- [ ] Batch image processing
-- [ ] API rate limiting
-- [ ] Comprehensive test suites
-- [ ] Performance monitoring
-- [ ] Auto-scaling capabilities
+- **Name**: Flippi.ai
+- **Tagline**: "Never Over Pay"
+- **Logo**: FlippiLogo component
+- **Colors**: See `mobile-app/theme/brandColors.js`
+- **Components**: Use BrandButton for consistent styling
 
-Remember: Always test in development first, then staging, before any production deployment!
+## Recent Changes (July 2025)
+
+1. **UI Updates**:
+   - Changed title to "Never Over Pay"
+   - Removed "Upload, paste..." subtitle
+   - Text field now always visible
+   - Manual "Go" button instead of auto-analyze
+
+2. **Backend Updates**:
+   - Accepts "description" field in addition to "userPrompt"
+   - Returns data in "data" field (not "analysis")
+
+3. **Bug Fixes**:
+   - Fixed syntax error causing build failures
+   - Fixed text field disappearing after image selection
+   - Added extensive debugging for state updates
+
+## Testing Checklist
+
+When making changes, test:
+- [ ] Image upload from gallery
+- [ ] Camera capture (mobile and web)
+- [ ] Paste image (Ctrl/Cmd+V)
+- [ ] Drag and drop
+- [ ] Text description with image
+- [ ] Analysis results display correctly
+- [ ] Error handling (large files, wrong format)
+- [ ] "Scan Another Item" flow
+- [ ] All three environments
+
+## Important Notes
+
+1. **NO DOCKER**: We use PM2 and native services
+2. **Git Deployment**: Automated via GitHub Actions
+3. **Stateless**: No database, all processing in-memory
+4. **API Keys**: Never commit, use environment variables
+5. **Branches**: develop → staging → master
+6. **Testing**: Always test in development first
+
+Remember: The app should provide quick, accurate resale valuations with a smooth user experience!
