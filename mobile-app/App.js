@@ -56,18 +56,43 @@ const WebCameraView = ({ onCapture, onCancel }) => {
         }
       });
       
+      console.log('Got media stream:', stream);
+      console.log('Stream tracks:', stream.getTracks());
+      
       streamRef.current = stream;
       
       if (videoRef.current) {
+        console.log('Setting video stream...');
         videoRef.current.srcObject = stream;
+        
+        // Add multiple event listeners for better compatibility
         videoRef.current.onloadedmetadata = () => {
+          console.log('Video metadata loaded');
           videoRef.current.play().then(() => {
             setIsReady(true);
             console.log('Camera ready and playing');
           }).catch(err => {
             console.error('Error playing video:', err);
+            // Try to set ready anyway
+            setIsReady(true);
           });
         };
+        
+        // Fallback for some browsers
+        videoRef.current.oncanplay = () => {
+          console.log('Video can play');
+          if (!isReady) {
+            setIsReady(true);
+          }
+        };
+        
+        // Force a play attempt after a short delay
+        setTimeout(() => {
+          if (videoRef.current && !isReady) {
+            videoRef.current.play().catch(() => {});
+            setIsReady(true);
+          }
+        }, 1000);
       }
       setHasPermission(true);
     } catch (err) {
@@ -144,11 +169,13 @@ const WebCameraView = ({ onCapture, onCancel }) => {
           maxWidth: 600,
           height: 400,
           backgroundColor: 'black',
-          objectFit: 'cover'
+          objectFit: 'cover',
+          display: 'block'
         }}
-        autoPlay
-        playsInline
-        muted
+        autoPlay={true}
+        playsInline={true}
+        muted={true}
+        controls={false}
       />
       <canvas ref={canvasRef} style={{ display: 'none' }} />
       <View style={styles.cameraButtonContainer}>
