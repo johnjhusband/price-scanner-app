@@ -27,7 +27,7 @@ export const brandColors = {
   surface: '#FFFFFF',           // Surface color for cards and results
   
   // UI Elements
-  border: '#E0E0E0',            // Light gray border for inputs and dividers
+  border: '#E8E8E8',            // Very light gray border for inputs and dividers
 };
 
 export const typography = {
