@@ -15,6 +15,9 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/blue.flippi.ai
+            # Reset any local changes to avoid merge conflicts
+            git reset --hard HEAD
+            git clean -fd
             git pull origin develop
             cd backend && npm install --production
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
