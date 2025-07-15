@@ -18,26 +18,27 @@ const API_URL = Platform.OS === 'web'
 const WebCameraView = ({ onCapture, onCancel }) => {
   const [hasPermission, setHasPermission] = useState(null);
   const [isReady, setIsReady] = useState(false);
+  const [stream, setStream] = useState(null);
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
 
+  // First effect: Get camera permissions
   useEffect(() => {
-    // Only initialize camera if we have permission set to null (initial state)
     if (hasPermission === null) {
-      // Add a small delay to ensure the video element is mounted
-      const timer = setTimeout(() => {
-        initializeCamera();
-      }, 100);
-      
-      return () => {
-        clearTimeout(timer);
-      };
+      requestCameraPermission();
     }
   }, [hasPermission]);
-  
+
+  // Second effect: Attach stream to video element when both are ready
   useEffect(() => {
-    // Cleanup stream on unmount
+    if (hasPermission === true && stream && videoRef.current) {
+      attachStreamToVideo();
+    }
+  }, [hasPermission, stream]);
+  
+  // Cleanup effect
+  useEffect(() => {
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
@@ -45,10 +46,9 @@ const WebCameraView = ({ onCapture, onCancel }) => {
     };
   }, []);
 
-  const initializeCamera = async () => {
+  const requestCameraPermission = async () => {
     try {
-      console.log('Initializing camera...');
-      console.log('Video ref status:', videoRef.current ? 'available' : 'not available');
+      console.log('Requesting camera permission...');
       
       // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -65,7 +65,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
       }
 
       // Request camera permission
-      const stream = await navigator.mediaDevices.getUserMedia({
+      const mediaStream = await navigator.mediaDevices.getUserMedia({
         video: { 
           facingMode: { ideal: 'environment' },
           width: { ideal: 1280 },
@@ -73,54 +73,14 @@ const WebCameraView = ({ onCapture, onCancel }) => {
         }
       });
       
-      console.log('Got media stream:', stream);
-      console.log('Stream tracks:', stream.getTracks());
+      console.log('Got media stream:', mediaStream);
+      console.log('Stream tracks:', mediaStream.getTracks());
       
-      streamRef.current = stream;
-      
-      if (videoRef.current) {
-        console.log('Setting video stream...');
-        console.log('Video element:', videoRef.current);
-        console.log('Video dimensions:', videoRef.current.offsetWidth, 'x', videoRef.current.offsetHeight);
-        
-        videoRef.current.srcObject = stream;
-        
-        // Add multiple event listeners for better compatibility
-        videoRef.current.onloadedmetadata = () => {
-          console.log('Video metadata loaded');
-          console.log('Video ready state:', videoRef.current.readyState);
-          videoRef.current.play().then(() => {
-            setIsReady(true);
-            console.log('Camera ready and playing');
-          }).catch(err => {
-            console.error('Error playing video:', err);
-            // Try to set ready anyway
-            setIsReady(true);
-          });
-        };
-        
-        // Fallback for some browsers
-        videoRef.current.oncanplay = () => {
-          console.log('Video can play');
-          if (!isReady) {
-            setIsReady(true);
-          }
-        };
-        
-        // Force a play attempt after a short delay
-        setTimeout(() => {
-          if (videoRef.current && !isReady) {
-            console.log('Forcing video play after timeout');
-            videoRef.current.play().catch(() => {});
-            setIsReady(true);
-          }
-        }, 1000);
-      } else {
-        console.error('Video ref not available!');
-      }
+      streamRef.current = mediaStream;
+      setStream(mediaStream);
       setHasPermission(true);
     } catch (err) {
-      console.error('Camera initialization error:', err);
+      console.error('Camera permission error:', err);
       setHasPermission(false);
       
       // Provide specific error messages
@@ -139,6 +99,54 @@ const WebCameraView = ({ onCapture, onCancel }) => {
       
       Alert.alert('Camera Error', errorMessage);
     }
+  };
+
+  const attachStreamToVideo = () => {
+    console.log('Attaching stream to video element...');
+    console.log('Video ref status:', videoRef.current ? 'available' : 'not available');
+    console.log('Stream status:', stream ? 'available' : 'not available');
+    
+    if (!videoRef.current || !stream) {
+      console.error('Missing video ref or stream');
+      return;
+    }
+    
+    console.log('Setting video stream...');
+    console.log('Video element:', videoRef.current);
+    console.log('Video dimensions:', videoRef.current.offsetWidth, 'x', videoRef.current.offsetHeight);
+    
+    videoRef.current.srcObject = stream;
+    
+    // Add multiple event listeners for better compatibility
+    videoRef.current.onloadedmetadata = () => {
+      console.log('Video metadata loaded');
+      console.log('Video ready state:', videoRef.current.readyState);
+      videoRef.current.play().then(() => {
+        setIsReady(true);
+        console.log('Camera ready and playing');
+      }).catch(err => {
+        console.error('Error playing video:', err);
+        // Try to set ready anyway
+        setIsReady(true);
+      });
+    };
+    
+    // Fallback for some browsers
+    videoRef.current.oncanplay = () => {
+      console.log('Video can play');
+      if (!isReady) {
+        setIsReady(true);
+      }
+    };
+    
+    // Force a play attempt after a short delay
+    setTimeout(() => {
+      if (videoRef.current && !isReady) {
+        console.log('Forcing video play after timeout');
+        videoRef.current.play().catch(() => {});
+        setIsReady(true);
+      }
+    }, 1000);
   };
 
   const capturePhoto = () => {
