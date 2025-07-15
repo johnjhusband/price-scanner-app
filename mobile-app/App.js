@@ -23,7 +23,21 @@ const WebCameraView = ({ onCapture, onCancel }) => {
   const streamRef = useRef(null);
 
   useEffect(() => {
-    initializeCamera();
+    // Only initialize camera if we have permission set to null (initial state)
+    if (hasPermission === null) {
+      // Add a small delay to ensure the video element is mounted
+      const timer = setTimeout(() => {
+        initializeCamera();
+      }, 100);
+      
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [hasPermission]);
+  
+  useEffect(() => {
+    // Cleanup stream on unmount
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
@@ -33,6 +47,9 @@ const WebCameraView = ({ onCapture, onCancel }) => {
 
   const initializeCamera = async () => {
     try {
+      console.log('Initializing camera...');
+      console.log('Video ref status:', videoRef.current ? 'available' : 'not available');
+      
       // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setHasPermission(false);
