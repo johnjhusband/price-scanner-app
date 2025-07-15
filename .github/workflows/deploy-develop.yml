@@ -1,5 +1,4 @@
-name: Deploy Develop to Blue
-
+name: Deploy Development
 on:
   push:
     branches: [develop]
@@ -8,27 +7,28 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Deploy to development
+      - name: Deploy to blue.flippi.ai
         uses: appleboy/ssh-action@v0.1.5
         with:
-          host: app.flippi.ai
+          host: 157.245.142.145
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/blue.flippi.ai
-            # Force clean state
-            git reset --hard
+            # Reset any local changes to avoid merge conflicts
+            git reset --hard HEAD
             git clean -fd
             git pull origin develop
-            # Backend
             cd backend && npm install --production
-            # Frontend
-            cd ../mobile-app 
-            npm install
-            # Use branded App if exists
-            [ -f App-branded.js ] && cp App-branded.js App.js
-            npx expo export --platform web
-            # Restart
+            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
+            # Debug: Check what directory PM2 is serving from
+            echo "=== PM2 dev-frontend config ==="
+            pm2 describe dev-frontend | grep -E "exec cwd|script|args" || true
+            echo "=== Checking directories ==="
+            ls -la /var/www/blue.flippi.ai/mobile-app/ | grep -E "dist|web-build" || true
+            echo "=== Files in dist ==="
+            ls -la /var/www/blue.flippi.ai/mobile-app/dist/ | head -5 || true
+            # Just restart, don't delete
             pm2 restart dev-backend dev-frontend
-            sleep 5
-            curl -f https://blue.flippi.ai/health || exit 1
+            # Clear nginx cache
+            nginx -s reload

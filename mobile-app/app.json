@@ -1,10 +1,11 @@
 {
   "expo": {
-    "name": "My Thrifting Buddy",
-    "slug": "my-thrifting-buddy",
+    "name": "flippi.ai",
+    "slug": "flippi-ai",
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "icon": "./assets/flippi-favicon.png",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -20,18 +21,21 @@
         "android.permission.CAMERA"
       ]
     },
-    "web": {},
+    "web": {
+      "favicon": "./assets/flippi-favicon.png",
+      "bundler": "metro"
+    },
     "plugins": [
       [
         "expo-camera",
         {
-          "cameraPermission": "Allow My Thrifting Buddy to access your camera to scan items for price analysis."
+          "cameraPermission": "Allow flippi.ai to access your camera to scan items for price analysis."
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Allow My Thrifting Buddy to access your photos to select images for price analysis."
+          "photosPermission": "Allow flippi.ai to access your photos to select images for price analysis."
         }
       ]
     ]

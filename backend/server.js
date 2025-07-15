@@ -73,12 +73,16 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
       });
     }
 
+    // Get the user prompt from the form data
+    const userPrompt = req.body.userPrompt || '';
+
     // Log file info for debugging
     console.log('Processing image:', {
       originalName: req.file.originalname,
       mimetype: req.file.mimetype,
       size: req.file.size,
-      bufferLength: req.file.buffer.length
+      bufferLength: req.file.buffer.length,
+      userPrompt: userPrompt
     });
 
     // Validate file size
@@ -101,7 +105,7 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
           content: [
             {
               type: "text",
-              text: "Analyze this item and provide: 1) What the item is, 2) Estimated resale value range, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best platform to sell it on (eBay, Poshmark, Facebook, Mercari, The RealReal, Vestiaire, etc - choose based on tier), 5) Condition assessment, 6) Authenticity likelihood (0-100% score based on visible indicators like stitching, materials, logos, tags), 7) Boca Score (0-100 score indicating how quickly this item will sell - higher score = faster sale based on current trends, demand, and market saturation). Respond with JSON that includes both structured data and contextual information: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"condition\": \"condition\", \"authenticity_score\": \"X%\", \"boca_score\": \"X\", \"market_insights\": \"free text about current market trends\", \"selling_tips\": \"specific advice for this item\", \"brand_context\": \"information about the brand if relevant\", \"seasonal_notes\": \"seasonal considerations if applicable\"}"
+              text: `${userPrompt ? `User says: ${userPrompt}\n\n` : ''}Analyze this item and provide: 1) What the item is, 2) Estimated resale value range, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best platform to sell it on (eBay, Poshmark, Facebook, Mercari, The RealReal, Vestiaire, etc - choose based on tier), 5) Condition assessment, 6) Authenticity likelihood (0-100% score based on visible indicators like stitching, materials, logos, tags), 7) Boca Score (0-100 score indicating how quickly this item will sell - higher score = faster sale based on current trends, demand, and market saturation). Respond with JSON that includes both structured data and contextual information: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"condition\": \"condition\", \"authenticity_score\": \"X%\", \"boca_score\": \"X\", \"market_insights\": \"free text about current market trends\", \"selling_tips\": \"specific advice for this item\", \"brand_context\": \"information about the brand if relevant\", \"seasonal_notes\": \"seasonal considerations if applicable\"}`
             },
             {
               type: "image_url",

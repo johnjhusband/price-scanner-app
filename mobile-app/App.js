@@ -1,7 +1,12 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Button, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
+
+// Import brand components and theme
+import FlippiLogo from './components/FlippiLogo';
+import BrandButton from './components/BrandButton';
+import { brandColors, typography, componentColors } from './theme/brandColors';
 
 const API_URL = Platform.OS === 'web' 
   ? '' // Same domain - nginx routes /api to backend
@@ -114,9 +119,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
           <Text style={styles.errorHint}>
             For now, please use the "Choose Image" button to select photos from your gallery.
           </Text>
-          <TouchableOpacity style={styles.button} onPress={onCancel}>
-            <Text style={styles.buttonText}>Go Back</Text>
-          </TouchableOpacity>
+          <BrandButton title="Go Back" variant="primary" onPress={onCancel} />
         </View>
       </View>
     );
@@ -162,19 +165,19 @@ const WebCameraView = ({ onCapture, onCancel }) => {
   );
 };
 
-// Helper functions for score colors
+// Helper functions for score colors using brand colors
 const getBocaScoreColor = (score) => {
   const numScore = parseInt(score);
-  if (numScore >= 80) return "#2e7d32"; // Green - High trend
-  if (numScore >= 60) return "#f57c00"; // Orange - Medium trend
-  return "#d32f2f"; // Red - Low trend
+  if (numScore >= 80) return componentColors.scores.high;
+  if (numScore >= 60) return componentColors.scores.medium;
+  return componentColors.scores.low;
 };
 
 const getAuthenticityColor = (score) => {
   const numScore = parseInt(score);
-  if (numScore >= 80) return "#2e7d32"; // Green - Likely authentic
-  if (numScore >= 60) return "#f57c00"; // Orange - Uncertain
-  return "#d32f2f"; // Red - Likely fake
+  if (numScore >= 80) return componentColors.scores.high;
+  if (numScore >= 60) return componentColors.scores.medium;
+  return componentColors.scores.low;
 };
 
 // Enhanced file type checking for Mac
@@ -199,95 +202,59 @@ export default function App() {
   const [showWebCamera, setShowWebCamera] = useState(false);
   const [hasCamera, setHasCamera] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
+  
+  const fileInputRef = useRef(null);
 
-  // Check if running on mobile web browser
-  const isMobileWeb = () => {
-    return Platform.OS === 'web' && 
-           /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-  };
+  // Check for camera availability and setup paste listener
+  useEffect(() => {
+    checkCameraAvailability();
+    setupPasteListener();
+    return () => removePasteListener();
+  }, []);
 
-  // Check for camera availability on web (v2.0 feature)
   const checkCameraAvailability = async () => {
-    if (Platform.OS !== 'web') return;
     try {
       const devices = await navigator.mediaDevices.enumerateDevices();
       const hasVideoDevice = devices.some(device => device.kind === 'videoinput');
       setHasCamera(hasVideoDevice);
-      console.log('Camera available:', hasVideoDevice);
     } catch (error) {
       console.log('Camera check failed:', error);
       setHasCamera(false);
     }
   };
 
-  // Enhanced paste handler for Mac compatibility
-  const handlePaste = (event) => {
-    console.log('Paste event triggered');
-    event.preventDefault(); // Important for Mac
-    
-    // Try multiple ways to access clipboard data for better compatibility
-    const clipboardData = event.clipboardData || window.clipboardData;
-    if (!clipboardData) {
-      console.log('No clipboard data available');
-      return;
-    }
-
-    // Check items first (modern browsers)
-    if (clipboardData.items) {
-      const items = Array.from(clipboardData.items);
-      console.log('Clipboard items:', items.map(item => item.type));
-      
-      for (let item of items) {
-        if (item.type.indexOf('image') !== -1 || item.kind === 'file') {
-          const file = item.getAsFile();
-          if (file) {
-            console.log('Processing pasted file:', file.name, file.type, file.size);
-            processImageFile(file);
-            return;
-          }
-        }
-      }
-    }
-
-    // Fallback to files (older browsers)
-    if (clipboardData.files && clipboardData.files.length > 0) {
-      const file = clipboardData.files[0];
-      if (isImageFile(file)) {
-        console.log('Processing pasted file (fallback):', file.name, file.type);
-        processImageFile(file);
-      }
-    }
-  };
-
-  // Setup paste listener with Mac-specific options
   const setupPasteListener = () => {
     if (Platform.OS === 'web') {
-      // Use capture phase and non-passive for better Mac compatibility
-      document.addEventListener('paste', handlePaste, { capture: true, passive: false });
-      console.log('Paste listener added');
+      document.addEventListener('paste', handlePaste);
     }
   };
 
   const removePasteListener = () => {
     if (Platform.OS === 'web') {
-      document.removeEventListener('paste', handlePaste, { capture: true });
-      console.log('Paste listener removed');
+      document.removeEventListener('paste', handlePaste);
     }
   };
 
-  // Process image file from drag/drop or paste (v2.0 feature)
+  const handlePaste = (event) => {
+    const items = event.clipboardData?.items;
+    if (!items) return;
+
+    for (let item of items) {
+      if (item.type.indexOf('image') !== -1) {
+        const file = item.getAsFile();
+        if (file) {
+          processImageFile(file);
+        }
+        break;
+      }
+    }
+  };
+
   const processImageFile = (file) => {
     console.log('Processing file:', file.name, file.type, file.size);
     
     if (!isImageFile(file)) {
-      Alert.alert('Error', 'Please select an image file (JPEG, PNG, GIF, WEBP, HEIC, or HEIF)');
-      return;
-    }
-
-    // Check file size
-    if (file.size > 10 * 1024 * 1024) {
-      Alert.alert('Error', 'Image file is too large. Please select an image under 10MB.');
+      Alert.alert('Error', 'Please select an image file');
       return;
     }
 
@@ -303,104 +270,15 @@ export default function App() {
     reader.readAsDataURL(file);
   };
 
-  // Enhanced drag and drop handlers for Mac
-  const handleDragOver = (e) => {
-    if (Platform.OS === 'web') {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // Set the drop effect for better visual feedback on Mac
-      if (e.dataTransfer) {
-        e.dataTransfer.dropEffect = 'copy';
-      }
-      
-      setIsDragOver(true);
-    }
+  // Check if running on mobile web browser
+  const isMobileWeb = () => {
+    return Platform.OS === 'web' && 
+           /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   };
-
-  const handleDragLeave = (e) => {
-    if (Platform.OS === 'web') {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // Check if we're actually leaving the drop zone
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX;
-      const y = e.clientY;
-      
-      if (x <= rect.left || x >= rect.right || y <= rect.top || y >= rect.bottom) {
-        setIsDragOver(false);
-      }
-    }
-  };
-
-  const handleDrop = (e) => {
-    if (Platform.OS === 'web') {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragOver(false);
-      
-      console.log('Drop event triggered');
-      
-      const dataTransfer = e.dataTransfer;
-      if (!dataTransfer) return;
-
-      // Try items first (modern approach, better for Mac)
-      if (dataTransfer.items && dataTransfer.items.length > 0) {
-        const items = Array.from(dataTransfer.items);
-        console.log('Dropped items:', items.map(item => `${item.kind}: ${item.type}`));
-        
-        for (let item of items) {
-          if (item.kind === 'file') {
-            const file = item.getAsFile();
-            if (file && isImageFile(file)) {
-              processImageFile(file);
-              return;
-            }
-          }
-        }
-      }
-
-      // Fallback to files
-      if (dataTransfer.files && dataTransfer.files.length > 0) {
-        const file = dataTransfer.files[0];
-        console.log('Dropped file:', file.name, file.type);
-        if (isImageFile(file)) {
-          processImageFile(file);
-        }
-      }
-    }
-  };
-
-  // Prevent default drag behavior on the entire document for Mac
-  useEffect(() => {
-    if (Platform.OS === 'web') {
-      const preventDragDefault = (e) => {
-        if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
-          e.preventDefault();
-        }
-      };
-
-      document.addEventListener('dragover', preventDragDefault);
-      document.addEventListener('drop', preventDragDefault);
-
-      return () => {
-        document.removeEventListener('dragover', preventDragDefault);
-        document.removeEventListener('drop', preventDragDefault);
-      };
-    }
-  }, []);
-
-  // Initialize v2.0 features
-  useEffect(() => {
-    checkCameraAvailability();
-    setupPasteListener();
-    return () => removePasteListener();
-  }, []);
 
   const pickImage = async () => {
     if (Platform.OS === 'web') {
-      // Web file picker - no camera capture attribute (fixed from blue)
+      // Web file picker - no camera capture attribute
       const input = document.createElement('input');
       input.type = 'file';
       input.accept = 'image/*';
@@ -410,12 +288,25 @@ export default function App() {
         const file = e.target.files[0];
         if (file) {
           console.log('File selected:', file.name, file.type, file.size);
-          processImageFile(file);
+          
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            console.log('File read successfully, analyzing...');
+            setImage(event.target.result);
+            analyzeImage(event.target.result);
+          };
+          reader.onerror = (error) => {
+            console.error('FileReader error:', error);
+            Alert.alert('Error', 'Failed to read file');
+          };
+          reader.readAsDataURL(file);
         }
       };
       
-      // Trigger file picker
-      input.click();
+      // Ensure the click happens (fixes the bug)
+      setTimeout(() => {
+        input.click();
+      }, 100);
     } else {
       // Native mobile - use image library picker
       const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -439,11 +330,30 @@ export default function App() {
     }
   };
 
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    
+    const files = e.dataTransfer.files;
+    if (files.length > 0) {
+      processImageFile(files[0]);
+    }
+  };
+
   const analyzeImage = async (imageData) => {
     console.log("analyzeImage called");
     setAnalyzing(true);
     setResults(null);
-    setShowDetails(false);
 
     try {
       const formData = new FormData();
@@ -512,10 +422,13 @@ export default function App() {
 
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.title}>My Thrifting Buddy</Text>
-      <Text style={styles.subtitle}>Upload a photo to get resale prices</Text>
+      {/* Branded Header with Logo */}
+      <View style={styles.header}>
+        <FlippiLogo size="large" />
+        <Text style={styles.subtitle}>Resell products like never before</Text>
+      </View>
 
-      {/* ChatGPT-style upload area (v2.0 feature) */}
+      {/* ChatGPT-style upload area */}
       <View 
         style={[
           styles.uploadArea, 
@@ -531,28 +444,24 @@ export default function App() {
           Drag and drop an image here, or click to browse
         </Text>
         <Text style={styles.uploadHint}>
-          You can also paste an image (Ctrl+V or Cmd+V) or use your camera
+          You can also paste an image (Ctrl+V) or use your camera
         </Text>
         
         <View style={styles.uploadButtons}>
-          <TouchableOpacity 
-            style={[styles.uploadButton, analyzing && styles.uploadButtonDisabled]}
+          <BrandButton 
+            title="Choose Image"
+            variant="primary"
             onPress={pickImage}
             disabled={analyzing}
-            activeOpacity={0.7}
-          >
-            <Text style={styles.uploadButtonText}>📁 Browse Files</Text>
-          </TouchableOpacity>
+          />
           
-          {(Platform.OS === 'web' ? hasCamera : true) && (
-            <TouchableOpacity 
-              style={[styles.cameraButton, analyzing && styles.uploadButtonDisabled]}
+          {hasCamera && (
+            <BrandButton 
+              title="Use Web Camera (Beta)"
+              variant="secondary"
               onPress={() => setShowWebCamera(true)}
               disabled={analyzing}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.cameraButtonText}>📷 Use Camera</Text>
-            </TouchableOpacity>
+            />
           )}
         </View>
       </View>
@@ -589,7 +498,7 @@ export default function App() {
           <Text style={styles.resultRow}>Best Platform: {results.recommended_platform}</Text>
           <Text style={styles.resultRow}>Condition: {results.condition}</Text>
 
-          {/* Enhanced v2.0 fields */}
+          {/* Enhanced Fields */}
           {results.authenticity_score && (
             <View style={styles.scoreContainer}>
               <Text style={styles.label}>Authenticity: </Text>
@@ -611,48 +520,6 @@ export default function App() {
               </Text>
             </View>
           )}
-
-          {/* Expandable details section (v2.0 feature) */}
-          <TouchableOpacity 
-            style={styles.detailsToggle}
-            onPress={() => setShowDetails(!showDetails)}
-          >
-            <Text style={styles.detailsToggleText}>
-              {showDetails ? '▼ Hide Details' : '▶ Show More Details'}
-            </Text>
-          </TouchableOpacity>
-
-          {showDetails && (
-            <View style={styles.detailsSection}>
-              {results.market_insights && (
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Market Insights:</Text>
-                  <Text style={styles.detailText}>{results.market_insights}</Text>
-                </View>
-              )}
-              
-              {results.selling_tips && (
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Selling Tips:</Text>
-                  <Text style={styles.detailText}>{results.selling_tips}</Text>
-                </View>
-              )}
-              
-              {results.brand_context && (
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Brand Info:</Text>
-                  <Text style={styles.detailText}>{results.brand_context}</Text>
-                </View>
-              )}
-              
-              {results.seasonal_notes && (
-                <View style={styles.detailItem}>
-                  <Text style={styles.detailLabel}>Seasonal Notes:</Text>
-                  <Text style={styles.detailText}>{results.seasonal_notes}</Text>
-                </View>
-              )}
-            </View>
-          )}
         </View>
       )}
     </ScrollView>
@@ -663,86 +530,62 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: '#fff',
+    backgroundColor: brandColors.coolWhite,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    textAlign: 'center',
+  header: {
+    alignItems: 'center',
     marginTop: 50,
-    marginBottom: 10,
+    marginBottom: 30,
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: parseInt(typography.sizes.h3),
+    fontWeight: typography.weights.medium,
+    color: brandColors.secondaryText,
     textAlign: 'center',
-    marginBottom: 30,
-    color: '#666',
+    marginTop: 10,
+    fontFamily: typography.fontFamily,
   },
-  // v2.0 Upload area styles
+  // ChatGPT-style upload area
   uploadArea: {
-    backgroundColor: '#f7f7f8',
-    borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#e5e5e7',
+    borderColor: componentColors.uploadArea.border,
     borderStyle: 'dashed',
+    borderRadius: 10,
     padding: 40,
-    marginHorizontal: 20,
-    marginTop: 20,
     alignItems: 'center',
+    backgroundColor: componentColors.uploadArea.background,
+    marginBottom: 20,
   },
   uploadAreaDragOver: {
-    borderColor: '#007AFF',
-    backgroundColor: '#f0f8ff',
+    borderColor: componentColors.uploadArea.hoverBorder,
+    backgroundColor: componentColors.uploadArea.hoverBackground,
   },
   uploadAreaDisabled: {
     opacity: 0.6,
   },
   uploadIcon: {
     fontSize: 48,
-    marginBottom: 16,
+    marginBottom: 10,
   },
   uploadText: {
-    fontSize: 16,
-    color: '#333',
-    marginBottom: 8,
+    fontSize: parseInt(typography.sizes.body),
+    fontWeight: typography.weights.medium,
+    color: brandColors.primaryText,
     textAlign: 'center',
+    marginBottom: 5,
+    fontFamily: typography.fontFamily,
   },
   uploadHint: {
-    fontSize: 14,
-    color: '#666',
-    marginBottom: 20,
+    fontSize: parseInt(typography.sizes.small),
+    color: brandColors.secondaryText,
     textAlign: 'center',
+    marginBottom: 20,
+    fontFamily: typography.fontFamily,
   },
   uploadButtons: {
     flexDirection: 'row',
+    justifyContent: 'center',
     gap: 12,
-  },
-  uploadButton: {
-    backgroundColor: '#007AFF',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 5,
-  },
-  uploadButtonDisabled: {
-    backgroundColor: '#ccc',
-  },
-  uploadButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  cameraButton: {
-    backgroundColor: '#34C759',
-    padding: 15,
-    borderRadius: 8,
-    alignItems: 'center',
-    marginHorizontal: 5,
-  },
-  cameraButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
   },
   image: {
     width: '100%',
@@ -753,51 +596,45 @@ const styles = StyleSheet.create({
   analyzing: {
     textAlign: 'center',
     marginTop: 20,
-    fontSize: 18,
+    fontSize: parseInt(typography.sizes.body),
+    color: brandColors.primaryText,
+    fontFamily: typography.fontFamily,
   },
   results: {
     marginTop: 20,
     padding: 20,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: componentColors.results.background,
     borderRadius: 10,
+    borderLeftWidth: 4,
+    borderLeftColor: brandColors.actionBlue,
   },
   resultTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: parseInt(typography.sizes.h3),
+    fontWeight: typography.weights.bold,
     marginBottom: 10,
+    color: brandColors.primaryText,
+    fontFamily: typography.fontFamily,
   },
   itemName: {
-    fontSize: 16,
+    fontSize: parseInt(typography.sizes.body),
     marginBottom: 8,
-    fontWeight: '600',
+    fontWeight: typography.weights.semiBold,
+    color: brandColors.primaryText,
+    fontFamily: typography.fontFamily,
   },
   resultRow: {
-    fontSize: 15,
+    fontSize: parseInt(typography.sizes.body),
     marginBottom: 5,
+    color: brandColors.primaryText,
+    fontFamily: typography.fontFamily,
   },
   buyPrice: {
-    fontWeight: 'bold',
-    color: '#2e7d32',
-    fontSize: 16,
+    fontWeight: typography.weights.bold,
+    color: componentColors.scores.high,
+    fontSize: parseInt(typography.sizes.body),
     marginTop: 5,
     marginBottom: 10,
-  },
-  scoreContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-    flexWrap: 'wrap',
-  },
-  scoreText: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginLeft: 8,
-  },
-  scoreDescription: {
-    fontSize: 12,
-    color: '#666',
-    marginLeft: 8,
-    fontStyle: 'italic',
+    fontFamily: typography.fontFamily,
   },
   tierContainer: {
     flexDirection: 'row',
@@ -805,7 +642,9 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   label: {
-    fontSize: 15,
+    fontSize: parseInt(typography.sizes.body),
+    color: brandColors.primaryText,
+    fontFamily: typography.fontFamily,
   },
   tierBadge: {
     paddingHorizontal: 12,
@@ -823,39 +662,29 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff3e0',
   },
   tierText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
+    fontSize: parseInt(typography.sizes.small),
+    fontWeight: typography.weights.semiBold,
+    color: brandColors.primaryText,
+    fontFamily: typography.fontFamily,
   },
-  // v2.0 Details section styles
-  detailsToggle: {
-    marginTop: 12,
-    padding: 8,
+  scoreContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+    flexWrap: 'wrap',
   },
-  detailsToggleText: {
-    color: '#007AFF',
-    fontSize: 14,
-    fontWeight: '600',
+  scoreText: {
+    fontSize: parseInt(typography.sizes.body),
+    fontWeight: typography.weights.bold,
+    marginLeft: 8,
+    fontFamily: typography.fontFamily,
   },
-  detailsSection: {
-    marginTop: 16,
-    backgroundColor: '#f9f9f9',
-    padding: 16,
-    borderRadius: 8,
-  },
-  detailItem: {
-    marginBottom: 12,
-  },
-  detailLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginBottom: 4,
-  },
-  detailText: {
-    fontSize: 14,
-    color: '#666',
-    lineHeight: 20,
+  scoreDescription: {
+    fontSize: parseInt(typography.sizes.notes),
+    color: brandColors.secondaryText,
+    marginLeft: 8,
+    fontStyle: 'italic',
+    fontFamily: typography.fontFamily,
   },
   // Camera styles
   cameraContainer: {
@@ -871,12 +700,14 @@ const styles = StyleSheet.create({
   },
   cameraTitle: {
     color: '#fff',
-    fontSize: 18,
-    fontWeight: 'bold',
+    fontSize: parseInt(typography.sizes.h3),
+    fontWeight: typography.weights.bold,
+    fontFamily: typography.fontFamily,
   },
   cancelText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: parseInt(typography.sizes.body),
+    fontFamily: typography.fontFamily,
   },
   videoWrapper: {
     flex: 1,
@@ -890,26 +721,30 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: 'rgba(0,0,0,0.7)',
   },
   loadingText: {
     color: '#fff',
+    fontSize: parseInt(typography.sizes.body),
     marginTop: 10,
+    fontFamily: typography.fontFamily,
   },
   captureContainer: {
     position: 'absolute',
-    bottom: 50,
+    bottom: 30,
     left: 0,
     right: 0,
     alignItems: 'center',
   },
   captureButton: {
-    width: 70,
-    height: 70,
-    borderRadius: 35,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: '#fff',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 4,
+    borderColor: '#ddd',
   },
   captureButtonDisabled: {
     opacity: 0.5,
@@ -918,42 +753,36 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: '#000',
+    backgroundColor: '#fff',
+    borderWidth: 2,
+    borderColor: '#333',
   },
   errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
+    backgroundColor: '#fff',
   },
   errorText: {
-    color: '#fff',
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginBottom: 15,
+    fontSize: parseInt(typography.sizes.h2),
+    fontWeight: typography.weights.bold,
+    marginBottom: 10,
+    color: brandColors.primaryText,
+    fontFamily: typography.fontFamily,
   },
   errorMessage: {
-    color: '#fff',
-    fontSize: 16,
+    fontSize: parseInt(typography.sizes.body),
     textAlign: 'center',
-    marginBottom: 20,
-    lineHeight: 24,
+    marginBottom: 10,
+    color: brandColors.secondaryText,
+    fontFamily: typography.fontFamily,
   },
   errorHint: {
-    color: '#ccc',
-    fontSize: 14,
+    fontSize: parseInt(typography.sizes.small),
     textAlign: 'center',
-    marginBottom: 30,
-    fontStyle: 'italic',
+    marginBottom: 20,
+    color: brandColors.disabledText,
+    fontFamily: typography.fontFamily,
   },
-  button: {
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 10,
-    borderRadius: 5,
-  },
-  buttonText: {
-    color: '#000',
-    fontSize: 16,
-  },
-});
+}); 
