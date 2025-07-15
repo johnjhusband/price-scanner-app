@@ -582,60 +582,61 @@ export default function App() {
           </Text>
         )}
         
-        {!image ? (
-          <View style={[
-            styles.uploadContainer,
-            isDragOver && styles.dragOver
-          ]}>
-            <BrandButton
-              title="Choose from Gallery"
-              onPress={pickImage}
-              style={styles.actionButton}
-            />
-            
-            {hasCamera && (
+        <View style={[
+          styles.uploadContainer,
+          isDragOver && styles.dragOver
+        ]}>
+          {/* Text input always visible */}
+          <TextInput
+            style={[styles.descriptionInput, { 
+              backgroundColor: brandColors.surface,
+              color: brandColors.text,
+              borderColor: brandColors.border || '#ddd'
+            }]}
+            placeholder="Describe your item (optional)"
+            placeholderTextColor={brandColors.textSecondary}
+            value={productDescription}
+            onChangeText={setProductDescription}
+            multiline
+            numberOfLines={3}
+          />
+          
+          {!image ? (
+            <>
               <BrandButton
-                title="Take Photo"
-                onPress={takePhoto}
+                title="Choose from Gallery"
+                onPress={pickImage}
                 style={styles.actionButton}
-                variant="secondary"
               />
-            )}
-            
-            {Platform.OS === 'web' && (
-              <View style={[styles.dropZone, isDragOver && styles.dropZoneActive]}>
-                <Text style={[styles.dropZoneText, { color: brandColors.textSecondary }]}>
-                  {isDragOver ? 'Drop image here' : 'Or drag and drop an image here'}
-                </Text>
-              </View>
-            )}
-          </View>
-        ) : (
-          <View style={styles.resultContainer}>
-            <Image source={{ uri: image }} style={styles.image} />
-            
-            {!analysisResult && !isLoading && (
-              <View style={styles.analysisControls}>
-                <TextInput
-                  style={[styles.descriptionInput, { 
-                    backgroundColor: brandColors.surface,
-                    color: brandColors.text,
-                    borderColor: brandColors.border || '#ddd'
-                  }]}
-                  placeholder="Add a description (optional)"
-                  placeholderTextColor={brandColors.textSecondary}
-                  value={productDescription}
-                  onChangeText={setProductDescription}
-                  multiline
-                  numberOfLines={3}
+              
+              {hasCamera && (
+                <BrandButton
+                  title="Take Photo"
+                  onPress={takePhoto}
+                  style={styles.actionButton}
+                  variant="secondary"
                 />
+              )}
+              
+              {Platform.OS === 'web' && (
+                <View style={[styles.dropZone, isDragOver && styles.dropZoneActive]}>
+                  <Text style={[styles.dropZoneText, { color: brandColors.textSecondary }]}>
+                    {isDragOver ? 'Drop image here' : 'Or drag and drop an image here'}
+                  </Text>
+                </View>
+              )}
+            </>
+          ) : (
+            <View style={styles.resultContainer}>
+              <Image source={{ uri: image }} style={styles.image} />
+              
+              {!analysisResult && !isLoading && (
                 <BrandButton
                   title="Go"
                   onPress={analyzeImage}
                   style={styles.goButton}
                 />
-              </View>
-            )}
+              )}
             
             {isLoading ? (
               <View style={styles.loadingContainer}>
@@ -720,13 +721,16 @@ export default function App() {
               </View>
             ) : null}
             
-            <BrandButton
-              title="Scan Another Item"
-              onPress={resetApp}
-              style={styles.resetButton}
-            />
-          </View>
-        )}
+            {analysisResult && (
+              <BrandButton
+                title="Scan Another Item"
+                onPress={resetApp}
+                style={styles.resetButton}
+              />
+            )}
+            </View>
+          )}
+        </View>
       </View>
     </ScrollView>
   );
@@ -763,6 +767,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
   },
+  resultContainer: {
+    width: '100%',
+    alignItems: 'center',
+  },
   actionButton: {
     marginVertical: 10,
     width: '100%',
@@ -788,11 +796,6 @@ const styles = StyleSheet.create({
   },
   dragOver: {
     opacity: 0.8,
-  },
-  resultContainer: {
-    width: '100%',
-    maxWidth: 400,
-    alignItems: 'center',
   },
   image: {
     width: '100%',
