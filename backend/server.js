@@ -73,8 +73,8 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
       });
     }
 
-    // Get the user prompt from the form data
-    const userPrompt = req.body.userPrompt || '';
+    // Get the user prompt/description from the form data
+    const userPrompt = req.body.userPrompt || req.body.description || '';
 
     // Log file info for debugging
     console.log('Processing image:', {
@@ -181,7 +181,7 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
 
     res.json({ 
       success: true, 
-      analysis,
+      data: analysis,  // Frontend expects 'data' not 'analysis'
       processing: {
         fileSize: req.file.size,
         processingTime: processingTime,

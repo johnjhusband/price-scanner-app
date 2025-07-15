@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
@@ -164,6 +164,7 @@ export default function App() {
   const [showCamera, setShowCamera] = useState(false);
   const [hasCamera, setHasCamera] = useState(true);
   const [isDragOver, setIsDragOver] = useState(false);
+  const [productDescription, setProductDescription] = useState('');
 
   // Check if camera is available (v2.0 feature)
   const checkCameraAvailability = async () => {
@@ -307,7 +308,7 @@ export default function App() {
     const reader = new FileReader();
     reader.onload = (event) => {
       setImage(event.target.result);
-      analyzeImage(event.target.result);
+      // Don't auto-analyze, wait for Go button
     };
     reader.onerror = (error) => {
       console.error('FileReader error:', error);
@@ -446,8 +447,8 @@ export default function App() {
           Alert.alert('Error', 'Image file is too large. Please select an image under 10MB.');
           return;
         }
-        setImage(asset.uri);
-        analyzeImage(asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri);
+        setImage(asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri);
+        // Don't auto-analyze, wait for Go button
       }
     }
   };
@@ -472,8 +473,8 @@ export default function App() {
 
       if (!result.canceled && result.assets[0]) {
         const asset = result.assets[0];
-        setImage(asset.uri);
-        analyzeImage(asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri);
+        setImage(asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri);
+        // Don't auto-analyze, wait for Go button
       }
     }
   };
@@ -481,10 +482,15 @@ export default function App() {
   const handleWebCameraCapture = (imageData) => {
     setShowCamera(false);
     setImage(imageData);
-    analyzeImage(imageData);
+    // Don't auto-analyze, wait for Go button
   };
 
-  const analyzeImage = async (imageData) => {
+  const analyzeImage = async () => {
+    if (!image) {
+      Alert.alert('Error', 'Please select an image first');
+      return;
+    }
+    
     setIsLoading(true);
     setAnalysisResult(null);
 
@@ -493,16 +499,21 @@ export default function App() {
       
       if (Platform.OS === 'web') {
         // Convert base64 to blob for web
-        const response = await fetch(imageData);
+        const response = await fetch(image);
         const blob = await response.blob();
         formData.append('image', blob, 'image.jpg');
       } else {
         // Mobile
         formData.append('image', {
-          uri: imageData,
+          uri: image,
           type: 'image/jpeg',
           name: 'photo.jpg',
         });
+      }
+      
+      // Add description if provided
+      if (productDescription.trim()) {
+        formData.append('description', productDescription.trim());
       }
 
       const apiResponse = await fetch(`${API_URL}/api/scan`, {
@@ -544,6 +555,7 @@ export default function App() {
     setImage(null);
     setAnalysisResult(null);
     setIsLoading(false);
+    setProductDescription('');
   };
 
   if (showCamera) {
@@ -602,6 +614,29 @@ export default function App() {
           <View style={styles.resultContainer}>
             <Image source={{ uri: image }} style={styles.image} />
             
+            {!analysisResult && !isLoading && (
+              <View style={styles.analysisControls}>
+                <TextInput
+                  style={[styles.descriptionInput, { 
+                    backgroundColor: brandColors.surface,
+                    color: brandColors.text,
+                    borderColor: brandColors.border || '#ddd'
+                  }]}
+                  placeholder="Add a description (optional)"
+                  placeholderTextColor={brandColors.textSecondary}
+                  value={productDescription}
+                  onChangeText={setProductDescription}
+                  multiline
+                  numberOfLines={3}
+                />
+                <BrandButton
+                  title="Go"
+                  onPress={analyzeImage}
+                  style={styles.goButton}
+                />
+              </View>
+            )}
+            
             {isLoading ? (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={brandColors.primary} />
@@ -615,13 +650,13 @@ export default function App() {
                 
                 <View style={styles.resultItem}>
                   <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Item:</Text>
-                  <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.item}</Text>
+                  <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.item_name}</Text>
                 </View>
                 
                 <View style={styles.resultItem}>
                   <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Estimated Value:</Text>
                   <Text style={[styles.resultValue, styles.priceValue, { color: brandColors.success }]}>
-                    {analysisResult.estimatedValue}
+                    {analysisResult.price_range}
                   </Text>
                 </View>
                 
@@ -631,26 +666,54 @@ export default function App() {
                 </View>
                 
                 <View style={styles.resultItem}>
-                  <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Market Demand:</Text>
-                  <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.marketability}</Text>
+                  <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Style Tier:</Text>
+                  <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.style_tier}</Text>
                 </View>
                 
-                {analysisResult.suggestedPrice && (
+                {analysisResult.recommended_platform && (
+                  <View style={styles.resultItem}>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Platform:</Text>
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.recommended_platform}</Text>
+                  </View>
+                )}
+                
+                {analysisResult.authenticity_score && (
+                  <View style={styles.resultItem}>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Authenticity Score:</Text>
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.authenticity_score}</Text>
+                  </View>
+                )}
+                
+                {analysisResult.boca_score && (
+                  <View style={styles.resultItem}>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Boca Score (Sellability):</Text>
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.boca_score}/100</Text>
+                  </View>
+                )}
+                
+                {analysisResult.buy_price && (
                   <View style={[styles.suggestedPriceContainer, { backgroundColor: brandColors.primaryLight }]}>
                     <Text style={[styles.suggestedPriceLabel, { color: brandColors.primary }]}>
-                      Suggested Listing Price:
+                      Suggested Buy Price:
                     </Text>
                     <Text style={[styles.suggestedPriceValue, { color: brandColors.primary }]}>
-                      {analysisResult.suggestedPrice}
+                      {analysisResult.buy_price}
                     </Text>
                   </View>
                 )}
                 
-                {analysisResult.profitPotential && (
+                {analysisResult.market_insights && (
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Profit Potential:</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.success }]}>
-                      {analysisResult.profitPotential}
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Market Insights:</Text>
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.market_insights}</Text>
+                  </View>
+                )}
+                
+                {analysisResult.selling_tips && (
+                  <View style={styles.resultItem}>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Selling Tips:</Text>
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>
+                      {analysisResult.selling_tips}
                     </Text>
                   </View>
                 )}
@@ -817,5 +880,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: 20,
     gap: 20,
+  },
+  // Analysis controls
+  analysisControls: {
+    width: '100%',
+    marginVertical: 20,
+  },
+  descriptionInput: {
+    width: '100%',
+    padding: 12,
+    borderWidth: 1,
+    borderRadius: 8,
+    fontSize: 16,
+    marginBottom: 15,
+    minHeight: 80,
+    textAlignVertical: 'top',
+  },
+  goButton: {
+    width: '100%',
   },
 });
