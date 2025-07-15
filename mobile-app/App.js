@@ -411,6 +411,11 @@ export default function App() {
     setupPasteListener();
     return () => removePasteListener();
   }, []);
+  
+  // Debug analysisResult changes
+  useEffect(() => {
+    console.log('analysisResult changed:', analysisResult);
+  }, [analysisResult]);
 
   const pickImage = async () => {
     if (Platform.OS === 'web') {
@@ -486,6 +491,10 @@ export default function App() {
   };
 
   const analyzeImage = async () => {
+    console.log('analyzeImage called');
+    console.log('Current image:', image ? 'exists' : 'null');
+    console.log('Current description:', productDescription);
+    
     if (!image) {
       Alert.alert('Error', 'Please select an image first');
       return;
@@ -493,6 +502,7 @@ export default function App() {
     
     setIsLoading(true);
     setAnalysisResult(null);
+    console.log('Loading state set to true');
 
     try {
       const formData = new FormData();
@@ -532,6 +542,7 @@ export default function App() {
           if (data.success && data.data) {
             console.log('Setting analysis result:', data.data);
             setAnalysisResult(data.data);
+            console.log('Analysis result state should be set now');
           } else {
             throw new Error(data.error || 'Invalid response format');
           }
@@ -549,7 +560,9 @@ export default function App() {
         error.message || 'Unable to analyze image. Please try again.'
       );
     } finally {
+      console.log('Setting loading to false');
       setIsLoading(false);
+      console.log('Final loading state:', isLoading);
     }
   };
 
@@ -718,6 +731,8 @@ export default function App() {
                   </View>
                 )}
               </View>
+            ) : (
+              !isLoading && !analysisResult && image ? <Text style={{ color: brandColors.text, marginTop: 20 }}>No results yet. Press Go to analyze.</Text> : null
             )}
             
             {analysisResult && (
