@@ -582,6 +582,22 @@ export default function App() {
           styles.uploadContainer,
           isDragOver && styles.dragOver
         ]}>
+          {/* Text input always visible at top */}
+          <TextInput
+            style={[styles.descriptionInput, { 
+              backgroundColor: brandColors.surface,
+              color: brandColors.text,
+              borderColor: brandColors.border || '#ddd',
+              marginBottom: 20
+            }]}
+            placeholder="Describe your item (optional)"
+            placeholderTextColor={brandColors.textSecondary}
+            value={productDescription}
+            onChangeText={setProductDescription}
+            multiline
+            numberOfLines={3}
+          />
+          
           {!image ? (
             <>
               <BrandButton
@@ -606,22 +622,6 @@ export default function App() {
                   </Text>
                 </View>
               )}
-              
-              {/* Text input below image options */}
-              <TextInput
-                style={[styles.descriptionInput, { 
-                  backgroundColor: brandColors.surface,
-                  color: brandColors.text,
-                  borderColor: brandColors.border || '#ddd',
-                  marginTop: 20
-                }]}
-                placeholder="Describe your item (optional)"
-                placeholderTextColor={brandColors.textSecondary}
-                value={productDescription}
-                onChangeText={setProductDescription}
-                multiline
-                numberOfLines={3}
-              />
             </>
           ) : (
             <View style={styles.resultContainer}>
