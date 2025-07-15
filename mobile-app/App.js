@@ -528,7 +528,9 @@ export default function App() {
       if (apiResponse.ok) {
         try {
           const data = JSON.parse(responseText);
+          console.log('Parsed data:', data);
           if (data.success && data.data) {
+            console.log('Setting analysis result:', data.data);
             setAnalysisResult(data.data);
           } else {
             throw new Error(data.error || 'Invalid response format');
@@ -573,34 +575,13 @@ export default function App() {
       <View style={styles.content}>
         <FlippiLogo />
         <Text style={[styles.title, { color: brandColors.text }]}>
-          AI-Powered Resale Value Scanner
+          Never Over Pay
         </Text>
-        
-        {Platform.OS === 'web' && (
-          <Text style={[styles.subtitle, { color: brandColors.textSecondary }]}>
-            Upload, paste (Ctrl/Cmd+V), or drag & drop an image
-          </Text>
-        )}
         
         <View style={[
           styles.uploadContainer,
           isDragOver && styles.dragOver
         ]}>
-          {/* Text input always visible */}
-          <TextInput
-            style={[styles.descriptionInput, { 
-              backgroundColor: brandColors.surface,
-              color: brandColors.text,
-              borderColor: brandColors.border || '#ddd'
-            }]}
-            placeholder="Describe your item (optional)"
-            placeholderTextColor={brandColors.textSecondary}
-            value={productDescription}
-            onChangeText={setProductDescription}
-            multiline
-            numberOfLines={3}
-          />
-          
           {!image ? (
             <>
               <BrandButton
@@ -625,6 +606,22 @@ export default function App() {
                   </Text>
                 </View>
               )}
+              
+              {/* Text input below image options */}
+              <TextInput
+                style={[styles.descriptionInput, { 
+                  backgroundColor: brandColors.surface,
+                  color: brandColors.text,
+                  borderColor: brandColors.border || '#ddd',
+                  marginTop: 20
+                }]}
+                placeholder="Describe your item (optional)"
+                placeholderTextColor={brandColors.textSecondary}
+                value={productDescription}
+                onChangeText={setProductDescription}
+                multiline
+                numberOfLines={3}
+              />
             </>
           ) : (
             <View style={styles.resultContainer}>
@@ -638,14 +635,16 @@ export default function App() {
                 />
               )}
             
-            {isLoading ? (
+            {isLoading && (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={brandColors.primary} />
                 <Text style={[styles.loadingText, { color: brandColors.text }]}>
                   Analyzing image...
                 </Text>
               </View>
-            ) : analysisResult ? (
+            )}
+            
+            {analysisResult && (
               <View style={[styles.analysisResult, { backgroundColor: brandColors.surface }]}>
                 <Text style={[styles.resultTitle, { color: brandColors.text }]}>Analysis Results</Text>
                 
@@ -719,7 +718,7 @@ export default function App() {
                   </View>
                 )}
               </View>
-            ) : null}
+            )}
             
             {analysisResult && (
               <BrandButton
@@ -753,11 +752,6 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginTop: 20,
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  subtitle: {
-    fontSize: 16,
     marginBottom: 20,
     textAlign: 'center',
   },
