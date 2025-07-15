@@ -2,7 +2,10 @@ const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
 const { OpenAI } = require('openai');
-require('dotenv').config();
+const path = require('path');
+
+// Load .env from shared location outside git directories
+require('dotenv').config({ path: path.join(__dirname, '../../shared/.env') });
 
 const app = express();
 
