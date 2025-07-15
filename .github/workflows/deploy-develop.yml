@@ -30,5 +30,10 @@ jobs:
             ls -la /var/www/blue.flippi.ai/mobile-app/dist/ | head -5 || true
             # Just restart, don't delete
             pm2 restart dev-backend dev-frontend
+            # Wait for services to start
+            sleep 3
+            # Check if backend is running
+            pm2 show dev-backend || true
+            curl -s http://localhost:3002/health || echo "Backend not responding"
             # Clear nginx cache
             nginx -s reload
