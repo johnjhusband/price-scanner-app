@@ -663,6 +663,18 @@ export default function App() {
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      {/* Environment Banner - Only show in non-production */}
+      {Platform.OS === 'web' && window.location.hostname === 'blue.flippi.ai' && (
+        <View style={styles.environmentBanner}>
+          <Text style={styles.environmentText}>DEVELOPMENT ENVIRONMENT</Text>
+        </View>
+      )}
+      {Platform.OS === 'web' && window.location.hostname === 'green.flippi.ai' && (
+        <View style={styles.environmentBannerStaging}>
+          <Text style={styles.environmentText}>STAGING ENVIRONMENT</Text>
+        </View>
+      )}
+      
       <View style={styles.content}>
         <FlippiLogo />
         <Text style={[styles.title, { color: brandColors.text }]}>
@@ -834,6 +846,22 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flexGrow: 1,
+  },
+  environmentBanner: {
+    backgroundColor: '#2196F3',
+    padding: 8,
+    alignItems: 'center',
+  },
+  environmentBannerStaging: {
+    backgroundColor: '#4CAF50',
+    padding: 8,
+    alignItems: 'center',
+  },
+  environmentText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 1,
   },
   content: {
     flex: 1,
