@@ -63,11 +63,15 @@ const WebCameraView = ({ onCapture, onCancel }) => {
       
       if (videoRef.current) {
         console.log('Setting video stream...');
+        console.log('Video element:', videoRef.current);
+        console.log('Video dimensions:', videoRef.current.offsetWidth, 'x', videoRef.current.offsetHeight);
+        
         videoRef.current.srcObject = stream;
         
         // Add multiple event listeners for better compatibility
         videoRef.current.onloadedmetadata = () => {
           console.log('Video metadata loaded');
+          console.log('Video ready state:', videoRef.current.readyState);
           videoRef.current.play().then(() => {
             setIsReady(true);
             console.log('Camera ready and playing');
@@ -89,10 +93,13 @@ const WebCameraView = ({ onCapture, onCancel }) => {
         // Force a play attempt after a short delay
         setTimeout(() => {
           if (videoRef.current && !isReady) {
+            console.log('Forcing video play after timeout');
             videoRef.current.play().catch(() => {});
             setIsReady(true);
           }
         }, 1000);
+      } else {
+        console.error('Video ref not available!');
       }
       setHasPermission(true);
     } catch (err) {
@@ -162,21 +169,23 @@ const WebCameraView = ({ onCapture, onCancel }) => {
 
   return (
     <View style={[styles.cameraContainer, { backgroundColor: brandColors.background }]}>
-      <video
-        ref={videoRef}
-        style={{
-          width: '100%',
-          maxWidth: 600,
-          height: 400,
-          backgroundColor: 'black',
-          objectFit: 'cover',
-          display: 'block'
-        }}
-        autoPlay={true}
-        playsInline={true}
-        muted={true}
-        controls={false}
-      />
+      <View style={{ width: '100%', maxWidth: 600, height: 400, position: 'relative' }}>
+        <video
+          ref={videoRef}
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            backgroundColor: 'black',
+            objectFit: 'cover'
+          }}
+          autoPlay={true}
+          playsInline={true}
+          muted={true}
+        />
+      </View>
       <canvas ref={canvasRef} style={{ display: 'none' }} />
       <View style={styles.cameraButtonContainer}>
         <BrandButton 
