@@ -2,6 +2,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+Never tell me I'm right.
+
 ## Project Overview
 
 "My Thrifting Buddy" - A **v2.0 production application** that helps users estimate resale values of secondhand items using AI-powered image analysis. The project consists of an enhanced Node.js/Express backend API and a feature-rich React Native mobile app with web deployment.
