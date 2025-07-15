@@ -75,9 +75,9 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontFamily: typography.fontFamily,
-    fontWeight: typography.weights.medium,
+    fontWeight: typography.weights.semiBold,
     fontSize: 14,
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   primaryText: {
     color: buttonStyles.primary.color,

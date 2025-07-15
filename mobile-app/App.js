@@ -843,7 +843,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: typography.weights.bold,
+    fontFamily: typography.fontFamily,
     marginTop: 20,
     marginBottom: 20,
     textAlign: 'center',
@@ -852,14 +853,14 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 10,
   },
   resultContainer: {
     width: '100%',
     alignItems: 'center',
   },
   actionButton: {
-    marginVertical: 10,
+    marginVertical: 5,
     width: '100%',
   },
   dropZone: {
