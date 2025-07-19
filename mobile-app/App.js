@@ -6,6 +6,7 @@ import { Camera } from 'expo-camera';
 // Import brand components and theme
 import FlippiLogo from './components/FlippiLogo';
 import BrandButton from './components/BrandButton';
+import FeedbackPrompt from './components/FeedbackPrompt';
 import { brandColors, typography, componentColors } from './theme/brandColors';
 
 const API_URL = Platform.OS === 'web' 
@@ -236,6 +237,8 @@ export default function App() {
   const [hasCamera, setHasCamera] = useState(true);
   const [isDragOver, setIsDragOver] = useState(false);
   const [productDescription, setProductDescription] = useState('');
+  const [imageBase64, setImageBase64] = useState(null);
+  const [showFeedback, setShowFeedback] = useState(false);
 
   // Check if camera is available (v2.0 feature)
   const checkCameraAvailability = async () => {
@@ -581,11 +584,23 @@ export default function App() {
     try {
       const formData = new FormData();
       
+      let base64Data;
+      
       if (Platform.OS === 'web') {
         // Convert base64 to blob for web
         const response = await fetch(image);
         const blob = await response.blob();
         formData.append('image', blob, 'image.jpg');
+        
+        // Also convert to base64 for feedback storage
+        const reader = new FileReader();
+        base64Data = await new Promise((resolve) => {
+          reader.onloadend = () => {
+            const base64 = reader.result.split(',')[1]; // Remove data:image/jpeg;base64, prefix
+            resolve(base64);
+          };
+          reader.readAsDataURL(blob);
+        });
       } else {
         // Mobile
         formData.append('image', {
@@ -593,7 +608,22 @@ export default function App() {
           type: 'image/jpeg',
           name: 'photo.jpg',
         });
+        
+        // Convert to base64 for feedback storage
+        const response = await fetch(image);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        base64Data = await new Promise((resolve) => {
+          reader.onloadend = () => {
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+          };
+          reader.readAsDataURL(blob);
+        });
       }
+      
+      // Store base64 for feedback
+      setImageBase64(base64Data);
       
       // Add description if provided
       if (productDescription.trim()) {
@@ -621,6 +651,7 @@ export default function App() {
             // Create a new object to ensure React detects the change
             const newResult = { ...data.data };
             setAnalysisResult(newResult);
+            setShowFeedback(true);
             console.log('Analysis result state should be set now');
           } else {
             throw new Error(data.error || 'Invalid response format');
@@ -649,6 +680,8 @@ export default function App() {
     setAnalysisResult(null);
     setIsLoading(false);
     setProductDescription('');
+    setImageBase64(null);
+    setShowFeedback(false);
   };
 
   if (showCamera) {
@@ -824,6 +857,15 @@ export default function App() {
             ) : (!isLoading && !analysisResult && image) ? (
               <Text style={{ color: brandColors.text, marginTop: 20 }}>No results yet. Press Go to analyze.</Text>
             ) : null}
+            
+            {analysisResult && showFeedback && (
+              <FeedbackPrompt
+                scanData={analysisResult}
+                userDescription={productDescription}
+                imageData={imageBase64}
+                onComplete={() => setShowFeedback(false)}
+              />
+            )}
             
             {analysisResult && (
               <BrandButton
