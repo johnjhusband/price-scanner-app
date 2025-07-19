@@ -3,9 +3,18 @@ const multer = require('multer');
 const cors = require('cors');
 const { OpenAI } = require('openai');
 const path = require('path');
+const { initializeDatabase } = require('./database');
 
 // Load .env from shared location outside git directories
 require('dotenv').config({ path: path.join(__dirname, '../../shared/.env') });
+
+// Initialize database
+try {
+  initializeDatabase();
+} catch (error) {
+  console.error('Failed to initialize database:', error);
+  // Continue running - database is only needed for feedback
+}
 
 const app = express();
 
@@ -201,6 +210,10 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
     });
   }
 });
+
+// Feedback route
+const feedbackRoutes = require('./routes/feedback');
+app.use('/api/feedback', feedbackRoutes);
 
 // Error handling middleware from v2.0
 app.use((error, req, res, next) => {
