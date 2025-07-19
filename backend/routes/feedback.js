@@ -5,7 +5,10 @@ const { getDatabase } = require('../database');
 
 // Validation rules
 const feedbackValidation = [
-  body('helped_decision').isBoolean().withMessage('helped_decision must be a boolean'),
+  body('helped_decision')
+    .optional({ nullable: true })
+    .isBoolean()
+    .withMessage('helped_decision must be a boolean or null'),
   body('feedback_text')
     .optional()
     .isString()
@@ -25,10 +28,10 @@ const feedbackValidation = [
     .withMessage('scan_data is required')
     .isObject()
     .withMessage('scan_data must be a valid object'),
-  // Custom validation: feedback_text required if helped_decision is false
-  body('feedback_text').custom((value, { req }) => {
-    if (req.body.helped_decision === false && !value) {
-      throw new Error('feedback_text is required when helped_decision is false');
+  // Custom validation: at least one of helped_decision or feedback_text must be provided
+  body().custom((body) => {
+    if (body.helped_decision === null && !body.feedback_text) {
+      throw new Error('Either helped_decision or feedback_text must be provided');
     }
     return true;
   })
@@ -74,7 +77,7 @@ router.post('/', feedbackValidation, (req, res) => {
 
     // Execute the insert
     const result = stmt.run(
-      helped_decision ? 1 : 0,  // SQLite uses 0/1 for boolean
+      helped_decision === null ? null : (helped_decision ? 1 : 0),  // SQLite uses 0/1 for boolean, null for undefined
       feedback_text || null,
       user_description || null,
       imageBuffer,
