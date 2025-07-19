@@ -9,9 +9,9 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
   const [isSubmitted, setIsSubmitted] = useState(false);
 
   const handleSubmit = async () => {
-    // Validate feedback text if "No" was selected
-    if (helpedDecision === false && !feedbackText.trim()) {
-      alert('Please tell us what didn\'t work');
+    // Validate that user has either selected Yes/No or entered text
+    if (helpedDecision === null && !feedbackText.trim()) {
+      alert('Please select Yes/No or provide feedback');
       return;
     }
 
@@ -20,9 +20,11 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
     try {
       // Get the backend URL based on environment
       const baseUrl = Platform.OS === 'web' 
-        ? window.location.origin 
+        ? '' // Same domain - nginx routes /api to backend
         : 'http://localhost:3000';
 
+      console.log('Submitting feedback to:', `${baseUrl}/api/feedback`);
+      
       const response = await fetch(`${baseUrl}/api/feedback`, {
         method: 'POST',
         headers: {
@@ -37,7 +39,10 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
         })
       });
 
+      console.log('Response status:', response.status);
+      
       const result = await response.json();
+      console.log('Response data:', result);
 
       if (result.success) {
         setIsSubmitted(true);
@@ -49,7 +54,8 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
       }
     } catch (error) {
       console.error('Feedback submission error:', error);
-      alert('Failed to submit feedback. Please try again.');
+      console.error('Error details:', error.message);
+      alert(`Failed to submit feedback: ${error.message}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -99,33 +105,31 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
         </TouchableOpacity>
       </View>
 
-      {helpedDecision !== null && (
-        <>
-          <TextInput
-            style={styles.textInput}
-            placeholder="Be honest — we're listening."
-            placeholderTextColor="#999"
-            value={feedbackText}
-            onChangeText={setFeedbackText}
-            multiline
-            numberOfLines={3}
-            maxLength={500}
-            editable={!isSubmitting}
-          />
+      <TextInput
+        style={styles.textInput}
+        placeholder="Tell us what worked or didn't (optional)"
+        placeholderTextColor="#999"
+        value={feedbackText}
+        onChangeText={setFeedbackText}
+        multiline
+        numberOfLines={3}
+        maxLength={500}
+        editable={!isSubmitting}
+      />
 
-          <TouchableOpacity
-            style={[
-              styles.submitButton,
-              isSubmitting && styles.disabledButton
-            ]}
-            onPress={handleSubmit}
-            disabled={isSubmitting || (helpedDecision === false && !feedbackText.trim())}
-          >
-            <Text style={styles.submitButtonText}>
-              {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
-            </Text>
-          </TouchableOpacity>
-        </>
+      {(helpedDecision !== null || feedbackText.trim()) && (
+        <TouchableOpacity
+          style={[
+            styles.submitButton,
+            isSubmitting && styles.disabledButton
+          ]}
+          onPress={handleSubmit}
+          disabled={isSubmitting || (!helpedDecision && !feedbackText.trim())}
+        >
+          <Text style={styles.submitButtonText}>
+            {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+          </Text>
+        </TouchableOpacity>
       )}
     </View>
   );

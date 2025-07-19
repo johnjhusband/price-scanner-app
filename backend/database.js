@@ -20,7 +20,7 @@ function initializeDatabase() {
   const createTableSQL = `
     CREATE TABLE IF NOT EXISTS feedback (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      helped_decision BOOLEAN NOT NULL,
+      helped_decision BOOLEAN,
       feedback_text TEXT,
       user_description TEXT,
       image_data BLOB NOT NULL,
