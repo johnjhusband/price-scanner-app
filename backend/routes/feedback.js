@@ -93,9 +93,11 @@ router.post('/', feedbackValidation, (req, res) => {
 
   } catch (error) {
     console.error('Error saving feedback:', error);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
-      error: 'Failed to save feedback'
+      error: 'Failed to save feedback',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
