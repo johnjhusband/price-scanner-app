@@ -3,6 +3,27 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const { getDatabase } = require('../database');
 
+// GET /api/feedback/health - Check if feedback system is working
+router.get('/health', (req, res) => {
+  try {
+    const db = getDatabase();
+    const count = db.prepare('SELECT COUNT(*) as count FROM feedback').get();
+    res.json({
+      success: true,
+      status: 'Feedback system operational',
+      feedbackCount: count.count,
+      databasePath: process.env.FEEDBACK_DB_PATH || './feedback.db'
+    });
+  } catch (error) {
+    console.error('Feedback health check error:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message,
+      databasePath: process.env.FEEDBACK_DB_PATH || './feedback.db'
+    });
+  }
+});
+
 // Validation rules
 const feedbackValidation = [
   body('helped_decision')
