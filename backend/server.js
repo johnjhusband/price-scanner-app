@@ -6,7 +6,15 @@ const path = require('path');
 const { initializeDatabase } = require('./database');
 
 // Load .env from shared location outside git directories
-require('dotenv').config({ path: path.join(__dirname, '../../shared/.env') });
+const envPath = path.join(__dirname, '../../shared/.env');
+console.log('Loading .env from:', envPath);
+require('dotenv').config({ path: envPath });
+
+// Log important environment variables (without exposing secrets)
+console.log('Environment check:');
+console.log('- NODE_ENV:', process.env.NODE_ENV || 'not set');
+console.log('- PORT:', process.env.PORT || 'not set');
+console.log('- FEEDBACK_DB_PATH:', process.env.FEEDBACK_DB_PATH || 'not set (will use ./feedback.db)');
 
 // Initialize database
 try {
