@@ -239,6 +239,9 @@ export default function App() {
   const [productDescription, setProductDescription] = useState('');
   const [imageBase64, setImageBase64] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  
+  const scrollViewRef = useRef(null);
+  const resultsRef = useRef(null);
 
   // Check if camera is available (v2.0 feature)
   const checkCameraAvailability = async () => {
@@ -653,6 +656,24 @@ export default function App() {
             setAnalysisResult(newResult);
             setShowFeedback(true);
             console.log('Analysis result state should be set now');
+            
+            // Scroll to results after a brief delay
+            setTimeout(() => {
+              if (resultsRef.current && scrollViewRef.current) {
+                if (Platform.OS === 'web') {
+                  // For web, use scrollIntoView
+                  resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  // For mobile, use ScrollView's scrollTo
+                  resultsRef.current.measureLayout(
+                    scrollViewRef.current.getInnerViewNode(),
+                    (x, y) => {
+                      scrollViewRef.current.scrollTo({ y: y - 20, animated: true });
+                    }
+                  );
+                }
+              }
+            }, 300);
           } else {
             throw new Error(data.error || 'Invalid response format');
           }
@@ -690,6 +711,7 @@ export default function App() {
 
   return (
     <ScrollView 
+      ref={scrollViewRef}
       style={[styles.container, { backgroundColor: brandColors.background }]}
       contentContainerStyle={styles.contentContainer}
       onDragOver={handleDragOver}
@@ -781,7 +803,15 @@ export default function App() {
             )}
             
             {analysisResult ? (
-              <View style={[styles.analysisResult, { backgroundColor: brandColors.surface }]}>
+              <View 
+                ref={(ref) => {
+                  resultsRef.current = ref;
+                  // For web, we need the actual DOM node
+                  if (Platform.OS === 'web' && ref) {
+                    resultsRef.current = ref._nativeTag || ref;
+                  }
+                }}
+                style={[styles.analysisResult, { backgroundColor: brandColors.surface }]}>
                 <Text style={[styles.resultTitle, { color: brandColors.text }]}>Analysis Results</Text>
                 
                 <View style={styles.resultItem}>

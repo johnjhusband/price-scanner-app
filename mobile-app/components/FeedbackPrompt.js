@@ -166,8 +166,8 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
   selectedButton: {
-    borderColor: brandColors.primary,
-    backgroundColor: brandColors.lightAccent,
+    borderColor: brandColors.actionBlue,
+    backgroundColor: '#F0F4FF',
   },
   buttonText: {
     fontSize: 16,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   selectedButtonText: {
-    color: brandColors.primary,
+    color: brandColors.actionBlue,
     fontWeight: '600',
   },
   textInput: {
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   submitButton: {
-    backgroundColor: brandColors.primary,
+    backgroundColor: brandColors.actionBlue,
     paddingVertical: 14,
     borderRadius: 25,
     alignItems: 'center',
@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
   successMessage: {
     fontSize: 16,
     textAlign: 'center',
-    color: brandColors.success,
+    color: brandColors.successGreen,
     fontWeight: '600',
     paddingVertical: 20,
   },
