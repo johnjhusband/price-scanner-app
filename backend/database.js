@@ -5,7 +5,23 @@ const path = require('path');
 let db;
 
 function initializeDatabase() {
-  const dbPath = process.env.FEEDBACK_DB_PATH || './feedback.db';
+  // Use environment-specific default paths if FEEDBACK_DB_PATH is not set
+  let defaultPath = './feedback.db';
+  
+  if (!process.env.FEEDBACK_DB_PATH) {
+    // Determine default path based on NODE_ENV or PORT
+    const port = process.env.PORT;
+    if (port === '3002') {
+      defaultPath = '/tmp/flippi-dev-feedback.db';  // Development
+    } else if (port === '3001') {
+      defaultPath = '/tmp/flippi-staging-feedback.db';  // Staging
+    } else if (port === '3000') {
+      defaultPath = '/tmp/flippi-feedback.db';  // Production
+    }
+    console.log(`No FEEDBACK_DB_PATH set, using default for port ${port}: ${defaultPath}`);
+  }
+  
+  const dbPath = process.env.FEEDBACK_DB_PATH || defaultPath;
   
   console.log('Initializing database at:', dbPath);
   console.log('Current working directory:', process.cwd());

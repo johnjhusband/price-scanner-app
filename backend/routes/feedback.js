@@ -3,6 +3,15 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const { getDatabase } = require('../database');
 
+// GET /api/feedback/test - Simple test endpoint
+router.get('/test', (req, res) => {
+  res.json({
+    success: true,
+    message: 'Feedback API is reachable',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // GET /api/feedback/health - Check if feedback system is working
 router.get('/health', (req, res) => {
   try {
@@ -60,10 +69,16 @@ const feedbackValidation = [
 
 // POST /api/feedback
 router.post('/', feedbackValidation, (req, res) => {
+  console.log('Feedback POST request received');
+  console.log('Request body keys:', Object.keys(req.body));
+  console.log('helped_decision type:', typeof req.body.helped_decision);
+  console.log('helped_decision value:', req.body.helped_decision);
+  
   try {
     // Check validation errors
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
+      console.error('Validation errors:', errors.array());
       return res.status(400).json({
         success: false,
         error: 'Invalid request',
