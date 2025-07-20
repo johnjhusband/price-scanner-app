@@ -59,7 +59,13 @@ app.use(cors({
   origin: true, // Allow all origins - from blue fix
   credentials: true
 }));
-app.use(express.json({ limit: '50mb' }));
+
+// Configure body parsers with increased limits
+// Using explicit body-parser to ensure limits are applied
+const { jsonParser, urlencodedParser, bodyParserLogger } = require('./middleware/bodyParser');
+app.use(bodyParserLogger);
+app.use(jsonParser);
+app.use(urlencodedParser);
 
 // Add request timing middleware from v2.0
 app.use((req, res, next) => {
