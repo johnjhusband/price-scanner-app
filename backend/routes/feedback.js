@@ -17,21 +17,28 @@ router.get('/test', (req, res) => {
 
 // GET /api/feedback/health - Check if feedback system is working
 router.get('/health', (req, res) => {
+  console.log('\n=== FEEDBACK HEALTH CHECK ===');
   try {
     const db = getDatabase();
+    console.log('Got database instance');
+    
     const count = db.prepare('SELECT COUNT(*) as count FROM feedback').get();
+    console.log('Query executed successfully, count:', count.count);
+    
     res.json({
       success: true,
       status: 'Feedback system operational',
       feedbackCount: count.count,
-      databasePath: process.env.FEEDBACK_DB_PATH || './feedback.db'
+      databasePath: '/tmp/flippi-feedback.db'
     });
   } catch (error) {
-    console.error('Feedback health check error:', error);
+    console.error('Feedback health check error:', error.message);
+    console.error('Error stack:', error.stack);
     res.status(500).json({
       success: false,
       error: error.message,
-      databasePath: process.env.FEEDBACK_DB_PATH || './feedback.db'
+      errorType: error.constructor.name,
+      databasePath: '/tmp/flippi-feedback.db'
     });
   }
 });
@@ -72,12 +79,23 @@ const feedbackValidation = [
 
 // POST /api/feedback
 router.post('/', feedbackValidation, (req, res) => {
-  console.log('Feedback POST request received');
-  console.log('Request body keys:', Object.keys(req.body));
-  console.log('helped_decision type:', typeof req.body.helped_decision);
-  console.log('helped_decision value:', req.body.helped_decision);
-  console.log('image_data length:', req.body.image_data ? req.body.image_data.length : 'missing');
-  console.log('scan_data type:', typeof req.body.scan_data);
+  console.log('\n=== FEEDBACK POST REQUEST ===');
+  console.log('Timestamp:', new Date().toISOString());
+  console.log('Request headers:', JSON.stringify(req.headers, null, 2));
+  console.log('Request body received:', req.body ? 'Yes' : 'No');
+  console.log('Request body keys:', req.body ? Object.keys(req.body) : 'No body');
+  
+  if (req.body) {
+    console.log('helped_decision:', req.body.helped_decision);
+    console.log('feedback_text length:', req.body.feedback_text ? req.body.feedback_text.length : 'not provided');
+    console.log('user_description length:', req.body.user_description ? req.body.user_description.length : 'not provided');
+    console.log('image_data length:', req.body.image_data ? req.body.image_data.length : 'MISSING');
+    console.log('scan_data:', req.body.scan_data ? 'Present' : 'MISSING');
+    
+    if (req.body.image_data) {
+      console.log('image_data first 100 chars:', req.body.image_data.substring(0, 100));
+    }
+  }
   
   try {
     // Check validation errors
@@ -100,32 +118,76 @@ router.post('/', feedbackValidation, (req, res) => {
     } = req.body;
 
     // Get database instance
-    const db = getDatabase();
+    let db;
+    try {
+      db = getDatabase();
+      console.log('Database instance obtained successfully');
+    } catch (dbError) {
+      console.error('Failed to get database instance:', dbError);
+      console.error('Database error stack:', dbError.stack);
+      return res.status(500).json({
+        success: false,
+        error: 'Database connection failed',
+        details: process.env.NODE_ENV === 'development' ? dbError.message : undefined
+      });
+    }
 
     // Prepare the insert statement
-    const stmt = db.prepare(`
-      INSERT INTO feedback (
-        helped_decision,
-        feedback_text,
-        user_description,
-        image_data,
-        scan_data
-      ) VALUES (?, ?, ?, ?, ?)
-    `);
+    let stmt;
+    try {
+      stmt = db.prepare(`
+        INSERT INTO feedback (
+          helped_decision,
+          feedback_text,
+          user_description,
+          image_data,
+          scan_data
+        ) VALUES (?, ?, ?, ?, ?)
+      `);
+      console.log('SQL statement prepared successfully');
+    } catch (prepError) {
+      console.error('Failed to prepare SQL statement:', prepError);
+      return res.status(500).json({
+        success: false,
+        error: 'Database query preparation failed',
+        details: process.env.NODE_ENV === 'development' ? prepError.message : undefined
+      });
+    }
 
     // Convert base64 to buffer for BLOB storage
-    const imageBuffer = Buffer.from(image_data, 'base64');
+    let imageBuffer;
+    try {
+      imageBuffer = Buffer.from(image_data, 'base64');
+      console.log('Image buffer created, size:', imageBuffer.length);
+    } catch (bufferError) {
+      console.error('Failed to create buffer from base64:', bufferError);
+      return res.status(400).json({
+        success: false,
+        error: 'Invalid image data format',
+        details: 'Image data must be valid base64'
+      });
+    }
 
     // Execute the insert
-    const result = stmt.run(
-      helped_decision === null ? null : (helped_decision ? 1 : 0),  // SQLite uses 0/1 for boolean, null for undefined
-      feedback_text || null,
-      user_description || null,
-      imageBuffer,
-      JSON.stringify(scan_data)
-    );
-
-    console.log(`Feedback saved with ID: ${result.lastInsertRowid}`);
+    let result;
+    try {
+      result = stmt.run(
+        helped_decision === null ? null : (helped_decision ? 1 : 0),  // SQLite uses 0/1 for boolean, null for undefined
+        feedback_text || null,
+        user_description || null,
+        imageBuffer,
+        JSON.stringify(scan_data)
+      );
+      console.log(`Feedback saved with ID: ${result.lastInsertRowid}`);
+    } catch (insertError) {
+      console.error('Failed to insert feedback:', insertError);
+      console.error('Insert error stack:', insertError.stack);
+      return res.status(500).json({
+        success: false,
+        error: 'Failed to save feedback to database',
+        details: process.env.NODE_ENV === 'development' ? insertError.message : undefined
+      });
+    }
 
     res.json({
       success: true,
