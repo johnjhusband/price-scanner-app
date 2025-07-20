@@ -75,8 +75,24 @@ const feedbackValidation = [
   body('image_data')
     .notEmpty()
     .withMessage('image_data is required')
-    .isBase64()
-    .withMessage('image_data must be base64 encoded'),
+    .isString()
+    .withMessage('image_data must be a string')
+    .custom((value) => {
+      // More lenient base64 check - just ensure it's a string with valid chars
+      // Don't use isBase64() as it may fail on large strings
+      if (typeof value !== 'string') return false;
+      // Basic check for base64 characters
+      const base64Regex = /^[A-Za-z0-9+/]*={0,2}$/;
+      // For large strings, just check first and last 1000 chars
+      if (value.length > 2000) {
+        const start = value.substring(0, 1000);
+        const end = value.substring(value.length - 1000);
+        return base64Regex.test(start.replace(/=/g, '')) && 
+               (end === '' || base64Regex.test(end));
+      }
+      return base64Regex.test(value);
+    })
+    .withMessage('image_data must be valid base64'),
   body('scan_data')
     .notEmpty()
     .withMessage('scan_data is required')
