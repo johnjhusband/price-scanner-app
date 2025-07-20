@@ -343,6 +343,38 @@ certbot certificates
 certbot renew
 ```
 
+### Nginx Configuration Updates
+
+When updating nginx configuration (e.g., to increase upload size limits):
+
+1. **Manual Update via SSH**:
+   ```bash
+   # Run the update script
+   bash /path/to/scripts/update-nginx-config.sh
+   ```
+
+2. **GitHub Actions Update**:
+   - Go to Actions tab in GitHub
+   - Select "Update Nginx Configuration" workflow
+   - Click "Run workflow"
+   - Type "yes" to confirm
+   - Click "Run workflow"
+
+3. **Manual Update**:
+   ```bash
+   # Edit nginx configs
+   sudo nano /etc/nginx/sites-available/blue.flippi.ai
+   
+   # Add after server_name line:
+   client_max_body_size 50M;
+   
+   # Test configuration
+   sudo nginx -t
+   
+   # Reload if test passes
+   sudo nginx -s reload
+   ```
+
 ## Monitoring
 
 ### Check Service Health
