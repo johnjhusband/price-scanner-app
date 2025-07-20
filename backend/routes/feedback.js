@@ -8,7 +8,9 @@ router.get('/test', (req, res) => {
   res.json({
     success: true,
     message: 'Feedback API is reachable',
-    timestamp: new Date().toISOString()
+    timestamp: new Date().toISOString(),
+    version: '2.0.1-fixed-tmp',
+    expectedDbPath: '/tmp/flippi-feedback.db'
   });
 });
 
