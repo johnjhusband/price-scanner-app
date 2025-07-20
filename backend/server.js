@@ -224,12 +224,55 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
   }
 });
 
-// Feedback route
-const feedbackRoutes = require('./routes/feedback');
-app.use('/api/feedback', feedbackRoutes);
+// Add comprehensive request logging middleware
+app.use((req, res, next) => {
+  if (req.url.startsWith('/api/feedback')) {
+    console.log('\n=== INCOMING FEEDBACK REQUEST ===');
+    console.log('Time:', new Date().toISOString());
+    console.log('Method:', req.method);
+    console.log('URL:', req.url);
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Body size:', req.headers['content-length'] || 'unknown');
+  }
+  
+  // Log response when it's done
+  const originalSend = res.send;
+  res.send = function(data) {
+    if (req.url.startsWith('/api/feedback') && res.statusCode >= 400) {
+      console.log('Response status:', res.statusCode);
+      console.log('Error response:', data);
+    }
+    originalSend.call(this, data);
+  };
+  
+  next();
+});
 
-// Error handling middleware from v2.0
+// Feedback route - wrap in try-catch
+const feedbackRoutes = require('./routes/feedback');
+app.use('/api/feedback', (req, res, next) => {
+  try {
+    feedbackRoutes(req, res, next);
+  } catch (error) {
+    console.error('ERROR in feedback routes setup:', error);
+    console.error('Stack:', error.stack);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// Error handling middleware from v2.0 - ENHANCED
 app.use((error, req, res, next) => {
+  console.error('\n=== EXPRESS ERROR HANDLER ===');
+  console.error('URL:', req.url);
+  console.error('Method:', req.method);
+  console.error('Error type:', error.constructor.name);
+  console.error('Error message:', error.message);
+  console.error('Error stack:', error.stack);
+  
   if (error instanceof multer.MulterError) {
     if (error.code === 'LIMIT_FILE_SIZE') {
       return res.status(400).json({
@@ -239,18 +282,59 @@ app.use((error, req, res, next) => {
     }
   }
   
-  console.error('Unhandled error:', error);
+  // Check if it's a body parser error
+  if (error.type === 'entity.parse.failed') {
+    console.error('Body parser error - likely JSON parsing issue');
+    return res.status(400).json({
+      error: 'Invalid request body',
+      hint: 'Please check your request format'
+    });
+  }
+  
+  // For all other errors
   res.status(500).json({
     error: 'Internal server error',
-    hint: 'Please try again later'
+    hint: 'Please try again later',
+    details: process.env.NODE_ENV === 'development' ? {
+      message: error.message,
+      type: error.constructor.name,
+      stack: error.stack
+    } : undefined
   });
+});
+
+// Process-level error handlers
+process.on('uncaughtException', (error) => {
+  console.error('\n=== UNCAUGHT EXCEPTION ===');
+  console.error('Time:', new Date().toISOString());
+  console.error('Error:', error);
+  console.error('Stack:', error.stack);
+  // Don't exit in development to see more errors
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
+  }
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('\n=== UNHANDLED REJECTION ===');
+  console.error('Time:', new Date().toISOString());
+  console.error('Reason:', reason);
+  console.error('Promise:', promise);
 });
 
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Enhanced server v2.0 running on port ${PORT}`);
   console.log(`🔑 OpenAI API Key: ${process.env.OPENAI_API_KEY ? 'Set' : 'Not set'}`);
   console.log('✨ Features: Image upload, Camera capture, Paste support, Drag & drop');
   console.log('📊 Enhanced AI analysis with authenticity and trend scoring');
+  console.log('🔍 COMPREHENSIVE ERROR LOGGING ENABLED');
+});
+
+// Handle server errors
+server.on('error', (error) => {
+  console.error('\n=== SERVER ERROR ===');
+  console.error('Error:', error);
+  console.error('Stack:', error.stack);
 });

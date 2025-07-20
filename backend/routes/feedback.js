@@ -14,6 +14,21 @@ router.get('/test', (req, res) => {
   });
 });
 
+// POST /api/feedback/echo - Echo back the request for debugging
+router.post('/echo', (req, res) => {
+  console.log('\n=== ECHO ENDPOINT ===');
+  console.log('Headers:', req.headers);
+  console.log('Body:', req.body);
+  
+  res.json({
+    success: true,
+    headers: req.headers,
+    body: req.body,
+    bodyType: typeof req.body,
+    bodyKeys: req.body ? Object.keys(req.body) : null
+  });
+});
+
 // GET /api/feedback/health - Check if feedback system is working
 router.get('/health', (req, res) => {
   console.log('\n=== FEEDBACK HEALTH CHECK ===');
@@ -200,6 +215,79 @@ router.post('/', feedbackValidation, (req, res) => {
       success: false,
       error: 'Failed to save feedback',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// POST /api/feedback/test-bypass - Test endpoint with NO validation
+router.post('/test-bypass', (req, res) => {
+  console.log('\n=== TEST BYPASS ENDPOINT HIT ===');
+  
+  try {
+    // Log everything about the request
+    console.log('Headers:', JSON.stringify(req.headers, null, 2));
+    console.log('Body exists:', !!req.body);
+    console.log('Body type:', typeof req.body);
+    console.log('Body:', JSON.stringify(req.body, null, 2).substring(0, 500) + '...');
+    
+    // Try to get database
+    let db;
+    try {
+      db = getDatabase();
+      console.log('Database obtained successfully');
+    } catch (dbErr) {
+      console.error('Database error:', dbErr.message);
+      return res.status(500).json({
+        success: false,
+        error: 'Database not available',
+        details: dbErr.message
+      });
+    }
+    
+    // Try a simple insert with minimal data
+    try {
+      const stmt = db.prepare(`
+        INSERT INTO feedback (
+          helped_decision,
+          feedback_text,
+          user_description,
+          image_data,
+          scan_data
+        ) VALUES (?, ?, ?, ?, ?)
+      `);
+      
+      const result = stmt.run(
+        1, // helped_decision = true
+        'Test bypass feedback',
+        'Test description',
+        Buffer.from('test', 'utf8'), // Small test buffer
+        JSON.stringify({ test: true })
+      );
+      
+      console.log('Test insert successful, ID:', result.lastInsertRowid);
+      
+      res.json({
+        success: true,
+        message: 'Test bypass successful',
+        id: result.lastInsertRowid
+      });
+    } catch (insertErr) {
+      console.error('Insert error:', insertErr.message);
+      console.error('Insert stack:', insertErr.stack);
+      return res.status(500).json({
+        success: false,
+        error: 'Insert failed',
+        details: insertErr.message
+      });
+    }
+    
+  } catch (error) {
+    console.error('Test bypass error:', error);
+    console.error('Stack:', error.stack);
+    res.status(500).json({
+      success: false,
+      error: 'Test bypass failed',
+      details: error.message
     });
   }
 });
