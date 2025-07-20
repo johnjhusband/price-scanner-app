@@ -5,18 +5,10 @@ const path = require('path');
 let db;
 
 function initializeDatabase() {
-  // Always use /tmp for database storage to ensure writability
-  let dbPath;
-  
-  if (process.env.FEEDBACK_DB_PATH) {
-    dbPath = process.env.FEEDBACK_DB_PATH;
-    console.log('Using FEEDBACK_DB_PATH from environment:', dbPath);
-  } else {
-    // Force use of /tmp with a unique filename
-    const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-    dbPath = `/tmp/flippi-feedback-${process.env.PORT || '3000'}-${timestamp}.db`;
-    console.log('No FEEDBACK_DB_PATH set, using /tmp path:', dbPath);
-  }
+  // ALWAYS use /tmp for database storage to ensure writability
+  // Ignore FEEDBACK_DB_PATH for now to fix the immediate issue
+  const dbPath = '/tmp/flippi-feedback.db';
+  console.log('Using fixed /tmp path:', dbPath);
   
   console.log('Initializing database at:', dbPath);
   console.log('Current working directory:', process.cwd());
