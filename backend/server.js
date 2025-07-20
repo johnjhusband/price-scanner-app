@@ -18,9 +18,14 @@ console.log('- FEEDBACK_DB_PATH:', process.env.FEEDBACK_DB_PATH || 'not set (wil
 
 // Initialize database
 try {
+  console.log('\n=== INITIALIZING DATABASE ===');
   initializeDatabase();
+  console.log('Database initialization complete\n');
 } catch (error) {
-  console.error('Failed to initialize database:', error);
+  console.error('\n=== DATABASE INITIALIZATION FAILED ===');
+  console.error('Error:', error.message);
+  console.error('Stack:', error.stack);
+  console.error('Continuing without database - feedback will not work\n');
   // Continue running - database is only needed for feedback
 }
 

@@ -1,4 +1,12 @@
-const Database = require('better-sqlite3');
+let Database;
+try {
+  Database = require('better-sqlite3');
+  console.log('better-sqlite3 module loaded successfully');
+} catch (loadError) {
+  console.error('Failed to load better-sqlite3:', loadError.message);
+  throw new Error('Database module not available. Run: npm install better-sqlite3');
+}
+
 const fs = require('fs');
 const path = require('path');
 
