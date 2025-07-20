@@ -28,11 +28,8 @@ jobs:
             ls -la /var/www/blue.flippi.ai/mobile-app/ | grep -E "dist|web-build" || true
             echo "=== Files in dist ==="
             ls -la /var/www/blue.flippi.ai/mobile-app/dist/ | head -5 || true
-            # Force PM2 to reload with new code
-            pm2 stop dev-backend
-            pm2 delete dev-backend
-            cd /var/www/blue.flippi.ai/backend
-            pm2 start server.js --name dev-backend --cwd /var/www/blue.flippi.ai/backend
+            # Reload PM2 with latest code
+            pm2 reload ecosystem.config.js --only dev-backend
             pm2 restart dev-frontend
             # Wait for services to start
             sleep 5
