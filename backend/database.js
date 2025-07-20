@@ -5,23 +5,18 @@ const path = require('path');
 let db;
 
 function initializeDatabase() {
-  // Use environment-specific default paths if FEEDBACK_DB_PATH is not set
-  let defaultPath = './feedback.db';
+  // Always use /tmp for database storage to ensure writability
+  let dbPath;
   
-  if (!process.env.FEEDBACK_DB_PATH) {
-    // Determine default path based on NODE_ENV or PORT
-    const port = process.env.PORT;
-    if (port === '3002') {
-      defaultPath = '/tmp/flippi-dev-feedback.db';  // Development
-    } else if (port === '3001') {
-      defaultPath = '/tmp/flippi-staging-feedback.db';  // Staging
-    } else if (port === '3000') {
-      defaultPath = '/tmp/flippi-feedback.db';  // Production
-    }
-    console.log(`No FEEDBACK_DB_PATH set, using default for port ${port}: ${defaultPath}`);
+  if (process.env.FEEDBACK_DB_PATH) {
+    dbPath = process.env.FEEDBACK_DB_PATH;
+    console.log('Using FEEDBACK_DB_PATH from environment:', dbPath);
+  } else {
+    // Force use of /tmp with a unique filename
+    const timestamp = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+    dbPath = `/tmp/flippi-feedback-${process.env.PORT || '3000'}-${timestamp}.db`;
+    console.log('No FEEDBACK_DB_PATH set, using /tmp path:', dbPath);
   }
-  
-  const dbPath = process.env.FEEDBACK_DB_PATH || defaultPath;
   
   console.log('Initializing database at:', dbPath);
   console.log('Current working directory:', process.cwd());
