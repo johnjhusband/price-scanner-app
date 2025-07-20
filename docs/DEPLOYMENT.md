@@ -44,53 +44,61 @@ Single Server (157.245.142.145)
 Each environment requires its own `.env` file:
 
 ```bash
+# IMPORTANT: These .env files are NOT in the git repository
+# They must be created manually on the server
+
 # /var/www/app.flippi.ai/backend/.env
 OPENAI_API_KEY=your_openai_api_key_here
 PORT=3000
 NODE_ENV=production
-FEEDBACK_DB_PATH=/var/lib/flippi/feedback.db
+# FEEDBACK_DB_PATH not set - defaults to /tmp/flippi-feedback.db
 
 # /var/www/green.flippi.ai/backend/.env
 OPENAI_API_KEY=your_openai_api_key_here
 PORT=3001
 NODE_ENV=staging
-FEEDBACK_DB_PATH=/var/lib/flippi-staging/feedback.db
+# FEEDBACK_DB_PATH not set - defaults to /tmp/flippi-feedback.db
 
 # /var/www/blue.flippi.ai/backend/.env
 OPENAI_API_KEY=your_openai_api_key_here
 PORT=3002
 NODE_ENV=development
-FEEDBACK_DB_PATH=/var/lib/flippi-dev/feedback.db
+# FEEDBACK_DB_PATH not set - defaults to /tmp/flippi-feedback.db
+
+# NOTE: The application loads .env from /var/www/shared/.env
+# But PORT is set by PM2 ecosystem.config.js
 ```
 
 ## Database Information
 
 ### SQLite Database Files
 
-Each environment has its own SQLite database for storing user feedback:
+**IMPORTANT CHANGE**: All environments now use the same location:
 
-- **Production**: `/var/lib/flippi/feedback.db`
-- **Staging**: `/var/lib/flippi-staging/feedback.db`
-- **Development**: `/var/lib/flippi-dev/feedback.db`
+- **All Environments**: `/tmp/flippi-feedback.db`
+
+This was changed due to permission issues with `/var/lib/` directories.
 
 ### Important Database Notes
 
 1. **Not in Git**: Database files are listed in `.gitignore` and never committed
 2. **Automatic Creation**: Database is created automatically on first feedback submission
-3. **Persistence**: Database files persist between code deployments
-4. **Permissions**: Database directories must be writable by the app user (www-data)
+3. **WARNING**: `/tmp` is cleared on server reboot - data is NOT persistent across reboots!
+4. **No Permission Issues**: `/tmp` is always writable
+5. **Future Work**: Move to persistent location after MVP testing
 
 ### Database Initialization
 
 The application automatically creates the database on first use. The initialization logic is in the backend code:
 
 ```javascript
-// Backend checks on startup
-if (!fs.existsSync(process.env.FEEDBACK_DB_PATH)) {
-  // Creates database with schema
-  const db = new Database(process.env.FEEDBACK_DB_PATH);
-  db.exec(`CREATE TABLE feedback (...)`);
-}
+// Current implementation (as of July 2025)
+const dbPath = '/tmp/flippi-feedback.db';
+console.log('Using fixed /tmp path:', dbPath);
+
+// Database is created automatically on first use
+const db = new Database(dbPath);
+db.exec(`CREATE TABLE IF NOT EXISTS feedback (...)`);
 ```
 
 ## Automated Deployment (GitHub Actions)
@@ -112,8 +120,13 @@ The deployment workflow (`.github/workflows/deploy-develop.yml`):
 3. Pulls latest code from branch
 4. Installs backend dependencies
 5. Builds frontend with Expo
-6. Restarts PM2 services
+6. **CRITICAL**: Uses `pm2 reload ecosystem.config.js --only [service-name]`
 7. Reloads Nginx
+
+**Lessons Learned**:
+- PM2 must use `reload` with ecosystem config, not simple `restart`
+- Environment variables are NOT loaded with `pm2 restart`
+- Always check PM2 logs after deployment completes
 
 ### For Developers
 
@@ -180,16 +193,19 @@ npx expo install react-native-web react-dom @expo/metro-runtime
 
 ### 4a. Database Initialization (First Deployment Only)
 
-The SQLite database will be automatically created on first use. To verify:
+**IMPORTANT**: Database now uses `/tmp` directory for all environments
+
+The SQLite database will be automatically created on first use:
 
 ```bash
-# Check if database directory exists
-sudo mkdir -p /var/lib/flippi-dev  # or flippi-staging, flippi
-sudo chown www-data:www-data /var/lib/flippi-dev
+# Database location: /tmp/flippi-feedback.db
+# No manual directory creation needed - /tmp is always writable
 
-# Database will be created automatically when first feedback is submitted
-# To manually verify database creation:
-ls -la /var/lib/flippi-dev/feedback.db  # Should show file after first use
+# To verify database creation after first feedback:
+ls -la /tmp/flippi-feedback.db
+
+# WARNING: /tmp is cleared on server reboot
+# Plan for data persistence in production
 ```
 
 ### 5. Build Frontend
@@ -198,15 +214,23 @@ npx expo export --platform web --output-dir dist
 ```
 
 ### 6. Restart Services
+
+**CRITICAL**: Use `reload` with ecosystem config to ensure environment variables are loaded
+
 ```bash
 # Development
-pm2 restart dev-backend dev-frontend
+cd /var/www
+pm2 reload ecosystem.config.js --only dev-backend dev-frontend
 
 # Staging
-pm2 restart staging-backend staging-frontend
+pm2 reload ecosystem.config.js --only staging-backend staging-frontend
 
 # Production
-pm2 restart prod-backend prod-frontend
+pm2 reload ecosystem.config.js --only prod-backend prod-frontend
+
+# If services fail to start, delete and recreate:
+pm2 delete dev-backend
+pm2 start ecosystem.config.js --only dev-backend
 ```
 
 ### 7. Reload Nginx
@@ -290,6 +314,47 @@ server {
 }
 ```
 
+## Common Deployment Problems & Solutions
+
+### 1. PM2 Environment Variables Not Loading
+
+**Symptoms**:
+- Backend crashes with "EADDRINUSE" error
+- Wrong PORT being used (e.g., dev using 3000 instead of 3002)
+
+**Root Cause**: `pm2 restart` doesn't reload environment variables
+
+**Solution**:
+```bash
+# Always use reload with ecosystem config
+cd /var/www
+pm2 reload ecosystem.config.js --only dev-backend
+
+# Or delete and restart
+pm2 delete dev-backend
+pm2 start ecosystem.config.js --only dev-backend
+```
+
+### 2. Database Permission Errors
+
+**Symptoms**:
+- "Internal server error" when submitting feedback
+- Cannot write to database file
+
+**Root Cause**: Original `/var/lib/flippi-*` directories not writable
+
+**Solution**: Database now uses `/tmp/flippi-feedback.db` (always writable)
+
+### 3. GitHub Actions Not Updating Code
+
+**Symptoms**:
+- Old code still running after deployment
+- Changes not reflected in API responses
+
+**Root Cause**: PM2 caching or not properly reloading
+
+**Solution**: Updated workflow to use `pm2 reload ecosystem.config.js`
+
 ## Troubleshooting
 
 ### Backend Not Responding (502 Error)
@@ -311,11 +376,15 @@ server {
    curl http://localhost:3002/health
    ```
 
-4. **Restart backend**:
+4. **Restart backend properly**:
    ```bash
    cd /var/www/blue.flippi.ai/backend
    npm install
-   pm2 restart dev-backend
+   
+   # IMPORTANT: Use ecosystem config for env vars
+   cd /var/www
+   pm2 delete dev-backend
+   pm2 start ecosystem.config.js --only dev-backend
    ```
 
 ### Frontend Shows "Index of dist/"
@@ -433,6 +502,32 @@ cp -r /etc/nginx /backup/nginx-$(date +%Y%m%d)
 4. **Load balancing for high availability**
 5. **Container-based deployment (Docker/Kubernetes)**
 6. **CI/CD pipeline with testing**
+
+## Deployment Checklist
+
+### Before Deploying
+- [ ] Test changes locally
+- [ ] Ensure .env variables are documented
+- [ ] Check if database schema changes are needed
+- [ ] Verify PM2 ecosystem config is up to date
+
+### During Deployment
+- [ ] Monitor GitHub Actions logs
+- [ ] Check PM2 logs after deployment: `pm2 logs --lines 50`
+- [ ] Verify services are running: `pm2 list`
+- [ ] Test health endpoints after deployment
+
+### After Deployment
+- [ ] Test all API endpoints
+- [ ] Verify frontend loads correctly
+- [ ] Check database connectivity (if applicable)
+- [ ] Monitor error logs for 5-10 minutes
+
+### If Things Go Wrong
+1. Check PM2 logs: `pm2 logs [service-name] --lines 100`
+2. Verify environment variables are loaded
+3. Use `pm2 reload ecosystem.config.js` NOT `pm2 restart`
+4. Check nginx error logs: `tail -f /var/log/nginx/error.log`
 
 ## Quick Reference
 

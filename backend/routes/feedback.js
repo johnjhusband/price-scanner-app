@@ -14,6 +14,7 @@ router.get('/test', (req, res) => {
   });
 });
 
+
 // GET /api/feedback/health - Check if feedback system is working
 router.get('/health', (req, res) => {
   try {
@@ -75,6 +76,8 @@ router.post('/', feedbackValidation, (req, res) => {
   console.log('Request body keys:', Object.keys(req.body));
   console.log('helped_decision type:', typeof req.body.helped_decision);
   console.log('helped_decision value:', req.body.helped_decision);
+  console.log('image_data length:', req.body.image_data ? req.body.image_data.length : 'missing');
+  console.log('scan_data type:', typeof req.body.scan_data);
   
   try {
     // Check validation errors

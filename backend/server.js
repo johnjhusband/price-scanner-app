@@ -54,7 +54,7 @@ app.use(cors({
   origin: true, // Allow all origins - from blue fix
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
 
 // Add request timing middleware from v2.0
 app.use((req, res, next) => {
