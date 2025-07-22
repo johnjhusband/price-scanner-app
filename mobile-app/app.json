@@ -5,7 +5,7 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "icon": "./assets/flippi-favicon.png",
+    "icon": "./assets/flippifavicon.png",
     "assetBundlePatterns": [
       "**/*"
     ],
@@ -22,7 +22,7 @@
       ]
     },
     "web": {
-      "favicon": "./assets/flippi-favicon.png",
+      "favicon": "./assets/flippifavicon.png",
       "bundler": "metro"
     },
     "plugins": [
