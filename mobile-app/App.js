@@ -838,7 +838,7 @@ export default function App() {
                 
                 {analysisResult.recommended_platform && (
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Platform:</Text>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Listing Platform:</Text>
                     <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.recommended_platform}</Text>
                   </View>
                 )}
