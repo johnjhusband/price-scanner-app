@@ -136,7 +136,7 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
           content: [
             {
               type: "text",
-              text: `${userPrompt ? `User says: ${userPrompt}\n\n` : ''}Analyze this item and provide: 1) What the item is, 2) Estimated resale value range, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best platform to sell it on (eBay, Poshmark, Facebook, Mercari, The RealReal, Vestiaire, etc - choose based on tier), 5) Condition assessment, 6) Authenticity likelihood (0-100% score based on visible indicators like stitching, materials, logos, tags), 7) Boca Score (0-100 score indicating how quickly this item will sell - higher score = faster sale based on current trends, demand, and market saturation). Respond with JSON that includes both structured data and contextual information: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"condition\": \"condition\", \"authenticity_score\": \"X%\", \"boca_score\": \"X\", \"market_insights\": \"free text about current market trends\", \"selling_tips\": \"specific advice for this item\", \"brand_context\": \"information about the brand if relevant\", \"seasonal_notes\": \"seasonal considerations if applicable\"}`
+              text: `${userPrompt ? `User says: ${userPrompt}\n\n` : ''}Analyze this item and provide: 1) What the item is, 2) Estimated resale value range, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best STANDARD platform to list it on (eBay, Poshmark, Facebook Marketplace, Mercari, The RealReal, Vestiaire Collective, Grailed, Depop, Etsy, Rebag, or Shopify - choose based on item type and tier), 5) Best LIVE selling platform (Whatnot, Poshmark Live, TikTok Shop, Instagram Live, Facebook Live, YouTube Live, Amazon Live, eBay Live, or Shopify Live - choose based on item appeal and audience), 6) Condition assessment, 7) Authenticity likelihood (0-100% score based on visible indicators), 8) Boca Score (0-100 score indicating how quickly this item will sell). Respond with JSON: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"recommended_live_platform\": \"live platform\", \"condition\": \"condition\", \"authenticity_score\": \"X%\", \"boca_score\": \"X\", \"market_insights\": \"current market trends\", \"selling_tips\": \"specific advice\", \"brand_context\": \"brand information if relevant\", \"seasonal_notes\": \"seasonal considerations if applicable\"}`
             },
             {
               type: "image_url",
@@ -170,6 +170,7 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
         price_range: "$10-$50",
         style_tier: "Entry",
         recommended_platform: "eBay",
+        recommended_live_platform: "Facebook Live",
         condition: "Good",
         authenticity_score: "50%",
         boca_score: "30",

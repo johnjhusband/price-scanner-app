@@ -843,6 +843,13 @@ export default function App() {
                   </View>
                 )}
                 
+                {analysisResult.recommended_live_platform && (
+                  <View style={styles.resultItem}>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Live Platform:</Text>
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.recommended_live_platform}</Text>
+                  </View>
+                )}
+                
                 {analysisResult.authenticity_score && (
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Authenticity Score:</Text>
