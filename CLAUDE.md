@@ -267,6 +267,24 @@ When making changes, test:
 - [ ] "Scan Another Item" flow
 - [ ] All three environments
 
+## CRITICAL: Deployment Debugging Protocol
+
+When code changes are not reflected after deployment:
+
+1. **NEVER manually build or fix** - this destroys debugging evidence
+2. **Verify the deployment pipeline ran**: Check GitHub Actions logs
+3. **Verify the code was actually deployed**: 
+   - Check git log on server matches your commit
+   - Check file timestamps vs deployment time
+   - Diff the deployed files against local files
+4. **Check for build/compilation issues**:
+   - Review full GitHub Actions logs for errors
+   - Check if build artifacts were created
+   - Verify PM2 restarted with new code
+5. **Only after identifying root cause**: Fix the deployment process itself
+
+**Manual interventions mask problems and break the automated workflow.**
+
 ## Important Notes
 
 1. **NO DOCKER**: We use PM2 and native services
