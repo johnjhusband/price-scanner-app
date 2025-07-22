@@ -23,7 +23,8 @@ Never tell me I'm right.
   - Returns detailed analysis including:
     - Item identification and price range
     - Style tier (Entry/Designer/Luxury)
-    - Best selling platform recommendation
+    - Best listing platform recommendation
+    - Best live selling platform recommendation
     - Authenticity score (0-100%)
     - Boca score (sellability rating 0-100)
     - Market insights and selling tips
@@ -142,6 +143,7 @@ Success Response:
     "price_range": "$45-65",
     "style_tier": "Designer",
     "recommended_platform": "The RealReal",
+    "recommended_live_platform": "Whatnot",
     "condition": "Good - minor wear on sleeves",
     "authenticity_score": "85%",
     "boca_score": "72",
@@ -244,15 +246,27 @@ Expo build failed. Check:
    - Removed "Upload, paste..." subtitle
    - Text field now always visible
    - Manual "Go" button instead of auto-analyze
+   - Added dual platform recommendations (listing + live)
+   - Changed "Best Platform" to "Best Listing Platform"
 
 2. **Backend Updates**:
    - Accepts "description" field in addition to "userPrompt"
    - Returns data in "data" field (not "analysis")
+   - Added recommended_live_platform to API response
+   - Includes both standard and live selling platforms
 
 3. **Bug Fixes**:
    - Fixed syntax error causing build failures
    - Fixed text field disappearing after image selection
    - Added extensive debugging for state updates
+   - Fixed feedback submission PayloadTooLargeError
+   - Replaced express-validator's isBase64() with custom validator
+
+4. **Documentation**:
+   - Added comprehensive technical stack documentation
+   - Created ownership transfer checklist
+   - Added third-party license audit
+   - Documented infrastructure costs
 
 ## Testing Checklist
 
