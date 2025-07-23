@@ -185,20 +185,26 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
     // Calculate buy price (resale price / 5)
     let buy_price = null;
     if (analysis.price_range) {
+      console.log('DEBUG: Original price_range:', analysis.price_range);
       // Extract numbers from price range (e.g., "$50-$150" or "$900-$1,000" -> 50 and 150 or 900 and 1000)
       // Updated regex to handle comma-separated thousands
       const priceMatch = analysis.price_range.match(/\$?([\d,]+)[-\s]+\$?([\d,]+)/);
       if (priceMatch) {
+        console.log('DEBUG: Regex matches:', priceMatch[1], priceMatch[2]);
         // Remove commas before parsing
         const lowPrice = parseInt(priceMatch[1].replace(/,/g, ''));
         const highPrice = parseInt(priceMatch[2].replace(/,/g, ''));
+        console.log('DEBUG: Parsed prices:', lowPrice, highPrice);
         const avgPrice = (lowPrice + highPrice) / 2;
         const buyPrice = Math.round(avgPrice / 5);
+        console.log('DEBUG: Calculated buy price:', buyPrice);
         buy_price = `$${buyPrice}`;
         
         // Add to analysis object
         analysis.buy_price = buy_price;
         analysis.resale_average = `$${Math.round(avgPrice)}`;
+      } else {
+        console.log('DEBUG: No price match found for:', analysis.price_range);
       }
     }
 
