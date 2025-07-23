@@ -220,16 +220,41 @@ Expo build failed. Check:
 3. Check state updates in console logs
 4. Ensure backend is running
 
-## Development Workflow
+## Development Workflow & Coding Protocol
 
-1. Work in develop branch (blue.flippi.ai)
-2. Create feature branches from develop
-3. Test thoroughly in development
-4. Create PR to develop for review
-5. After approval, merge to develop (auto-deploys)
-6. Test in development environment
-7. If stable, merge develop → staging
-8. After QA, merge staging → master
+### Issue Prioritization
+1. **Bugs first** - Always fix bugs before features
+2. **Features by LIFO** (Last In, First Out) - Work on newest features first
+3. **Respect #OnHold tags** - Don't work on issues marked with this
+
+### Development Process
+1. Work only on develop branch (blue.flippi.ai)
+2. Maximum 3 attempts to fix an issue
+3. Test everything you can test
+4. Create new issues for bugs you can't fix
+5. Auto-deployment via push to develop (GitHub Actions)
+
+### Tagging System
+- **#OnHold** - Add to issues when you CANNOT implement due to:
+  - Missing tools or capabilities (e.g., email automation)
+  - Waiting for other dependencies
+  - Explicitly instructed to hold
+  - Do NOT work on issues already tagged #OnHold
+- **#PendingTest** - Add to issues after implementation when:
+  - You've coded the solution but need human testing
+  - More extensive testing is required than you can provide
+  - The feature works but needs real-world validation
+
+### Testing Requirements
+- Test as much as you can
+- If something needs more testing, tag with #PendingTest
+- Run lint/typecheck commands when provided
+- Test in development environment first
+
+### Branch Strategy
+1. develop → blue.flippi.ai (auto-deploy on push)
+2. staging → green.flippi.ai (auto-deploy on push)
+3. master → app.flippi.ai (auto-deploy on push)
 
 ## Brand Guidelines
 
