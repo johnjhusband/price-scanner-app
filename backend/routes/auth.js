@@ -3,6 +3,8 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { body, validationResult } = require('express-validator');
 const { getDatabase } = require('../database');
+const { authLimiter, createAccountLimiter } = require('../middleware/rateLimiter');
+const logger = require('../utils/logger');
 
 const router = express.Router();
 
@@ -43,7 +45,7 @@ function generateToken(userId, email) {
 }
 
 // POST /api/auth/signup
-router.post('/signup', signupValidation, async (req, res) => {
+router.post('/signup', createAccountLimiter, signupValidation, async (req, res) => {
   try {
     // Check validation errors
     const errors = validationResult(req);
@@ -60,6 +62,7 @@ router.post('/signup', signupValidation, async (req, res) => {
     // Check if user already exists
     const existingUser = db.prepare('SELECT id FROM users WHERE email = ?').get(email);
     if (existingUser) {
+      logger.security('Signup attempt with existing email', { email, ip: req.ip });
       return res.status(409).json({ 
         success: false, 
         error: 'Email already registered' 
@@ -78,10 +81,20 @@ router.post('/signup', signupValidation, async (req, res) => {
     // Generate token
     const token = generateToken(result.lastInsertRowid, email);
 
+    // Set HttpOnly cookie
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
+    logger.info('New user registered', { userId: result.lastInsertRowid, email });
+    
     res.status(201).json({
       success: true,
       message: 'User created successfully',
-      token,
+      token, // Still send in body for backward compatibility
       user: {
         id: result.lastInsertRowid,
         email
@@ -89,7 +102,7 @@ router.post('/signup', signupValidation, async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Signup error:', error);
+    logger.error('Signup error', { error: error.message, stack: error.stack });
     res.status(500).json({ 
       success: false, 
       error: 'Failed to create user' 
@@ -98,7 +111,7 @@ router.post('/signup', signupValidation, async (req, res) => {
 });
 
 // POST /api/auth/login
-router.post('/login', loginValidation, async (req, res) => {
+router.post('/login', authLimiter, loginValidation, async (req, res) => {
   try {
     // Check validation errors
     const errors = validationResult(req);
@@ -120,6 +133,7 @@ router.post('/login', loginValidation, async (req, res) => {
     `).get(email);
 
     if (!user) {
+      logger.security('Failed login attempt - unknown email', { email, ip: req.ip });
       return res.status(401).json({ 
         success: false, 
         error: 'Invalid email or password' 
@@ -137,6 +151,7 @@ router.post('/login', loginValidation, async (req, res) => {
     // Verify password
     const isValidPassword = await bcrypt.compare(password, user.password_hash);
     if (!isValidPassword) {
+      logger.security('Failed login attempt - wrong password', { email, userId: user.id, ip: req.ip });
       return res.status(401).json({ 
         success: false, 
         error: 'Invalid email or password' 
@@ -154,10 +169,18 @@ router.post('/login', loginValidation, async (req, res) => {
     // Generate token
     const token = generateToken(user.id, user.email);
 
+    // Set HttpOnly cookie
+    res.cookie('auth_token', token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+    });
+
     res.json({
       success: true,
       message: 'Login successful',
-      token,
+      token, // Still send in body for backward compatibility
       user: {
         id: user.id,
         email: user.email
@@ -218,6 +241,21 @@ router.get('/verify', (req, res) => {
       error: 'Token verification failed' 
     });
   }
+});
+
+// POST /api/auth/logout
+router.post('/logout', (req, res) => {
+  // Clear the auth cookie
+  res.clearCookie('auth_token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict'
+  });
+  
+  res.json({
+    success: true,
+    message: 'Logged out successfully'
+  });
 });
 
 module.exports = router;

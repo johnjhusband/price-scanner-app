@@ -1,9 +1,12 @@
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
+const cookieParser = require('cookie-parser');
+const helmet = require('helmet');
 const { OpenAI } = require('openai');
 const path = require('path');
 const { initializeDatabase } = require('./database');
+const logger = require('./utils/logger');
 
 // Load .env from shared location outside git directories
 const envPath = path.join(__dirname, '../../shared/.env');
@@ -55,11 +58,28 @@ if (!process.env.OPENAI_API_KEY) {
   process.exit(1);
 }
 
+// Security headers
+app.use(helmet({
+  contentSecurityPolicy: false, // Disable CSP for now as it may interfere with CORS
+  hsts: {
+    maxAge: 31536000,
+    includeSubDomains: true,
+    preload: true
+  }
+}));
+
 // Middleware
 app.use(cors({
   origin: true, // Allow all origins - from blue fix
   credentials: true
 }));
+
+// Cookie parser for HttpOnly cookie support
+app.use(cookieParser());
+
+// Rate limiting
+const { apiLimiter, scanLimiter } = require('./middleware/rateLimiter');
+app.use('/api/', apiLimiter); // Apply general rate limit to all API routes
 
 // Configure body parsers with increased limits
 // Using explicit body-parser to ensure limits are applied
@@ -68,9 +88,16 @@ app.use(bodyParserLogger);
 app.use(jsonParser);
 app.use(urlencodedParser);
 
-// Add request timing middleware from v2.0
+// Add request timing and logging middleware
 app.use((req, res, next) => {
   req.startTime = Date.now();
+  
+  // Log response after it's sent
+  res.on('finish', () => {
+    const duration = Date.now() - req.startTime;
+    logger.logRequest(req, res, duration);
+  });
+  
   next();
 });
 
@@ -101,8 +128,8 @@ app.get('/health', (req, res) => {
 // Import optional authentication middleware
 const { optionalAuthentication } = require('./middleware/auth');
 
-// Enhanced image analysis endpoint with optional authentication
-app.post('/api/scan', optionalAuthentication, upload.single('image'), async (req, res) => {
+// Enhanced image analysis endpoint with optional authentication and rate limiting
+app.post('/api/scan', scanLimiter, optionalAuthentication, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ 
