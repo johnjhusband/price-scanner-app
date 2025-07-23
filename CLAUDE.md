@@ -222,19 +222,35 @@ Expo build failed. Check:
 
 ## Development Workflow & Coding Protocol
 
-### Issue Prioritization
-1. **Bugs first** - Always fix bugs before features
-2. **Features by LIFO** (Last In, First Out) - Work on newest features first
-3. **Respect #OnHold tags** - Don't work on issues marked with this
+### Parameters
+- Treat this like code - follow precisely
+- Only merge into develop branch and deploy to blue.flippi.ai
+- Same process for bugs and features
 
-### Development Process
-1. Work only on develop branch (blue.flippi.ai)
-2. Maximum 3 attempts to fix an issue
-3. Test everything you can test
-4. Create new issues for bugs you can't fix
-5. Auto-deployment via push to develop (GitHub Actions)
+### Priority
+1. **Work on bugs first** - in whatever priority makes sense
+2. **When all bugs complete** - start coding new features
+3. **Select highest priority feature** - if no priority exists, use LIFO (Last In First Out)
 
-### Tagging System
+### Coding Protocol
+1. **Write code** → **merge to dev branch** → **deploy to blue.flippi.ai only**
+2. **Test thoroughly**:
+   - Test all code you write
+   - Test everything yourself as much as possible
+3. **Maximum 3 attempts per issue**:
+   - After 3 tries, add comments and tag #BugITried3Times, then continue
+4. **After successful testing**:
+   - Test rest of application to ensure nothing broke
+   - If new bugs found, fix them (don't document unless you can't fix)
+   - New bugs also get max 3 attempts, then create issue with #BugITried3Times
+5. **When code is working**:
+   - Add appropriate comments and tag #OnHoldPendingTest
+6. **If cannot code feature/bug**:
+   - Add comments and tag #OnHoldPendingBetterTools
+7. **Update documentation** as needed after coding
+8. **Continue** to next bug/feature until no untagged issues remain
+
+### Complete Tagging System
 
 #### Priority Tags (in issue titles)
 - **P0** - Critical bugs affecting core functionality (HIGHEST PRIORITY)
@@ -242,29 +258,21 @@ Expo build failed. Check:
 - **P2** - Medium priority items
 - **P3** - Low priority items
 
-#### Status Tags (in comments or descriptions)
-- **#OnHold** - Add to issues when you CANNOT implement due to:
-  - Missing tools or capabilities (e.g., email automation)
-  - Waiting for other dependencies
-  - Explicitly instructed to hold
-  - Do NOT work on issues already tagged #OnHold
-- **#PendingTest** - Add to issues after implementation when:
-  - You've coded the solution but need human testing
-  - More extensive testing is required than you can provide
-  - The feature works but needs real-world validation
-- **#NeedsApproval** - Implementation complete but awaiting explicit approval
-- **#Blocked** - Cannot proceed due to dependency or external factor
+#### Status Tags (in comments)
+- **#OnHoldPendingTest** - Code is working, awaiting human test
+- **#OnHoldPendingBetterTools** - Cannot implement with current tools
+- **#BugITried3Times** - Attempted 3 times, moving on
+- **#OnHold** - Do not work on (general hold)
 
 ### Testing Requirements
-- Test as much as you can
-- If something needs more testing, tag with #PendingTest
-- Run lint/typecheck commands when provided
-- Test in development environment first
+- Test everything yourself as much as possible
+- Test the specific feature/bug thoroughly
+- Test the rest of the application for regressions
+- Only tag #OnHoldPendingTest after comprehensive testing
 
 ### Branch Strategy
-1. develop → blue.flippi.ai (auto-deploy on push)
-2. staging → green.flippi.ai (auto-deploy on push)
-3. master → app.flippi.ai (auto-deploy on push)
+- **Only use develop branch** → blue.flippi.ai (auto-deploy on push)
+- Do NOT use staging or master branches
 
 ## Brand Guidelines
 
