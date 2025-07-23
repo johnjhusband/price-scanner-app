@@ -7,7 +7,26 @@
 - Local: `http://localhost:3000`
 
 ## Authentication
-None - API is open access (no authentication required)
+
+### Public Endpoints
+- GET /health - Health check
+- POST /api/scan - Image analysis (optionally authenticated for history)
+- POST /api/auth/signup - Create new account
+- POST /api/auth/login - Login to existing account
+- GET /api/auth/verify - Verify JWT token
+
+### Protected Endpoints
+All other endpoints require JWT authentication:
+- Authorization: Bearer {token}
+
+### JWT Token Format
+```json
+{
+  "userId": 123,
+  "email": "user@example.com",
+  "exp": 1234567890
+}
+```
 
 ## Response Format
 
@@ -134,6 +153,176 @@ Analyze an image to get detailed resale price estimates using OpenAI Vision.
   "error": "Failed to analyze image"
 }
 ```
+
+### 3. Authentication
+
+#### POST /api/auth/signup
+Create a new user account.
+
+**Request:**
+```json
+{
+  "email": "user@example.com",
+  "password": "SecurePassword123"
+}
+```
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "message": "User created successfully",
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": 1,
+    "email": "user@example.com"
+  }
+}
+```
+
+**Password Requirements:**
+- Minimum 8 characters
+- At least one uppercase letter
+- At least one lowercase letter
+- At least one number
+
+#### POST /api/auth/login
+Login to existing account.
+
+**Request:**
+```json
+{
+  "email": "user@example.com",
+  "password": "SecurePassword123"
+}
+```
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "message": "Login successful",
+  "token": "eyJhbGciOiJIUzI1NiIs...",
+  "user": {
+    "id": 1,
+    "email": "user@example.com"
+  }
+}
+```
+
+#### GET /api/auth/verify
+Verify JWT token validity.
+
+**Headers:**
+```
+Authorization: Bearer {token}
+```
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "user": {
+    "id": 1,
+    "email": "user@example.com"
+  }
+}
+```
+
+### 4. Scan History (Protected)
+
+#### GET /api/scan-history
+Get user's scan history with pagination.
+
+**Query Parameters:**
+- `page` (default: 1)
+- `limit` (default: 20)
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "scans": [
+      {
+        "id": 1,
+        "item_name": "Vintage Leather Jacket",
+        "price_range": "$45-65",
+        "style_tier": "Designer",
+        "recommended_platform": "The RealReal",
+        "authenticity_score": "85%",
+        "boca_score": "72",
+        "buy_price": "$11",
+        "created_at": "2025-07-23T00:00:00.000Z"
+      }
+    ],
+    "pagination": {
+      "page": 1,
+      "limit": 20,
+      "total": 45,
+      "totalPages": 3
+    }
+  }
+}
+```
+
+#### GET /api/scan-history/:id
+Get specific scan details.
+
+#### DELETE /api/scan-history/:id
+Delete a scan from history.
+
+### 5. Analytics (Protected)
+
+#### GET /api/analytics/summary
+Get scanning summary and statistics.
+
+**Success Response:**
+```json
+{
+  "success": true,
+  "data": {
+    "totalScans": 150,
+    "platformStats": [
+      {
+        "platform": "eBay",
+        "count": 45,
+        "avg_boca_score": 68
+      }
+    ],
+    "styleTierStats": [
+      {
+        "style_tier": "Designer",
+        "count": 80,
+        "avg_resale_value": 120
+      }
+    ],
+    "highValueFinds": [...],
+    "scanTrends": [...]
+  }
+}
+```
+
+#### GET /api/analytics/search
+Search scan history with filters.
+
+**Query Parameters:**
+- `q` - Search query (searches item name, insights, tips, etc.)
+- `platform` - Filter by platform
+- `style_tier` - Filter by style tier
+- `min_price` - Minimum price filter
+- `max_price` - Maximum price filter
+- `sort` - Sort field (created_at, item_name, boca_score, resale_average)
+- `order` - Sort order (ASC, DESC)
+- `page` - Page number
+- `limit` - Results per page
+
+#### GET /api/analytics/export
+Export scan history as CSV file.
+
+**Response:**
+- Content-Type: text/csv
+- Downloads a CSV file with all user's scan history
 
 ## Request Headers
 
@@ -279,7 +468,14 @@ API version included in health check response. Future versions will support vers
 
 ## Changelog
 
-### v2.0 (Current)
+### v2.1 (Current)
+- Added JWT authentication system
+- Implemented user registration and login
+- Added scan history tracking for authenticated users
+- Created analytics endpoints with search and export
+- Enhanced database with users and scan_history tables
+
+### v2.0
 - Enhanced error handling and validation
 - Added comprehensive health endpoint
 - Improved response format consistency
@@ -294,14 +490,19 @@ API version included in health check response. Future versions will support vers
 
 ## Future Enhancements
 
-- User authentication (JWT)
-- Scan history endpoints
+- ~~User authentication (JWT)~~ ✓ Implemented
+- ~~Scan history endpoints~~ ✓ Implemented
+- ~~Analytics and search~~ ✓ Implemented
 - Batch image processing
 - WebSocket support for real-time updates
 - GraphQL endpoint
 - Rate limiting
 - API key authentication
 - Webhook notifications
+- Email verification
+- Password reset functionality
+- OAuth integration (Google, Facebook)
+- Admin dashboard endpoints
 
 ## Support
 

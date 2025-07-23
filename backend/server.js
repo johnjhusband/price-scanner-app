@@ -15,6 +15,7 @@ console.log('Environment check:');
 console.log('- NODE_ENV:', process.env.NODE_ENV || 'not set');
 console.log('- PORT:', process.env.PORT || 'not set');
 console.log('- FEEDBACK_DB_PATH:', process.env.FEEDBACK_DB_PATH || 'not set (will use ./feedback.db)');
+console.log('- JWT_SECRET:', process.env.JWT_SECRET ? 'Set' : 'Not set (using default - INSECURE)');
 
 // Initialize database
 try {
@@ -83,19 +84,25 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '2.0',
+    version: '2.1',
     features: {
       imageAnalysis: true,
       cameraSupport: true,
       pasteSupport: true,
       dragDropSupport: true,
-      enhancedAI: true
+      enhancedAI: true,
+      authentication: true,
+      scanHistory: true,
+      analytics: true
     }
   });
 });
 
-// Enhanced image analysis endpoint
-app.post('/api/scan', upload.single('image'), async (req, res) => {
+// Import optional authentication middleware
+const { optionalAuthentication } = require('./middleware/auth');
+
+// Enhanced image analysis endpoint with optional authentication
+app.post('/api/scan', optionalAuthentication, upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ 
@@ -213,13 +220,27 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
     const processingTime = Date.now() - req.startTime;
     console.log(`Analysis completed in ${processingTime}ms`);
 
+    // Save to scan history if user is authenticated
+    if (req.user) {
+      try {
+        const { saveScanToHistory } = require('./routes/scan-history');
+        const scanId = saveScanToHistory(req.user.id, analysis, userPrompt);
+        if (scanId) {
+          console.log(`Scan saved to history with ID: ${scanId} for user: ${req.user.email}`);
+        }
+      } catch (error) {
+        console.error('Failed to save scan to history:', error);
+        // Don't fail the request if history save fails
+      }
+    }
+
     res.json({ 
       success: true, 
       data: analysis,  // Frontend expects 'data' not 'analysis'
       processing: {
         fileSize: req.file.size,
         processingTime: processingTime,
-        version: '2.0'
+        version: '2.1'
       }
     });
 
@@ -256,6 +277,18 @@ app.use((req, res, next) => {
   
   next();
 });
+
+// Auth routes
+const authRoutes = require('./routes/auth');
+app.use('/api/auth', authRoutes);
+
+// Scan history routes (protected)
+const scanHistoryRoutes = require('./routes/scan-history');
+app.use('/api/scan-history', scanHistoryRoutes);
+
+// Analytics routes (protected)
+const analyticsRoutes = require('./routes/analytics');
+app.use('/api/analytics', analyticsRoutes);
 
 // Feedback route - wrap in try-catch
 const feedbackRoutes = require('./routes/feedback');
@@ -334,11 +367,17 @@ process.on('unhandledRejection', (reason, promise) => {
 // Start server
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
-  console.log(`🚀 Enhanced server v2.0 running on port ${PORT}`);
+  console.log(`🚀 Enhanced server v2.1 running on port ${PORT}`);
   console.log(`🔑 OpenAI API Key: ${process.env.OPENAI_API_KEY ? 'Set' : 'Not set'}`);
+  console.log(`🔐 JWT Secret: ${process.env.JWT_SECRET ? 'Set' : 'Using default (INSECURE!)'}`);
   console.log('✨ Features: Image upload, Camera capture, Paste support, Drag & drop');
   console.log('📊 Enhanced AI analysis with authenticity and trend scoring');
   console.log('🔍 COMPREHENSIVE ERROR LOGGING ENABLED');
+  
+  if (!process.env.JWT_SECRET) {
+    console.warn('\n⚠️  WARNING: JWT_SECRET not set! Using default secret.');
+    console.warn('⚠️  This is INSECURE for production. Set JWT_SECRET in your .env file.\n');
+  }
 });
 
 // Handle server errors

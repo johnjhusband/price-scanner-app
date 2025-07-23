@@ -47,7 +47,8 @@ function initializeDatabase() {
     console.log('Database connection established');
     
     // Create table if it doesn't exist
-    const createTableSQL = `
+    // Create feedback table
+    const createFeedbackTableSQL = `
       CREATE TABLE IF NOT EXISTS feedback (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         helped_decision BOOLEAN,
@@ -60,8 +61,26 @@ function initializeDatabase() {
       )
     `;
     
-    db.exec(createTableSQL);
+    db.exec(createFeedbackTableSQL);
     console.log('Feedback table created/verified');
+    
+    // Create users table
+    const createUsersTableSQL = `
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        email_verified BOOLEAN DEFAULT 0,
+        is_active BOOLEAN DEFAULT 1,
+        usage_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_login TIMESTAMP,
+        CHECK (email LIKE '%@%.%')
+      )
+    `;
+    
+    db.exec(createUsersTableSQL);
+    console.log('Users table created/verified');
     
     // Test the database with a simple query
     const testQuery = db.prepare('SELECT COUNT(*) as count FROM feedback').get();
