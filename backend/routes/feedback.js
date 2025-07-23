@@ -43,7 +43,7 @@ router.get('/health', (req, res) => {
       success: true,
       status: 'Feedback system operational',
       feedbackCount: count.count,
-      databasePath: '/tmp/flippi-feedback.db'
+      databasePath: process.env.FEEDBACK_DB_PATH || '/tmp/flippi-feedback.db'
     });
   } catch (error) {
     console.error('Feedback health check error:', error.message);
@@ -52,7 +52,7 @@ router.get('/health', (req, res) => {
       success: false,
       error: error.message,
       errorType: error.constructor.name,
-      databasePath: '/tmp/flippi-feedback.db'
+      databasePath: process.env.FEEDBACK_DB_PATH || '/tmp/flippi-feedback.db'
     });
   }
 });
