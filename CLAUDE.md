@@ -235,6 +235,14 @@ Expo build failed. Check:
 5. Auto-deployment via push to develop (GitHub Actions)
 
 ### Tagging System
+
+#### Priority Tags (in issue titles)
+- **P0** - Critical bugs affecting core functionality (HIGHEST PRIORITY)
+- **P1** - Important bugs or features 
+- **P2** - Medium priority items
+- **P3** - Low priority items
+
+#### Status Tags (in comments or descriptions)
 - **#OnHold** - Add to issues when you CANNOT implement due to:
   - Missing tools or capabilities (e.g., email automation)
   - Waiting for other dependencies
@@ -244,6 +252,8 @@ Expo build failed. Check:
   - You've coded the solution but need human testing
   - More extensive testing is required than you can provide
   - The feature works but needs real-world validation
+- **#NeedsApproval** - Implementation complete but awaiting explicit approval
+- **#Blocked** - Cannot proceed due to dependency or external factor
 
 ### Testing Requirements
 - Test as much as you can
