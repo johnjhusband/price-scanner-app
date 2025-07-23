@@ -64,24 +64,6 @@ function initializeDatabase() {
     db.exec(createFeedbackTableSQL);
     console.log('Feedback table created/verified');
     
-    // Create users table
-    const createUsersTableSQL = `
-      CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        email TEXT UNIQUE NOT NULL,
-        password_hash TEXT NOT NULL,
-        email_verified BOOLEAN DEFAULT 0,
-        is_active BOOLEAN DEFAULT 1,
-        usage_count INTEGER DEFAULT 0,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        last_login TIMESTAMP,
-        CHECK (email LIKE '%@%.%')
-      )
-    `;
-    
-    db.exec(createUsersTableSQL);
-    console.log('Users table created/verified');
-    
     // Test the database with a simple query
     const testQuery = db.prepare('SELECT COUNT(*) as count FROM feedback').get();
     console.log('Database test query successful, current feedback count:', testQuery.count);

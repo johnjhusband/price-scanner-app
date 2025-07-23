@@ -196,6 +196,35 @@ Pushing to branches triggers automatic deployment:
 - `staging` → green.flippi.ai
 - `master` → app.flippi.ai
 
+### GitHub Pull Request Protocol
+
+**CRITICAL: DO NOT CREATE PULL REQUESTS BETWEEN BRANCHES**
+
+- Push code to develop branch ONLY
+- Do NOT create PRs from develop → staging
+- Do NOT create PRs from staging → master
+- Do NOT create any PRs unless explicitly asked by the user
+
+The deployment flow is automatic:
+- Push to develop → auto-deploys to blue.flippi.ai
+- Push to staging → auto-deploys to green.flippi.ai  
+- Push to master → auto-deploys to app.flippi.ai
+
+Each environment is managed independently. Creating PRs between these branches disrupts the workflow and creates unnecessary work.
+
+**If you create an unauthorized PR:**
+- You are breaking the protocol
+- You are creating unplanned work
+- You are wasting time and budget
+- You are potentially disrupting the deployment pipeline
+
+**The ONLY acceptable workflow:**
+1. Make changes in develop branch
+2. Commit and push to develop
+3. Stop
+
+Remember: Just because you CAN create a PR doesn't mean you SHOULD. Follow the protocol exactly as specified.
+
 ### Manual Deployment
 See `DEPLOYMENT.md` for detailed instructions.
 
