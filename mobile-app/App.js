@@ -864,6 +864,15 @@ export default function App() {
                   </View>
                 )}
                 
+                {analysisResult.trending_score !== undefined && (
+                  <View style={styles.resultItem}>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Trending Score:</Text>
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>
+                      {analysisResult.trending_score}/100 - {analysisResult.trending_label || 'N/A'}
+                    </Text>
+                  </View>
+                )}
+                
                 {analysisResult.buy_price && (
                   <View style={[styles.suggestedPriceContainer, { backgroundColor: brandColors.primaryLight }]}>
                     <Text style={[styles.suggestedPriceLabel, { color: brandColors.primary }]}>
