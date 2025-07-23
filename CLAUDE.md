@@ -33,9 +33,11 @@ Never tell me I'm right.
   - Comprehensive error handling
   - CORS configuration for multi-domain support
 - **Dependencies**: 
+  - better-sqlite3
   - cors
   - dotenv
   - express
+  - express-validator
   - multer
   - openai
 
@@ -335,21 +337,30 @@ Expo build failed. Check:
    - Manual "Go" button instead of auto-analyze
    - Added dual platform recommendations (listing + live)
    - Changed "Best Platform" to "Best Listing Platform"
+   - Added disclaimer: "Flippi can make mistakes. Check important info."
 
 2. **Backend Updates**:
    - Accepts "description" field in addition to "userPrompt"
    - Returns data in "data" field (not "analysis")
    - Added recommended_live_platform to API response
    - Includes both standard and live selling platforms
+   - Removed authentication implementation (was on hold)
+   - Maintained feedback API with SQLite database
 
-3. **Bug Fixes**:
+3. **Infrastructure Updates**:
+   - Created ecosystem.config.js for PM2 configuration
+   - Fixed deployment workflow to use pm2 restart
+   - Re-added express-validator dependency for feedback routes
+
+4. **Bug Fixes**:
    - Fixed syntax error causing build failures
    - Fixed text field disappearing after image selection
    - Added extensive debugging for state updates
    - Fixed feedback submission PayloadTooLargeError
    - Replaced express-validator's isBase64() with custom validator
+   - Fixed deployment issues for blue.flippi.ai (502 errors)
 
-4. **Documentation**:
+5. **Documentation**:
    - Added comprehensive technical stack documentation
    - Created ownership transfer checklist
    - Added third-party license audit

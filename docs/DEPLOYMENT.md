@@ -216,25 +216,33 @@ nginx -s reload
 
 ## PM2 Configuration
 
-The PM2 ecosystem is configured at `/var/www/ecosystem.config.js`:
+The PM2 ecosystem is configured in the repository at `ecosystem.config.js`. This file is deployed to each environment directory:
 
 ```javascript
 module.exports = {
   apps: [
-    // Production
     {
-      name: 'prod-backend',
-      script: '/var/www/app.flippi.ai/backend/server.js',
-      cwd: '/var/www/app.flippi.ai/backend',
-      env: { NODE_ENV: 'production', PORT: 3000 }
+      name: 'dev-backend',
+      script: './backend/server.js',
+      cwd: '/var/www/blue.flippi.ai',
+      env: {
+        NODE_ENV: 'development',
+        PORT: 3002
+      },
+      watch: false,
+      instances: 1,
+      exec_mode: 'fork'
     },
     {
-      name: 'prod-frontend',
-      script: 'serve',
-      args: '-s /var/www/app.flippi.ai/mobile-app/dist -l 8080',
-      interpreter: 'npx'
-    },
-    // Staging and Development follow same pattern
+      name: 'dev-frontend',
+      script: 'npx',
+      args: 'serve -s /var/www/blue.flippi.ai/mobile-app/dist -l 8082',
+      cwd: '/var/www/blue.flippi.ai/mobile-app',
+      watch: false,
+      instances: 1,
+      exec_mode: 'fork'
+    }
+    // Production and Staging apps follow same pattern with different ports
   ]
 };
 ```
