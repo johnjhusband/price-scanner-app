@@ -228,9 +228,13 @@ Expo build failed. Check:
 - Same process for bugs and features
 
 ### Priority
-1. **Work on bugs first** - in whatever priority makes sense
-2. **When all bugs complete** - start coding new features
-3. **Select highest priority feature** - if no priority exists, use LIFO (Last In First Out)
+1. **Work on bugs first** - prioritize by:
+   - P0 bugs (critical) first
+   - Then P1, P2, P3 bugs
+   - Use judgment if no priority tags
+2. **When all bugs complete** - start coding new features:
+   - Select highest priority feature (P0 > P1 > P2 > P3)
+   - If no priority exists, use LIFO (Last In First Out)
 
 ### Coding Protocol
 1. **Write code** → **merge to dev branch** → **deploy to blue.flippi.ai only**
@@ -259,10 +263,21 @@ Expo build failed. Check:
 - **P3** - Low priority items
 
 #### Status Tags (in comments)
+##### Core Protocol Tags (from user)
 - **#OnHoldPendingTest** - Code is working, awaiting human test
 - **#OnHoldPendingBetterTools** - Cannot implement with current tools
 - **#BugITried3Times** - Attempted 3 times, moving on
 - **#OnHold** - Do not work on (general hold)
+
+##### Additional Status Tags (collaborative additions)
+- **#PendingTest** - Needs more extensive testing than I can provide
+- **#NeedsApproval** - Implementation complete but awaiting explicit approval
+- **#Blocked** - Cannot proceed due to dependency or external factor
+
+#### Issue Type Labels (GitHub labels)
+- **bug** - Something isn't working
+- **enhancement** - New feature or request
+- **documentation** - Improvements or additions to documentation
 
 ### Testing Requirements
 - Test everything yourself as much as possible
