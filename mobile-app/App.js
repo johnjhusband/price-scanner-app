@@ -814,12 +814,6 @@ export default function App() {
                 style={[styles.analysisResult, { backgroundColor: brandColors.surface }]}>
                 <Text style={[styles.resultTitle, { color: brandColors.text }]}>Analysis Results</Text>
                 
-                <View style={styles.disclaimer}>
-                  <Text style={[styles.disclaimerText, { color: brandColors.textSecondary }]}>
-                    Flippi can make mistakes. Check important info.
-                  </Text>
-                </View>
-                
                 <View style={styles.resultItem}>
                   <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Item:</Text>
                   <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.item_name}</Text>
