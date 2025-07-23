@@ -29,7 +29,7 @@ jobs:
             echo "=== Files in dist ==="
             ls -la /var/www/blue.flippi.ai/mobile-app/dist/ | head -5 || true
             # Reload PM2 with latest code
-            pm2 reload ecosystem.config.js --only dev-backend
+            pm2 restart dev-backend
             pm2 restart dev-frontend
             # Wait for services to start
             sleep 5
