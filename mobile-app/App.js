@@ -901,6 +901,20 @@ export default function App() {
               <Text style={{ color: brandColors.text, marginTop: 20 }}>No results yet. Press Go to analyze.</Text>
             ) : null}
             
+            {analysisResult && (
+              <Text style={{ 
+                color: brandColors.placeholder, 
+                fontSize: 12, 
+                fontStyle: 'italic',
+                textAlign: 'center',
+                marginTop: 16,
+                marginBottom: 8,
+                paddingHorizontal: 20
+              }}>
+                *Flippi can make mistakes. Check important info.
+              </Text>
+            )}
+            
             {analysisResult && showFeedback && (
               <FeedbackPrompt
                 scanData={analysisResult}
