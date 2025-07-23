@@ -13,10 +13,13 @@ const path = require('path');
 let db;
 
 function initializeDatabase() {
-  // ALWAYS use /tmp for database storage to ensure writability
-  // Ignore FEEDBACK_DB_PATH for now to fix the immediate issue
-  const dbPath = '/tmp/flippi-feedback.db';
-  console.log('Using fixed /tmp path:', dbPath);
+  // Use environment variable if set, otherwise fall back to /tmp
+  const dbPath = process.env.FEEDBACK_DB_PATH || '/tmp/flippi-feedback.db';
+  console.log('Using database path:', dbPath);
+  
+  if (!process.env.FEEDBACK_DB_PATH) {
+    console.warn('WARNING: FEEDBACK_DB_PATH not set, using temporary directory. Data may be lost on restart!');
+  }
   
   console.log('Initializing database at:', dbPath);
   console.log('Current working directory:', process.cwd());
