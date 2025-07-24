@@ -148,7 +148,6 @@ Success Response:
     "recommended_live_platform": "Whatnot",
     "condition": "Good - minor wear on sleeves",
     "authenticity_score": "85%",
-    "boca_score": "72",
     "buy_price": "$11",
     "resale_average": "$55",
     "market_insights": "Vintage leather is trending...",
