@@ -308,4 +308,50 @@ router.post('/test-bypass', (req, res) => {
   }
 });
 
+// GET /api/feedback/list - Retrieve all feedback entries
+router.get('/list', (req, res) => {
+  console.log('\n=== FEEDBACK LIST REQUEST ===');
+  
+  try {
+    const db = getDatabase();
+    
+    // Get all feedback entries, most recent first
+    const feedbackList = db.prepare(`
+      SELECT 
+        id,
+        helped_decision,
+        feedback_text,
+        user_description,
+        json_extract(scan_data, '$.item_name') as item_name,
+        json_extract(scan_data, '$.price_range') as price_range,
+        json_extract(scan_data, '$.trending_score') as trending_score,
+        json_extract(scan_data, '$.trending_label') as trending_label,
+        created_at
+      FROM feedback 
+      ORDER BY created_at DESC
+      LIMIT 100
+    `).all();
+    
+    // Convert helped_decision from 0/1 to boolean
+    const formattedList = feedbackList.map(entry => ({
+      ...entry,
+      helped_decision: entry.helped_decision === 1 ? 'Yes' : entry.helped_decision === 0 ? 'No' : 'Not answered'
+    }));
+    
+    res.json({
+      success: true,
+      count: formattedList.length,
+      feedback: formattedList
+    });
+    
+  } catch (error) {
+    console.error('Error retrieving feedback list:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve feedback',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 module.exports = router;
