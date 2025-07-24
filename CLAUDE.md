@@ -293,16 +293,9 @@ Expo build failed. Check:
 - **P3** - Low priority items
 
 #### Status Tags (in comments)
-##### Core Protocol Tags (from user)
 - **#OnHoldPendingTest** - Code is working, awaiting human test
 - **#OnHoldPendingBetterTools** - Cannot implement with current tools
 - **#BugITried3Times** - Attempted 3 times, moving on
-- **#OnHold** - Do not work on (general hold)
-
-##### Additional Status Tags (collaborative additions)
-- **#PendingTest** - Needs more extensive testing than I can provide
-- **#NeedsApproval** - Implementation complete but awaiting explicit approval
-- **#Blocked** - Cannot proceed due to dependency or external factor
 
 #### Issue Type Labels (GitHub labels)
 - **bug** - Something isn't working

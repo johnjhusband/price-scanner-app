@@ -833,7 +833,16 @@ export default function App() {
                 
                 <View style={styles.resultItem}>
                   <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Style Tier:</Text>
-                  <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.style_tier}</Text>
+                  <View style={[styles.styleTierBadge, {
+                    backgroundColor: (() => {
+                      const tier = analysisResult.style_tier.toLowerCase();
+                      if (tier === 'luxury') return componentColors.scores.high;
+                      if (tier === 'designer') return componentColors.scores.medium;
+                      return brandColors.slateBlueGray;
+                    })()
+                  }]}>
+                    <Text style={styles.styleTierBadgeText}>{analysisResult.style_tier}</Text>
+                  </View>
                 </View>
                 
                 {analysisResult.recommended_platform && (
@@ -853,25 +862,51 @@ export default function App() {
                 {analysisResult.authenticity_score && (
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Authenticity Score:</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.authenticity_score}</Text>
+                    <View>
+                      <Text style={[styles.resultValue, { 
+                        color: (() => {
+                          const score = parseInt(analysisResult.authenticity_score);
+                          if (score >= 80) return componentColors.scores.high;
+                          if (score >= 50) return componentColors.scores.medium;
+                          return componentColors.scores.low;
+                        })()
+                      }]}>{analysisResult.authenticity_score}</Text>
+                      {parseInt(analysisResult.authenticity_score) < 50 && (
+                        <Text style={[styles.warningText, { color: componentColors.scores.low }]}>
+                          ⚠️ Warning: Low authenticity - verify carefully
+                        </Text>
+                      )}
+                    </View>
                   </View>
                 )}
                 
                 {analysisResult.trending_score !== undefined && (
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Boca Score (Sellability):</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>
-                      {analysisResult.trending_score}/100 - {analysisResult.trending_label || 'N/A'}
+                    <Text style={[styles.resultValue, { 
+                      color: (() => {
+                        const score = parseInt(analysisResult.trending_score);
+                        if (score >= 80) return componentColors.scores.high;
+                        if (score >= 50) return componentColors.scores.medium;
+                        return componentColors.scores.low;
+                      })()
+                    }]}>
+                      {analysisResult.trending_score}/100 {(() => {
+                        const score = parseInt(analysisResult.trending_score);
+                        if (score >= 80) return '🔥';
+                        if (score >= 50) return '📈';
+                        return '📉';
+                      })()} - {analysisResult.trending_label || 'N/A'}
                     </Text>
                   </View>
                 )}
                 
                 {analysisResult.buy_price && (
-                  <View style={[styles.suggestedPriceContainer, { backgroundColor: brandColors.primaryLight }]}>
-                    <Text style={[styles.suggestedPriceLabel, { color: brandColors.primary }]}>
+                  <View style={[styles.suggestedPriceContainer, { backgroundColor: 'rgba(60, 140, 78, 0.1)' }]}>
+                    <Text style={[styles.suggestedPriceLabel, { color: componentColors.scores.high }]}>
                       Suggested Buy Price:
                     </Text>
-                    <Text style={[styles.suggestedPriceValue, { color: brandColors.primary }]}>
+                    <Text style={[styles.suggestedPriceValue, { color: componentColors.scores.high }]}>
                       {analysisResult.buy_price}
                     </Text>
                   </View>
@@ -1069,6 +1104,22 @@ const styles = StyleSheet.create({
   suggestedPriceValue: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  styleTierBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  styleTierBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  warningText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 4,
   },
   disclaimer: {
     backgroundColor: '#FFF3E0',
