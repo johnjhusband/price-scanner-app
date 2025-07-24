@@ -398,4 +398,23 @@ When code changes are not reflected after deployment:
 5. **Branches**: develop → staging → master
 6. **Testing**: Always test in development first
 
+# 🚨 CRITICAL SSH RULE 🚨
+
+## SSH ACCESS IS READ-ONLY FOR DEBUGGING
+
+**NEVER EVER UNDER ANY CIRCUMSTANCES:**
+- Run git commands on the server (except git log/status for checking)
+- Restart PM2 services manually
+- Run npm install or build commands
+- Make ANY changes on the server
+
+**SSH IS ONLY FOR:**
+- Checking logs (pm2 logs, git log)
+- Viewing status (pm2 status, git status)
+- Reading files for debugging
+
+**ALL FIXES MUST BE MADE IN THE REPOSITORY AND DEPLOYED AUTOMATICALLY**
+
+If deployment fails, FIX THE DEPLOYMENT WORKFLOW IN THE REPO, NOT ON THE SERVER!
+
 Remember: The app should provide quick, accurate resale valuations with a smooth user experience!
