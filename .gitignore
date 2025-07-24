@@ -51,3 +51,13 @@ feedback.db
 # Temporary files
 *.tmp
 *.temp
+
+# Homebrew installation scripts
+fix_homebrew.sh
+homebrew_install.sh
+homebrew_install.sh.bak
+install_brew.sh
+
+# Downloaded archives
+*.tar.gz
+*.zip
