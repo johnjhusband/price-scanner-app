@@ -18,7 +18,9 @@ jobs:
             # Reset any local changes to avoid merge conflicts
             git reset --hard HEAD
             git clean -fd
-            git pull origin develop
+            # Force update to match remote exactly
+            git fetch origin develop
+            git reset --hard origin/develop
             cd backend && npm install --production
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
             # Debug: Check what directory PM2 is serving from
