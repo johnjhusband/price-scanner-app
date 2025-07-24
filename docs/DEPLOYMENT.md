@@ -1,10 +1,12 @@
 # Flippi.ai Deployment Guide (Consolidated)
 
-Last Updated: July 15, 2025
+Last Updated: July 19, 2025
 
 ## Overview
 
 This is the consolidated deployment documentation for the Flippi.ai (My Thrifting Buddy) application. The app runs on a single DigitalOcean droplet with three environments using PM2 process manager and Nginx.
+
+**Important**: The application now includes SQLite database support for user feedback collection. Each environment has its own database file that persists between deployments.
 
 ## Server Architecture
 
@@ -46,16 +48,49 @@ Each environment requires its own `.env` file:
 OPENAI_API_KEY=your_openai_api_key_here
 PORT=3000
 NODE_ENV=production
+FEEDBACK_DB_PATH=/var/lib/flippi/feedback.db
 
 # /var/www/green.flippi.ai/backend/.env
 OPENAI_API_KEY=your_openai_api_key_here
 PORT=3001
 NODE_ENV=staging
+FEEDBACK_DB_PATH=/var/lib/flippi-staging/feedback.db
 
 # /var/www/blue.flippi.ai/backend/.env
 OPENAI_API_KEY=your_openai_api_key_here
 PORT=3002
 NODE_ENV=development
+FEEDBACK_DB_PATH=/var/lib/flippi-dev/feedback.db
+```
+
+## Database Information
+
+### SQLite Database Files
+
+Each environment has its own SQLite database for storing user feedback:
+
+- **Production**: `/var/lib/flippi/feedback.db`
+- **Staging**: `/var/lib/flippi-staging/feedback.db`
+- **Development**: `/var/lib/flippi-dev/feedback.db`
+
+### Important Database Notes
+
+1. **Not in Git**: Database files are listed in `.gitignore` and never committed
+2. **Automatic Creation**: Database is created automatically on first feedback submission
+3. **Persistence**: Database files persist between code deployments
+4. **Permissions**: Database directories must be writable by the app user (www-data)
+
+### Database Initialization
+
+The application automatically creates the database on first use. The initialization logic is in the backend code:
+
+```javascript
+// Backend checks on startup
+if (!fs.existsSync(process.env.FEEDBACK_DB_PATH)) {
+  // Creates database with schema
+  const db = new Database(process.env.FEEDBACK_DB_PATH);
+  db.exec(`CREATE TABLE feedback (...)`);
+}
 ```
 
 ## Automated Deployment (GitHub Actions)
@@ -143,6 +178,20 @@ npm install
 npx expo install react-native-web react-dom @expo/metro-runtime
 ```
 
+### 4a. Database Initialization (First Deployment Only)
+
+The SQLite database will be automatically created on first use. To verify:
+
+```bash
+# Check if database directory exists
+sudo mkdir -p /var/lib/flippi-dev  # or flippi-staging, flippi
+sudo chown www-data:www-data /var/lib/flippi-dev
+
+# Database will be created automatically when first feedback is submitted
+# To manually verify database creation:
+ls -la /var/lib/flippi-dev/feedback.db  # Should show file after first use
+```
+
 ### 5. Build Frontend
 ```bash
 npx expo export --platform web --output-dir dist
@@ -167,25 +216,33 @@ nginx -s reload
 
 ## PM2 Configuration
 
-The PM2 ecosystem is configured at `/var/www/ecosystem.config.js`:
+The PM2 ecosystem is configured in the repository at `ecosystem.config.js`. This file is deployed to each environment directory:
 
 ```javascript
 module.exports = {
   apps: [
-    // Production
     {
-      name: 'prod-backend',
-      script: '/var/www/app.flippi.ai/backend/server.js',
-      cwd: '/var/www/app.flippi.ai/backend',
-      env: { NODE_ENV: 'production', PORT: 3000 }
+      name: 'dev-backend',
+      script: './backend/server.js',
+      cwd: '/var/www/blue.flippi.ai',
+      env: {
+        NODE_ENV: 'development',
+        PORT: 3002
+      },
+      watch: false,
+      instances: 1,
+      exec_mode: 'fork'
     },
     {
-      name: 'prod-frontend',
-      script: 'serve',
-      args: '-s /var/www/app.flippi.ai/mobile-app/dist -l 8080',
-      interpreter: 'npx'
-    },
-    // Staging and Development follow same pattern
+      name: 'dev-frontend',
+      script: 'npx',
+      args: 'serve -s /var/www/blue.flippi.ai/mobile-app/dist -l 8082',
+      cwd: '/var/www/blue.flippi.ai/mobile-app',
+      watch: false,
+      instances: 1,
+      exec_mode: 'fork'
+    }
+    // Production and Staging apps follow same pattern with different ports
   ]
 };
 ```
@@ -294,6 +351,38 @@ certbot certificates
 certbot renew
 ```
 
+### Nginx Configuration Updates
+
+When updating nginx configuration (e.g., to increase upload size limits):
+
+1. **Manual Update via SSH**:
+   ```bash
+   # Run the update script
+   bash /path/to/scripts/update-nginx-config.sh
+   ```
+
+2. **GitHub Actions Update**:
+   - Go to Actions tab in GitHub
+   - Select "Update Nginx Configuration" workflow
+   - Click "Run workflow"
+   - Type "yes" to confirm
+   - Click "Run workflow"
+
+3. **Manual Update**:
+   ```bash
+   # Edit nginx configs
+   sudo nano /etc/nginx/sites-available/blue.flippi.ai
+   
+   # Add after server_name line:
+   client_max_body_size 50M;
+   
+   # Test configuration
+   sudo nginx -t
+   
+   # Reload if test passes
+   sudo nginx -s reload
+   ```
+
 ## Monitoring
 
 ### Check Service Health
@@ -342,7 +431,23 @@ df -h
 ## Backup and Recovery
 
 ### Database Backup
-Currently no database - all processing is stateless
+
+#### SQLite Feedback Database
+
+Each environment has its own SQLite database for user feedback:
+
+```bash
+# Production backup
+cp /var/lib/flippi/feedback.db /backup/feedback-prod-$(date +%Y%m%d).db
+
+# Staging backup
+cp /var/lib/flippi-staging/feedback.db /backup/feedback-staging-$(date +%Y%m%d).db
+
+# Development backup
+cp /var/lib/flippi-dev/feedback.db /backup/feedback-dev-$(date +%Y%m%d).db
+```
+
+**Note**: The SQLite database files are NOT stored in Git and persist between deployments.
 
 ### Code Backup
 Code is versioned in Git. To restore:

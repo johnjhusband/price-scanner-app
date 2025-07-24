@@ -8,7 +8,8 @@ export const brandColors = {
   slateBlueGray: '#4A5A5F',     // App background, icon fill
   
   // Accent & Background Colors
-  coolWhite: '#F5F6F7',         // Backgrounds, cards, CTA areas
+  coolWhite: '#F5F6F7',         // Old background color
+  pureWhite: '#FFFFFF',         // New pure white background
   actionBlue: '#3478F6',        // CTA buttons
   actionBlueHover: '#2C68D0',   // Button hover state
   successGreen: '#3C8C4E',      // Resale value success highlight
@@ -20,6 +21,13 @@ export const brandColors = {
   
   // Favicon Background
   faviconBg: '#4A5A5F',         // Favicon background color
+  
+  // App Background
+  background: '#FFFFFF',        // Pure white background for clean look
+  surface: '#FFFFFF',           // Surface color for cards and results
+  
+  // UI Elements
+  border: '#E8E8E8',            // Very light gray border for inputs and dividers
 };
 
 export const typography = {

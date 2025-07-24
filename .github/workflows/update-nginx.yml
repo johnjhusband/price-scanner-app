@@ -1,0 +1,59 @@
+name: Update Nginx Configuration
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "yes" to confirm nginx update'
+        required: true
+        default: 'no'
+
+jobs:
+  update-nginx:
+    runs-on: ubuntu-latest
+    if: github.event.inputs.confirm == 'yes'
+    
+    steps:
+    - name: Update Nginx Configuration
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.HOST }}
+        username: ${{ secrets.USERNAME }}
+        key: ${{ secrets.SSH_KEY }}
+        script: |
+          echo "=== Updating Nginx Configuration ==="
+          
+          # Backup existing configurations
+          sudo cp /etc/nginx/sites-available/app.flippi.ai /etc/nginx/sites-available/app.flippi.ai.backup-$(date +%Y%m%d-%H%M%S)
+          sudo cp /etc/nginx/sites-available/green.flippi.ai /etc/nginx/sites-available/green.flippi.ai.backup-$(date +%Y%m%d-%H%M%S)
+          sudo cp /etc/nginx/sites-available/blue.flippi.ai /etc/nginx/sites-available/blue.flippi.ai.backup-$(date +%Y%m%d-%H%M%S)
+          
+          # Function to add client_max_body_size
+          add_client_max_body_size() {
+              local config_file=$1
+              local domain=$2
+              
+              echo "Updating $domain..."
+              
+              if grep -q "client_max_body_size" "$config_file"; then
+                  sudo sed -i 's/client_max_body_size.*/client_max_body_size 50M;/g' "$config_file"
+              else
+                  sudo sed -i '/server_name/a\    client_max_body_size 50M;' "$config_file"
+              fi
+          }
+          
+          # Update each configuration
+          add_client_max_body_size "/etc/nginx/sites-available/app.flippi.ai" "app.flippi.ai"
+          add_client_max_body_size "/etc/nginx/sites-available/green.flippi.ai" "green.flippi.ai"
+          add_client_max_body_size "/etc/nginx/sites-available/blue.flippi.ai" "blue.flippi.ai"
+          
+          # Test configuration
+          sudo nginx -t
+          
+          if [ $? -eq 0 ]; then
+              sudo nginx -s reload
+              echo "✅ Nginx configuration updated successfully!"
+          else
+              echo "❌ Nginx configuration test failed!"
+              exit 1
+          fi

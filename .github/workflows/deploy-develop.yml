@@ -28,10 +28,11 @@ jobs:
             ls -la /var/www/blue.flippi.ai/mobile-app/ | grep -E "dist|web-build" || true
             echo "=== Files in dist ==="
             ls -la /var/www/blue.flippi.ai/mobile-app/dist/ | head -5 || true
-            # Just restart, don't delete
-            pm2 restart dev-backend dev-frontend
+            # Reload PM2 with latest code
+            pm2 restart dev-backend
+            pm2 restart dev-frontend
             # Wait for services to start
-            sleep 3
+            sleep 5
             # Check if backend is running
             pm2 show dev-backend || true
             curl -s http://localhost:3002/health || echo "Backend not responding"

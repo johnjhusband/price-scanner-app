@@ -23,7 +23,8 @@ Never tell me I'm right.
   - Returns detailed analysis including:
     - Item identification and price range
     - Style tier (Entry/Designer/Luxury)
-    - Best selling platform recommendation
+    - Best listing platform recommendation
+    - Best live selling platform recommendation
     - Authenticity score (0-100%)
     - Boca score (sellability rating 0-100)
     - Market insights and selling tips
@@ -32,9 +33,11 @@ Never tell me I'm right.
   - Comprehensive error handling
   - CORS configuration for multi-domain support
 - **Dependencies**: 
+  - better-sqlite3
   - cors
   - dotenv
   - express
+  - express-validator
   - multer
   - openai
 
@@ -142,6 +145,7 @@ Success Response:
     "price_range": "$45-65",
     "style_tier": "Designer",
     "recommended_platform": "The RealReal",
+    "recommended_live_platform": "Whatnot",
     "condition": "Good - minor wear on sleeves",
     "authenticity_score": "85%",
     "boca_score": "72",
@@ -194,6 +198,35 @@ Pushing to branches triggers automatic deployment:
 - `staging` → green.flippi.ai
 - `master` → app.flippi.ai
 
+### GitHub Pull Request Protocol
+
+**CRITICAL: DO NOT CREATE PULL REQUESTS BETWEEN BRANCHES**
+
+- Push code to develop branch ONLY
+- Do NOT create PRs from develop → staging
+- Do NOT create PRs from staging → master
+- Do NOT create any PRs unless explicitly asked by the user
+
+The deployment flow is automatic:
+- Push to develop → auto-deploys to blue.flippi.ai
+- Push to staging → auto-deploys to green.flippi.ai  
+- Push to master → auto-deploys to app.flippi.ai
+
+Each environment is managed independently. Creating PRs between these branches disrupts the workflow and creates unnecessary work.
+
+**If you create an unauthorized PR:**
+- You are breaking the protocol
+- You are creating unplanned work
+- You are wasting time and budget
+- You are potentially disrupting the deployment pipeline
+
+**The ONLY acceptable workflow:**
+1. Make changes in develop branch
+2. Commit and push to develop
+3. Stop
+
+Remember: Just because you CAN create a PR doesn't mean you SHOULD. Follow the protocol exactly as specified.
+
 ### Manual Deployment
 See `DEPLOYMENT.md` for detailed instructions.
 
@@ -218,16 +251,74 @@ Expo build failed. Check:
 3. Check state updates in console logs
 4. Ensure backend is running
 
-## Development Workflow
+## Development Workflow & Coding Protocol
 
-1. Work in develop branch (blue.flippi.ai)
-2. Create feature branches from develop
-3. Test thoroughly in development
-4. Create PR to develop for review
-5. After approval, merge to develop (auto-deploys)
-6. Test in development environment
-7. If stable, merge develop → staging
-8. After QA, merge staging → master
+### Parameters
+- Treat this like code - follow precisely
+- Only merge into develop branch and deploy to blue.flippi.ai
+- Same process for bugs and features
+
+### Priority
+1. **Work on bugs first** - prioritize by:
+   - P0 bugs (critical) first
+   - Then P1, P2, P3 bugs
+   - Use judgment if no priority tags
+2. **When all bugs complete** - start coding new features:
+   - Select highest priority feature (P0 > P1 > P2 > P3)
+   - If no priority exists, use LIFO (Last In First Out)
+
+### Coding Protocol
+1. **Write code** → **merge to dev branch** → **deploy to blue.flippi.ai only**
+2. **Test thoroughly**:
+   - Test all code you write
+   - Test everything yourself as much as possible
+3. **Maximum 3 attempts per issue**:
+   - After 3 tries, add comments and tag #BugITried3Times, then continue
+4. **After successful testing**:
+   - Test rest of application to ensure nothing broke
+   - If new bugs found, fix them (don't document unless you can't fix)
+   - New bugs also get max 3 attempts, then create issue with #BugITried3Times
+5. **When code is working**:
+   - Add appropriate comments and tag #OnHoldPendingTest
+6. **If cannot code feature/bug**:
+   - Add comments and tag #OnHoldPendingBetterTools
+7. **Update documentation** as needed after coding
+8. **Continue** to next bug/feature until no untagged issues remain
+
+### Complete Tagging System
+
+#### Priority Tags (in issue titles)
+- **P0** - Critical bugs affecting core functionality (HIGHEST PRIORITY)
+- **P1** - Important bugs or features 
+- **P2** - Medium priority items
+- **P3** - Low priority items
+
+#### Status Tags (in comments)
+##### Core Protocol Tags (from user)
+- **#OnHoldPendingTest** - Code is working, awaiting human test
+- **#OnHoldPendingBetterTools** - Cannot implement with current tools
+- **#BugITried3Times** - Attempted 3 times, moving on
+- **#OnHold** - Do not work on (general hold)
+
+##### Additional Status Tags (collaborative additions)
+- **#PendingTest** - Needs more extensive testing than I can provide
+- **#NeedsApproval** - Implementation complete but awaiting explicit approval
+- **#Blocked** - Cannot proceed due to dependency or external factor
+
+#### Issue Type Labels (GitHub labels)
+- **bug** - Something isn't working
+- **enhancement** - New feature or request
+- **documentation** - Improvements or additions to documentation
+
+### Testing Requirements
+- Test everything yourself as much as possible
+- Test the specific feature/bug thoroughly
+- Test the rest of the application for regressions
+- Only tag #OnHoldPendingTest after comprehensive testing
+
+### Branch Strategy
+- **Only use develop branch** → blue.flippi.ai (auto-deploy on push)
+- Do NOT use staging or master branches
 
 ## Brand Guidelines
 
@@ -244,15 +335,36 @@ Expo build failed. Check:
    - Removed "Upload, paste..." subtitle
    - Text field now always visible
    - Manual "Go" button instead of auto-analyze
+   - Added dual platform recommendations (listing + live)
+   - Changed "Best Platform" to "Best Listing Platform"
+   - Added disclaimer: "Flippi can make mistakes. Check important info."
 
 2. **Backend Updates**:
    - Accepts "description" field in addition to "userPrompt"
    - Returns data in "data" field (not "analysis")
+   - Added recommended_live_platform to API response
+   - Includes both standard and live selling platforms
+   - Removed authentication implementation (was on hold)
+   - Maintained feedback API with SQLite database
 
-3. **Bug Fixes**:
+3. **Infrastructure Updates**:
+   - Created ecosystem.config.js for PM2 configuration
+   - Fixed deployment workflow to use pm2 restart
+   - Re-added express-validator dependency for feedback routes
+
+4. **Bug Fixes**:
    - Fixed syntax error causing build failures
    - Fixed text field disappearing after image selection
    - Added extensive debugging for state updates
+   - Fixed feedback submission PayloadTooLargeError
+   - Replaced express-validator's isBase64() with custom validator
+   - Fixed deployment issues for blue.flippi.ai (502 errors)
+
+5. **Documentation**:
+   - Added comprehensive technical stack documentation
+   - Created ownership transfer checklist
+   - Added third-party license audit
+   - Documented infrastructure costs
 
 ## Testing Checklist
 
@@ -266,6 +378,24 @@ When making changes, test:
 - [ ] Error handling (large files, wrong format)
 - [ ] "Scan Another Item" flow
 - [ ] All three environments
+
+## CRITICAL: Deployment Debugging Protocol
+
+When code changes are not reflected after deployment:
+
+1. **NEVER manually build or fix** - this destroys debugging evidence
+2. **Verify the deployment pipeline ran**: Check GitHub Actions logs
+3. **Verify the code was actually deployed**: 
+   - Check git log on server matches your commit
+   - Check file timestamps vs deployment time
+   - Diff the deployed files against local files
+4. **Check for build/compilation issues**:
+   - Review full GitHub Actions logs for errors
+   - Check if build artifacts were created
+   - Verify PM2 restarted with new code
+5. **Only after identifying root cause**: Fix the deployment process itself
+
+**Manual interventions mask problems and break the automated workflow.**
 
 ## Important Notes
 

@@ -50,19 +50,12 @@ const styles = StyleSheet.create({
   button: {
     paddingHorizontal: parseInt(buttonStyles.padding.horizontal),
     paddingVertical: parseInt(buttonStyles.padding.vertical),
-    borderRadius: parseInt(buttonStyles.borderRadius),
+    borderRadius: 12, // Increased from 8px for more modern look
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: parseInt(buttonStyles.minHeight),
     minWidth: parseInt(buttonStyles.minWidth),
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.1,
-    shadowRadius: 3.84,
-    elevation: 5,
+    // Removed shadows for flat design
   },
   primaryButton: {
     backgroundColor: buttonStyles.primary.backgroundColor,
@@ -75,9 +68,9 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     fontFamily: typography.fontFamily,
-    fontWeight: typography.weights.medium,
+    fontWeight: typography.weights.semiBold,
     fontSize: 14,
-    letterSpacing: 0.5,
+    letterSpacing: 1,
   },
   primaryText: {
     color: buttonStyles.primary.color,

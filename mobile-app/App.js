@@ -6,6 +6,7 @@ import { Camera } from 'expo-camera';
 // Import brand components and theme
 import FlippiLogo from './components/FlippiLogo';
 import BrandButton from './components/BrandButton';
+import FeedbackPrompt from './components/FeedbackPrompt';
 import { brandColors, typography, componentColors } from './theme/brandColors';
 
 const API_URL = Platform.OS === 'web' 
@@ -236,6 +237,11 @@ export default function App() {
   const [hasCamera, setHasCamera] = useState(true);
   const [isDragOver, setIsDragOver] = useState(false);
   const [productDescription, setProductDescription] = useState('');
+  const [imageBase64, setImageBase64] = useState(null);
+  const [showFeedback, setShowFeedback] = useState(false);
+  
+  const scrollViewRef = useRef(null);
+  const resultsRef = useRef(null);
 
   // Check if camera is available (v2.0 feature)
   const checkCameraAvailability = async () => {
@@ -581,11 +587,23 @@ export default function App() {
     try {
       const formData = new FormData();
       
+      let base64Data;
+      
       if (Platform.OS === 'web') {
         // Convert base64 to blob for web
         const response = await fetch(image);
         const blob = await response.blob();
         formData.append('image', blob, 'image.jpg');
+        
+        // Also convert to base64 for feedback storage
+        const reader = new FileReader();
+        base64Data = await new Promise((resolve) => {
+          reader.onloadend = () => {
+            const base64 = reader.result.split(',')[1]; // Remove data:image/jpeg;base64, prefix
+            resolve(base64);
+          };
+          reader.readAsDataURL(blob);
+        });
       } else {
         // Mobile
         formData.append('image', {
@@ -593,7 +611,22 @@ export default function App() {
           type: 'image/jpeg',
           name: 'photo.jpg',
         });
+        
+        // Convert to base64 for feedback storage
+        const response = await fetch(image);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        base64Data = await new Promise((resolve) => {
+          reader.onloadend = () => {
+            const base64 = reader.result.split(',')[1];
+            resolve(base64);
+          };
+          reader.readAsDataURL(blob);
+        });
       }
+      
+      // Store base64 for feedback
+      setImageBase64(base64Data);
       
       // Add description if provided
       if (productDescription.trim()) {
@@ -621,7 +654,26 @@ export default function App() {
             // Create a new object to ensure React detects the change
             const newResult = { ...data.data };
             setAnalysisResult(newResult);
+            setShowFeedback(true);
             console.log('Analysis result state should be set now');
+            
+            // Scroll to results after a brief delay
+            setTimeout(() => {
+              if (resultsRef.current && scrollViewRef.current) {
+                if (Platform.OS === 'web') {
+                  // For web, use scrollIntoView
+                  resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                  // For mobile, use ScrollView's scrollTo
+                  resultsRef.current.measureLayout(
+                    scrollViewRef.current.getInnerViewNode(),
+                    (x, y) => {
+                      scrollViewRef.current.scrollTo({ y: y - 20, animated: true });
+                    }
+                  );
+                }
+              }
+            }, 300);
           } else {
             throw new Error(data.error || 'Invalid response format');
           }
@@ -649,6 +701,8 @@ export default function App() {
     setAnalysisResult(null);
     setIsLoading(false);
     setProductDescription('');
+    setImageBase64(null);
+    setShowFeedback(false);
   };
 
   if (showCamera) {
@@ -657,12 +711,25 @@ export default function App() {
 
   return (
     <ScrollView 
+      ref={scrollViewRef}
       style={[styles.container, { backgroundColor: brandColors.background }]}
       contentContainerStyle={styles.contentContainer}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
     >
+      {/* Environment Banner - Only show in non-production */}
+      {Platform.OS === 'web' && window.location.hostname === 'blue.flippi.ai' && (
+        <View style={styles.environmentBanner}>
+          <Text style={styles.environmentText}>DEVELOPMENT ENVIRONMENT</Text>
+        </View>
+      )}
+      {Platform.OS === 'web' && window.location.hostname === 'green.flippi.ai' && (
+        <View style={styles.environmentBannerStaging}>
+          <Text style={styles.environmentText}>STAGING ENVIRONMENT</Text>
+        </View>
+      )}
+      
       <View style={styles.content}>
         <FlippiLogo />
         <Text style={[styles.title, { color: brandColors.text }]}>
@@ -736,7 +803,15 @@ export default function App() {
             )}
             
             {analysisResult ? (
-              <View style={[styles.analysisResult, { backgroundColor: brandColors.surface }]}>
+              <View 
+                ref={(ref) => {
+                  resultsRef.current = ref;
+                  // For web, we need the actual DOM node
+                  if (Platform.OS === 'web' && ref) {
+                    resultsRef.current = ref._nativeTag || ref;
+                  }
+                }}
+                style={[styles.analysisResult, { backgroundColor: brandColors.surface }]}>
                 <Text style={[styles.resultTitle, { color: brandColors.text }]}>Analysis Results</Text>
                 
                 <View style={styles.resultItem}>
@@ -763,8 +838,15 @@ export default function App() {
                 
                 {analysisResult.recommended_platform && (
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Platform:</Text>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Listing Platform:</Text>
                     <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.recommended_platform}</Text>
+                  </View>
+                )}
+                
+                {analysisResult.recommended_live_platform && (
+                  <View style={styles.resultItem}>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Live Platform:</Text>
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.recommended_live_platform}</Text>
                   </View>
                 )}
                 
@@ -775,10 +857,12 @@ export default function App() {
                   </View>
                 )}
                 
-                {analysisResult.boca_score && (
+                {analysisResult.trending_score !== undefined && (
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Boca Score (Sellability):</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.boca_score}/100</Text>
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>
+                      {analysisResult.trending_score}/100 - {analysisResult.trending_label || 'N/A'}
+                    </Text>
                   </View>
                 )}
                 
@@ -814,6 +898,29 @@ export default function App() {
             ) : null}
             
             {analysisResult && (
+              <Text style={{ 
+                color: brandColors.placeholder, 
+                fontSize: 12, 
+                fontStyle: 'italic',
+                textAlign: 'center',
+                marginTop: 16,
+                marginBottom: 8,
+                paddingHorizontal: 20
+              }}>
+                *Flippi can make mistakes. Check important info.
+              </Text>
+            )}
+            
+            {analysisResult && showFeedback && (
+              <FeedbackPrompt
+                scanData={analysisResult}
+                userDescription={productDescription}
+                imageData={imageBase64}
+                onComplete={() => setShowFeedback(false)}
+              />
+            )}
+            
+            {analysisResult && (
               <BrandButton
                 title="Scan Another Item"
                 onPress={resetApp}
@@ -835,6 +942,22 @@ const styles = StyleSheet.create({
   contentContainer: {
     flexGrow: 1,
   },
+  environmentBanner: {
+    backgroundColor: '#2196F3',
+    padding: 8,
+    alignItems: 'center',
+  },
+  environmentBannerStaging: {
+    backgroundColor: '#4CAF50',
+    padding: 8,
+    alignItems: 'center',
+  },
+  environmentText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
   content: {
     flex: 1,
     alignItems: 'center',
@@ -843,7 +966,8 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: typography.weights.bold,
+    fontFamily: typography.fontFamily,
     marginTop: 20,
     marginBottom: 20,
     textAlign: 'center',
@@ -852,23 +976,23 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400,
     alignItems: 'center',
-    marginTop: 20,
+    marginTop: 10,
   },
   resultContainer: {
     width: '100%',
     alignItems: 'center',
   },
   actionButton: {
-    marginVertical: 10,
+    marginVertical: 5,
     width: '100%',
   },
   dropZone: {
     width: '100%',
     minHeight: 150,
     borderWidth: 2,
-    borderColor: '#ddd',
+    borderColor: brandColors.border,
     borderStyle: 'dashed',
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 20,
@@ -946,6 +1070,19 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
   },
+  disclaimer: {
+    backgroundColor: '#FFF3E0',
+    padding: 12,
+    marginBottom: 15,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FFE0B2',
+  },
+  disclaimerText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+    textAlign: 'center',
+  },
   resetButton: {
     marginTop: 10,
     width: '100%',
@@ -980,7 +1117,7 @@ const styles = StyleSheet.create({
     width: '100%',
     padding: 12,
     borderWidth: 1,
-    borderRadius: 8,
+    borderRadius: 12,
     fontSize: 16,
     marginBottom: 15,
     minHeight: 80,
