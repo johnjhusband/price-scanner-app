@@ -89,7 +89,7 @@ const EnterScreen = () => {
           </View>
           
           <Text style={styles.socialProof}>
-            Trusted by 10,000+ resellers making smarter decisions
+            Flippi uses AI to analyze pricing trends from 15+ resale marketplaces—built to help sellers move smarter and faster.
           </Text>
         </View>
         
