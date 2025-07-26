@@ -387,6 +387,17 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Promise:', promise);
 });
 
+// Serve legal pages
+app.get('/terms', (req, res) => {
+  const path = require('path');
+  res.sendFile(path.join(__dirname, '../mobile-app/terms.html'));
+});
+
+app.get('/privacy', (req, res) => {
+  const path = require('path');
+  res.sendFile(path.join(__dirname, '../mobile-app/privacy.html'));
+});
+
 // Start server
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {

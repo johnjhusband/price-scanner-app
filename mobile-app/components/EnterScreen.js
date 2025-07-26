@@ -153,7 +153,7 @@ const EnterScreen = () => {
             style={styles.link}
             onPress={() => {
               if (Platform.OS === 'web') {
-                window.open('https://app.flippi.ai/terms', '_blank');
+                window.open('/terms', '_blank');
               }
             }}
           >
@@ -164,7 +164,7 @@ const EnterScreen = () => {
             style={styles.link}
             onPress={() => {
               if (Platform.OS === 'web') {
-                window.open('https://app.flippi.ai/privacy', '_blank');
+                window.open('/privacy', '_blank');
               }
             }}
           >
