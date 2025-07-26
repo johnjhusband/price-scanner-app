@@ -180,7 +180,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
   if (hasPermission === null) {
     return (
       <View style={[styles.cameraContainer, { backgroundColor: brandColors.background }]}>
-        <ActivityIndicator size="large" color={brandColors.primary} />
+        <ActivityIndicator size="large" color={brandColors.charcoalGray} />
         <Text style={[styles.cameraText, { color: brandColors.text }]}>Initializing camera...</Text>
       </View>
     );
@@ -762,7 +762,7 @@ export default function App() {
   if (authLoading && Platform.OS === 'web') {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={brandColors.primary} />
+        <ActivityIndicator size="large" color={brandColors.charcoalGray} />
       </View>
     );
   }
@@ -872,7 +872,7 @@ export default function App() {
             
             {isLoading && (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={brandColors.primary} />
+                <ActivityIndicator size="large" color={brandColors.charcoalGray} />
                 <Text style={[styles.loadingText, { color: brandColors.text }]}>
                   Analyzing image...
                 </Text>
@@ -1294,7 +1294,7 @@ const styles = StyleSheet.create({
   exitButton: {
     paddingHorizontal: 12,
     paddingVertical: 4,
-    backgroundColor: brandColors.charcoalGray,
+    backgroundColor: brandColors.deepTeal,
     borderRadius: 4,
     marginLeft: 8,
   },

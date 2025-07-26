@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   submitButton: {
-    backgroundColor: brandColors.actionBlue,
+    backgroundColor: brandColors.deepTeal,
     paddingVertical: 14,
     borderRadius: 25,
     alignItems: 'center',

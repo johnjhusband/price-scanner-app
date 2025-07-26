@@ -218,16 +218,16 @@ h1, .headline {
 }
 
 .score-badge.high {
-  background-color: rgba(60, 140, 78, 0.1);
-  color: #3C8C4E;
+  background-color: rgba(63, 89, 84, 0.1);
+  color: #3F5954;
 }
 
 .score-badge.medium {
-  background-color: rgba(245, 124, 0, 0.1);
-  color: #F57C00;
+  background-color: rgba(200, 168, 99, 0.1);
+  color: #C8A863;
 }
 
 .score-badge.low {
-  background-color: rgba(211, 47, 47, 0.1);
-  color: #D32F2F;
+  background-color: rgba(214, 198, 181, 0.1);
+  color: #D6C6B5;
 } 
