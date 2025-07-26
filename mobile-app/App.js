@@ -947,7 +947,15 @@ export default function App() {
                           if (score >= 50) return componentColors.scores.medium;
                           return componentColors.scores.low;
                         })()
-                      }]}>{analysisResult.authenticity_score}</Text>
+                      }]}>
+                        {(() => {
+                          const score = parseInt(analysisResult.authenticity_score);
+                          if (score >= 80) return '✓ ';
+                          if (score >= 50) return '◐ ';
+                          return '○ ';
+                        })()}
+                        {analysisResult.authenticity_score}
+                      </Text>
                       {parseInt(analysisResult.authenticity_score) < 50 && (
                         <Text style={[styles.warningText, { color: componentColors.scores.low }]}>
                           ⚠️ Warning: Low authenticity - verify carefully

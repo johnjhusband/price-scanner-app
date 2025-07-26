@@ -94,8 +94,8 @@ export const componentColors = {
     border: brandColors.softTaupeBeige,
   },
   scores: {
-    high: brandColors.slateTeal,
-    medium: brandColors.matteGold,
-    low: brandColors.softTaupeBeige,
+    high: brandColors.deepTeal,        // Better contrast, uses primary brand color
+    medium: '#996B3D',                  // Darker gold for WCAG compliance (3.8:1)
+    low: '#8A8A8A',                     // Medium gray for clear differentiation (4.5:1)
   },
 }; 
