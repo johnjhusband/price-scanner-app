@@ -29,32 +29,22 @@ const EnterScreen = () => {
           Know where to sell. Know what to pay.
         </Text>
         
-        {/* Platform Section */}
-        <View style={styles.platformSection}>
-          <Text style={styles.platformTitle}>
-            Best place to sell from all platforms
-          </Text>
-          
-          <View style={styles.platformGrid}>
-            {/* Regular Platforms */}
-            <View style={styles.platformColumn}>
-              <Text style={styles.platformCategory}>Marketplaces</Text>
-              <Text style={styles.platformList}>
-                eBay • Mercari • Poshmark{'\n'}
-                Depop • TheRealReal • Vestiaire{'\n'}
-                Grailed • StockX • GOAT
-              </Text>
-            </View>
-            
-            {/* Live Platforms */}
-            <View style={styles.platformColumn}>
-              <Text style={styles.platformCategory}>Live Selling</Text>
-              <Text style={styles.platformList}>
-                Whatnot • Instagram Live{'\n'}
-                TikTok Shop • Facebook Live{'\n'}
-                YouTube Live • Poshmark Live
-              </Text>
-            </View>
+        {/* Value Propositions */}
+        <View style={styles.valueProps}>
+          <View style={styles.valueProp}>
+            <Text style={styles.valueIcon}>💰</Text>
+            <Text style={styles.valueTitle}>Accurate Pricing</Text>
+            <Text style={styles.valueDesc}>Know the real value</Text>
+          </View>
+          <View style={styles.valueProp}>
+            <Text style={styles.valueIcon}>🔍</Text>
+            <Text style={styles.valueTitle}>Authenticity Scores</Text>
+            <Text style={styles.valueDesc}>Avoid fake items</Text>
+          </View>
+          <View style={styles.valueProp}>
+            <Text style={styles.valueIcon}>📈</Text>
+            <Text style={styles.valueTitle}>Platform Match</Text>
+            <Text style={styles.valueDesc}>Maximize your profit</Text>
           </View>
         </View>
         
@@ -83,13 +73,47 @@ const EnterScreen = () => {
               <View style={styles.googleLogo}>
                 <Text style={styles.googleG}>G</Text>
               </View>
-              <Text style={styles.googleButtonText}>Enter with Google</Text>
+              <Text style={styles.googleButtonText}>Start Your First Valuation</Text>
             </View>
           </TouchableOpacity>
           
-          <Text style={styles.securityNote}>
-            Free to use • No credit card required
+          <View style={styles.trustIndicators}>
+            <Text style={styles.trustItem}>✓ 30-second setup</Text>
+            <Text style={styles.trustItem}>✓ No credit card</Text>
+            <Text style={styles.trustItem}>✓ Cancel anytime</Text>
+          </View>
+          
+          <Text style={styles.socialProof}>
+            Trusted by 10,000+ resellers making smarter decisions
           </Text>
+        </View>
+        
+        {/* Platform Section - Moved below login */}
+        <View style={styles.platformSection}>
+          <Text style={styles.platformTitle}>
+            Works with 15+ major reselling platforms
+          </Text>
+          
+          <View style={styles.platformLogoGrid}>
+            <View style={styles.platformLogo}>
+              <Text style={styles.logoText}>eBay</Text>
+            </View>
+            <View style={styles.platformLogo}>
+              <Text style={styles.logoText}>Poshmark</Text>
+            </View>
+            <View style={styles.platformLogo}>
+              <Text style={styles.logoText}>Mercari</Text>
+            </View>
+            <View style={styles.platformLogo}>
+              <Text style={styles.logoText}>Whatnot</Text>
+            </View>
+            <View style={styles.platformLogo}>
+              <Text style={styles.logoText}>Depop</Text>
+            </View>
+            <View style={styles.platformLogo}>
+              <Text style={styles.logoText}>TheRealReal</Text>
+            </View>
+          </View>
         </View>
       </ScrollView>
       
@@ -145,7 +169,8 @@ const styles = StyleSheet.create({
     backgroundColor: brandColors.softCream,
     padding: 30,
     borderRadius: 12,
-    marginBottom: 30,
+    marginTop: 40, // Space from login section
+    marginBottom: 40,
     width: Platform.OS === 'web' ? '90%' : '100%',
     maxWidth: 900, // Generous limit
   },
@@ -177,25 +202,87 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   heroImageContainer: {
-    width: Platform.OS === 'web' ? '70%' : '100%',
-    maxWidth: 800,
-    height: Platform.OS === 'web' ? 400 : 300,
-    backgroundColor: brandColors.offWhite,
-    borderRadius: 12,
-    marginBottom: 40, // More space below image
-    marginTop: 20, // Space above image
+    width: Platform.OS === 'web' ? '100%' : '100%',
+    maxWidth: 600, // iPhone mockup doesn't need to be huge
+    height: Platform.OS === 'web' ? 700 : 400,
+    marginBottom: 50,
+    marginTop: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 5,
     overflow: 'hidden',
   },
   heroImage: {
     width: '100%',
     height: '100%',
+  },
+  valueProps: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    width: Platform.OS === 'web' ? '80%' : '100%',
+    maxWidth: 700,
+    marginTop: 40,
+    marginBottom: 40,
+  },
+  valueProp: {
+    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: 10,
+  },
+  valueIcon: {
+    fontSize: 32,
+    marginBottom: 10,
+  },
+  valueTitle: {
+    fontSize: 16,
+    fontWeight: typography.weights.semiBold,
+    color: brandColors.deepTeal,
+    marginBottom: 5,
+    textAlign: 'center',
+  },
+  valueDesc: {
+    fontSize: 13,
+    color: brandColors.slateTeal,
+    textAlign: 'center',
+  },
+  trustIndicators: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginTop: 20,
+    gap: 20,
+  },
+  trustItem: {
+    fontSize: 14,
+    color: brandColors.slateTeal,
+  },
+  socialProof: {
+    fontSize: 14,
+    color: brandColors.mutedGraphite,
+    marginTop: 15,
+    marginBottom: 20,
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  platformLogoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 15,
+    marginTop: 20,
+  },
+  platformLogo: {
+    backgroundColor: brandColors.offWhite,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: brandColors.softTaupeBeige,
+    minWidth: 120,
+    alignItems: 'center',
+  },
+  logoText: {
+    fontSize: 14,
+    fontWeight: typography.weights.medium,
+    color: brandColors.slateTeal,
   },
   enterSection: {
     alignItems: 'center',
