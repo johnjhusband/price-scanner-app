@@ -24,13 +24,15 @@ const EnterScreen = () => {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
-        <FlippiLogo size="xlarge" />
-        
-        <Text style={styles.tagline}>Never Over Pay</Text>
-        
-        <Text style={styles.subtitle}>
-          Find the best price. Pick the best platform.
-        </Text>
+        <View style={styles.headerSection}>
+          <FlippiLogo size="xlarge" />
+          
+          <Text style={styles.tagline}>Never Over Pay</Text>
+          
+          <Text style={styles.subtitle}>
+            Find the best price. Pick the best platform.
+          </Text>
+        </View>
         
         {/* Limited Time Offer */}
         <TouchableOpacity 
@@ -176,8 +178,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'flex-start', // Start from top instead of center
     padding: Platform.OS === 'web' ? 40 : 20,
-    paddingTop: Platform.OS === 'web' ? 80 : 40, // More top space to prevent cutoff
+    paddingTop: 0, // Header section handles top padding
     paddingBottom: 100, // Space for footer
+  },
+  headerSection: {
+    width: '100%',
+    alignItems: 'center',
+    paddingHorizontal: Platform.OS === 'web' ? 40 : 20,
+    paddingTop: Platform.OS === 'web' ? 80 : 40,
+    paddingBottom: 30,
+    marginBottom: 10,
+    // Subtle luxury gradient - very soft transition
+    backgroundColor: brandColors.background,
+    ...(Platform.OS === 'web' && {
+      background: `linear-gradient(180deg, rgba(251, 248, 242, 0.4) 0%, rgba(243, 239, 234, 0.2) 50%, transparent 100%)`,
+    }),
   },
   tagline: {
     fontSize: 28,
