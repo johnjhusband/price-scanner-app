@@ -31,7 +31,7 @@ const EnterScreen = () => {
         
         {/* Limited Time Offer */}
         <View style={styles.offerBanner}>
-          <Text style={styles.offerText}>🎉 FREE for a limited time - No credit card required</Text>
+          <Text style={styles.offerText}>FREE for a limited time - No credit card required</Text>
         </View>
         
         {/* Value Propositions */}
@@ -57,7 +57,7 @@ const EnterScreen = () => {
         {Platform.OS === 'web' && (
           <View style={styles.heroImageContainer}>
             <Image 
-              source={require('../assets/FLIPPISHOT.png')}
+              source={require('../assets/flippiapp2.png')}
               style={styles.heroImage}
               resizeMode="contain"
             />
@@ -78,7 +78,7 @@ const EnterScreen = () => {
               <View style={styles.googleLogo}>
                 <Text style={styles.googleG}>G</Text>
               </View>
-              <Text style={styles.googleButtonText}>Start Your First Valuation</Text>
+              <Text style={styles.googleButtonText}>Login with Google</Text>
             </View>
           </TouchableOpacity>
           
@@ -89,7 +89,7 @@ const EnterScreen = () => {
           </View>
           
           <Text style={styles.socialProof}>
-            Flippi uses AI to analyze pricing trends from 15+ resale marketplaces—built to help sellers move smarter and faster.
+            Flippi uses AI to analyze pricing trends from 15+ resale marketplaces.
           </Text>
         </View>
         
@@ -174,7 +174,7 @@ const styles = StyleSheet.create({
     backgroundColor: brandColors.matteGold,
     paddingHorizontal: 25,
     paddingVertical: 12,
-    borderRadius: 25,
+    borderRadius: 8, // Rounded square instead of pill
     marginBottom: 30,
   },
   offerText: {
@@ -313,9 +313,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   googleButton: {
-    backgroundColor: '#ffffff',
+    backgroundColor: brandColors.deepTeal, // Brand color
     borderRadius: 8,
-    paddingVertical: 12,
+    paddingVertical: 14,
     paddingHorizontal: 24,
     width: '100%',
     elevation: 2,
@@ -323,8 +323,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
-    borderWidth: 1,
-    borderColor: '#dadce0',
   },
   googleButtonContent: {
     flexDirection: 'row',
@@ -335,20 +333,20 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
     marginRight: 12,
-    backgroundColor: '#4285f4',
+    backgroundColor: '#FFFFFF',
     borderRadius: 4,
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleG: {
-    color: 'white',
+    color: brandColors.deepTeal,
     fontSize: 16,
     fontWeight: 'bold',
   },
   googleButtonText: {
-    color: '#3c4043',
+    color: '#FFFFFF', // White text on deep teal
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: typography.weights.semiBold,
   },
   securityNote: {
     fontSize: 12,
