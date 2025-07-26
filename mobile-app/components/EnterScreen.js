@@ -30,9 +30,9 @@ const EnterScreen = () => {
         </Text>
         
         {/* Limited Time Offer */}
-        <View style={styles.offerBanner}>
+        <TouchableOpacity style={styles.offerBanner} onPress={handleGoogleSignIn}>
           <Text style={styles.offerText}>FREE for a limited time - No credit card required</Text>
-        </View>
+        </TouchableOpacity>
         
         {/* Value Propositions */}
         <View style={styles.valueProps}>
@@ -173,6 +173,11 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8, // Rounded square instead of pill
     marginBottom: 15, // Reduced from 30
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
   },
   offerText: {
     color: brandColors.offWhite,
