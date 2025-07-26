@@ -791,19 +791,20 @@ export default function App() {
         </View>
       )}
       
-      <View style={styles.content}>
-        {/* You section - User info and Exit */}
-        {Platform.OS === 'web' && user && (
-          <View style={styles.userSection}>
-            <View style={styles.userInfo}>
-              <Text style={styles.userName}>You: {user.name}</Text>
-              <Text style={styles.userEmail}>{user.email}</Text>
-            </View>
-            <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
-              <Text style={styles.exitText}>Exit</Text>
-            </TouchableOpacity>
+      {/* You section - User info and Exit - Outside content for better positioning */}
+      {Platform.OS === 'web' && user && (
+        <View style={styles.userSection}>
+          <View style={styles.userInfo}>
+            <Text style={styles.userName} numberOfLines={1}>{user.name}</Text>
+            <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
           </View>
-        )}
+          <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
+            <Text style={styles.exitText}>Exit</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
+      <View style={styles.content}>
         
         <FlippiLogo />
         <Text style={[styles.title, { color: brandColors.text }]}>
@@ -1071,7 +1072,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     padding: 20,
-    paddingTop: Platform.OS === 'web' ? 40 : 60,
+    paddingTop: Platform.OS === 'web' ? 60 : 80, // More top padding to avoid user section
   },
   title: {
     fontSize: 24,
@@ -1254,40 +1255,47 @@ const styles = StyleSheet.create({
   // User section styles
   userSection: {
     position: 'absolute',
-    top: 20,
-    right: 20,
+    top: Platform.OS === 'web' ? 10 : 20,
+    right: 10,
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: brandColors.surface,
-    padding: 10,
-    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 20,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    shadowRadius: 3,
+    elevation: 2,
+    zIndex: 1000,
+    maxWidth: 280,
   },
   userInfo: {
-    marginRight: 15,
+    marginRight: 12,
+    flex: 1,
+    minWidth: 0, // Allow text to shrink
   },
   userName: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: typography.weights.semiBold,
     color: brandColors.text,
   },
   userEmail: {
-    fontSize: 12,
+    fontSize: 11,
     color: brandColors.textSecondary,
+    marginTop: 1,
   },
   exitButton: {
-    paddingHorizontal: 12,
+    paddingHorizontal: 16,
     paddingVertical: 6,
-    backgroundColor: brandColors.primaryLight,
-    borderRadius: 6,
+    backgroundColor: brandColors.primary,
+    borderRadius: 16,
+    marginLeft: 8,
   },
   exitText: {
-    fontSize: 14,
-    color: brandColors.primary,
-    fontWeight: typography.weights.medium,
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: typography.weights.semiBold,
   },
 });
