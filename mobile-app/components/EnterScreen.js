@@ -11,6 +11,7 @@ const API_URL = Platform.OS === 'web'
 
 const EnterScreen = () => {
   const [isHovering, setIsHovering] = useState(false);
+  const [isOfferHovering, setIsOfferHovering] = useState(false);
   
   const handleGoogleSignIn = () => {
     // Redirect to Google OAuth
@@ -32,7 +33,16 @@ const EnterScreen = () => {
         </Text>
         
         {/* Limited Time Offer */}
-        <TouchableOpacity style={styles.offerBanner} onPress={handleGoogleSignIn}>
+        <TouchableOpacity 
+          style={[
+            styles.offerBanner,
+            isOfferHovering && styles.offerBannerHover
+          ]}
+          onPress={handleGoogleSignIn}
+          onMouseEnter={() => Platform.OS === 'web' && setIsOfferHovering(true)}
+          onMouseLeave={() => Platform.OS === 'web' && setIsOfferHovering(false)}
+          activeOpacity={0.8}
+        >
           <Text style={styles.offerText}>FREE for a limited time - No credit card required</Text>
         </TouchableOpacity>
         
@@ -193,6 +203,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    ...(Platform.OS === 'web' && {
+      transition: 'all 0.2s ease',
+      cursor: 'pointer',
+    }),
+  },
+  offerBannerHover: {
+    backgroundColor: '#B09756', // Darker gold
+    transform: [{ scale: 1.02 }],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   offerText: {
     color: brandColors.offWhite,
