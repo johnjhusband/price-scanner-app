@@ -55,15 +55,12 @@ const EnterScreen = () => {
         
         {/* Hero Image */}
         {Platform.OS === 'web' && (
-          <View>
-            <View style={styles.heroImageContainer}>
-              <Image 
-                source={require('../assets/flippiapp2.png')}
-                style={styles.heroImage}
-                resizeMode="contain"
-              />
-            </View>
-            <Text style={styles.imageCaption}>↑ Real results in seconds</Text>
+          <View style={styles.heroImageContainer}>
+            <Image 
+              source={require('../assets/flippiapp2.png')}
+              style={styles.heroImage}
+              resizeMode="contain"
+            />
           </View>
         )}
         
@@ -222,35 +219,17 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   heroImageContainer: {
-    width: Platform.OS === 'web' ? '100%' : '100%',
-    maxWidth: 600, // iPhone mockup doesn't need to be huge
-    height: Platform.OS === 'web' ? 700 : 400,
-    marginBottom: 50,
-    marginTop: 30,
+    width: Platform.OS === 'web' ? '80%' : '100%',
+    maxWidth: 600,
+    marginBottom: 40,
+    marginTop: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
-    borderRadius: 20, // Rounded corners for container
-    // Add subtle shadow for depth
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 10,
   },
   heroImage: {
     width: '100%',
-    height: '100%',
-    borderRadius: 20, // Match container radius
-    backgroundColor: 'transparent', // Ensure no white background
-  },
-  imageCaption: {
-    textAlign: 'center',
-    marginTop: -30, // Pull up closer to image
-    marginBottom: 30,
-    fontSize: 14,
-    color: brandColors.slateTeal,
-    fontStyle: 'italic',
+    height: 'auto',
+    borderRadius: 20, // Just add rounded corners
   },
   valueProps: {
     flexDirection: 'row',
