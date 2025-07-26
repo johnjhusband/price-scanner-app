@@ -1181,6 +1181,8 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 10,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: brandColors.softTaupeBeige,
   },
   suggestedPriceLabel: {
     fontSize: 14,

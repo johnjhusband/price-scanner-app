@@ -87,7 +87,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
           <Text style={[
             styles.buttonText,
             helpedDecision === true && styles.selectedButtonText
-          ]}>✅ Yes</Text>
+          ]}>👍 Yes</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -101,7 +101,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
           <Text style={[
             styles.buttonText,
             helpedDecision === false && styles.selectedButtonText
-          ]}>❌ No</Text>
+          ]}>👎 No</Text>
         </TouchableOpacity>
       </View>
 
