@@ -82,6 +82,10 @@ const EnterScreen = () => {
             </View>
           </TouchableOpacity>
           
+          <Text style={styles.securityNote}>
+            Secure login. No password required.
+          </Text>
+          
           <View style={styles.trustIndicators}>
             <Text style={styles.trustItem}>✓ 30-second setup</Text>
             <Text style={styles.trustItem}>✓ Unlimited scans</Text>
@@ -355,9 +359,9 @@ const styles = StyleSheet.create({
   },
   securityNote: {
     fontSize: 12,
-    color: brandColors.textSecondary,
-    marginTop: 20,
-    marginBottom: 40, // Add space below to prevent overlap
+    color: brandColors.slateTeal,
+    marginTop: 8,
+    marginBottom: 20,
     textAlign: 'center',
   },
   footer: {
