@@ -229,8 +229,7 @@ const styles = StyleSheet.create({
   },
   heroImage: {
     width: '100%',
-    height: undefined,
-    aspectRatio: 390/844, // iPhone aspect ratio to match the screenshot
+    height: 400, // Fixed height for consistent display
     borderRadius: 20, // Just add rounded corners
   },
   valueProps: {
