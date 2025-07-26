@@ -62,6 +62,9 @@ const EnterScreen = () => {
               resizeMode="contain"
               onError={(e) => console.error('Hero image failed to load:', e.nativeEvent.error)}
             />
+            <Text style={styles.testimonial}>
+              "Sold in 24 hours thanks to Flippi!"
+            </Text>
           </View>
         )}
         
@@ -232,6 +235,13 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 400, // Fixed height for consistent display
     borderRadius: 20, // Just add rounded corners
+  },
+  testimonial: {
+    fontSize: 16,
+    fontStyle: 'italic',
+    color: brandColors.slateTeal,
+    marginTop: 15,
+    textAlign: 'center',
   },
   valueProps: {
     flexDirection: 'row',
