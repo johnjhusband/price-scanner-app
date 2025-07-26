@@ -1257,15 +1257,14 @@ const styles = StyleSheet.create({
   // User section styles
   userSection: {
     position: 'absolute',
-    top: Platform.OS === 'web' ? 10 : 20,
+    top: Platform.OS === 'web' ? 40 : 20, // Move down to avoid dev banner
     right: 10,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: brandColors.surface,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-    shadowColor: '#000',
+    backgroundColor: 'transparent', // Remove background
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    shadowColor: 'transparent', // Remove shadow
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 3,
@@ -1274,9 +1273,8 @@ const styles = StyleSheet.create({
     maxWidth: 280,
   },
   userInfo: {
-    marginRight: 12,
-    flex: 1,
-    minWidth: 0, // Allow text to shrink
+    marginRight: 8,
+    maxWidth: 200, // Limit width to prevent overflow
   },
   userName: {
     fontSize: 13,
@@ -1289,20 +1287,20 @@ const styles = StyleSheet.create({
     color: brandColors.text,
   },
   userEmail: {
-    fontSize: 11,
-    color: brandColors.textSecondary,
-    marginTop: 1,
+    fontSize: 12,
+    color: brandColors.text,
+    fontWeight: typography.weights.medium,
   },
   exitButton: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    backgroundColor: brandColors.primary,
-    borderRadius: 16,
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: brandColors.charcoalGray,
+    borderRadius: 4,
     marginLeft: 8,
   },
   exitText: {
     fontSize: 12,
     color: '#FFFFFF',
-    fontWeight: typography.weights.semiBold,
+    fontWeight: typography.weights.medium,
   },
 });
