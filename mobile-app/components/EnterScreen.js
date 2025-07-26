@@ -60,6 +60,7 @@ const EnterScreen = () => {
               source={require('../assets/flippiapp2.png')}
               style={styles.heroImage}
               resizeMode="contain"
+              onError={(e) => console.error('Hero image failed to load:', e.nativeEvent.error)}
             />
           </View>
         )}
@@ -228,7 +229,8 @@ const styles = StyleSheet.create({
   },
   heroImage: {
     width: '100%',
-    height: 'auto',
+    height: undefined,
+    aspectRatio: 16/9, // Maintain aspect ratio for better web compatibility
     borderRadius: 20, // Just add rounded corners
   },
   valueProps: {
