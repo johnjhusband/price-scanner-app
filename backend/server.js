@@ -3,6 +3,8 @@ const multer = require('multer');
 const cors = require('cors');
 const { OpenAI } = require('openai');
 const path = require('path');
+const session = require('express-session');
+const passport = require('passport');
 const { initializeDatabase } = require('./database');
 
 // Load .env from shared location outside git directories
@@ -59,6 +61,22 @@ app.use(cors({
   origin: true, // Allow all origins - from blue fix
   credentials: true
 }));
+
+// Session configuration for OAuth
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'default-session-secret-change-this',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    httpOnly: true,
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 
 
@@ -290,6 +308,10 @@ app.use((req, res, next) => {
   
   next();
 });
+
+// Auth routes
+const authRoutes = require('./routes/auth');
+app.use('/auth', authRoutes);
 
 // Feedback route - wrap in try-catch
 const feedbackRoutes = require('./routes/feedback');

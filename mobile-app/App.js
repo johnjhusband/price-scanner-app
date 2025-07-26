@@ -7,6 +7,8 @@ import { Camera } from 'expo-camera';
 import FlippiLogo from './components/FlippiLogo';
 import BrandButton from './components/BrandButton';
 import FeedbackPrompt from './components/FeedbackPrompt';
+import EnterScreen from './components/EnterScreen';
+import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
 
 const API_URL = Platform.OS === 'web' 
@@ -239,6 +241,9 @@ export default function App() {
   const [productDescription, setProductDescription] = useState('');
   const [imageBase64, setImageBase64] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   
   const scrollViewRef = useRef(null);
   const resultsRef = useRef(null);
@@ -486,6 +491,27 @@ export default function App() {
   useEffect(() => {
     checkCameraAvailability();
     setupPasteListener();
+    
+    // Check authentication on web
+    if (Platform.OS === 'web') {
+      // Check if token in URL (OAuth callback)
+      if (AuthService.parseTokenFromUrl()) {
+        setIsAuthenticated(true);
+        setUser(AuthService.getUser());
+        setAuthLoading(false);
+      } else if (AuthService.isAuthenticated()) {
+        // Check existing session
+        setIsAuthenticated(true);
+        setUser(AuthService.getUser());
+        setAuthLoading(false);
+      } else {
+        setAuthLoading(false);
+      }
+    } else {
+      // Mobile platforms - for now, no auth required
+      setAuthLoading(false);
+    }
+    
     return () => removePasteListener();
   }, []);
   
@@ -704,11 +730,46 @@ export default function App() {
     setImageBase64(null);
     setShowFeedback(false);
   };
+  
+  const handleExit = async () => {
+    if (Platform.OS === 'web') {
+      try {
+        // Call backend to logout
+        await fetch(`${API_URL}/auth/exit`, {
+          method: 'GET',
+          credentials: 'include'
+        });
+      } catch (error) {
+        console.error('Exit error:', error);
+      }
+      
+      // Clear local auth
+      AuthService.exit();
+      setIsAuthenticated(false);
+      setUser(null);
+      resetApp();
+    }
+  };
 
   if (showCamera) {
     return <WebCameraView onCapture={handleWebCameraCapture} onCancel={() => setShowCamera(false)} />;
   }
+  
+  // Show loading while checking auth
+  if (authLoading && Platform.OS === 'web') {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={brandColors.primary} />
+      </View>
+    );
+  }
+  
+  // Show Enter screen if not authenticated (web only)
+  if (Platform.OS === 'web' && !isAuthenticated) {
+    return <EnterScreen />;
+  }
 
+  // Main Flip interface
   return (
     <ScrollView 
       ref={scrollViewRef}
@@ -731,6 +792,19 @@ export default function App() {
       )}
       
       <View style={styles.content}>
+        {/* You section - User info and Exit */}
+        {Platform.OS === 'web' && user && (
+          <View style={styles.userSection}>
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>You: {user.name}</Text>
+              <Text style={styles.userEmail}>{user.email}</Text>
+            </View>
+            <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
+              <Text style={styles.exitText}>Exit</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+        
         <FlippiLogo />
         <Text style={[styles.title, { color: brandColors.text }]}>
           Never Over Pay
@@ -1176,5 +1250,44 @@ const styles = StyleSheet.create({
   },
   goButton: {
     width: '100%',
+  },
+  // User section styles
+  userSection: {
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: brandColors.surface,
+    padding: 10,
+    borderRadius: 8,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  userInfo: {
+    marginRight: 15,
+  },
+  userName: {
+    fontSize: 14,
+    fontWeight: typography.weights.semiBold,
+    color: brandColors.text,
+  },
+  userEmail: {
+    fontSize: 12,
+    color: brandColors.textSecondary,
+  },
+  exitButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    backgroundColor: brandColors.primaryLight,
+    borderRadius: 6,
+  },
+  exitText: {
+    fontSize: 14,
+    color: brandColors.primary,
+    fontWeight: typography.weights.medium,
   },
 });
