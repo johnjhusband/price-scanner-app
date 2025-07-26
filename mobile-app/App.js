@@ -232,6 +232,9 @@ const WebCameraView = ({ onCapture, onCancel }) => {
 };
 
 export default function App() {
+  // Build version for cache busting
+  console.log('App version: 2025-07-26-v2 - Rotating greetings');
+  
   const [image, setImage] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
