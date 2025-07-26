@@ -29,6 +29,11 @@ const EnterScreen = () => {
           Know where to sell. Know what to pay.
         </Text>
         
+        {/* Limited Time Offer */}
+        <View style={styles.offerBanner}>
+          <Text style={styles.offerText}>🎉 FREE for a limited time - No credit card required</Text>
+        </View>
+        
         {/* Value Propositions */}
         <View style={styles.valueProps}>
           <View style={styles.valueProp}>
@@ -79,8 +84,8 @@ const EnterScreen = () => {
           
           <View style={styles.trustIndicators}>
             <Text style={styles.trustItem}>✓ 30-second setup</Text>
-            <Text style={styles.trustItem}>✓ No credit card</Text>
-            <Text style={styles.trustItem}>✓ Cancel anytime</Text>
+            <Text style={styles.trustItem}>✓ Unlimited scans</Text>
+            <Text style={styles.trustItem}>✓ All features included</Text>
           </View>
           
           <Text style={styles.socialProof}>
@@ -96,6 +101,9 @@ const EnterScreen = () => {
           
           <View style={styles.platformLogoGrid}>
             <View style={styles.platformLogo}>
+              <Text style={styles.logoText}>Whatnot</Text>
+            </View>
+            <View style={styles.platformLogo}>
               <Text style={styles.logoText}>eBay</Text>
             </View>
             <View style={styles.platformLogo}>
@@ -103,9 +111,6 @@ const EnterScreen = () => {
             </View>
             <View style={styles.platformLogo}>
               <Text style={styles.logoText}>Mercari</Text>
-            </View>
-            <View style={styles.platformLogo}>
-              <Text style={styles.logoText}>Whatnot</Text>
             </View>
             <View style={styles.platformLogo}>
               <Text style={styles.logoText}>Depop</Text>
@@ -162,8 +167,20 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 18,
     color: brandColors.slateTeal,
-    marginBottom: 40,
+    marginBottom: 20,
     textAlign: 'center',
+  },
+  offerBanner: {
+    backgroundColor: brandColors.matteGold,
+    paddingHorizontal: 25,
+    paddingVertical: 12,
+    borderRadius: 25,
+    marginBottom: 30,
+  },
+  offerText: {
+    color: brandColors.offWhite,
+    fontSize: 15,
+    fontWeight: typography.weights.semiBold,
   },
   platformSection: {
     backgroundColor: brandColors.softCream,
