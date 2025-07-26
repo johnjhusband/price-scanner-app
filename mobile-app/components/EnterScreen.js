@@ -66,10 +66,6 @@ const EnterScreen = () => {
         )}
         
         <View style={styles.enterSection}>
-          <Text style={styles.welcomeText}>
-            AI-powered pricing from 15+ resale platforms in real time so the modern day treasure hunter can strike gold!
-          </Text>
-          
           <TouchableOpacity 
             style={styles.googleButton}
             onPress={handleGoogleSignIn}
@@ -305,12 +301,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     width: Platform.OS === 'web' ? '60%' : '100%',
     maxWidth: 600, // Reasonable limit for readability
-  },
-  welcomeText: {
-    fontSize: 18,
-    color: brandColors.textSecondary,
-    marginBottom: 30,
-    textAlign: 'center',
   },
   googleButton: {
     backgroundColor: brandColors.deepTeal, // Brand color
