@@ -987,11 +987,11 @@ export default function App() {
                 )}
                 
                 {analysisResult.buy_price && (
-                  <View style={[styles.suggestedPriceContainer, { backgroundColor: 'rgba(60, 140, 78, 0.1)' }]}>
-                    <Text style={[styles.suggestedPriceLabel, { color: componentColors.scores.high }]}>
+                  <View style={[styles.suggestedPriceContainer, { backgroundColor: brandColors.softCream }]}>
+                    <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
                       Suggested Buy Price:
                     </Text>
-                    <Text style={[styles.suggestedPriceValue, { color: componentColors.scores.high }]}>
+                    <Text style={[styles.suggestedPriceValue, { color: brandColors.deepTeal }]}>
                       {analysisResult.buy_price}
                     </Text>
                   </View>

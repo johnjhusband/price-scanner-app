@@ -166,8 +166,8 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
   selectedButton: {
-    borderColor: brandColors.actionBlue,
-    backgroundColor: '#F0F4FF',
+    borderColor: brandColors.deepTeal,
+    backgroundColor: brandColors.offWhite,
   },
   buttonText: {
     fontSize: 16,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   selectedButtonText: {
-    color: brandColors.actionBlue,
+    color: brandColors.deepTeal,
     fontWeight: '600',
   },
   textInput: {
