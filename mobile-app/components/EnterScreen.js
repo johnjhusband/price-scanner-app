@@ -55,18 +55,21 @@ const EnterScreen = () => {
         
         {/* Hero Image */}
         {Platform.OS === 'web' && (
-          <View style={styles.heroImageContainer}>
-            <Image 
-              source={require('../assets/flippiapp2.png')}
-              style={styles.heroImage}
-              resizeMode="contain"
-            />
+          <View>
+            <View style={styles.heroImageContainer}>
+              <Image 
+                source={require('../assets/flippiapp2.png')}
+                style={styles.heroImage}
+                resizeMode="contain"
+              />
+            </View>
+            <Text style={styles.imageCaption}>↑ Real results in seconds</Text>
           </View>
         )}
         
         <View style={styles.enterSection}>
           <Text style={styles.welcomeText}>
-            Join thousands of resellers making smarter decisions
+            AI-powered pricing from 15+ resale platforms in real time so the modern day treasure hunter can strike gold!
           </Text>
           
           <TouchableOpacity 
@@ -227,10 +230,27 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'hidden',
+    borderRadius: 20, // Rounded corners for container
+    // Add subtle shadow for depth
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 10,
   },
   heroImage: {
     width: '100%',
     height: '100%',
+    borderRadius: 20, // Match container radius
+    backgroundColor: 'transparent', // Ensure no white background
+  },
+  imageCaption: {
+    textAlign: 'center',
+    marginTop: -30, // Pull up closer to image
+    marginBottom: 30,
+    fontSize: 14,
+    color: brandColors.slateTeal,
+    fontStyle: 'italic',
   },
   valueProps: {
     flexDirection: 'row',
