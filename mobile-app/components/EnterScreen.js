@@ -22,9 +22,52 @@ const EnterScreen = () => {
         
         <Text style={styles.tagline}>Never Over Pay</Text>
         
+        <Text style={styles.subtitle}>
+          Know where to sell. Know what to pay.
+        </Text>
+        
+        {/* Platform Section */}
+        <View style={styles.platformSection}>
+          <Text style={styles.platformTitle}>
+            Best place to sell from all platforms
+          </Text>
+          
+          <View style={styles.platformGrid}>
+            {/* Regular Platforms */}
+            <View style={styles.platformColumn}>
+              <Text style={styles.platformCategory}>Marketplaces</Text>
+              <Text style={styles.platformList}>
+                eBay • Mercari • Poshmark{'\n'}
+                Depop • TheRealReal • Vestiaire{'\n'}
+                Grailed • StockX • GOAT
+              </Text>
+            </View>
+            
+            {/* Live Platforms */}
+            <View style={styles.platformColumn}>
+              <Text style={styles.platformCategory}>Live Selling</Text>
+              <Text style={styles.platformList}>
+                Whatnot • Instagram Live{'\n'}
+                TikTok Shop • Facebook Live{'\n'}
+                YouTube Live • Poshmark Live
+              </Text>
+            </View>
+          </View>
+        </View>
+        
+        {/* Hero Image Placeholder */}
+        {Platform.OS === 'web' && (
+          <View style={styles.heroImageContainer}>
+            {/* Add your image here */}
+            <Text style={styles.imagePlaceholder}>
+              [Add hero image showing app in action]
+            </Text>
+          </View>
+        )}
+        
         <View style={styles.enterSection}>
           <Text style={styles.welcomeText}>
-            Welcome to the reseller's edge
+            Join thousands of resellers making smarter decisions
           </Text>
           
           <TouchableOpacity 
@@ -41,7 +84,7 @@ const EnterScreen = () => {
           </TouchableOpacity>
           
           <Text style={styles.securityNote}>
-            Secure authentication • Your data is safe
+            Free to use • No credit card required
           </Text>
         </View>
       </View>
@@ -80,11 +123,69 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   tagline: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: typography.weights.bold,
-    color: brandColors.text,
+    color: brandColors.mutedGraphite,
     marginTop: 20,
-    marginBottom: 60,
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: brandColors.slateTeal,
+    marginBottom: 40,
+    textAlign: 'center',
+  },
+  platformSection: {
+    backgroundColor: brandColors.softCream,
+    padding: 30,
+    borderRadius: 12,
+    marginBottom: 30,
+    width: '100%',
+    maxWidth: 600,
+  },
+  platformTitle: {
+    fontSize: 20,
+    fontWeight: typography.weights.semiBold,
+    color: brandColors.deepTeal,
+    textAlign: 'center',
+    marginBottom: 20,
+  },
+  platformGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+  },
+  platformColumn: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  platformCategory: {
+    fontSize: 16,
+    fontWeight: typography.weights.semiBold,
+    color: brandColors.mutedGraphite,
+    marginBottom: 10,
+  },
+  platformList: {
+    fontSize: 14,
+    color: brandColors.slateTeal,
+    textAlign: 'center',
+    lineHeight: 22,
+  },
+  heroImageContainer: {
+    width: '100%',
+    maxWidth: 500,
+    height: 300,
+    backgroundColor: brandColors.offWhite,
+    borderRadius: 12,
+    marginBottom: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: brandColors.softTaupeBeige,
+    borderStyle: 'dashed',
+  },
+  imagePlaceholder: {
+    color: brandColors.slateTeal,
+    fontSize: 16,
   },
   enterSection: {
     alignItems: 'center',
