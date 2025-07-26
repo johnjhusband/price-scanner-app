@@ -1058,9 +1058,12 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%', // Ensure full width
   },
   contentContainer: {
     flexGrow: 1,
+    alignItems: 'center', // Center the content column
+    width: '100%', // Full width
   },
   environmentBanner: {
     backgroundColor: '#2196F3',

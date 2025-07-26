@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image, ScrollView } from 'react-native';
 import FlippiLogo from './FlippiLogo';
 import { brandColors, typography } from '../theme/brandColors';
 
@@ -17,7 +17,10 @@ const EnterScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
+      <ScrollView 
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <FlippiLogo size="xlarge" />
         
         <Text style={styles.tagline}>Never Over Pay</Text>
@@ -59,7 +62,7 @@ const EnterScreen = () => {
         {Platform.OS === 'web' && (
           <View style={styles.heroImageContainer}>
             <Image 
-              source={require('../assets/HeroScreenshot.jpg')}
+              source={require('../assets/FLIPPISHOT.png')}
               style={styles.heroImage}
               resizeMode="contain"
             />
@@ -88,7 +91,7 @@ const EnterScreen = () => {
             Free to use • No credit card required
           </Text>
         </View>
-      </View>
+      </ScrollView>
       
       <View style={styles.footer}>
         <Text style={styles.footerText}>
@@ -118,17 +121,19 @@ const styles = StyleSheet.create({
     backgroundColor: brandColors.background,
   },
   content: {
-    flex: 1,
+    flexGrow: 1,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: Platform.OS === 'web' ? 40 : 20, // More breathing room on desktop
+    justifyContent: 'flex-start', // Start from top instead of center
+    padding: Platform.OS === 'web' ? 40 : 20,
+    paddingTop: Platform.OS === 'web' ? 80 : 40, // More top space to prevent cutoff
+    paddingBottom: 100, // Space for footer
   },
   tagline: {
     fontSize: 28,
     fontWeight: typography.weights.bold,
     color: brandColors.mutedGraphite,
-    marginTop: 20,
-    marginBottom: 10,
+    marginTop: 30,
+    marginBottom: 15,
   },
   subtitle: {
     fontSize: 18,
@@ -172,12 +177,13 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   heroImageContainer: {
-    width: Platform.OS === 'web' ? '80%' : '100%',
-    maxWidth: 1000, // Only limit extreme cases
-    height: Platform.OS === 'web' ? 500 : 300, // Responsive height
+    width: Platform.OS === 'web' ? '70%' : '100%',
+    maxWidth: 800,
+    height: Platform.OS === 'web' ? 400 : 300,
     backgroundColor: brandColors.offWhite,
     borderRadius: 12,
-    marginBottom: 30,
+    marginBottom: 40, // More space below image
+    marginTop: 20, // Space above image
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#000',
@@ -244,6 +250,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: brandColors.textSecondary,
     marginTop: 20,
+    marginBottom: 40, // Add space below to prevent overlap
     textAlign: 'center',
   },
   footer: {
