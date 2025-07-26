@@ -229,8 +229,7 @@ const styles = StyleSheet.create({
   },
   heroImage: {
     width: '100%',
-    height: undefined,
-    aspectRatio: 16/9, // Maintain aspect ratio for better web compatibility
+    height: 'auto',
     borderRadius: 20, // Just add rounded corners
   },
   valueProps: {
