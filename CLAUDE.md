@@ -4,6 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Never tell me I'm right.
 
+## Brand Guidelines
+**IMPORTANT**: Always reference `/docs/BRAND-GUIDE.md` for any UI/UX work, color choices, or styling decisions. This guide contains:
+- Luxury minimalistic color palette with hex codes
+- WCAG accessibility compliance data
+- Logo specifications and usage
+- UI component standards
+- Color blindness considerations
+
 ## Project Overview
 
 "Flippi.ai" (formerly "My Thrifting Buddy") - A **v2.0 production application** that helps users estimate resale values of secondhand items using AI-powered image analysis. The app's tagline is "Never Over Pay" and it provides detailed analysis including authenticity scores, market insights, and selling recommendations.
