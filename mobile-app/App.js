@@ -233,7 +233,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
 
 export default function App() {
   // Build version for cache busting
-  console.log('App version: 2025-07-26-v2 - Rotating greetings');
+  console.log('App version: 2025-07-26-v3 - Rotating greetings FIXED');
   
   const [image, setImage] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
@@ -800,11 +800,41 @@ export default function App() {
           <View style={styles.userInfo}>
             <Text style={styles.userGreeting} numberOfLines={1}>
               {(() => {
+                const firstName = user.name.split(' ')[0];
                 const hour = new Date().getHours();
-                if (hour < 12) return 'Morning hustle';
-                if (hour < 17) return 'Afternoon grind';
-                return 'Evening finds';
-              })()}, {user.name.split(' ')[0]}
+                
+                // Greeting options by time of day
+                const greetings = {
+                  morning: [
+                    "Enjoy your morning hustle",
+                    "Own your morning energy",
+                    "Kickstart the day with purpose",
+                    `Good morning, ${firstName}`,
+                  ],
+                  afternoon: [
+                    "Enjoy your afternoon treasure hunt",
+                    "Keep chasing the spark this afternoon",
+                    "Let the afternoon adventures unfold",
+                    `You're shining this afternoon, ${firstName}`,
+                  ],
+                  evening: [
+                    "Delight in your evening finds",
+                    "Unwind with evening wins",
+                    "Find joy in your evening discoveries",
+                    `Evening magic awaits, ${firstName}`,
+                  ],
+                };
+                
+                // Get time of day
+                let timeOfDay;
+                if (hour < 12) timeOfDay = 'morning';
+                else if (hour < 18) timeOfDay = 'afternoon';
+                else timeOfDay = 'evening';
+                
+                // Pick random greeting
+                const pool = greetings[timeOfDay];
+                return pool[Math.floor(Math.random() * pool.length)];
+              })()}
             </Text>
             <Text style={styles.userEmail} numberOfLines={1}>You: {user.email}</Text>
           </View>
