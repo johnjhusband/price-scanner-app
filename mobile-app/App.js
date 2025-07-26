@@ -795,11 +795,18 @@ export default function App() {
       {Platform.OS === 'web' && user && (
         <View style={styles.userSection}>
           <View style={styles.userInfo}>
-            <Text style={styles.userName} numberOfLines={1}>{user.name}</Text>
-            <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
+            <Text style={styles.userGreeting} numberOfLines={1}>
+              {(() => {
+                const hour = new Date().getHours();
+                if (hour < 12) return 'Morning hustle';
+                if (hour < 17) return 'Afternoon grind';
+                return 'Evening finds';
+              })()}, {user.name.split(' ')[0]}
+            </Text>
+            <Text style={styles.userEmail} numberOfLines={1}>You: {user.email}</Text>
           </View>
           <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
-            <Text style={styles.exitText}>Exit</Text>
+            <Text style={styles.exitText}>Flip side</Text>
           </TouchableOpacity>
         </View>
       )}
@@ -979,10 +986,10 @@ export default function App() {
                 {analysisResult.buy_price && (
                   <View style={[styles.suggestedPriceContainer, { backgroundColor: 'rgba(60, 140, 78, 0.1)' }]}>
                     <Text style={[styles.suggestedPriceLabel, { color: componentColors.scores.high }]}>
-                      Suggested Buy Price:
+                      💰 Suggested Buy Price:
                     </Text>
                     <Text style={[styles.suggestedPriceValue, { color: componentColors.scores.high }]}>
-                      {analysisResult.buy_price}
+                      {analysisResult.buy_price} 💰
                     </Text>
                   </View>
                 )}
@@ -1277,6 +1284,11 @@ const styles = StyleSheet.create({
     minWidth: 0, // Allow text to shrink
   },
   userName: {
+    fontSize: 13,
+    fontWeight: typography.weights.semiBold,
+    color: brandColors.text,
+  },
+  userGreeting: {
     fontSize: 13,
     fontWeight: typography.weights.semiBold,
     color: brandColors.text,
