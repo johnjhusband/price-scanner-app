@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image } from 'react-native';
 import FlippiLogo from './FlippiLogo';
 import { brandColors, typography } from '../theme/brandColors';
 
@@ -55,13 +55,14 @@ const EnterScreen = () => {
           </View>
         </View>
         
-        {/* Hero Image Placeholder */}
+        {/* Hero Image */}
         {Platform.OS === 'web' && (
           <View style={styles.heroImageContainer}>
-            {/* Add your image here */}
-            <Text style={styles.imagePlaceholder}>
-              [Add hero image showing app in action]
-            </Text>
+            <Image 
+              source={require('../assets/HeroScreenshot.jpg')}
+              style={styles.heroImage}
+              resizeMode="contain"
+            />
           </View>
         )}
         
@@ -173,19 +174,22 @@ const styles = StyleSheet.create({
   heroImageContainer: {
     width: '100%',
     maxWidth: 500,
-    height: 300,
+    height: 400,
     backgroundColor: brandColors.offWhite,
     borderRadius: 12,
     marginBottom: 30,
     alignItems: 'center',
     justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: brandColors.softTaupeBeige,
-    borderStyle: 'dashed',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 5,
+    overflow: 'hidden',
   },
-  imagePlaceholder: {
-    color: brandColors.slateTeal,
-    fontSize: 16,
+  heroImage: {
+    width: '100%',
+    height: '100%',
   },
   enterSection: {
     alignItems: 'center',

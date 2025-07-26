@@ -1083,6 +1083,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     paddingTop: Platform.OS === 'web' ? 60 : 80, // More top padding to avoid user section
+    width: '100%',
+    maxWidth: Platform.OS === 'web' ? 800 : '100%', // Wider on desktop
+    alignSelf: 'center',
   },
   title: {
     fontSize: 24,
@@ -1094,7 +1097,7 @@ const styles = StyleSheet.create({
   },
   uploadContainer: {
     width: '100%',
-    maxWidth: 400,
+    maxWidth: Platform.OS === 'web' ? 600 : 400, // Wider on desktop
     alignItems: 'center',
     marginTop: 10,
   },
@@ -1145,6 +1148,7 @@ const styles = StyleSheet.create({
   },
   analysisResult: {
     width: '100%',
+    maxWidth: Platform.OS === 'web' ? 600 : '100%', // Limit width on desktop
     padding: 20,
     borderRadius: 10,
     marginBottom: 20,
@@ -1253,6 +1257,7 @@ const styles = StyleSheet.create({
   },
   descriptionInput: {
     width: '100%',
+    maxWidth: Platform.OS === 'web' ? 600 : '100%', // Match other elements
     padding: 12,
     borderWidth: 1,
     borderRadius: 12,
