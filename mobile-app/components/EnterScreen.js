@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 25,
     paddingVertical: 12,
     borderRadius: 8, // Rounded square instead of pill
-    marginBottom: 30,
+    marginBottom: 15, // Reduced from 30
   },
   offerText: {
     color: brandColors.offWhite,
@@ -257,8 +257,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     width: Platform.OS === 'web' ? '80%' : '100%',
     maxWidth: 700,
-    marginTop: 40,
-    marginBottom: 40,
+    marginTop: 25, // Reduced from 40
+    marginBottom: 30, // Reduced from 40
   },
   valueProp: {
     alignItems: 'center',
