@@ -26,7 +26,7 @@ const EnterScreen = () => {
         <Text style={styles.tagline}>Never Over Pay</Text>
         
         <Text style={styles.subtitle}>
-          Know where to sell. Know what to pay.
+          Find the best price. Pick the best platform.
         </Text>
         
         {/* Limited Time Offer */}
