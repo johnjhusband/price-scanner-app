@@ -151,14 +151,22 @@ const EnterScreen = () => {
           By entering, you agree to our{' '}
           <Text 
             style={styles.link}
-            onPress={() => window.open('/terms', '_blank')}
+            onPress={() => {
+              if (Platform.OS === 'web') {
+                window.open('/terms', '_blank');
+              }
+            }}
           >
             Terms
           </Text>
           {' '}and{' '}
           <Text 
             style={styles.link}
-            onPress={() => window.open('/privacy', '_blank')}
+            onPress={() => {
+              if (Platform.OS === 'web') {
+                window.open('/privacy', '_blank');
+              }
+            }}
           >
             Privacy
           </Text>
