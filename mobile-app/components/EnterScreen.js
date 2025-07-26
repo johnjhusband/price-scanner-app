@@ -121,7 +121,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 20,
+    padding: Platform.OS === 'web' ? 40 : 20, // More breathing room on desktop
   },
   tagline: {
     fontSize: 28,
@@ -141,8 +141,8 @@ const styles = StyleSheet.create({
     padding: 30,
     borderRadius: 12,
     marginBottom: 30,
-    width: '100%',
-    maxWidth: 600,
+    width: Platform.OS === 'web' ? '90%' : '100%',
+    maxWidth: 900, // Generous limit
   },
   platformTitle: {
     fontSize: 20,
@@ -172,9 +172,9 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   heroImageContainer: {
-    width: '100%',
-    maxWidth: 500,
-    height: 400,
+    width: Platform.OS === 'web' ? '80%' : '100%',
+    maxWidth: 1000, // Only limit extreme cases
+    height: Platform.OS === 'web' ? 500 : 300, // Responsive height
     backgroundColor: brandColors.offWhite,
     borderRadius: 12,
     marginBottom: 30,
@@ -193,8 +193,8 @@ const styles = StyleSheet.create({
   },
   enterSection: {
     alignItems: 'center',
-    width: '100%',
-    maxWidth: 400,
+    width: Platform.OS === 'web' ? '60%' : '100%',
+    maxWidth: 600, // Reasonable limit for readability
   },
   welcomeText: {
     fontSize: 18,

@@ -1081,11 +1081,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    padding: 20,
+    padding: Platform.OS === 'web' ? 40 : 20, // More padding on desktop
     paddingTop: Platform.OS === 'web' ? 60 : 80, // More top padding to avoid user section
-    width: '100%',
-    maxWidth: Platform.OS === 'web' ? 800 : '100%', // Wider on desktop
-    alignSelf: 'center',
   },
   title: {
     fontSize: 24,
@@ -1096,8 +1093,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   uploadContainer: {
-    width: '100%',
-    maxWidth: Platform.OS === 'web' ? 600 : 400, // Wider on desktop
+    width: Platform.OS === 'web' ? '80%' : '100%', // Percentage based for desktop
+    maxWidth: 1000, // Only prevent extreme stretching
     alignItems: 'center',
     marginTop: 10,
   },
@@ -1147,8 +1144,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   analysisResult: {
-    width: '100%',
-    maxWidth: Platform.OS === 'web' ? 600 : '100%', // Limit width on desktop
+    width: Platform.OS === 'web' ? '80%' : '100%', // Percentage based
+    maxWidth: 1000, // Generous limit only for ultra-wide
     padding: 20,
     borderRadius: 10,
     marginBottom: 20,
@@ -1257,7 +1254,6 @@ const styles = StyleSheet.create({
   },
   descriptionInput: {
     width: '100%',
-    maxWidth: Platform.OS === 'web' ? 600 : '100%', // Match other elements
     padding: 12,
     borderWidth: 1,
     borderRadius: 12,
