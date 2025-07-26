@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Image, ScrollView } from 'react-native';
 import FlippiLogo from './FlippiLogo';
 import { brandColors, typography } from '../theme/brandColors';
@@ -10,6 +10,8 @@ const API_URL = Platform.OS === 'web'
     : 'http://10.0.2.2:3000'; // Android emulator
 
 const EnterScreen = () => {
+  const [isHovering, setIsHovering] = useState(false);
+  
   const handleGoogleSignIn = () => {
     // Redirect to Google OAuth
     window.location.href = `${API_URL}/auth/google`;
@@ -70,8 +72,14 @@ const EnterScreen = () => {
         
         <View style={styles.enterSection}>
           <TouchableOpacity 
-            style={styles.googleButton}
+            style={[
+              styles.googleButton,
+              isHovering && styles.googleButtonHover
+            ]}
             onPress={handleGoogleSignIn}
+            onMouseEnter={() => Platform.OS === 'web' && setIsHovering(true)}
+            onMouseLeave={() => Platform.OS === 'web' && setIsHovering(false)}
+            activeOpacity={0.8}
           >
             <View style={styles.googleButtonContent}>
               {/* Google G Logo */}
@@ -332,6 +340,18 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 4,
+    ...(Platform.OS === 'web' && {
+      transition: 'all 0.2s ease',
+      cursor: 'pointer',
+    }),
+  },
+  googleButtonHover: {
+    backgroundColor: '#174B49', // Darker teal
+    transform: [{ scale: 1.02 }],
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 6,
+    elevation: 4,
   },
   googleButtonContent: {
     flexDirection: 'row',
