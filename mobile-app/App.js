@@ -798,48 +798,10 @@ export default function App() {
       {Platform.OS === 'web' && user && (
         <View style={styles.userSection}>
           <View style={styles.userInfo}>
-            <Text style={styles.userGreeting} numberOfLines={1}>
-              {(() => {
-                const firstName = user.name.split(' ')[0];
-                const hour = new Date().getHours();
-                
-                // Greeting options by time of day
-                const greetings = {
-                  morning: [
-                    "Enjoy your morning hustle",
-                    "Own your morning energy",
-                    "Kickstart the day with purpose",
-                    `Good morning, ${firstName}`,
-                  ],
-                  afternoon: [
-                    "Enjoy your afternoon treasure hunt",
-                    "Keep chasing the spark this afternoon",
-                    "Let the afternoon adventures unfold",
-                    `You're shining this afternoon, ${firstName}`,
-                  ],
-                  evening: [
-                    "Delight in your evening finds",
-                    "Unwind with evening wins",
-                    "Find joy in your evening discoveries",
-                    `Evening magic awaits, ${firstName}`,
-                  ],
-                };
-                
-                // Get time of day
-                let timeOfDay;
-                if (hour < 12) timeOfDay = 'morning';
-                else if (hour < 18) timeOfDay = 'afternoon';
-                else timeOfDay = 'evening';
-                
-                // Pick random greeting
-                const pool = greetings[timeOfDay];
-                return pool[Math.floor(Math.random() * pool.length)];
-              })()}
-            </Text>
-            <Text style={styles.userEmail} numberOfLines={1}>You: {user.email}</Text>
+            <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
           </View>
           <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
-            <Text style={styles.exitText}>Flip side</Text>
+            <Text style={styles.exitText}>Exit</Text>
           </TouchableOpacity>
         </View>
       )}
