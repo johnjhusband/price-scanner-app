@@ -378,9 +378,9 @@ const styles = StyleSheet.create({
     backgroundColor: brandColors.deepTeal, // Brand color
     borderRadius: 8,
     paddingVertical: 14,
-    paddingHorizontal: Platform.OS === 'web' ? 24 : 16,
-    width: Platform.OS === 'web' ? '100%' : '90%',
-    minWidth: 220, // Ensure button is wide enough for text
+    paddingHorizontal: Platform.OS === 'web' ? 24 : 20,
+    width: Platform.OS === 'web' ? '100%' : '95%',
+    minWidth: 250, // Increased to prevent wrapping
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -420,8 +420,9 @@ const styles = StyleSheet.create({
   },
   googleButtonText: {
     color: '#FFFFFF', // White text on deep teal
-    fontSize: Platform.OS === 'web' ? 16 : 15,
+    fontSize: Platform.OS === 'web' ? 16 : 14,
     fontWeight: typography.weights.semiBold,
+    whiteSpace: 'nowrap', // Prevent text wrapping
   },
   securityNote: {
     fontSize: 12,
