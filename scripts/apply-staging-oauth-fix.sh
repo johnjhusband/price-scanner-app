@@ -13,9 +13,15 @@ NGINX_CONFIG="/etc/nginx/sites-available/$DOMAIN"
 TIMESTAMP=$(date +%Y%m%d-%H%M%S)
 
 # Check if running with proper permissions
-if [ "$EUID" -ne 0 ] && [ ! -w "$NGINX_CONFIG" ]; then 
-    echo "ERROR: This script needs write access to nginx configs. Run with sudo."
-    exit 1
+if [ ! -w "$NGINX_CONFIG" ] && [ "$EUID" -ne 0 ]; then 
+    echo "WARNING: No write access to nginx configs. Attempting with sudo..."
+    # Try to run ourselves with sudo
+    if command -v sudo >/dev/null 2>&1; then
+        exec sudo "$0" "$@"
+    else
+        echo "ERROR: This script needs write access to nginx configs."
+        exit 1
+    fi
 fi
 
 # Backup current configuration
