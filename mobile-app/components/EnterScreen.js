@@ -162,6 +162,19 @@ const EnterScreen = () => {
             Privacy
           </Text>
         </Text>
+        <Text style={styles.footerText}>
+          {' '}·{' '}
+          <Text 
+            style={styles.link}
+            onPress={() => {
+              if (Platform.OS === 'web') {
+                window.location.href = 'mailto:teamflippi@gmail.com';
+              }
+            }}
+          >
+            Contact
+          </Text>
+        </Text>
       </View>
     </View>
   );
