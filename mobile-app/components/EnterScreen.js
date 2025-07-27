@@ -111,7 +111,7 @@ const EnterScreen = () => {
         {/* Platform Section - Moved below login */}
         <View style={styles.platformSection}>
           <Text style={styles.platformTitle}>
-            Works with 15+ major reselling platforms
+            Flippi scans millions of resale listings with AI spotting trends on 15+ marketplaces
           </Text>
           
           <View style={styles.platformLogoGrid}>
