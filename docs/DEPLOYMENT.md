@@ -1,12 +1,15 @@
-# Flippi.ai Deployment Guide (Consolidated)
+# Flippi.ai Deployment Guide
 
-Last Updated: July 19, 2025
+Last Updated: July 26, 2025
 
 ## Overview
 
-This is the consolidated deployment documentation for the Flippi.ai (My Thrifting Buddy) application. The app runs on a single DigitalOcean droplet with three environments using PM2 process manager and Nginx.
+This is the consolidated deployment documentation for the Flippi.ai application. The app runs on a single DigitalOcean droplet with three environments using PM2 process manager and Nginx.
 
-**Important**: The application now includes SQLite database support for user feedback collection. Each environment has its own database file that persists between deployments.
+**Important Changes**: 
+- The application now includes Google OAuth authentication
+- SQLite database stores both user data and feedback
+- JWT tokens for session management
 
 ## Server Architecture
 
@@ -35,63 +38,108 @@ Single Server (157.245.142.145)
 - Git
 - SSL certificates (Let's Encrypt)
 - OpenAI API key
+- Google OAuth credentials
 - GitHub SSH deploy key configured
 
 ## Environment Configuration
 
 ### Backend .env Files
 
-Each environment requires its own `.env` file:
+Each environment requires its own `.env` file with OAuth configuration:
 
 ```bash
 # /var/www/app.flippi.ai/backend/.env
 OPENAI_API_KEY=your_openai_api_key_here
 PORT=3000
 NODE_ENV=production
-FEEDBACK_DB_PATH=/var/lib/flippi/feedback.db
+DATABASE_PATH=/var/lib/flippi/flippi.db
+
+# OAuth Configuration
+JWT_SECRET=your_jwt_secret_here
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+FRONTEND_URL=https://app.flippi.ai
 
 # /var/www/green.flippi.ai/backend/.env
 OPENAI_API_KEY=your_openai_api_key_here
 PORT=3001
 NODE_ENV=staging
-FEEDBACK_DB_PATH=/var/lib/flippi-staging/feedback.db
+DATABASE_PATH=/var/lib/flippi-staging/flippi.db
+
+# OAuth Configuration
+JWT_SECRET=your_jwt_secret_here
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+FRONTEND_URL=https://green.flippi.ai
 
 # /var/www/blue.flippi.ai/backend/.env
 OPENAI_API_KEY=your_openai_api_key_here
 PORT=3002
 NODE_ENV=development
-FEEDBACK_DB_PATH=/var/lib/flippi-dev/feedback.db
+DATABASE_PATH=/var/lib/flippi-dev/flippi.db
+
+# OAuth Configuration
+JWT_SECRET=your_jwt_secret_here
+GOOGLE_CLIENT_ID=your_google_client_id
+GOOGLE_CLIENT_SECRET=your_google_client_secret
+FRONTEND_URL=https://blue.flippi.ai
 ```
+
+### Google OAuth Setup
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com)
+2. Create or select a project
+3. Enable Google+ API
+4. Create OAuth 2.0 credentials
+5. Add authorized redirect URIs:
+   - `https://app.flippi.ai/auth/google/callback`
+   - `https://green.flippi.ai/auth/google/callback`
+   - `https://blue.flippi.ai/auth/google/callback`
+6. Copy Client ID and Client Secret to .env files
 
 ## Database Information
 
-### SQLite Database Files
+### SQLite Database
 
-Each environment has its own SQLite database for storing user feedback:
+Each environment has its own SQLite database storing users and feedback:
 
-- **Production**: `/var/lib/flippi/feedback.db`
-- **Staging**: `/var/lib/flippi-staging/feedback.db`
-- **Development**: `/var/lib/flippi-dev/feedback.db`
+- **Production**: `/var/lib/flippi/flippi.db`
+- **Staging**: `/var/lib/flippi-staging/flippi.db`
+- **Development**: `/var/lib/flippi-dev/flippi.db`
+
+### Database Schema
+
+```sql
+-- Users table (OAuth)
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  googleId TEXT UNIQUE NOT NULL,
+  email TEXT NOT NULL,
+  name TEXT,
+  picture TEXT,
+  createdAt DATETIME DEFAULT CURRENT_TIMESTAMP,
+  lastLoginAt DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Feedback table
+CREATE TABLE feedback (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  scanData TEXT NOT NULL,
+  userDescription TEXT,
+  imageData TEXT,
+  rating INTEGER,
+  comments TEXT,
+  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+```
 
 ### Important Database Notes
 
-1. **Not in Git**: Database files are listed in `.gitignore` and never committed
-2. **Automatic Creation**: Database is created automatically on first feedback submission
-3. **Persistence**: Database files persist between code deployments
-4. **Permissions**: Database directories must be writable by the app user (www-data)
-
-### Database Initialization
-
-The application automatically creates the database on first use. The initialization logic is in the backend code:
-
-```javascript
-// Backend checks on startup
-if (!fs.existsSync(process.env.FEEDBACK_DB_PATH)) {
-  // Creates database with schema
-  const db = new Database(process.env.FEEDBACK_DB_PATH);
-  db.exec(`CREATE TABLE feedback (...)`);
-}
-```
+1. **Not in Git**: Database files are in `.gitignore`
+2. **Automatic Creation**: Database created on first use
+3. **Persistence**: Database files persist between deployments
+4. **Permissions**: Must be writable by app user
+5. **Backup**: Regular backups recommended
 
 ## Automated Deployment (GitHub Actions)
 
@@ -105,45 +153,36 @@ Deployments are triggered automatically when pushing to specific branches:
 
 ### GitHub Actions Workflow
 
-The deployment workflow (`.github/workflows/deploy-develop.yml`):
+The deployment workflow:
 
 1. Connects to server via SSH
-2. Resets local changes (`git reset --hard HEAD`)
-3. Pulls latest code from branch
-4. Installs backend dependencies
+2. Resets local changes
+3. Pulls latest code
+4. Installs dependencies (including passport)
 5. Builds frontend with Expo
 6. Restarts PM2 services
 7. Reloads Nginx
 
 ### For Developers
 
-1. **Create feature branch**:
+1. **Work in develop branch**:
    ```bash
    git checkout develop
    git pull origin develop
-   git checkout -b feature/your-feature-name
    ```
 
 2. **Make changes and push**:
    ```bash
    git add .
    git commit -m "Your commit message"
-   git push origin feature/your-feature-name
+   git push origin develop
    ```
 
-3. **Create Pull Request**:
-   ```bash
-   gh pr create --base develop --title "Your PR title" --body "Description"
-   ```
-
-4. **Merge to trigger deployment**:
-   ```bash
-   gh pr merge --merge
-   ```
+3. **Deployment happens automatically**
 
 ## Manual Deployment Process
 
-If automated deployment fails, use these steps:
+If automated deployment fails:
 
 ### 1. SSH to Server
 ```bash
@@ -168,36 +207,30 @@ git pull origin [branch-name]
 
 ### 4. Install Dependencies
 ```bash
-# Backend
+# Backend (includes passport dependencies)
 cd backend
 npm install --production
 
 # Frontend
 cd ../mobile-app
 npm install
-npx expo install react-native-web react-dom @expo/metro-runtime
 ```
 
-### 4a. Database Initialization (First Deployment Only)
-
-The SQLite database will be automatically created on first use. To verify:
-
+### 5. Database Setup (First Time Only)
 ```bash
-# Check if database directory exists
-sudo mkdir -p /var/lib/flippi-dev  # or flippi-staging, flippi
+# Create database directory
+sudo mkdir -p /var/lib/flippi-dev
 sudo chown www-data:www-data /var/lib/flippi-dev
 
-# Database will be created automatically when first feedback is submitted
-# To manually verify database creation:
-ls -la /var/lib/flippi-dev/feedback.db  # Should show file after first use
+# Database auto-creates on first use
 ```
 
-### 5. Build Frontend
+### 6. Build Frontend
 ```bash
 npx expo export --platform web --output-dir dist
 ```
 
-### 6. Restart Services
+### 7. Restart Services
 ```bash
 # Development
 pm2 restart dev-backend dev-frontend
@@ -209,14 +242,14 @@ pm2 restart staging-backend staging-frontend
 pm2 restart prod-backend prod-frontend
 ```
 
-### 7. Reload Nginx
+### 8. Reload Nginx
 ```bash
 nginx -s reload
 ```
 
 ## PM2 Configuration
 
-The PM2 ecosystem is configured in the repository at `ecosystem.config.js`. This file is deployed to each environment directory:
+Services are configured in `ecosystem.config.js`:
 
 ```javascript
 module.exports = {
@@ -228,21 +261,14 @@ module.exports = {
       env: {
         NODE_ENV: 'development',
         PORT: 3002
-      },
-      watch: false,
-      instances: 1,
-      exec_mode: 'fork'
+      }
     },
     {
       name: 'dev-frontend',
       script: 'npx',
       args: 'serve -s /var/www/blue.flippi.ai/mobile-app/dist -l 8082',
-      cwd: '/var/www/blue.flippi.ai/mobile-app',
-      watch: false,
-      instances: 1,
-      exec_mode: 'fork'
+      cwd: '/var/www/blue.flippi.ai/mobile-app'
     }
-    // Production and Staging apps follow same pattern with different ports
   ]
 };
 ```
@@ -255,25 +281,35 @@ pm2 logs [service-name]     # View logs
 pm2 restart [service-name]  # Restart service
 pm2 show [service-name]     # Show service details
 pm2 monit                   # Real-time monitoring
-pm2 save                    # Save current configuration
 ```
 
 ## Nginx Configuration
 
-Each domain has its own nginx config at `/etc/nginx/sites-available/[domain]`:
+Each domain config includes OAuth and legal page routes:
 
 ```nginx
 server {
     server_name blue.flippi.ai;
     
-    # API routes
+    # Backend API routes
     location /api {
         proxy_pass http://localhost:3002;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
         proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        client_max_body_size 10M;
+    }
+    
+    # OAuth routes
+    location /auth {
+        proxy_pass http://localhost:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
     
     # Health check
@@ -281,26 +317,71 @@ server {
         proxy_pass http://localhost:3002;
     }
     
-    # Frontend
-    location / {
-        proxy_pass http://localhost:8082;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
+    # Legal pages
+    location = /terms {
+        alias /var/www/blue.flippi.ai/mobile-app/terms.html;
     }
     
-    # SSL configuration (managed by Certbot)
+    location = /privacy {
+        alias /var/www/blue.flippi.ai/mobile-app/privacy.html;
+    }
+    
+    # Frontend catch-all
+    location / {
+        root /var/www/blue.flippi.ai/mobile-app/dist;
+        try_files $uri /index.html;
+    }
+    
+    # SSL configuration
     listen 443 ssl;
     ssl_certificate /etc/letsencrypt/live/blue.flippi.ai/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/blue.flippi.ai/privkey.pem;
 }
 ```
 
+## Dependencies
+
+### Backend Dependencies
+```json
+{
+  "dependencies": {
+    "better-sqlite3": "^11.0.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-validator": "^7.0.1",
+    "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.1",
+    "openai": "^4.47.1",
+    "passport": "^0.7.0",
+    "passport-google-oauth20": "^2.0.0"
+  }
+}
+```
+
 ## Troubleshooting
 
-### Backend Not Responding (502 Error)
+### OAuth Login Not Working
+
+1. **Check OAuth credentials**:
+   ```bash
+   cat /var/www/blue.flippi.ai/backend/.env | grep GOOGLE
+   ```
+
+2. **Verify callback URLs** in Google Console match environment
+
+3. **Check JWT secret** is set:
+   ```bash
+   cat /var/www/blue.flippi.ai/backend/.env | grep JWT_SECRET
+   ```
+
+4. **Test OAuth endpoint**:
+   ```bash
+   curl https://blue.flippi.ai/auth/google -I
+   ```
+
+### Backend 502 Error
 
 1. **Check PM2 status**:
    ```bash
@@ -308,171 +389,102 @@ server {
    pm2 logs dev-backend --lines 50
    ```
 
-2. **Verify .env file**:
+2. **Verify all env variables**:
    ```bash
    cat /var/www/blue.flippi.ai/backend/.env
-   # Ensure OPENAI_API_KEY is set and PORT is correct
    ```
 
-3. **Test backend directly**:
+3. **Check passport initialization**:
    ```bash
-   curl http://localhost:3002/health
+   pm2 logs dev-backend | grep passport
    ```
 
-4. **Restart backend**:
+### Database Issues
+
+1. **Check database exists**:
    ```bash
-   cd /var/www/blue.flippi.ai/backend
-   npm install
-   pm2 restart dev-backend
+   ls -la /var/lib/flippi-dev/flippi.db
    ```
 
-### Frontend Shows "Index of dist/"
+2. **Check permissions**:
+   ```bash
+   ls -ld /var/lib/flippi-dev
+   # Should be writable by www-data
+   ```
 
-This means the Expo build failed:
+3. **View database content**:
+   ```bash
+   sqlite3 /var/lib/flippi-dev/flippi.db
+   .tables
+   SELECT COUNT(*) FROM users;
+   .quit
+   ```
 
-1. **Check build logs**:
+### Frontend Shows Old Content
+
+1. **Clear PM2 cache**:
+   ```bash
+   pm2 restart dev-frontend --update-env
+   ```
+
+2. **Verify build completed**:
+   ```bash
+   ls -la /var/www/blue.flippi.ai/mobile-app/dist/
+   ```
+
+3. **Force rebuild**:
    ```bash
    cd /var/www/blue.flippi.ai/mobile-app
+   rm -rf dist
    npx expo export --platform web --output-dir dist
    ```
 
-2. **Common fixes**:
-   - Fix any syntax errors in App.js
-   - Ensure all dependencies are installed
-   - Check for proper React Native Web setup
-
-### SSL Certificate Issues
-
-```bash
-# Check certificates
-certbot certificates
-
-# Renew if needed
-certbot renew
-```
-
-### Nginx Configuration Updates
-
-When updating nginx configuration (e.g., to increase upload size limits):
-
-1. **Manual Update via SSH**:
-   ```bash
-   # Run the update script
-   bash /path/to/scripts/update-nginx-config.sh
-   ```
-
-2. **GitHub Actions Update**:
-   - Go to Actions tab in GitHub
-   - Select "Update Nginx Configuration" workflow
-   - Click "Run workflow"
-   - Type "yes" to confirm
-   - Click "Run workflow"
-
-3. **Manual Update**:
-   ```bash
-   # Edit nginx configs
-   sudo nano /etc/nginx/sites-available/blue.flippi.ai
-   
-   # Add after server_name line:
-   client_max_body_size 50M;
-   
-   # Test configuration
-   sudo nginx -t
-   
-   # Reload if test passes
-   sudo nginx -s reload
-   ```
-
-## Monitoring
-
-### Check Service Health
-
-```bash
-# All environments
-curl https://app.flippi.ai/health
-curl https://green.flippi.ai/health
-curl https://blue.flippi.ai/health
-
-# Check logs
-tail -f /var/log/nginx/error.log
-pm2 logs --lines 100
-```
-
-### Performance Monitoring
-
-```bash
-# PM2 monitoring
-pm2 monit
-
-# System resources
-htop
-df -h
-```
-
 ## Security Considerations
 
-1. **Never commit sensitive data**:
-   - OpenAI API keys
-   - Database credentials
-   - Private keys
+1. **Environment Variables**:
+   - Never commit .env files
+   - Use strong JWT_SECRET (min 32 chars)
+   - Rotate OAuth credentials periodically
 
-2. **Use environment variables** for all secrets
+2. **Database Security**:
+   - Regular backups
+   - Restricted file permissions
+   - No direct internet access
 
-3. **Keep dependencies updated**:
+3. **HTTPS Only**:
+   - All OAuth callbacks use HTTPS
+   - Secure cookies in production
+
+4. **Dependencies**:
    ```bash
    npm audit
    npm audit fix
    ```
 
-4. **Firewall configuration**:
-   - Only ports 22, 80, 443 should be open
-   - Backend ports (3000-3002) should only be accessible locally
-
 ## Backup and Recovery
 
 ### Database Backup
-
-#### SQLite Feedback Database
-
-Each environment has its own SQLite database for user feedback:
-
 ```bash
-# Production backup
-cp /var/lib/flippi/feedback.db /backup/feedback-prod-$(date +%Y%m%d).db
+# Automated daily backup script
+#!/bin/bash
+DATE=$(date +%Y%m%d)
+cp /var/lib/flippi/flippi.db /backup/flippi-prod-$DATE.db
+cp /var/lib/flippi-staging/flippi.db /backup/flippi-staging-$DATE.db
+cp /var/lib/flippi-dev/flippi.db /backup/flippi-dev-$DATE.db
 
-# Staging backup
-cp /var/lib/flippi-staging/feedback.db /backup/feedback-staging-$(date +%Y%m%d).db
-
-# Development backup
-cp /var/lib/flippi-dev/feedback.db /backup/feedback-dev-$(date +%Y%m%d).db
-```
-
-**Note**: The SQLite database files are NOT stored in Git and persist between deployments.
-
-### Code Backup
-Code is versioned in Git. To restore:
-```bash
-git log --oneline
-git reset --hard [commit-hash]
+# Keep only last 7 days
+find /backup -name "flippi-*.db" -mtime +7 -delete
 ```
 
 ### Configuration Backup
 ```bash
-# Backup PM2 config
-pm2 save
+# Backup all .env files
+tar -czf /backup/env-files-$(date +%Y%m%d).tar.gz \
+  /var/www/*/backend/.env
 
-# Backup Nginx config
-cp -r /etc/nginx /backup/nginx-$(date +%Y%m%d)
+# Backup nginx configs
+cp -r /etc/nginx/sites-available /backup/nginx-$(date +%Y%m%d)
 ```
-
-## Future Improvements
-
-1. **Automated Git-based deployment** (partially implemented)
-2. **Health check monitoring**
-3. **Automated backups**
-4. **Load balancing for high availability**
-5. **Container-based deployment (Docker/Kubernetes)**
-6. **CI/CD pipeline with testing**
 
 ## Quick Reference
 
@@ -481,26 +493,72 @@ cp -r /etc/nginx /backup/nginx-$(date +%Y%m%d)
 - Staging: https://green.flippi.ai
 - Development: https://blue.flippi.ai
 
-### Server Access
-```bash
-ssh root@157.245.142.145
-```
-
 ### Service Ports
 - Production: Backend 3000, Frontend 8080
 - Staging: Backend 3001, Frontend 8081
 - Development: Backend 3002, Frontend 8082
 
 ### Common Issues & Solutions
+- **"Authentication required"**: User needs to log in via Google
 - **502 Error**: Backend crashed - check PM2 logs
-- **"Index of dist/"**: Frontend build failed - check syntax
-- **"Analysis Failed"**: Check OpenAI API key in .env
-- **SSL errors**: Run `certbot renew`
+- **OAuth redirect error**: Check callback URLs in Google Console
+- **"Analysis Failed"**: Check OpenAI API key
+- **Database locked**: Too many concurrent writes - implement retry logic
 
-## Contact & Support
+### Required Environment Variables
+```bash
+# API Keys
+OPENAI_API_KEY=sk-...
+
+# OAuth
+JWT_SECRET=random-32-char-string
+GOOGLE_CLIENT_ID=xxx.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=GOCSPX-...
+FRONTEND_URL=https://[domain]
+
+# Database
+DATABASE_PATH=/var/lib/flippi[-env]/flippi.db
+
+# Server
+PORT=300X
+NODE_ENV=production|staging|development
+```
+
+## Monitoring
+
+### Health Checks
+```bash
+# All environments
+curl https://app.flippi.ai/health
+curl https://green.flippi.ai/health
+curl https://blue.flippi.ai/health
+```
+
+### User Activity
+```bash
+# Check recent logins
+sqlite3 /var/lib/flippi/flippi.db \
+  "SELECT email, lastLoginAt FROM users ORDER BY lastLoginAt DESC LIMIT 10;"
+
+# Count total users
+sqlite3 /var/lib/flippi/flippi.db \
+  "SELECT COUNT(*) as total_users FROM users;"
+```
+
+## Future Improvements
+
+1. **OAuth Providers**: Add Facebook, Apple Sign-In
+2. **Session Management**: Redis for scalability
+3. **Rate Limiting**: Implement per-user limits
+4. **Analytics**: Track user engagement
+5. **Automated Testing**: Jest for API tests
+6. **CI/CD Pipeline**: Automated testing before deploy
+
+## Support
 
 For deployment issues:
 1. Check PM2 logs first
-2. Verify environment variables
-3. Test services individually
-4. Check GitHub Actions logs for automated deployments
+2. Verify all environment variables
+3. Test OAuth flow manually
+4. Check GitHub Actions logs
+5. Email: teamflippi@gmail.com
