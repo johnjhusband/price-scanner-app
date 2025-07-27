@@ -1084,7 +1084,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    padding: Platform.OS === 'web' ? 40 : 20, // More padding on desktop
+    padding: Platform.OS === 'web' ? 40 : 10, // Less padding on mobile for more width
     paddingTop: Platform.OS === 'web' ? 60 : 80, // More top padding to avoid user section
   },
   title: {
