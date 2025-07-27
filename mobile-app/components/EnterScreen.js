@@ -131,7 +131,7 @@ const EnterScreen = () => {
               <Text style={styles.logoText}>Depop</Text>
             </View>
             <View style={styles.platformLogo}>
-              <Text style={styles.logoText}>TheRealReal</Text>
+              <Text style={styles.logoText}>Vestiaire</Text>
             </View>
           </View>
         </View>
