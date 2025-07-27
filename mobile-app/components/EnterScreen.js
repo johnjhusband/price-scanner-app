@@ -106,15 +106,6 @@ const EnterScreen = () => {
             Secure login. No password required.
           </Text>
           
-          <View style={styles.trustIndicators}>
-            <Text style={styles.trustItem}>✓ 30-second setup</Text>
-            <Text style={styles.trustItem}>✓ Unlimited scans</Text>
-            <Text style={styles.trustItem}>✓ All features included</Text>
-          </View>
-          
-          <Text style={styles.socialProof}>
-            Flippi uses AI to analyze pricing trends from 15+ resale marketplaces.
-          </Text>
         </View>
         
         {/* Platform Section - Moved below login */}
@@ -328,24 +319,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: brandColors.slateTeal,
     textAlign: 'center',
-  },
-  trustIndicators: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    marginTop: 20,
-    gap: 20,
-  },
-  trustItem: {
-    fontSize: 14,
-    color: brandColors.slateTeal,
-  },
-  socialProof: {
-    fontSize: 14,
-    color: brandColors.mutedGraphite,
-    marginTop: 15,
-    marginBottom: 20,
-    textAlign: 'center',
-    fontStyle: 'italic',
   },
   platformLogoGrid: {
     flexDirection: 'row',
