@@ -3,6 +3,8 @@ const multer = require('multer');
 const cors = require('cors');
 const { OpenAI } = require('openai');
 const path = require('path');
+const session = require('express-session');
+const passport = require('passport');
 const { initializeDatabase } = require('./database');
 
 // Load .env from shared location outside git directories
@@ -59,6 +61,22 @@ app.use(cors({
   origin: true, // Allow all origins - from blue fix
   credentials: true
 }));
+
+// Session configuration for OAuth
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'default-session-secret-change-this',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    httpOnly: true,
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
 
 
 
@@ -138,7 +156,7 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
           content: [
             {
               type: "text",
-              text: `${userPrompt ? `User says: ${userPrompt}\n\n` : ''}You are an expert resale value appraiser in 2025. Consider current market trends, platform popularity shifts, and recent sales data. Analyze this item and provide: 1) What the item is, 2) Estimated resale value range based on CURRENT 2025 market conditions, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best STANDARD platform to list it on (eBay, Poshmark, Facebook Marketplace, Mercari, The RealReal, Vestiaire Collective, Grailed, Depop, Etsy, Rebag, or Shopify - choose based on current platform trends and item type), 5) Best LIVE selling platform (Whatnot, Poshmark Live, TikTok Shop, Instagram Live, Facebook Live, YouTube Live, Amazon Live, eBay Live, or Shopify Live - consider current platform popularity and audience demographics), 6) Condition assessment, 7) Authenticity likelihood (0-100% score based on visible indicators), 8) Boca Score (0-100 score indicating how quickly this item will sell - use the FULL range: 0-20 for slow movers, 21-40 for below average, 41-60 for average items, 61-80 for fast sellers, 81-100 for instant sellers. Be bold and use extreme scores when appropriate), 9) TRENDING SCORE: Calculate a score from 0-100 using this formula: (1.0 × Demand[0-25]) + (0.8 × Velocity[0-20]) + (0.6 × Platform[0-15]) + (0.5 × Recency[0-10]) + (0.5 × Scarcity[0-10]) - (1.0 × Penalty[0-20]). Demand=search volume/likes/wishlist adds. Velocity=sell-through rate. Platform=trending on multiple platforms. Recency=seasonal/viral trends. Scarcity=limited runs/rare items. Penalty=high supply/counterfeits/bad condition. BE DECISIVE - use extreme values when justified. Avoid clustering around 40-60. Consider inflation, current fashion trends, and platform algorithm changes. Respond with JSON: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"recommended_live_platform\": \"live platform\", \"condition\": \"condition\", \"authenticity_score\": \"X%\", \"boca_score\": \"X\", \"trending_score_data\": {\"scores\": {\"demand\": X, \"velocity\": X, \"platform\": X, \"recency\": X, \"scarcity\": X, \"penalty\": X}, \"trending_score\": X, \"label\": \"(return ONLY the label text that matches the trending_score: if score 0-10 return 'Unsellable (By Most)', if 11-25 return 'Will Take Up Rent', if 26-40 return 'Niche Vibes Only', if 41-55 return 'Hit-or-Miss', if 56-70 return 'Moves When Ready', if 71-85 return 'Money Maker', if 86-95 return 'Hot Ticket', if 96-100 return 'Win!')\"}, \"market_insights\": \"current 2025 market trends\", \"selling_tips\": \"specific advice for 2025 marketplace\", \"brand_context\": \"brand status and demand in 2025\", \"seasonal_notes\": \"current seasonal considerations\"}`
+              text: `${userPrompt ? `User says: ${userPrompt}\n\n` : ''}You are an expert resale value appraiser in 2025. Consider current market trends, platform popularity shifts, and recent sales data. Analyze this item and provide: 1) What the item is, 2) Estimated resale value range based on CURRENT 2025 market conditions, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best STANDARD platform to list it on (eBay, Poshmark, Facebook Marketplace, Mercari, The RealReal, Vestiaire Collective, Grailed, Depop, Etsy, Rebag, or Shopify - choose based on current platform trends and item type), 5) Best LIVE selling platform (Whatnot, Poshmark Live, TikTok Shop, Instagram Live, Facebook Live, YouTube Live, Amazon Live, eBay Live, or Shopify Live - consider current platform popularity and audience demographics), 6) Condition assessment, 7) Authenticity likelihood (0-100% score based on visible indicators), 8) TRENDING SCORE: Calculate a score from 0-100 using this formula: (1.0 × Demand[0-25]) + (0.8 × Velocity[0-20]) + (0.6 × Platform[0-15]) + (0.5 × Recency[0-10]) + (0.5 × Scarcity[0-10]) - (1.0 × Penalty[0-20]). Demand=search volume/likes/wishlist adds. Velocity=sell-through rate. Platform=trending on multiple platforms. Recency=seasonal/viral trends. Scarcity=limited runs/rare items. Penalty=high supply/counterfeits/bad condition. BE DECISIVE - use extreme values when justified. Avoid clustering around 40-60. Consider inflation, current fashion trends, and platform algorithm changes. Respond with JSON: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"recommended_live_platform\": \"live platform\", \"condition\": \"condition\", \"authenticity_score\": \"X%\", \"trending_score_data\": {\"scores\": {\"demand\": X, \"velocity\": X, \"platform\": X, \"recency\": X, \"scarcity\": X, \"penalty\": X}, \"trending_score\": X, \"label\": \"(return ONLY the label text that matches the trending_score: if score 0-10 return 'Unsellable (By Most)', if 11-25 return 'Will Take Up Rent', if 26-40 return 'Niche Vibes Only', if 41-55 return 'Hit-or-Miss', if 56-70 return 'Moves When Ready', if 71-85 return 'Money Maker', if 86-95 return 'Hot Ticket', if 96-100 return 'Win!')\"}, \"market_insights\": \"current 2025 market trends\", \"selling_tips\": \"specific advice for 2025 marketplace\", \"brand_context\": \"brand status and demand in 2025\", \"seasonal_notes\": \"current seasonal considerations\"}`
             },
             {
               type: "image_url",
@@ -175,7 +193,6 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
         recommended_live_platform: "Facebook Live",
         condition: "Good",
         authenticity_score: "50%",
-        boca_score: "30",
         trending_score_data: {
           scores: {
             demand: 12,
@@ -218,7 +235,6 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
 
     // Ensure all new fields exist with defaults if missing
     if (!analysis.authenticity_score) analysis.authenticity_score = "50%";
-    if (!analysis.boca_score) analysis.boca_score = "30";
     if (!analysis.market_insights) analysis.market_insights = "Market insights unavailable";
     if (!analysis.selling_tips) analysis.selling_tips = "Ensure good lighting and clear photos";
     if (!analysis.brand_context) analysis.brand_context = "Brand information unavailable";
@@ -269,29 +285,11 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
   }
 });
 
-// Add comprehensive request logging middleware
-app.use((req, res, next) => {
-  if (req.url.startsWith('/api/feedback')) {
-    console.log('\n=== INCOMING FEEDBACK REQUEST ===');
-    console.log('Time:', new Date().toISOString());
-    console.log('Method:', req.method);
-    console.log('URL:', req.url);
-    console.log('Headers:', JSON.stringify(req.headers, null, 2));
-    console.log('Body size:', req.headers['content-length'] || 'unknown');
-  }
-  
-  // Log response when it's done
-  const originalSend = res.send;
-  res.send = function(data) {
-    if (req.url.startsWith('/api/feedback') && res.statusCode >= 400) {
-      console.log('Response status:', res.statusCode);
-      console.log('Error response:', data);
-    }
-    originalSend.call(this, data);
-  };
-  
-  next();
-});
+// Request/response logging removed for performance
+
+// Auth routes
+const authRoutes = require('./routes/auth');
+app.use('/auth', authRoutes);
 
 // Feedback route - wrap in try-catch
 const feedbackRoutes = require('./routes/feedback');
@@ -365,6 +363,17 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Time:', new Date().toISOString());
   console.error('Reason:', reason);
   console.error('Promise:', promise);
+});
+
+// Serve legal pages
+app.get('/terms', (req, res) => {
+  const path = require('path');
+  res.sendFile(path.join(__dirname, '../mobile-app/terms.html'));
+});
+
+app.get('/privacy', (req, res) => {
+  const path = require('path');
+  res.sendFile(path.join(__dirname, '../mobile-app/privacy.html'));
 });
 
 // Start server
