@@ -1147,11 +1147,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   analysisResult: {
-    width: Platform.OS === 'web' ? '80%' : '100%', // Percentage based
+    width: Platform.OS === 'web' ? '80%' : '95%', // Give some margin on mobile
     maxWidth: 1000, // Generous limit only for ultra-wide
-    padding: 20,
+    padding: Platform.OS === 'web' ? 20 : 16,
     borderRadius: 10,
     marginBottom: 20,
+    alignSelf: 'center',
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1166,14 +1167,17 @@ const styles = StyleSheet.create({
   },
   resultItem: {
     marginBottom: 12,
+    width: '100%',
   },
   resultLabel: {
-    fontSize: 14,
+    fontSize: Platform.OS === 'web' ? 14 : 13,
     marginBottom: 4,
   },
   resultValue: {
-    fontSize: 16,
+    fontSize: Platform.OS === 'web' ? 16 : 14,
     fontWeight: '500',
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   priceValue: {
     fontSize: 20,
@@ -1187,6 +1191,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: brandColors.softTaupeBeige,
+    width: '100%',
   },
   suggestedPriceLabel: {
     fontSize: 14,
