@@ -30,7 +30,7 @@ const EnterScreen = () => {
           <Text style={styles.tagline}>Never Over Pay</Text>
           
           <Text style={styles.subtitle}>
-            Find the best price. Pick the best platform.
+            Know the price. Own the profit.
           </Text>
         </View>
         
