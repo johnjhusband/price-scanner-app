@@ -285,29 +285,7 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
   }
 });
 
-// Add comprehensive request logging middleware
-app.use((req, res, next) => {
-  if (req.url.startsWith('/api/feedback')) {
-    console.log('\n=== INCOMING FEEDBACK REQUEST ===');
-    console.log('Time:', new Date().toISOString());
-    console.log('Method:', req.method);
-    console.log('URL:', req.url);
-    console.log('Headers:', JSON.stringify(req.headers, null, 2));
-    console.log('Body size:', req.headers['content-length'] || 'unknown');
-  }
-  
-  // Log response when it's done
-  const originalSend = res.send;
-  res.send = function(data) {
-    if (req.url.startsWith('/api/feedback') && res.statusCode >= 400) {
-      console.log('Response status:', res.statusCode);
-      console.log('Error response:', data);
-    }
-    originalSend.call(this, data);
-  };
-  
-  next();
-});
+// Request/response logging removed for performance
 
 // Auth routes
 const authRoutes = require('./routes/auth');
