@@ -45,7 +45,7 @@ const EnterScreen = () => {
           onMouseLeave={() => Platform.OS === 'web' && setIsOfferHovering(false)}
           activeOpacity={0.8}
         >
-          <Text style={styles.offerText}>FREE for a limited time - No credit card required</Text>
+          <Text style={styles.offerText}>Start now. No card. Limited offer.</Text>
         </TouchableOpacity>
         
         {/* Value Propositions */}
