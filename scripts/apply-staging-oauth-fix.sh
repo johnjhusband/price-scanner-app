@@ -109,14 +109,22 @@ cp "/tmp/$DOMAIN.conf" "$NGINX_CONFIG"
 
 # Test nginx configuration
 echo "4. Testing nginx configuration..."
-nginx -t
+if command -v sudo >/dev/null 2>&1 && [ "$EUID" -ne 0 ]; then
+    sudo nginx -t
+else
+    nginx -t
+fi
 
 if [ $? -eq 0 ]; then
     echo "   ✓ Configuration test passed"
     
     # Reload nginx
     echo "5. Reloading nginx..."
-    nginx -s reload
+    if command -v sudo >/dev/null 2>&1 && [ "$EUID" -ne 0 ]; then
+        sudo systemctl reload nginx
+    else
+        systemctl reload nginx || nginx -s reload
+    fi
     echo "   ✓ Nginx reloaded successfully"
     
     # Test OAuth endpoint
@@ -141,7 +149,11 @@ else
     echo "   ✗ Configuration test failed!"
     echo "   Restoring backup..."
     cp "$NGINX_CONFIG.backup-$TIMESTAMP" "$NGINX_CONFIG"
-    nginx -s reload
+    if command -v sudo >/dev/null 2>&1 && [ "$EUID" -ne 0 ]; then
+        sudo systemctl reload nginx
+    else
+        systemctl reload nginx || nginx -s reload
+    fi
     echo "   Backup restored. Please check the error messages above."
     exit 1
 fi
