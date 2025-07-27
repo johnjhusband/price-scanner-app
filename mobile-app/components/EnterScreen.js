@@ -212,7 +212,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 18,
     color: brandColors.slateTeal,
-    marginBottom: 20,
+    marginBottom: Platform.OS === 'web' ? 20 : 10,
     textAlign: 'center',
   },
   offerBanner: {
