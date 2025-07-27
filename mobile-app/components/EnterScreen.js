@@ -193,7 +193,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingHorizontal: Platform.OS === 'web' ? 40 : 20,
-    paddingTop: Platform.OS === 'web' ? 80 : 40,
+    paddingTop: Platform.OS === 'web' ? 40 : 30,
     paddingBottom: 30,
     marginBottom: 10,
     // Subtle luxury gradient - very soft transition
