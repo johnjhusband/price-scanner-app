@@ -1096,8 +1096,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   uploadContainer: {
-    width: Platform.OS === 'web' ? '80%' : '100%', // Percentage based for desktop
-    maxWidth: 1000, // Only prevent extreme stretching
+    width: '100%', // Full width on all platforms
+    maxWidth: Platform.OS === 'web' ? 800 : '100%', // Only limit on web
     alignItems: 'center',
     marginTop: 10,
   },
@@ -1147,9 +1147,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   analysisResult: {
-    width: Platform.OS === 'web' ? '80%' : '95%', // Give some margin on mobile
-    maxWidth: 1000, // Generous limit only for ultra-wide
-    padding: Platform.OS === 'web' ? 20 : 16,
+    width: '100%', // Full width
+    maxWidth: Platform.OS === 'web' ? 800 : '100%', // Only limit on web
+    padding: Platform.OS === 'web' ? 20 : 12,
     borderRadius: 10,
     marginBottom: 20,
     alignSelf: 'center',
