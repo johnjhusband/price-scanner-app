@@ -98,7 +98,7 @@ const EnterScreen = () => {
               <View style={styles.googleLogo}>
                 <Text style={styles.googleG}>G</Text>
               </View>
-              <Text style={styles.googleButtonText}>Login with Google</Text>
+              <Text style={styles.googleButtonText}>Sign in with Google</Text>
             </View>
           </TouchableOpacity>
           
@@ -378,8 +378,9 @@ const styles = StyleSheet.create({
     backgroundColor: brandColors.deepTeal, // Brand color
     borderRadius: 8,
     paddingVertical: 14,
-    paddingHorizontal: 24,
-    width: '100%',
+    paddingHorizontal: Platform.OS === 'web' ? 24 : 16,
+    width: Platform.OS === 'web' ? '100%' : '90%',
+    minWidth: 220, // Ensure button is wide enough for text
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -419,7 +420,7 @@ const styles = StyleSheet.create({
   },
   googleButtonText: {
     color: '#FFFFFF', // White text on deep teal
-    fontSize: 16,
+    fontSize: Platform.OS === 'web' ? 16 : 15,
     fontWeight: typography.weights.semiBold,
   },
   securityNote: {
