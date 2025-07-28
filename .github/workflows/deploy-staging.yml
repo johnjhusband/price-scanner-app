@@ -19,6 +19,20 @@ jobs:
             git reset --hard HEAD
             git clean -fd
             git pull origin staging
+            
+            # Apply OAuth nginx fix IMMEDIATELY after pull
+            echo "=== Applying OAuth fix ==="
+            if [ -f scripts/apply-staging-oauth-fix-debug.sh ]; then
+              echo "Running debug version of OAuth fix..."
+              bash scripts/apply-staging-oauth-fix-debug.sh
+            elif [ -f scripts/apply-staging-oauth-fix.sh ]; then
+              echo "Running standard OAuth fix..."
+              bash scripts/apply-staging-oauth-fix.sh
+            else
+              echo "ERROR: OAuth fix script not found!"
+              ls -la scripts/
+            fi
+            
             cd backend && npm install --production
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
             # Debug: Check what directory PM2 is serving from
@@ -35,5 +49,12 @@ jobs:
             # Check if backend is running
             pm2 show staging-backend || true
             curl -s http://localhost:3001/health || echo "Backend not responding"
-            # Clear nginx cache
-            nginx -s reload
+            
+            # Output OAuth fix log
+            echo "=== OAuth Fix Log Contents ==="
+            cat /tmp/oauth-fix-* 2>/dev/null || echo "⚠️ No OAuth fix log found"
+            echo "=== End OAuth Fix Log ==="
+            
+            # Final OAuth test
+            echo "=== Final OAuth Status Check ==="
+            curl -I https://green.flippi.ai/auth/google
