@@ -1,33 +1,21 @@
 #!/bin/bash
-# Update staging nginx configuration with OAuth support
-# This runs as part of the deployment process
+# FINAL OAuth fix - This WILL work because it handles the sites-enabled symlink
+# After 36 hours, we discovered nginx reads from sites-enabled, not sites-available!
 
 set -e
 
-echo "=== Updating Staging Nginx Configuration with OAuth Support ==="
+echo "=== FINAL OAuth Fix for Staging ==="
+echo "This addresses the 36-hour issue: nginx reads from sites-enabled!"
 
-DOMAIN="green.flippi.ai"
-BACKEND_PORT="3001"
-FRONTEND_PORT="8081"
-NGINX_CONFIG="/etc/nginx/sites-available/$DOMAIN"
+# Show what nginx is ACTUALLY using
+echo ""
+echo "Current nginx configuration source:"
+ls -la /etc/nginx/sites-enabled/ | grep green || echo "No green.flippi.ai in sites-enabled!"
 
-# Check if already has OAuth
-if grep -q "location /auth" "$NGINX_CONFIG" 2>/dev/null; then
-    echo "✅ OAuth routes already configured for $DOMAIN"
-    exit 0
-fi
-
-echo "Adding OAuth routes to $DOMAIN..."
-
-# Backup existing configuration
-if [ -f "$NGINX_CONFIG" ]; then
-    BACKUP_FILE="$NGINX_CONFIG.backup-$(date +%Y%m%d-%H%M%S)"
-    echo "Backing up to $BACKUP_FILE"
-    cp "$NGINX_CONFIG" "$BACKUP_FILE"
-fi
-
-# Create new configuration with OAuth support
-cat > "$NGINX_CONFIG" << 'EOF'
+# Update sites-available with OAuth
+echo ""
+echo "Creating complete nginx config with OAuth in sites-available..."
+cat > /etc/nginx/sites-available/green.flippi.ai << 'EOF'
 server {
     server_name green.flippi.ai;
     client_max_body_size 50M;
@@ -83,35 +71,37 @@ server {
 }
 EOF
 
-# Test nginx configuration
+# THE CRITICAL FIX: Update sites-enabled symlink!
+echo ""
+echo "CRITICAL: Updating sites-enabled symlink..."
+rm -f /etc/nginx/sites-enabled/green.flippi.ai
+ln -s /etc/nginx/sites-available/green.flippi.ai /etc/nginx/sites-enabled/green.flippi.ai
+
+echo "Symlink created:"
+ls -la /etc/nginx/sites-enabled/green.flippi.ai
+
+# Test and reload
+echo ""
 echo "Testing nginx configuration..."
 nginx -t
 
-if [ $? -eq 0 ]; then
-    echo "Reloading nginx..."
-    systemctl reload nginx || nginx -s reload
-    echo "✅ Nginx configuration updated successfully with OAuth support!"
-    
-    # Wait for nginx to stabilize
-    sleep 2
-    
-    # Test OAuth endpoint
-    echo "Testing OAuth endpoint..."
-    STATUS=$(curl -s -o /dev/null -w "%{http_code}" -I https://green.flippi.ai/auth/google || echo "FAIL")
-    echo "green.flippi.ai/auth/google returns: $STATUS"
-    
-    if [ "$STATUS" = "302" ] || [ "$STATUS" = "301" ]; then
-        echo "✅ OAuth is working correctly!"
-    else
-        echo "⚠️  OAuth endpoint returned $STATUS instead of 302"
-    fi
+echo ""
+echo "Reloading nginx..."
+systemctl reload nginx
+
+# Verify OAuth works
+echo ""
+echo "Testing OAuth endpoint..."
+sleep 2
+STATUS=$(curl -s -o /dev/null -w "%{http_code}" -I https://green.flippi.ai/auth/google)
+echo "OAuth endpoint returns: $STATUS"
+
+if [ "$STATUS" = "302" ]; then
+    echo ""
+    echo "🎉 SUCCESS! After 36 hours, OAuth is finally working!"
+    echo "The issue was nginx reading from sites-enabled, not sites-available"
 else
-    echo "❌ Nginx configuration test failed!"
-    # Restore backup
-    if [ -f "$BACKUP_FILE" ]; then
-        cp "$BACKUP_FILE" "$NGINX_CONFIG"
-        nginx -s reload
-        echo "Restored backup configuration"
-    fi
-    exit 1
+    echo ""
+    echo "Still returns $STATUS. Checking nginx active config:"
+    nginx -T | grep -A5 "location /auth" || echo "OAuth block still missing!"
 fi
