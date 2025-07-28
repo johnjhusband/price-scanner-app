@@ -100,6 +100,15 @@ const openai = new OpenAI({
 
 // Enhanced health check from v2.0
 app.get('/health', (req, res) => {
+  // Emergency OAuth check for production
+  if (process.env.PORT === '3000') {
+    try {
+      require('./health-check-oauth')();
+    } catch (e) {
+      console.log('OAuth check failed:', e.message);
+    }
+  }
+  
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
