@@ -1,125 +1,117 @@
 #!/bin/bash
-# Verbose OAuth fix for staging with full diagnostics
-set -x  # Enable debug mode to see every command
-set -e  # Exit on error
+# Update staging nginx configuration with OAuth support
+# This runs as part of the deployment process
 
-echo "🔍 VERBOSE OAUTH FIX FOR STAGING"
-echo "================================"
-echo "Date: $(date)"
-echo "Running as: $(whoami)"
-echo "Current directory: $(pwd)"
+set -e
 
-# Configuration
-NGINX_CONFIG="/etc/nginx/sites-available/green.flippi.ai"
-LOG_FILE="/tmp/oauth-fix-verbose-$(date +%s).log"
+echo "=== Updating Staging Nginx Configuration with OAuth Support ==="
 
-# Redirect all output to log file AND screen
-exec > >(tee -a "$LOG_FILE")
-exec 2>&1
+DOMAIN="green.flippi.ai"
+BACKEND_PORT="3001"
+FRONTEND_PORT="8081"
+NGINX_CONFIG="/etc/nginx/sites-available/$DOMAIN"
 
-echo
-echo "📁 STEP 1: Check if nginx config exists"
+# Check if already has OAuth
+if grep -q "location /auth" "$NGINX_CONFIG" 2>/dev/null; then
+    echo "✅ OAuth routes already configured for $DOMAIN"
+    exit 0
+fi
+
+echo "Adding OAuth routes to $DOMAIN..."
+
+# Backup existing configuration
 if [ -f "$NGINX_CONFIG" ]; then
-    echo "✅ Found nginx config at: $NGINX_CONFIG"
-    echo "📊 File permissions: $(ls -la $NGINX_CONFIG)"
-else
-    echo "❌ ERROR: Nginx config not found at $NGINX_CONFIG"
-    echo "📂 Listing /etc/nginx/sites-available/:"
-    ls -la /etc/nginx/sites-available/
-    exit 1
+    BACKUP_FILE="$NGINX_CONFIG.backup-$(date +%Y%m%d-%H%M%S)"
+    echo "Backing up to $BACKUP_FILE"
+    cp "$NGINX_CONFIG" "$BACKUP_FILE"
 fi
 
-echo
-echo "📜 STEP 2: Show CURRENT nginx config"
-echo "===== CURRENT NGINX CONFIG START ====="
-cat "$NGINX_CONFIG"
-echo "===== CURRENT NGINX CONFIG END ====="
+# Create new configuration with OAuth support
+cat > "$NGINX_CONFIG" << 'EOF'
+server {
+    server_name green.flippi.ai;
+    client_max_body_size 50M;
 
-echo
-echo "🔍 STEP 3: Check if /auth location exists"
-if grep -q "location /auth" "$NGINX_CONFIG"; then
-    echo "⚠️  Found existing /auth location"
-    echo "📋 Current /auth config:"
-    grep -A 10 "location /auth" "$NGINX_CONFIG" || true
-else
-    echo "❌ No /auth location found - MUST ADD IT"
-fi
-
-echo
-echo "💾 STEP 4: Backup current config"
-BACKUP="/tmp/nginx-backup-$(date +%s).conf"
-cp "$NGINX_CONFIG" "$BACKUP"
-echo "✅ Backup saved to: $BACKUP"
-
-echo
-echo "🛠️ STEP 5: Create new config with OAuth"
-# Use sed to insert the /auth block after /api block
-sed '/location \/api {/,/^[[:space:]]*}/ {
-    /^[[:space:]]*}/ a\
-\
-    # OAuth routes (REQUIRED FOR GOOGLE LOGIN)\
-    location /auth/ {\
-        proxy_pass http://localhost:3001/;\
-        proxy_http_version 1.1;\
-        proxy_set_header Upgrade $http_upgrade;\
-        proxy_set_header Connection '\''upgrade'\'';\
-        proxy_set_header Host $host;\
-        proxy_cache_bypass $http_upgrade;\
+    location / {
+        proxy_pass http://localhost:8081;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
     }
-}' "$BACKUP" > /tmp/nginx-new.conf
 
-echo
-echo "📜 STEP 6: Show NEW nginx config"
-echo "===== NEW NGINX CONFIG START ====="
-cat /tmp/nginx-new.conf
-echo "===== NEW NGINX CONFIG END ====="
+    location /api {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }
 
-echo
-echo "🔄 STEP 7: Apply new config"
-cp /tmp/nginx-new.conf "$NGINX_CONFIG"
-echo "✅ New config copied to $NGINX_CONFIG"
+    # OAuth routes (REQUIRED FOR GOOGLE LOGIN)
+    location /auth {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
 
-echo
-echo "🧪 STEP 8: Test nginx configuration"
-nginx -t 2>&1 || {
-    echo "❌ Nginx test failed! Restoring backup..."
-    cp "$BACKUP" "$NGINX_CONFIG"
-    exit 1
+    location /health {
+        proxy_pass http://localhost:3001/health;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+    }
+
+    listen 443 ssl;
+    ssl_certificate /etc/letsencrypt/live/green.flippi.ai/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/green.flippi.ai/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
 }
 
-echo
-echo "♻️ STEP 9: Reload nginx"
-systemctl reload nginx || nginx -s reload || {
-    echo "❌ Failed to reload nginx!"
-    exit 1
+server {
+    if ($host = green.flippi.ai) {
+        return 301 https://$host$request_uri;
+    }
+    listen 80;
+    server_name green.flippi.ai;
+    return 404;
 }
-echo "✅ Nginx reloaded"
+EOF
 
-echo
-echo "⏱️ STEP 10: Wait for nginx to stabilize"
-sleep 3
+# Test nginx configuration
+echo "Testing nginx configuration..."
+nginx -t
 
-echo
-echo "🔍 STEP 11: Verify the fix"
-echo "Testing OAuth endpoint..."
-RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" -I https://green.flippi.ai/auth/google)
-echo "OAuth endpoint response: $RESPONSE"
-
-if [ "$RESPONSE" = "302" ] || [ "$RESPONSE" = "301" ]; then
-    echo "✅ SUCCESS! OAuth is working!"
+if [ $? -eq 0 ]; then
+    echo "Reloading nginx..."
+    systemctl reload nginx || nginx -s reload
+    echo "✅ Nginx configuration updated successfully with OAuth support!"
+    
+    # Wait for nginx to stabilize
+    sleep 2
+    
+    # Test OAuth endpoint
+    echo "Testing OAuth endpoint..."
+    STATUS=$(curl -s -o /dev/null -w "%{http_code}" -I https://green.flippi.ai/auth/google || echo "FAIL")
+    echo "green.flippi.ai/auth/google returns: $STATUS"
+    
+    if [ "$STATUS" = "302" ] || [ "$STATUS" = "301" ]; then
+        echo "✅ OAuth is working correctly!"
+    else
+        echo "⚠️  OAuth endpoint returned $STATUS instead of 302"
+    fi
 else
-    echo "❌ FAILED! OAuth still returning $RESPONSE"
-    echo
-    echo "📋 Final nginx config check:"
-    grep -A 10 "location /auth" "$NGINX_CONFIG" || echo "NO /auth block found!"
+    echo "❌ Nginx configuration test failed!"
+    # Restore backup
+    if [ -f "$BACKUP_FILE" ]; then
+        cp "$BACKUP_FILE" "$NGINX_CONFIG"
+        nginx -s reload
+        echo "Restored backup configuration"
+    fi
+    exit 1
 fi
-
-echo
-echo "📊 STEP 12: Show final nginx config"
-echo "===== FINAL NGINX CONFIG START ====="
-cat "$NGINX_CONFIG"
-echo "===== FINAL NGINX CONFIG END ====="
-
-echo
-echo "📁 Log file saved to: $LOG_FILE"
-echo "🏁 Script completed at: $(date)"
