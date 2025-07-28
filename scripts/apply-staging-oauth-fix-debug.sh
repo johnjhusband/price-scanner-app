@@ -1,5 +1,14 @@
 #!/bin/bash
 # Verbose OAuth fix for staging with full diagnostics
+
+# IMMEDIATE LOGGING - Create log file first thing
+LOG_FILE="/tmp/oauth-fix-$(date +%s).log"
+echo "Starting OAuth fix script at $(date)" > "$LOG_FILE"
+echo "Log file: $LOG_FILE" | tee -a "$LOG_FILE"
+
+# Redirect all output to log file AND screen
+exec > >(tee -a "$LOG_FILE") 2>&1
+
 set -x  # Enable debug mode to see every command
 set -e  # Exit on error
 
@@ -8,14 +17,23 @@ echo "================================"
 echo "Date: $(date)"
 echo "Running as: $(whoami)"
 echo "Current directory: $(pwd)"
+echo "Script name: $0"
+echo "All arguments: $@"
 
 # Configuration
 NGINX_CONFIG="/etc/nginx/sites-available/green.flippi.ai"
-LOG_FILE="/tmp/oauth-fix-verbose-$(date +%s).log"
 
-# Redirect all output to log file AND screen
-exec > >(tee -a "$LOG_FILE")
-exec 2>&1
+# CRITICAL: Create the OAuth block we need to add
+OAUTH_BLOCK='
+    # OAuth routes (REQUIRED FOR GOOGLE LOGIN)
+    location /auth/ {
+        proxy_pass http://localhost:3001/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection '\''upgrade'\'';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+    }'
 
 echo
 echo "📁 STEP 1: Check if nginx config exists"
