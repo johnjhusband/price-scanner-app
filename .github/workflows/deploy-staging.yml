@@ -22,18 +22,26 @@ jobs:
             
             # Apply OAuth nginx fix IMMEDIATELY after pull
             echo "=== Applying OAuth fix ==="
-            if [ -f scripts/fix-staging-nginx-oauth.sh ]; then
+            if [ -f scripts/fix-staging-oauth-verbose.sh ]; then
+              echo "Running VERBOSE nginx OAuth fix..."
+              bash scripts/fix-staging-oauth-verbose.sh
+            elif [ -f scripts/fix-staging-nginx-oauth.sh ]; then
               echo "Running nginx OAuth fix for staging..."
               bash scripts/fix-staging-nginx-oauth.sh
-            elif [ -f scripts/apply-staging-oauth-fix-debug.sh ]; then
-              echo "Running debug version of OAuth fix..."
-              bash scripts/apply-staging-oauth-fix-debug.sh
-            elif [ -f scripts/apply-staging-oauth-fix.sh ]; then
-              echo "Running standard OAuth fix..."
-              bash scripts/apply-staging-oauth-fix.sh
             else
               echo "ERROR: OAuth fix script not found!"
               ls -la scripts/
+            fi
+            
+            # VALIDATE the fix actually worked
+            echo "=== VALIDATING OAuth Fix ==="
+            OAUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -I https://green.flippi.ai/auth/google)
+            if [ "$OAUTH_STATUS" = "302" ] || [ "$OAUTH_STATUS" = "301" ]; then
+              echo "✅ OAuth VERIFIED WORKING (returns $OAUTH_STATUS)"
+            else
+              echo "❌ OAuth FIX FAILED! Still returns $OAUTH_STATUS instead of 302"
+              echo "DEPLOYMENT FAILED - OAuth not working"
+              exit 1
             fi
             
             cd backend && npm install --production
