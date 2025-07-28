@@ -10,6 +10,10 @@ if [[ "$PWD" == *"/app.flippi.ai/"* ]]; then
         echo "Applying production OAuth fix..."
         bash ../scripts/production-oauth-fix.sh || echo "OAuth fix will be applied by root user"
     fi
+    if [ -f ../scripts/fix-production-legal-pages.sh ]; then
+        echo "Applying legal pages fix..."
+        bash ../scripts/fix-production-legal-pages.sh || echo "Legal pages fix will be applied by root user"
+    fi
 elif [[ "$PWD" == *"/green.flippi.ai/"* ]]; then
     echo "Staging environment detected"
     if [ -f ../scripts/fix-staging-oauth-verbose.sh ]; then
