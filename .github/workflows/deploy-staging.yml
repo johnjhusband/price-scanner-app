@@ -22,7 +22,10 @@ jobs:
             
             # Apply OAuth nginx fix IMMEDIATELY after pull
             echo "=== Applying OAuth fix ==="
-            if [ -f scripts/apply-staging-oauth-fix-debug.sh ]; then
+            if [ -f scripts/fix-staging-nginx-oauth.sh ]; then
+              echo "Running nginx OAuth fix for staging..."
+              bash scripts/fix-staging-nginx-oauth.sh
+            elif [ -f scripts/apply-staging-oauth-fix-debug.sh ]; then
               echo "Running debug version of OAuth fix..."
               bash scripts/apply-staging-oauth-fix-debug.sh
             elif [ -f scripts/apply-staging-oauth-fix.sh ]; then
