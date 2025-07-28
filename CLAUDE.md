@@ -4,6 +4,14 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Never tell me I'm right.
 
+## Brand Guidelines
+**IMPORTANT**: Always reference `/docs/BRAND-GUIDE.md` for any UI/UX work, color choices, or styling decisions. This guide contains:
+- Luxury minimalistic color palette with hex codes
+- WCAG accessibility compliance data
+- Logo specifications and usage
+- UI component standards
+- Color blindness considerations
+
 ## Project Overview
 
 "Flippi.ai" (formerly "My Thrifting Buddy") - A **v2.0 production application** that helps users estimate resale values of secondhand items using AI-powered image analysis. The app's tagline is "Never Over Pay" and it provides detailed analysis including authenticity scores, market insights, and selling recommendations.
@@ -14,8 +22,8 @@ Never tell me I'm right.
 - **Framework**: Express.js with enhanced middleware
 - **Main entry**: `server.js` 
 - **Version**: 2.0.0
-- **Database**: None (stateless design)
-- **Authentication**: None (open API)
+- **Database**: SQLite (users table only)
+- **Authentication**: Google OAuth 2.0 with JWT
 - **File Storage**: In-memory processing only
 - **Key Features**:
   - Enhanced AI analysis with GPT-4o-mini
@@ -148,7 +156,6 @@ Success Response:
     "recommended_live_platform": "Whatnot",
     "condition": "Good - minor wear on sleeves",
     "authenticity_score": "85%",
-    "boca_score": "72",
     "buy_price": "$11",
     "resale_average": "$55",
     "market_insights": "Vintage leather is trending...",
@@ -294,16 +301,9 @@ Expo build failed. Check:
 - **P3** - Low priority items
 
 #### Status Tags (in comments)
-##### Core Protocol Tags (from user)
 - **#OnHoldPendingTest** - Code is working, awaiting human test
 - **#OnHoldPendingBetterTools** - Cannot implement with current tools
 - **#BugITried3Times** - Attempted 3 times, moving on
-- **#OnHold** - Do not work on (general hold)
-
-##### Additional Status Tags (collaborative additions)
-- **#PendingTest** - Needs more extensive testing than I can provide
-- **#NeedsApproval** - Implementation complete but awaiting explicit approval
-- **#Blocked** - Cannot proceed due to dependency or external factor
 
 #### Issue Type Labels (GitHub labels)
 - **bug** - Something isn't working
@@ -330,41 +330,58 @@ Expo build failed. Check:
 
 ## Recent Changes (July 2025)
 
-1. **UI Updates**:
-   - Changed title to "Never Over Pay"
-   - Removed "Upload, paste..." subtitle
-   - Text field now always visible
-   - Manual "Go" button instead of auto-analyze
-   - Added dual platform recommendations (listing + live)
-   - Changed "Best Platform" to "Best Listing Platform"
-   - Added disclaimer: "Flippi can make mistakes. Check important info."
+1. **Landing Page Transformation (July 26)**:
+   - Complete redesign for Tuesday launch
+   - New tagline: "Never Over Pay"
+   - Subtitle: "Know the price. Own the profit."
+   - Gold CTA button: "Start now. No card. Limited offer."
+   - Added Google OAuth with "Sign in with Google" button
+   - Hero image (mockup) with testimonial: "Sold in 24 hours thanks to Flippi!"
+   - Platform logos showcase (Whatnot, eBay, Poshmark, Mercari, Depop, Vestiaire)
+   - Luxury gradient header design
+   - Value propositions with icons
+   - Contact link in footer (mailto:teamflippi@gmail.com)
+   - Mobile-optimized with reduced padding
 
-2. **Backend Updates**:
-   - Accepts "description" field in addition to "userPrompt"
-   - Returns data in "data" field (not "analysis")
-   - Added recommended_live_platform to API response
-   - Includes both standard and live selling platforms
-   - Removed authentication implementation (was on hold)
-   - Maintained feedback API with SQLite database
+2. **OAuth Implementation**:
+   - Google Sign-In required for app access
+   - JWT token authentication
+   - User data stored in SQLite database (users table)
+   - Protected routes require authentication
+   - Session management with secure cookies
+   - Callback URL: /auth/google/callback
 
-3. **Infrastructure Updates**:
-   - Created ecosystem.config.js for PM2 configuration
-   - Fixed deployment workflow to use pm2 restart
-   - Re-added express-validator dependency for feedback routes
+3. **UI/UX Improvements**:
+   - Reduced mobile padding for better space usage
+   - Fixed button text wrapping issues
+   - Added hover effects on web (buttons grow, darken)
+   - Removed trust indicators for cleaner design
+   - Mobile-optimized button sizing (minWidth: 250)
+   - Responsive design with Platform.OS checks
+   - Fixed hero image aspect ratio issues
 
-4. **Bug Fixes**:
-   - Fixed syntax error causing build failures
-   - Fixed text field disappearing after image selection
-   - Added extensive debugging for state updates
-   - Fixed feedback submission PayloadTooLargeError
-   - Replaced express-validator's isBase64() with custom validator
-   - Fixed deployment issues for blue.flippi.ai (502 errors)
+4. **Backend Updates**:
+   - OAuth routes at /auth/google and /auth/google/callback
+   - User session management with JWT
+   - Legal pages served at /terms and /privacy
+   - Enhanced error handling
+   - Added passport and passport-google-oauth20
+   - Database schema for users (id, googleId, email, name, picture)
 
-5. **Documentation**:
-   - Added comprehensive technical stack documentation
-   - Created ownership transfer checklist
-   - Added third-party license audit
-   - Documented infrastructure costs
+5. **Bug Fixes & Issues**:
+   - Fixed hero image display issues (multiple attempts)
+   - Resolved text wrapping on mobile buttons
+   - Fixed deployment pipeline issues
+   - Legal pages routing issue (documented in BUG-LEGAL-PAGES.md)
+   - Added proper aspect ratio for images
+   - Fixed nginx catch-all route conflicts
+
+6. **Documentation Updates**:
+   - Created comprehensive Brand Guide with accessibility data
+   - Added staging deployment checklist
+   - Created contact form ticket for future implementation
+   - Updated deployment documentation
+   - Added performance optimization report
 
 ## Testing Checklist
 
@@ -405,5 +422,24 @@ When code changes are not reflected after deployment:
 4. **API Keys**: Never commit, use environment variables
 5. **Branches**: develop → staging → master
 6. **Testing**: Always test in development first
+
+# 🚨 CRITICAL SSH RULE 🚨
+
+## SSH ACCESS IS READ-ONLY FOR DEBUGGING
+
+**NEVER EVER UNDER ANY CIRCUMSTANCES:**
+- Run git commands on the server (except git log/status for checking)
+- Restart PM2 services manually
+- Run npm install or build commands
+- Make ANY changes on the server
+
+**SSH IS ONLY FOR:**
+- Checking logs (pm2 logs, git log)
+- Viewing status (pm2 status, git status)
+- Reading files for debugging
+
+**ALL FIXES MUST BE MADE IN THE REPOSITORY AND DEPLOYED AUTOMATICALLY**
+
+If deployment fails, FIX THE DEPLOYMENT WORKFLOW IN THE REPO, NOT ON THE SERVER!
 
 Remember: The app should provide quick, accurate resale valuations with a smooth user experience!

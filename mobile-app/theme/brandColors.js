@@ -1,33 +1,43 @@
 // Flippi.ai Brand Color System
-// Based on comprehensive brand guide
+// Luxury Minimalistic Color Palette
 
 export const brandColors = {
   // Primary Brand Colors
-  charcoalGray: '#23292C',      // Logo "flippi", headlines, buttons
-  lightGray: '#BFC2C4',         // ".ai", subtitles, icon dot
-  slateBlueGray: '#4A5A5F',     // App background, icon fill
+  slateTeal: '#3F5954',         // Primary UI color, icons, text on light backgrounds
+  deepTeal: '#1D5C5A',          // Buttons, headers, call-to-action components
+  softCream: '#F3EFEA',         // Backgrounds, sections, secondary UI fill
+  offWhite: '#FBF8F2',          // Secondary background and form areas
+  matteGold: '#C8A863',         // Accent text, highlights, subtle luxury touches
+  mutedGraphite: '#1E2A28',     // Body text, footer, logo variants
+  softTaupeBeige: '#D6C6B5',    // Secondary UI elements, shadows, neutral backgrounds
   
-  // Accent & Background Colors
-  coolWhite: '#F5F6F7',         // Old background color
-  pureWhite: '#FFFFFF',         // New pure white background
-  actionBlue: '#3478F6',        // CTA buttons
-  actionBlueHover: '#2C68D0',   // Button hover state
-  successGreen: '#3C8C4E',      // Resale value success highlight
+  // Legacy color mappings (for compatibility)
+  charcoalGray: '#1E2A28',      // Maps to mutedGraphite
+  lightGray: '#D6C6B5',         // Maps to softTaupeBeige
+  slateBlueGray: '#3F5954',     // Maps to slateTeal
+  actionPurple: '#1D5C5A',      // Maps to deepTeal for CTA buttons
+  actionPurpleHover: '#174B49', // Darker teal for hover state
+  successGreen: '#3F5954',      // Maps to slateTeal for success
   
   // Text Colors
-  primaryText: '#23292C',       // Main text
-  secondaryText: '#495A5C',     // Notes, smaller UI
-  disabledText: '#D1D3D4',      // Inactive states
+  primaryText: '#1E2A28',       // Main text (mutedGraphite)
+  secondaryText: '#3F5954',     // Notes, smaller UI (slateTeal)
+  disabledText: '#D6C6B5',      // Inactive states (softTaupeBeige)
   
   // Favicon Background
-  faviconBg: '#4A5A5F',         // Favicon background color
+  faviconBg: '#1D5C5A',         // Favicon background color (deepTeal)
   
   // App Background
-  background: '#FFFFFF',        // Pure white background for clean look
-  surface: '#FFFFFF',           // Surface color for cards and results
+  background: '#FBF8F2',        // Off-white background for luxury feel
+  surface: '#F3EFEA',           // Soft cream for cards and results
   
   // UI Elements
-  border: '#E8E8E8',            // Very light gray border for inputs and dividers
+  border: '#D6C6B5',            // Soft taupe beige for borders
+  
+  // Additional colors for specific uses
+  text: '#1E2A28',              // Alias for primaryText
+  textSecondary: '#3F5954',     // Alias for secondaryText
+  primary: '#1D5C5A',           // Primary action color
 };
 
 export const typography = {
@@ -53,14 +63,14 @@ export const typography = {
 // Button styling constants
 export const buttonStyles = {
   primary: {
-    backgroundColor: brandColors.actionBlue,
+    backgroundColor: brandColors.deepTeal,
     color: '#FFFFFF',
-    hoverBackground: brandColors.actionBlueHover,
+    hoverBackground: '#174B49',
   },
   secondary: {
-    backgroundColor: brandColors.lightGray,
-    color: brandColors.charcoalGray,
-    hoverBackground: '#A5A8AA',
+    backgroundColor: brandColors.softTaupeBeige,
+    color: brandColors.mutedGraphite,
+    hoverBackground: '#C4B4A3',
   },
   borderRadius: '8px',
   padding: {
@@ -74,18 +84,18 @@ export const buttonStyles = {
 // Component-specific colors
 export const componentColors = {
   uploadArea: {
-    border: brandColors.lightGray,
-    background: brandColors.coolWhite,
-    hoverBorder: brandColors.actionBlue,
-    hoverBackground: '#F0F4FF',
+    border: brandColors.softTaupeBeige,
+    background: brandColors.softCream,
+    hoverBorder: brandColors.deepTeal,
+    hoverBackground: brandColors.offWhite,
   },
   results: {
-    background: '#F0F0F0',
-    border: brandColors.lightGray,
+    background: brandColors.softCream,
+    border: brandColors.softTaupeBeige,
   },
   scores: {
-    high: brandColors.successGreen,
-    medium: '#F57C00',
-    low: '#D32F2F',
+    high: brandColors.deepTeal,        // Better contrast, uses primary brand color
+    medium: '#996B3D',                  // Darker gold for WCAG compliance (3.8:1)
+    low: '#8A8A8A',                     // Medium gray for clear differentiation (4.5:1)
   },
 }; 

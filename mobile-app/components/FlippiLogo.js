@@ -41,11 +41,11 @@ const styles = StyleSheet.create({
   },
   flippiText: {
     fontWeight: typography.weights.semiBold,
-    color: brandColors.charcoalGray,
+    color: brandColors.mutedGraphite,  // Updated to new luxury color
   },
   aiText: {
     fontWeight: typography.weights.regular,
-    color: brandColors.lightGray,
+    color: brandColors.matteGold,      // Gold accent for luxury touch
   },
 });
 

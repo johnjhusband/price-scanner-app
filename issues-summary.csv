@@ -1,0 +1,36 @@
+Issue Number,Title,Description,Labels,Tags,State
+18,Test Issue,Testing if issue creation works,-,-,CLOSED
+19,Feature: Upload images from device gallery,- [ ] I can tap 'Browse Files' and see my photo gallery,implemented,-,CLOSED
+20,Feature: Take photos directly with phone camera,- [ ] I can tap 'Use Camera' on my iPhone,implemented,-,CLOSED
+21,Feature: Use webcam on desktop/laptop,- [ ] Camera button only appears if my laptop has a camera,implemented,-,CLOSED
+22,Feature: Drag and drop images to upload,- [ ] I can drag an image from my desktop to the upload area,implemented,-,CLOSED
+23,Feature: Paste images from clipboard,- [ ] I can take a screenshot and paste with Ctrl+V (Windows),implemented,-,CLOSED
+24,Feature: Get resale price estimates,- [ ] I see the item name/description,implemented,-,CLOSED
+25,Feature: Advanced scoring and insights,- [ ] I see an authenticity score (0-100%) with color coding,implemented,-,CLOSED
+26,Feature: Visual indicators for scores,"- [ ] Authenticity scores are color coded (red=fake, green=real)",needs-implementation,-,OPEN
+27,Feature: Zero-downtime deployments,- [ ] Updates can be tested at blue.flippi.ai,-,-,CLOSED
+39,Feature: Add Live Auction Platform Recommendation,"As a user, some products I may want to sell during a live auction. The app is currently showing suggestions for standard listing platforms only. Please add logic to identify and support live auction sales.",implemented,-,CLOSED
+40,Feature: Auto-Recommend Best Selling Platforms (Live & Standard),"As a seller, I want the app to automatically evaluate each product I enter and recommend:",implemented,-,CLOSED
+41,Feature: Display flippi.ai Logo in App Header/Welcome Screen,"As a user visiting the Flippi.ai app, I want to see the finalized brand logo in the header or welcome screen, so that I recognize the brand and trust the platform.",implemented,-,CLOSED
+42,Feature: Add Favicon for Browser Tab Recognition,"As a user bookmarking or tabbing the app, I want to see the finalized favicon so I can quickly identify Flippi.ai in my browser.",implemented,#OnHoldPendingTest,CLOSED
+43,Feature: Apply Brand Color Palette Across App UI,"As a user navigating the app, I want to experience consistent brand colors across UI elements, so the platform looks polished and professional.",implemented,-,CLOSED
+44,Feature: Style Upload Buttons to Match Brand Guidelines,"As a user uploading an image, I want the upload and camera buttons to follow brand styling.",implemented,-,CLOSED
+45,Feature: Send GitHub Repository Link + Summary Before Production Release,"As a stakeholder, I want to receive a GitHub repository link and a summary of all changes before any code is pushed to production, so I have regular visibility into release notes and updates — even though no approval is required.",needs-implementation,"#OnHoldPendingTest, #OnHoldPendingBetterTools",OPEN
+46,Feature: Create Full Technical Stack Documentation for Handoff & Future Ownership,"As a stakeholder preparing to sell or transfer ownership of the Flippi.ai app, I want a complete, well-organized technical documentation of the app's stack, so that future owners or acquirers know exactly what's been built, how it works, what tools and services are used, and what third-party dependencies may incur future costs.",-,#OnHoldPendingTest,OPEN
+47,Feature: Record Search History and Link to Feedback,"As a product owner, I want to track all searches performed in the app and link them to any feedback provided, so we can analyze user behavior and improve our AI models based on real usage data.",removed,#OnHoldPendingTest,OPEN
+48,Feature: User Authentication and Access Control,"As a product owner, I want users to authenticate before using the app, so we can track usage per user, provide personalized experiences, and protect our service from abuse.",removed,#OnHoldPendingTest,OPEN
+49,Feature: Build Internal Trends Database with Selective Web Search,"As a product owner, I want to build our own trends database that grows with each search, using OpenAI's web search capability only when our database lacks the information, so we can reduce API costs while providing current market data.",needs-implementation,-,OPEN
+50,P0 HOTFIX: High-End Product Valuation Error,"When scanning high-end products (e.g., Louboutin rare prism drawstring clutch), the system returns a suggested buy price significantly below appropriate levels.","bug, ready-for-testing",#OnHoldPendingTest,OPEN
+51,P0 HOTFIX: Boca Score Capping at 65-70%,"Boca Score responses consistently remain at 65% or 70% across various image inputs, indicating a potential issue with the scoring algorithm.","bug, ready-for-testing",#OnHoldPendingTest,OPEN
+52,Create LandingPage.js Component,"Create a public landing page introducing Flippi.ai, describing the product, and providing a clear Call to Action (CTA).","enhancement, blocked",#OnHoldPendingBetterTools,OPEN
+53,Create LoginPage.js Component,Ensure functional user management by capturing and storing user emails securely in the backend as part of the login/signup process.,"enhancement, blocked",#OnHoldPendingBetterTools,OPEN
+54,Create Dashboard.js Component,Create the protected main app view after a user logs in.,"enhancement, blocked",#OnHoldPendingBetterTools,OPEN
+55,Create ProtectedRoute.js Component,Develop a route protection component to block unauthorized access.,"enhancement, blocked",#OnHoldPendingBetterTools,OPEN
+56,Build authService.js (Frontend Authentication Helper),Handle basic authentication logic in frontend.,"enhancement, blocked",#OnHoldPendingBetterTools,OPEN
+57,Implement Routing in App.js,Set up app routing using React Router.,"enhancement, blocked",#OnHoldPendingBetterTools,OPEN
+58,Create index.js Entry Point,Bootstrap React app and render App component.,"enhancement, blocked",#OnHoldPendingBetterTools,OPEN
+59,Backlog: Ensure User Email Capture and Secure Storage,Ensure backend securely captures/stores user emails for account management.,"enhancement, removed",#OnHoldPendingTest,OPEN
+60,Backlog: Flippi Can Make Mistakes - User Advisory,"Display the advisory: ""Flippi can make mistakes. Check important info.""","enhancement, ready-for-testing","#OnHoldPendingTest, #OnHoldPendingBetterTools",OPEN
+61,Backlog: Adopt Security Standards,Ensure platform complies with key security standards.,"enhancement, removed",#OnHoldPendingTest,OPEN
+62,P0 HOTFIX: Configure Persistent Database Path for Feedback Feature in Blue Environment,"The feedback feature currently stores its SQLite database in `/tmp/flippi-feedback.db`, which is a temporary directory that gets cleared on server reboot. This means all user feedback data will be lost if the server restarts.",bug,-,CLOSED
+63,P0 HOTFIX: Complete Server Configuration for Feedback Database Persistence - Blue Environment,Code changes have been implemented to support persistent feedback database storage. The backend now reads FEEDBACK_DB_PATH from environment variables instead of using hardcoded /tmp/ directory.,bug,#OnHoldPendingTest,CLOSED

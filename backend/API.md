@@ -78,7 +78,6 @@ Analyze an image to get detailed resale price estimates using OpenAI Vision.
     "recommended_platform": "The RealReal",
     "condition": "Good - minor wear on sleeves",
     "authenticity_score": "85%",
-    "boca_score": "72",
     "buy_price": "$11",
     "resale_average": "$55",
     "market_insights": "Vintage leather is trending...",
@@ -101,7 +100,6 @@ Analyze an image to get detailed resale price estimates using OpenAI Vision.
 - `recommended_platform`: Best platform for selling
 - `condition`: Detailed condition assessment
 - `authenticity_score`: Likelihood of authenticity (0-100%)
-- `boca_score`: Sellability score (0-100)
 - `buy_price`: Recommended purchase price
 - `resale_average`: Average resale value
 - `market_insights`: Current market trends

@@ -7,6 +7,8 @@ import { Camera } from 'expo-camera';
 import FlippiLogo from './components/FlippiLogo';
 import BrandButton from './components/BrandButton';
 import FeedbackPrompt from './components/FeedbackPrompt';
+import EnterScreen from './components/EnterScreen';
+import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
 
 const API_URL = Platform.OS === 'web' 
@@ -178,7 +180,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
   if (hasPermission === null) {
     return (
       <View style={[styles.cameraContainer, { backgroundColor: brandColors.background }]}>
-        <ActivityIndicator size="large" color={brandColors.primary} />
+        <ActivityIndicator size="large" color={brandColors.charcoalGray} />
         <Text style={[styles.cameraText, { color: brandColors.text }]}>Initializing camera...</Text>
       </View>
     );
@@ -230,6 +232,9 @@ const WebCameraView = ({ onCapture, onCancel }) => {
 };
 
 export default function App() {
+  // Build version for cache busting
+  console.log('App version: 2025-07-26-v3 - Rotating greetings FIXED');
+  
   const [image, setImage] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -239,6 +244,9 @@ export default function App() {
   const [productDescription, setProductDescription] = useState('');
   const [imageBase64, setImageBase64] = useState(null);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
   
   const scrollViewRef = useRef(null);
   const resultsRef = useRef(null);
@@ -486,6 +494,27 @@ export default function App() {
   useEffect(() => {
     checkCameraAvailability();
     setupPasteListener();
+    
+    // Check authentication on web
+    if (Platform.OS === 'web') {
+      // Check if token in URL (OAuth callback)
+      if (AuthService.parseTokenFromUrl()) {
+        setIsAuthenticated(true);
+        setUser(AuthService.getUser());
+        setAuthLoading(false);
+      } else if (AuthService.isAuthenticated()) {
+        // Check existing session
+        setIsAuthenticated(true);
+        setUser(AuthService.getUser());
+        setAuthLoading(false);
+      } else {
+        setAuthLoading(false);
+      }
+    } else {
+      // Mobile platforms - for now, no auth required
+      setAuthLoading(false);
+    }
+    
     return () => removePasteListener();
   }, []);
   
@@ -704,11 +733,46 @@ export default function App() {
     setImageBase64(null);
     setShowFeedback(false);
   };
+  
+  const handleExit = async () => {
+    if (Platform.OS === 'web') {
+      try {
+        // Call backend to logout
+        await fetch(`${API_URL}/auth/exit`, {
+          method: 'GET',
+          credentials: 'include'
+        });
+      } catch (error) {
+        console.error('Exit error:', error);
+      }
+      
+      // Clear local auth
+      AuthService.exit();
+      setIsAuthenticated(false);
+      setUser(null);
+      resetApp();
+    }
+  };
 
   if (showCamera) {
     return <WebCameraView onCapture={handleWebCameraCapture} onCancel={() => setShowCamera(false)} />;
   }
+  
+  // Show loading while checking auth
+  if (authLoading && Platform.OS === 'web') {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={brandColors.charcoalGray} />
+      </View>
+    );
+  }
+  
+  // Show Enter screen if not authenticated (web only)
+  if (Platform.OS === 'web' && !isAuthenticated) {
+    return <EnterScreen />;
+  }
 
+  // Main Flip interface
   return (
     <ScrollView 
       ref={scrollViewRef}
@@ -730,7 +794,20 @@ export default function App() {
         </View>
       )}
       
+      {/* You section - User info and Exit - Outside content for better positioning */}
+      {Platform.OS === 'web' && user && (
+        <View style={styles.userSection}>
+          <View style={styles.userInfo}>
+            <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
+          </View>
+          <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
+            <Text style={styles.exitText}>Exit</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+      
       <View style={styles.content}>
+        
         <FlippiLogo />
         <Text style={[styles.title, { color: brandColors.text }]}>
           Never Over Pay
@@ -795,7 +872,7 @@ export default function App() {
             
             {isLoading && (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={brandColors.primary} />
+                <ActivityIndicator size="large" color={brandColors.charcoalGray} />
                 <Text style={[styles.loadingText, { color: brandColors.text }]}>
                   Analyzing image...
                 </Text>
@@ -833,7 +910,16 @@ export default function App() {
                 
                 <View style={styles.resultItem}>
                   <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Style Tier:</Text>
-                  <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.style_tier}</Text>
+                  <View style={[styles.styleTierBadge, {
+                    backgroundColor: (() => {
+                      const tier = analysisResult.style_tier.toLowerCase();
+                      if (tier === 'luxury') return componentColors.scores.high;
+                      if (tier === 'designer') return componentColors.scores.medium;
+                      return brandColors.slateBlueGray;
+                    })()
+                  }]}>
+                    <Text style={styles.styleTierBadgeText}>{analysisResult.style_tier}</Text>
+                  </View>
                 </View>
                 
                 {analysisResult.recommended_platform && (
@@ -853,25 +939,59 @@ export default function App() {
                 {analysisResult.authenticity_score && (
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Authenticity Score:</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.authenticity_score}</Text>
+                    <View>
+                      <Text style={[styles.resultValue, { 
+                        color: (() => {
+                          const score = parseInt(analysisResult.authenticity_score);
+                          if (score >= 80) return componentColors.scores.high;
+                          if (score >= 50) return componentColors.scores.medium;
+                          return componentColors.scores.low;
+                        })()
+                      }]}>
+                        {(() => {
+                          const score = parseInt(analysisResult.authenticity_score);
+                          if (score >= 80) return '✓ ';
+                          if (score >= 50) return '◐ ';
+                          return '○ ';
+                        })()}
+                        {analysisResult.authenticity_score}
+                      </Text>
+                      {parseInt(analysisResult.authenticity_score) < 50 && (
+                        <Text style={[styles.warningText, { color: componentColors.scores.low }]}>
+                          ⚠️ Warning: Low authenticity - verify carefully
+                        </Text>
+                      )}
+                    </View>
                   </View>
                 )}
                 
                 {analysisResult.trending_score !== undefined && (
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Boca Score (Sellability):</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>
-                      {analysisResult.trending_score}/100 - {analysisResult.trending_label || 'N/A'}
+                    <Text style={[styles.resultValue, { 
+                      color: (() => {
+                        const score = parseInt(analysisResult.trending_score);
+                        if (score >= 80) return componentColors.scores.high;
+                        if (score >= 50) return componentColors.scores.medium;
+                        return componentColors.scores.low;
+                      })()
+                    }]}>
+                      {analysisResult.trending_score}/100 {(() => {
+                        const score = parseInt(analysisResult.trending_score);
+                        if (score >= 80) return '🔥';
+                        if (score >= 50) return '📈';
+                        return '📉';
+                      })()} - {analysisResult.trending_label || 'N/A'}
                     </Text>
                   </View>
                 )}
                 
                 {analysisResult.buy_price && (
-                  <View style={[styles.suggestedPriceContainer, { backgroundColor: brandColors.primaryLight }]}>
-                    <Text style={[styles.suggestedPriceLabel, { color: brandColors.primary }]}>
+                  <View style={[styles.suggestedPriceContainer, { backgroundColor: brandColors.softCream }]}>
+                    <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
                       Suggested Buy Price:
                     </Text>
-                    <Text style={[styles.suggestedPriceValue, { color: brandColors.primary }]}>
+                    <Text style={[styles.suggestedPriceValue, { color: brandColors.deepTeal }]}>
                       {analysisResult.buy_price}
                     </Text>
                   </View>
@@ -938,9 +1058,12 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    width: '100%', // Ensure full width
   },
   contentContainer: {
     flexGrow: 1,
+    alignItems: 'center', // Center the content column
+    width: '100%', // Full width
   },
   environmentBanner: {
     backgroundColor: '#2196F3',
@@ -961,8 +1084,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    padding: 20,
-    paddingTop: Platform.OS === 'web' ? 40 : 60,
+    padding: Platform.OS === 'web' ? 40 : 10, // Less padding on mobile for more width
+    paddingTop: Platform.OS === 'web' ? 60 : 80, // More top padding to avoid user section
   },
   title: {
     fontSize: 24,
@@ -973,8 +1096,8 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   uploadContainer: {
-    width: '100%',
-    maxWidth: 400,
+    width: Platform.OS === 'web' ? '80%' : '100%', // 80% on desktop, full on mobile
+    maxWidth: 1000, // Only prevent extreme stretching
     alignItems: 'center',
     marginTop: 10,
   },
@@ -1024,10 +1147,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   analysisResult: {
-    width: '100%',
-    padding: 20,
+    width: Platform.OS === 'web' ? '80%' : '100%', // 80% on desktop, full on mobile
+    maxWidth: 1000, // Generous limit only for ultra-wide
+    padding: Platform.OS === 'web' ? 20 : 12,
     borderRadius: 10,
     marginBottom: 20,
+    alignSelf: 'center',
     elevation: 3,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1042,14 +1167,17 @@ const styles = StyleSheet.create({
   },
   resultItem: {
     marginBottom: 12,
+    width: '100%',
   },
   resultLabel: {
-    fontSize: 14,
+    fontSize: Platform.OS === 'web' ? 14 : 13,
     marginBottom: 4,
   },
   resultValue: {
-    fontSize: 16,
+    fontSize: Platform.OS === 'web' ? 16 : 14,
     fontWeight: '500',
+    flexShrink: 1,
+    flexWrap: 'wrap',
   },
   priceValue: {
     fontSize: 20,
@@ -1061,6 +1189,9 @@ const styles = StyleSheet.create({
     marginTop: 10,
     marginBottom: 10,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: brandColors.softTaupeBeige,
+    width: '100%',
   },
   suggestedPriceLabel: {
     fontSize: 14,
@@ -1069,6 +1200,22 @@ const styles = StyleSheet.create({
   suggestedPriceValue: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  styleTierBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    alignSelf: 'flex-start',
+  },
+  styleTierBadgeText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  warningText: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    marginTop: 4,
   },
   disclaimer: {
     backgroundColor: '#FFF3E0',
@@ -1125,5 +1272,54 @@ const styles = StyleSheet.create({
   },
   goButton: {
     width: '100%',
+  },
+  // User section styles
+  userSection: {
+    position: 'absolute',
+    top: Platform.OS === 'web' ? 40 : 20, // Move down to avoid dev banner
+    right: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'transparent', // Remove background
+    paddingVertical: 4,
+    paddingHorizontal: 0,
+    shadowColor: 'transparent', // Remove shadow
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 2,
+    zIndex: 1000,
+    maxWidth: 280,
+  },
+  userInfo: {
+    marginRight: 8,
+    maxWidth: 200, // Limit width to prevent overflow
+  },
+  userName: {
+    fontSize: 13,
+    fontWeight: typography.weights.semiBold,
+    color: brandColors.text,
+  },
+  userGreeting: {
+    fontSize: 13,
+    fontWeight: typography.weights.semiBold,
+    color: brandColors.text,
+  },
+  userEmail: {
+    fontSize: 12,
+    color: brandColors.text,
+    fontWeight: typography.weights.medium,
+  },
+  exitButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: brandColors.deepTeal,
+    borderRadius: 4,
+    marginLeft: 8,
+  },
+  exitText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: typography.weights.medium,
   },
 });

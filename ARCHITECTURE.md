@@ -136,7 +136,6 @@ POST /api/scan   → Image analysis endpoint
     "recommended_platform": "The RealReal",
     "condition": "Good condition",
     "authenticity_score": "85%",
-    "boca_score": "72",
     "buy_price": "$11",
     "resale_average": "$55",
     "market_insights": "Trending...",

@@ -87,7 +87,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
           <Text style={[
             styles.buttonText,
             helpedDecision === true && styles.selectedButtonText
-          ]}>✅ Yes</Text>
+          ]}>👍 Yes</Text>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -101,7 +101,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
           <Text style={[
             styles.buttonText,
             helpedDecision === false && styles.selectedButtonText
-          ]}>❌ No</Text>
+          ]}>👎 No</Text>
         </TouchableOpacity>
       </View>
 
@@ -166,8 +166,8 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
   selectedButton: {
-    borderColor: brandColors.actionBlue,
-    backgroundColor: '#F0F4FF',
+    borderColor: brandColors.deepTeal,
+    backgroundColor: brandColors.offWhite,
   },
   buttonText: {
     fontSize: 16,
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   selectedButtonText: {
-    color: brandColors.actionBlue,
+    color: brandColors.deepTeal,
     fontWeight: '600',
   },
   textInput: {
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     marginBottom: 15,
   },
   submitButton: {
-    backgroundColor: brandColors.actionBlue,
+    backgroundColor: brandColors.deepTeal,
     paddingVertical: 14,
     borderRadius: 25,
     alignItems: 'center',

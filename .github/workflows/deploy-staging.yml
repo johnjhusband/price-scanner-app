@@ -19,6 +19,30 @@ jobs:
             git reset --hard HEAD
             git clean -fd
             git pull origin staging
+            
+            # Apply OAuth nginx fix IMMEDIATELY after pull
+            echo "=== Applying OAuth fix ==="
+            if [ -f scripts/fix-staging-oauth-verbose.sh ]; then
+              echo "Running VERBOSE nginx OAuth fix..."
+              bash scripts/fix-staging-oauth-verbose.sh
+            elif [ -f scripts/fix-staging-nginx-oauth.sh ]; then
+              echo "Running nginx OAuth fix for staging..."
+              bash scripts/fix-staging-nginx-oauth.sh
+            else
+              echo "ERROR: OAuth fix script not found!"
+              ls -la scripts/
+            fi
+            
+            # Check OAuth status (but don't fail deployment)
+            echo "=== Checking OAuth Status ==="
+            OAUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -I https://green.flippi.ai/auth/google)
+            echo "OAuth endpoint returns: $OAUTH_STATUS"
+            if [ "$OAUTH_STATUS" = "302" ] || [ "$OAUTH_STATUS" = "301" ]; then
+              echo "✅ OAuth is working!"
+            else
+              echo "⚠️ OAuth still returns $OAUTH_STATUS - may need time to propagate"
+            fi
+            
             cd backend && npm install --production
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
             # Debug: Check what directory PM2 is serving from
@@ -35,5 +59,12 @@ jobs:
             # Check if backend is running
             pm2 show staging-backend || true
             curl -s http://localhost:3001/health || echo "Backend not responding"
-            # Clear nginx cache
-            nginx -s reload
+            
+            # Output OAuth fix log
+            echo "=== OAuth Fix Log Contents ==="
+            cat /tmp/oauth-fix-* 2>/dev/null || echo "⚠️ No OAuth fix log found"
+            echo "=== End OAuth Fix Log ==="
+            
+            # Final OAuth test
+            echo "=== Final OAuth Status Check ==="
+            curl -I https://green.flippi.ai/auth/google
