@@ -4,6 +4,16 @@
 echo "FINAL OAUTH FIX - DIRECT APPROACH"
 echo "================================="
 
+# Check if running as root (required for nginx config changes)
+if [ "$EUID" -ne 0 ]; then
+    echo "❌ ERROR: This script must be run as root"
+    echo "Current user: $(whoami) (UID: $EUID)"
+    echo "GitHub Actions should run this as root. Check runner configuration."
+    exit 1
+fi
+
+echo "✅ Running as root - can modify nginx config"
+
 # The EXACT nginx config we need
 cat > /tmp/green-nginx-oauth.conf << 'EOF'
 server {
@@ -67,10 +77,25 @@ EOF
 
 # Backup and replace
 echo "Backing up current nginx config..."
-cp /etc/nginx/sites-available/green.flippi.ai /tmp/nginx-backup-$(date +%s).conf
+if [ -f /etc/nginx/sites-available/green.flippi.ai ]; then
+    cp /etc/nginx/sites-available/green.flippi.ai /tmp/nginx-backup-$(date +%s).conf || {
+        echo "❌ Failed to backup nginx config"
+        exit 1
+    }
+    echo "✅ Backup created"
+else
+    echo "❌ ERROR: Nginx config not found at /etc/nginx/sites-available/green.flippi.ai"
+    echo "Listing available configs:"
+    ls -la /etc/nginx/sites-available/
+    exit 1
+fi
 
 echo "Applying new config with OAuth..."
-cp /tmp/green-nginx-oauth.conf /etc/nginx/sites-available/green.flippi.ai
+cp /tmp/green-nginx-oauth.conf /etc/nginx/sites-available/green.flippi.ai || {
+    echo "❌ Failed to copy new nginx config"
+    exit 1
+}
+echo "✅ New config applied"
 
 echo "Testing nginx..."
 nginx -t || { echo "FAILED nginx test"; exit 1; }
