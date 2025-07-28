@@ -51,19 +51,21 @@ const EnterScreen = () => {
         {/* Hero Section with Image and Value Props */}
         <View style={styles.heroSection}>
           {/* Hero Image on left */}
-          {Platform.OS === 'web' && (
-            <View style={styles.heroImageContainer}>
-              <Image 
-                source={require('../assets/flippiapp2.png')}
-                style={styles.heroImage}
-                resizeMode="contain"
-                onError={(e) => console.error('Hero image failed to load:', e.nativeEvent.error)}
-              />
-              <Text style={styles.testimonial}>
-                "Sold in 24 hours thanks to Flippi!"
-              </Text>
-            </View>
-          )}
+          <View style={styles.heroImageContainer}>
+            {Platform.OS === 'web' && (
+              <>
+                <Image 
+                  source={require('../assets/flippiapp2.png')}
+                  style={styles.heroImage}
+                  resizeMode="contain"
+                  onError={(e) => console.error('Hero image failed to load:', e.nativeEvent.error)}
+                />
+                <Text style={styles.testimonial}>
+                  "Sold in 24 hours thanks to Flippi!"
+                </Text>
+              </>
+            )}
+          </View>
           
           {/* Value Propositions on right */}
           <View style={styles.valueProps}>
@@ -301,19 +303,21 @@ const styles = StyleSheet.create({
     maxWidth: 900,
     marginTop: 30,
     marginBottom: 40,
-    gap: 20,
+    paddingHorizontal: 20,
   },
   heroImageContainer: {
-    flex: Platform.OS === 'web' ? 0 : undefined,
-    width: Platform.OS === 'web' ? 'auto' : '100%',
-    maxWidth: 400,
+    flex: Platform.OS === 'web' ? 1 : undefined,
+    width: Platform.OS === 'web' ? '45%' : '100%',
+    minHeight: 400,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: Platform.OS === 'web' ? 20 : 0,
   },
   heroImage: {
     width: '100%',
-    height: 400, // Fixed height for consistent display
-    borderRadius: 20, // Just add rounded corners
+    maxWidth: 350,
+    height: 350,
+    borderRadius: 20,
   },
   testimonial: {
     fontSize: 16,
@@ -323,11 +327,11 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   valueProps: {
-    flex: Platform.OS === 'web' ? 0 : undefined,
+    flex: Platform.OS === 'web' ? 1 : undefined,
     flexDirection: 'column',
     justifyContent: 'center',
-    alignItems: 'flex-start',
-    width: Platform.OS === 'web' ? 'auto' : '100%',
+    alignItems: Platform.OS === 'web' ? 'flex-start' : 'center',
+    width: Platform.OS === 'web' ? '45%' : '100%',
     gap: 15,
   },
   valueProp: {
