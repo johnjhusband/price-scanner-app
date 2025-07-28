@@ -1,0 +1,4 @@
+Deployment trigger to apply OAuth nginx fix
+Timestamp: 2025-01-28 16:30:00
+
+This commit triggers deployment to run the OAuth nginx configuration scripts.
