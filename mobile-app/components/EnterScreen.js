@@ -338,6 +338,7 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.03,
     shadowRadius: 3,
     elevation: 1,
+    width: 240,
   },
   valueIcon: {
     fontSize: 24,
@@ -380,16 +381,14 @@ const styles = StyleSheet.create({
   },
   enterSection: {
     alignItems: 'center',
-    width: Platform.OS === 'web' ? '60%' : '100%',
-    maxWidth: 600, // Reasonable limit for readability
+    width: '100%',
   },
   googleButton: {
-    backgroundColor: brandColors.deepTeal, // Brand color
+    backgroundColor: brandColors.deepTeal,
     borderRadius: 8,
-    paddingVertical: 14,
-    paddingHorizontal: Platform.OS === 'web' ? 24 : 20,
-    width: Platform.OS === 'web' ? '100%' : '95%',
-    minWidth: 250, // Increased to prevent wrapping
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    width: 'auto',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
