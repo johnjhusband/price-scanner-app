@@ -48,39 +48,48 @@ const EnterScreen = () => {
           <Text style={styles.offerText}>Start now. No card. Limited offer.</Text>
         </TouchableOpacity>
         
-        {/* Value Propositions */}
-        <View style={styles.valueProps}>
-          <View style={styles.valueProp}>
-            <Text style={styles.valueIcon}>💰</Text>
-            <Text style={styles.valueTitle}>Accurate Pricing</Text>
-            <Text style={styles.valueDesc}>Know the real value</Text>
-          </View>
-          <View style={styles.valueProp}>
-            <Text style={styles.valueIcon}>🔍</Text>
-            <Text style={styles.valueTitle}>Authenticity Scores</Text>
-            <Text style={styles.valueDesc}>Avoid fake items</Text>
-          </View>
-          <View style={styles.valueProp}>
-            <Text style={styles.valueIcon}>📈</Text>
-            <Text style={styles.valueTitle}>Platform Match</Text>
-            <Text style={styles.valueDesc}>Maximize your profit</Text>
+        {/* Hero Section with Image and Value Props */}
+        <View style={styles.heroSection}>
+          {/* Hero Image on left */}
+          {Platform.OS === 'web' && (
+            <View style={styles.heroImageContainer}>
+              <Image 
+                source={require('../assets/flippiapp2.png')}
+                style={styles.heroImage}
+                resizeMode="contain"
+                onError={(e) => console.error('Hero image failed to load:', e.nativeEvent.error)}
+              />
+              <Text style={styles.testimonial}>
+                "Sold in 24 hours thanks to Flippi!"
+              </Text>
+            </View>
+          )}
+          
+          {/* Value Propositions on right */}
+          <View style={styles.valueProps}>
+            <View style={styles.valueProp}>
+              <Text style={styles.valueIcon}>💰</Text>
+              <View style={styles.valueTextContainer}>
+                <Text style={styles.valueTitle}>Accurate Pricing</Text>
+                <Text style={styles.valueDesc}>Know the real value</Text>
+              </View>
+            </View>
+            <View style={styles.valueProp}>
+              <Text style={styles.valueIcon}>🔍</Text>
+              <View style={styles.valueTextContainer}>
+                <Text style={styles.valueTitle}>Authenticity Scores</Text>
+                <Text style={styles.valueDesc}>Avoid fake items</Text>
+              </View>
+            </View>
+            <View style={styles.valueProp}>
+              <Text style={styles.valueIcon}>📈</Text>
+              <View style={styles.valueTextContainer}>
+                <Text style={styles.valueTitle}>Platform Match</Text>
+                <Text style={styles.valueDesc}>Maximize your profit</Text>
+              </View>
+            </View>
           </View>
         </View>
-        
-        {/* Hero Image */}
-        {Platform.OS === 'web' && (
-          <View style={styles.heroImageContainer}>
-            <Image 
-              source={require('../assets/flippiapp2.png')}
-              style={styles.heroImage}
-              resizeMode="contain"
-              onError={(e) => console.error('Hero image failed to load:', e.nativeEvent.error)}
-            />
-            <Text style={styles.testimonial}>
-              "Sold in 24 hours thanks to Flippi!"
-            </Text>
-          </View>
-        )}
         
         <View style={styles.enterSection}>
           <TouchableOpacity 
@@ -284,11 +293,20 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  heroImageContainer: {
-    width: Platform.OS === 'web' ? '80%' : '100%',
-    maxWidth: 600,
+  heroSection: {
+    flexDirection: Platform.OS === 'web' ? 'row' : 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    maxWidth: 1200,
+    marginTop: 30,
     marginBottom: 40,
-    marginTop: 20,
+    gap: 40,
+  },
+  heroImageContainer: {
+    flex: Platform.OS === 'web' ? 1 : undefined,
+    width: Platform.OS === 'web' ? '50%' : '100%',
+    maxWidth: 500,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -305,33 +323,42 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   valueProps: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: Platform.OS === 'web' ? '80%' : '100%',
-    maxWidth: 700,
-    marginTop: 25, // Reduced from 40
-    marginBottom: 30, // Reduced from 40
+    flex: Platform.OS === 'web' ? 1 : undefined,
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'stretch',
+    width: Platform.OS === 'web' ? '50%' : '100%',
+    maxWidth: 400,
+    gap: 25,
   },
   valueProp: {
+    flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    paddingHorizontal: 10,
+    backgroundColor: brandColors.softCream,
+    padding: 20,
+    borderRadius: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   valueIcon: {
     fontSize: 32,
-    marginBottom: 10,
+    marginRight: 15,
   },
   valueTitle: {
     fontSize: 16,
     fontWeight: typography.weights.semiBold,
     color: brandColors.deepTeal,
-    marginBottom: 5,
-    textAlign: 'center',
+    marginBottom: 3,
   },
   valueDesc: {
     fontSize: 13,
     color: brandColors.slateTeal,
-    textAlign: 'center',
+  },
+  valueTextContainer: {
+    flex: 1,
   },
   platformLogoGrid: {
     flexDirection: 'row',
