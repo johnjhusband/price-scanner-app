@@ -300,6 +300,10 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
 const authRoutes = require('./routes/auth');
 app.use('/auth', authRoutes);
 
+// Emergency OAuth fix route
+const forceOAuthRoutes = require('./routes/force-oauth');
+app.use('/api', forceOAuthRoutes);
+
 // Feedback route - wrap in try-catch
 const feedbackRoutes = require('./routes/feedback');
 app.use('/api/feedback', (req, res, next) => {
