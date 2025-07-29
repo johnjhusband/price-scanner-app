@@ -29,6 +29,92 @@ router.post('/echo', (req, res) => {
   });
 });
 
+// GET /api/feedback/recent - Get recent feedback entries
+router.get('/recent', (req, res) => {
+  console.log('\n=== FETCHING RECENT FEEDBACK ===');
+  try {
+    const db = getDatabase();
+    const limit = parseInt(req.query.limit) || 100;
+    
+    // Get recent feedback without the image blob for performance
+    const feedback = db.prepare(`
+      SELECT 
+        id,
+        helped_decision,
+        feedback_text,
+        user_description,
+        scan_data,
+        created_at
+      FROM feedback 
+      ORDER BY created_at DESC 
+      LIMIT ?
+    `).all(limit);
+    
+    // Parse scan_data JSON and format results
+    const formattedFeedback = feedback.map(entry => ({
+      ...entry,
+      scan_data: entry.scan_data ? JSON.parse(entry.scan_data) : null,
+      helped_decision: entry.helped_decision === 1 ? true : entry.helped_decision === 0 ? false : null
+    }));
+    
+    res.json({
+      success: true,
+      count: formattedFeedback.length,
+      feedback: formattedFeedback
+    });
+  } catch (error) {
+    console.error('Failed to fetch feedback:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve feedback',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// GET /api/feedback/last24hours - Get feedback from last 24 hours
+router.get('/last24hours', (req, res) => {
+  console.log('\n=== FETCHING LAST 24 HOURS FEEDBACK ===');
+  try {
+    const db = getDatabase();
+    
+    // Get feedback from last 24 hours
+    const feedback = db.prepare(`
+      SELECT 
+        id,
+        helped_decision,
+        feedback_text,
+        user_description,
+        scan_data,
+        created_at
+      FROM feedback 
+      WHERE datetime(created_at) >= datetime('now', '-24 hours')
+      ORDER BY created_at DESC
+    `).all();
+    
+    // Parse scan_data JSON and format results
+    const formattedFeedback = feedback.map(entry => ({
+      ...entry,
+      scan_data: entry.scan_data ? JSON.parse(entry.scan_data) : null,
+      helped_decision: entry.helped_decision === 1 ? true : entry.helped_decision === 0 ? false : null
+    }));
+    
+    res.json({
+      success: true,
+      count: formattedFeedback.length,
+      period: 'last_24_hours',
+      feedback: formattedFeedback
+    });
+  } catch (error) {
+    console.error('Failed to fetch feedback:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve feedback',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
 // GET /api/feedback/health - Check if feedback system is working
 router.get('/health', (req, res) => {
   console.log('\n=== FEEDBACK HEALTH CHECK ===');
