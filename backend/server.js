@@ -304,6 +304,10 @@ app.use('/auth', authRoutes);
 const forceOAuthRoutes = require('./routes/force-oauth');
 app.use('/api', forceOAuthRoutes);
 
+// Legal pages routes
+const legalRoutes = require('./routes/legal');
+app.use('/', legalRoutes);
+
 // Feedback route - wrap in try-catch
 const feedbackRoutes = require('./routes/feedback');
 app.use('/api/feedback', (req, res, next) => {
