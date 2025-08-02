@@ -17,10 +17,6 @@ const urlencodedParser = bodyParser.urlencoded({
 // Logging middleware to debug body parsing
 const bodyParserLogger = (req, res, next) => {
   if (req.url.startsWith('/api/feedback')) {
-    console.log('\n=== BODY PARSER CHECK ===');
-    console.log('Content-Type:', req.headers['content-type']);
-    console.log('Content-Length:', req.headers['content-length']);
-    console.log('Body present before parsing:', !!req.body);
   }
   next();
 };

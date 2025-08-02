@@ -26,8 +26,6 @@ const initUsersTable = () => {
       last_login DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
-  
-  console.log('Users table initialized');
 };
 
 // Initialize on module load
