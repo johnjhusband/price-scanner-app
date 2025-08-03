@@ -263,7 +263,7 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       analysis.market_insights = "⚠️ Unknown market research on this product. Upload a clearer image to retry.";
       
       // Replace selling tips to avoid advice
-      analysis.selling_tips = "Sure";
+      analysis.selling_tips = "Unknown";
       
       // Adjust style tier
       analysis.style_tier = "Authenticity Uncertain";
