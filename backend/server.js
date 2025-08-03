@@ -265,13 +265,9 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       // Adjust style tier
       analysis.style_tier = "Authenticity Uncertain";
       
-      // Don't recommend luxury authentication platforms for low authenticity items
-      if (["The RealReal", "Vestiaire Collective", "Rebag", "StockX", "GOAT"].includes(analysis.recommended_platform)) {
-        analysis.recommended_platform = "Not Recommended - Authenticity Concerns";
-      }
-      if (["The RealReal", "Vestiaire Collective", "Rebag", "StockX", "GOAT"].includes(analysis.recommended_live_platform)) {
-        analysis.recommended_live_platform = "Not Recommended - Authenticity Concerns";
-      }
+      // Don't recommend platforms for uncertain authenticity items
+      analysis.recommended_platform = "Unknown";
+      analysis.recommended_live_platform = "Unknown";
     }
 
     // Calculate buy price (resale price / 5)
