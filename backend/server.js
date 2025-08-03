@@ -2,23 +2,9 @@ const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
 const { OpenAI } = require('openai');
-const session = require('express-session');
-const passport = require('passport');
-const { initializeDatabase } = require('./database');
 
 // Load environment variables
 require('dotenv').config();
-
-// Initialize database
-try {
-  console.log('\n=== INITIALIZING DATABASE ===');
-  initializeDatabase();
-  console.log('Database initialization complete\n');
-} catch (error) {
-  console.error('\n=== DATABASE INITIALIZATION FAILED ===');
-  console.error('Error:', error.message);
-  console.error('Continuing without database - auth and feedback will not work\n');
-}
 
 const app = express();
 
@@ -30,27 +16,11 @@ if (!process.env.OPENAI_API_KEY) {
 
 // Basic middleware
 app.use(cors({
-  origin: true, // Allow all origins
+  origin: true,
   credentials: true
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Session configuration for OAuth
-app.use(session({
-  secret: process.env.SESSION_SECRET || 'default-session-secret-change-this',
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
-    httpOnly: true,
-    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-  }
-}));
-
-// Initialize Passport
-app.use(passport.initialize());
-app.use(passport.session());
 
 // Request timing middleware
 app.use((req, res, next) => {
@@ -62,7 +32,7 @@ app.use((req, res, next) => {
 const upload = multer({ 
   memory: true,
   limits: { 
-    fileSize: 10 * 1024 * 1024, // 10MB limit
+    fileSize: 10 * 1024 * 1024,
     files: 1
   },
   fileFilter: (req, file, cb) => {
@@ -84,118 +54,167 @@ app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '2.0-minimal',
+    version: '2.0-minimal-safe',
     features: {
       imageAnalysis: true,
-      cameraSupport: true,
-      pasteSupport: true,
-      dragDropSupport: true,
-      enhancedAI: true
+      authentication: false,
+      feedback: false
     }
+  });
+});
+
+// Temporary auth status endpoint
+app.get('/auth/status', (req, res) => {
+  res.json({
+    authenticated: false,
+    message: 'Authentication temporarily disabled - database module unavailable'
   });
 });
 
 // Main scan endpoint
 app.post('/api/scan', upload.single('image'), async (req, res) => {
-  console.log('=== SCAN REQUEST RECEIVED ===');
-  console.log(`Time: ${new Date().toISOString()}`);
-  
   try {
     if (!req.file) {
       return res.status(400).json({ 
         success: false, 
-        error: 'No image provided',
-        hint: 'Please upload an image file'
+        error: 'No image file provided',
+        hint: 'Please select an image to analyze'
       });
     }
 
-    console.log(`File received: ${req.file.originalname}, Size: ${req.file.size} bytes`);
+    const imageBase64 = req.file.buffer.toString('base64');
+    const userPrompt = req.body.description || req.body.userPrompt || '';
     
-    const base64Image = req.file.buffer.toString('base64');
-    const userDescription = req.body.description || req.body.userPrompt || '';
-    
-    console.log(`User description: "${userDescription}"`);
-    console.log('Sending to OpenAI Vision API...');
+    const replicaIndicators = ['replica', 'fake', 'counterfeit', 'knockoff', 'dupe', 'copy', 'imitation'];
+    const isLikelyReplica = replicaIndicators.some(word => userPrompt.toLowerCase().includes(word));
 
-    // Simplified prompt
-    const prompt = `Analyze this thrift store item image and provide a JSON response with these fields:
-    - item_name: Name of the item
-    - price_range: Suggested resale price range (e.g., "$45-65")
-    - condition: Describe the condition
-    - authenticity_score: Percentage (e.g., "85%")
-    - market_insights: Brief market analysis
-    ${userDescription ? `User description: ${userDescription}` : ''}`;
+    const messages = [
+      {
+        role: "system",
+        content: `You are a secondhand item valuation expert. Analyze the image and provide:
+1. Item identification
+2. Resale price range (be realistic - thrift finds are usually $10-50)
+3. Condition assessment
+4. Best selling platform
+5. Authenticity score (0-100%) - Be VERY strict with luxury brands. If ANY doubt, score low.
+6. Market insights
+${isLikelyReplica ? 'NOTE: User indicates this may be a replica. Score authenticity accordingly.' : ''}`
+      },
+      {
+        role: "user",
+        content: [
+          { type: "text", text: userPrompt || "What is this item and its resale value?" },
+          { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}` } }
+        ]
+      }
+    ];
 
-    const response = await openai.chat.completions.create({
+    const completion = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: prompt },
-            { 
-              type: "image_url", 
-              image_url: { 
-                url: `data:image/jpeg;base64,${base64Image}` 
-              } 
-            }
-          ]
-        }
-      ],
-      max_tokens: 1000,
-      response_format: { type: "json_object" }
+      messages: messages,
+      max_tokens: 500,
+      temperature: 0.3
     });
 
-    const analysis = JSON.parse(response.choices[0].message.content);
-    console.log('OpenAI analysis completed successfully');
+    const aiResponse = completion.choices[0].message.content;
+    
+    // Parse response
+    const analysis = {
+      item_name: "Unknown Item",
+      price_range: "$0-0",
+      style_tier: "Unknown",
+      recommended_platform: "eBay",
+      condition: "Unknown",
+      authenticity_score: "0%",
+      boca_score: "0",
+      buy_price: "$0",
+      resale_average: "$0",
+      market_insights: aiResponse,
+      selling_tips: "Check similar sold listings",
+      brand_context: "",
+      seasonal_notes: ""
+    };
+
+    // Try to extract structured data from response
+    const lines = aiResponse.split('\n');
+    lines.forEach(line => {
+      const lower = line.toLowerCase();
+      if (lower.includes('item:') || lower.includes('identification:')) {
+        analysis.item_name = line.split(':')[1]?.trim() || analysis.item_name;
+      } else if (lower.includes('price') && lower.includes('range')) {
+        const match = line.match(/\$[\d,]+-[\d,]+/);
+        if (match) analysis.price_range = match[0];
+      } else if (lower.includes('authenticity')) {
+        const match = line.match(/(\d+)%/);
+        if (match) analysis.authenticity_score = match[0];
+      }
+    });
+
+    // Calculate derived values
+    const avgMatch = analysis.price_range.match(/\$(\d+)-(\d+)/);
+    if (avgMatch) {
+      const avg = (parseInt(avgMatch[1]) + parseInt(avgMatch[2])) / 2;
+      analysis.resale_average = `$${Math.round(avg)}`;
+      analysis.buy_price = `$${Math.round(avg / 5)}`;
+    }
+
+    // Post-process for luxury brands
+    const luxuryBrands = ['Louis Vuitton', 'Chanel', 'Gucci', 'Hermès', 'Prada'];
+    if (luxuryBrands.some(brand => analysis.item_name.toLowerCase().includes(brand.toLowerCase()))) {
+      if (isLikelyReplica) {
+        analysis.authenticity_score = "20%";
+      }
+    }
+
+    const processingTime = Date.now() - req.processingStart;
 
     res.json({
       success: true,
       data: analysis,
       processing: {
         fileSize: req.file.size,
-        processingTime: Date.now() - req.processingStart,
-        version: '2.0-minimal'
+        processingTime: processingTime,
+        version: '2.0'
       }
     });
 
   } catch (error) {
-    console.error('ERROR in /api/scan:', error);
-    
-    const statusCode = error.status || 500;
-    const errorMessage = error.message || 'Failed to analyze image';
-    
-    res.status(statusCode).json({
-      success: false,
-      error: errorMessage,
-      hint: statusCode === 401 ? 'Check your OpenAI API key' : 'Please try again'
+    console.error('Scan error:', error);
+    res.status(500).json({ 
+      success: false, 
+      error: error.message || 'Failed to process image',
+      hint: 'Please try again with a different image'
     });
   }
 });
 
-// Auth routes
-const authRoutes = require('./routes/auth');
-app.use('/auth', authRoutes);
-
-// Feedback routes
-const feedbackRoutes = require('./routes/feedback');
-app.use('/api/feedback', feedbackRoutes);
-
 // Basic error handler
 app.use((err, req, res, next) => {
   console.error('Global error handler:', err);
-  res.status(500).json({
-    success: false,
-    error: err.message || 'Internal server error'
+  res.status(500).json({ 
+    success: false, 
+    error: err.message || 'Internal server error',
+    hint: 'Please try again'
   });
 });
 
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`\n=== Flippi.ai Backend (Minimal) ===`);
-  console.log(`Version: 2.0-minimal`);
-  console.log(`Port: ${PORT}`);
-  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`Ready for connections!\n`);
+  console.log(`
+===========================================
+Flippi.ai Backend Server (Minimal Safe Mode)
+===========================================
+Port: ${PORT}
+Environment: ${process.env.NODE_ENV || 'development'}
+Version: 2.0-minimal-safe
+Features:
+  - Image Analysis: ✓
+  - Authentication: ✗ (database unavailable)
+  - Feedback: ✗ (database unavailable)
+===========================================
+Server is running at http://localhost:${PORT}
+Health check: http://localhost:${PORT}/health
+===========================================
+  `);
 });
