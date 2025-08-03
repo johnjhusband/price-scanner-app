@@ -254,7 +254,7 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
 
     // Adjust pricing for low authenticity items
     const authenticityScore = parseInt(analysis.authenticity_score) || 50;
-    if (authenticityScore < 30) {
+    if (authenticityScore <= 30) {
       // Override pricing for likely replicas
       analysis.price_range = "$5-$50";
       analysis.resale_average = "$25";
