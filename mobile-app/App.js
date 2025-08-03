@@ -1001,29 +1001,6 @@ export default function App() {
         <Text style={styles.legalText}>
           Flippi™ and Flippi.ai™ are trademarks of Boca Belle. All rights reserved.
         </Text>
-        <View style={styles.legalLinks}>
-          <Text 
-            style={styles.legalLink}
-            onPress={() => {
-              if (Platform.OS === 'web') {
-                window.open('/terms', '_blank');
-              }
-            }}
-          >
-            Terms of Service
-          </Text>
-          <Text style={styles.legalSeparator}> | </Text>
-          <Text 
-            style={styles.legalLink}
-            onPress={() => {
-              if (Platform.OS === 'web') {
-                window.open('/privacy', '_blank');
-              }
-            }}
-          >
-            Privacy Policy
-          </Text>
-        </View>
       </View>
     </ScrollView>
   );
@@ -1308,21 +1285,5 @@ const styles = StyleSheet.create({
     color: brandColors.textSecondary,
     fontFamily: typography.fontFamily,
     textAlign: 'center',
-  },
-  legalLinks: {
-    flexDirection: 'row',
-    marginTop: 8,
-    alignItems: 'center',
-  },
-  legalLink: {
-    fontSize: 12,
-    color: brandColors.primary,
-    fontFamily: typography.fontFamily,
-    textDecorationLine: 'underline',
-  },
-  legalSeparator: {
-    fontSize: 12,
-    color: brandColors.textSecondary,
-    marginHorizontal: 4,
   },
 });
