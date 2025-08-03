@@ -262,6 +262,20 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       }
     }
 
+    // Adjust pricing for low authenticity items
+    const authenticityScore = parseInt(analysis.authenticity_score) || 50;
+    if (authenticityScore < 30) {
+      // Override pricing for likely replicas
+      analysis.price_range = "$20-$80";
+      analysis.resale_average = "$50";
+      
+      // Update market insights with caution
+      analysis.market_insights = "⚠️ Low authenticity score detected. This item shows signs that may indicate it's not authentic. Pricing has been adjusted to reflect this uncertainty.";
+      
+      // Adjust style tier
+      analysis.style_tier = "Authenticity Uncertain";
+    }
+
     // Calculate buy price (resale price / 5)
     let buy_price = null;
     if (analysis.price_range) {
