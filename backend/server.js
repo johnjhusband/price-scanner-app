@@ -2,40 +2,46 @@ const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
 const { OpenAI } = require('openai');
+const path = require('path');
+const session = require('express-session');
+const passport = require('passport');
+const { initializeDatabase } = require('./database');
 
-// Load environment variables
-require('dotenv').config();
+// Load .env from shared location outside git directories
+const envPath = path.join(__dirname, '../../shared/.env');
+console.log('Loading .env from:', envPath);
+require('dotenv').config({ path: envPath });
+
+// Log important environment variables (without exposing secrets)
+console.log('Environment check:');
+console.log('- NODE_ENV:', process.env.NODE_ENV || 'not set');
+console.log('- PORT:', process.env.PORT || 'not set');
+console.log('- FEEDBACK_DB_PATH:', process.env.FEEDBACK_DB_PATH || 'not set (will use ./feedback.db)');
+
+// Initialize database
+try {
+  console.log('\n=== INITIALIZING DATABASE ===');
+  initializeDatabase();
+  console.log('Database initialization complete\n');
+} catch (error) {
+  console.error('\n=== DATABASE INITIALIZATION FAILED ===');
+  console.error('Error:', error.message);
+  console.error('Stack:', error.stack);
+  console.error('Continuing without database - feedback will not work\n');
+  // Continue running - database is only needed for feedback
+}
 
 const app = express();
 
-// Environment validation
-if (!process.env.OPENAI_API_KEY) {
-  console.error('ERROR: OPENAI_API_KEY is not set in .env file');
-  process.exit(1);
-}
-
-// Basic middleware
-app.use(cors({
-  origin: true,
-  credentials: true
-}));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-// Request timing middleware
-app.use((req, res, next) => {
-  req.processingStart = Date.now();
-  next();
-});
-
-// Multer configuration
+// Enhanced multer configuration from v2.0
 const upload = multer({ 
   memory: true,
   limits: { 
-    fileSize: 10 * 1024 * 1024,
-    files: 1
+    fileSize: 10 * 1024 * 1024, // 10MB limit
+    files: 1 // Only allow 1 file
   },
   fileFilter: (req, file, cb) => {
+    // Validate file type
     if (file.mimetype.startsWith('image/')) {
       cb(null, true);
     } else {
@@ -44,133 +50,224 @@ const upload = multer({
   }
 });
 
-// Initialize OpenAI
+// Environment validation
+if (!process.env.OPENAI_API_KEY) {
+  console.error('ERROR: OPENAI_API_KEY is not set in .env file');
+  process.exit(1);
+}
+
+// Middleware
+app.use(cors({
+  origin: true, // Allow all origins - from blue fix
+  credentials: true
+}));
+
+// Session configuration for OAuth
+app.use(session({
+  secret: process.env.SESSION_SECRET || 'default-session-secret-change-this',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+    secure: process.env.NODE_ENV === 'production', // HTTPS only in production
+    httpOnly: true,
+    maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+  }
+}));
+
+// Initialize Passport
+app.use(passport.initialize());
+app.use(passport.session());
+
+
+
+// Configure body parsers with increased limits
+// Using explicit body-parser to ensure limits are applied
+const { jsonParser, urlencodedParser, bodyParserLogger } = require('./middleware/bodyParser');
+app.use(bodyParserLogger);
+app.use(jsonParser);
+app.use(urlencodedParser);
+
+// Add request timing middleware from v2.0
+app.use((req, res, next) => {
+  req.startTime = Date.now();
+  next();
+});
+
+// OpenAI setup
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// Health check endpoint
+// Enhanced health check from v2.0
 app.get('/health', (req, res) => {
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
-    version: '2.0-minimal-safe',
+    version: '2.0',
     features: {
       imageAnalysis: true,
-      authentication: false,
-      feedback: false
+      cameraSupport: true,
+      pasteSupport: true,
+      dragDropSupport: true,
+      enhancedAI: true
     }
   });
 });
 
-// Temporary auth status endpoint
-app.get('/auth/status', (req, res) => {
-  res.json({
-    authenticated: false,
-    message: 'Authentication temporarily disabled - database module unavailable'
-  });
-});
-
-// Main scan endpoint
+// Enhanced image analysis endpoint
 app.post('/api/scan', upload.single('image'), async (req, res) => {
   try {
     if (!req.file) {
       return res.status(400).json({ 
-        success: false, 
-        error: 'No image file provided',
-        hint: 'Please select an image to analyze'
+        error: 'No image provided',
+        hint: 'Please select an image file, take a photo, or paste an image'
       });
     }
 
-    const imageBase64 = req.file.buffer.toString('base64');
-    const userPrompt = req.body.description || req.body.userPrompt || '';
+    // Get the user prompt/description from the form data
+    const userPrompt = req.body.userPrompt || req.body.description || '';
+
+    // Log file info for debugging
+    console.log('Processing image:', {
+      originalName: req.file.originalname,
+      mimetype: req.file.mimetype,
+      size: req.file.size,
+      bufferLength: req.file.buffer.length,
+      userPrompt: userPrompt
+    });
+
+    // Validate file size
+    if (req.file.size > 10 * 1024 * 1024) {
+      return res.status(400).json({ 
+        error: 'File too large',
+        hint: 'Please use an image smaller than 10MB'
+      });
+    }
+
+    // Get image buffer
+    const imageBuffer = req.file.buffer;
     
-    const replicaIndicators = ['replica', 'fake', 'counterfeit', 'knockoff', 'dupe', 'copy', 'imitation'];
-    const isLikelyReplica = replicaIndicators.some(word => userPrompt.toLowerCase().includes(word));
-
-    const messages = [
-      {
-        role: "system",
-        content: `You are a secondhand item valuation expert. Analyze the image and provide:
-1. Item identification
-2. Resale price range (be realistic - thrift finds are usually $10-50)
-3. Condition assessment
-4. Best selling platform
-5. Authenticity score (0-100%) - Be VERY strict with luxury brands. If ANY doubt, score low.
-6. Market insights
-${isLikelyReplica ? 'NOTE: User indicates this may be a replica. Score authenticity accordingly.' : ''}`
-      },
-      {
-        role: "user",
-        content: [
-          { type: "text", text: userPrompt || "What is this item and its resale value?" },
-          { type: "image_url", image_url: { url: `data:image/jpeg;base64,${imageBase64}` } }
-        ]
-      }
-    ];
-
-    const completion = await openai.chat.completions.create({
+    // Enhanced OpenAI Vision API prompt from v2.0
+    const response = await openai.chat.completions.create({
       model: "gpt-4o-mini",
-      messages: messages,
-      max_tokens: 500,
-      temperature: 0.3
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `${userPrompt ? `User says: ${userPrompt}\n\n` : ''}You are an expert resale value appraiser in 2025. Consider current market trends, platform popularity shifts, and recent sales data. Analyze this item and provide: 1) What the item is, 2) Estimated resale value range based on CURRENT 2025 market conditions, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best STANDARD platform to list it on (eBay, Poshmark, Facebook Marketplace, Mercari, The RealReal, Vestiaire Collective, Grailed, Depop, Etsy, Rebag, or Shopify - choose based on current platform trends and item type), 5) Best LIVE selling platform (Whatnot, Poshmark Live, TikTok Shop, Instagram Live, Facebook Live, YouTube Live, Amazon Live, eBay Live, or Shopify Live - consider current platform popularity and audience demographics), 6) Condition assessment, 7) Authenticity likelihood (0-100% score based on visible indicators), 8) TRENDING SCORE: Calculate a score from 0-100 using this formula: (1.0 × Demand[0-25]) + (0.8 × Velocity[0-20]) + (0.6 × Platform[0-15]) + (0.5 × Recency[0-10]) + (0.5 × Scarcity[0-10]) - (1.0 × Penalty[0-20]). Demand=search volume/likes/wishlist adds. Velocity=sell-through rate. Platform=trending on multiple platforms. Recency=seasonal/viral trends. Scarcity=limited runs/rare items. Penalty=high supply/counterfeits/bad condition. BE DECISIVE - use extreme values when justified. Avoid clustering around 40-60. Consider inflation, current fashion trends, and platform algorithm changes. Respond with JSON: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"recommended_live_platform\": \"live platform\", \"condition\": \"condition\", \"authenticity_score\": \"X%\", \"trending_score_data\": {\"scores\": {\"demand\": X, \"velocity\": X, \"platform\": X, \"recency\": X, \"scarcity\": X, \"penalty\": X}, \"trending_score\": X, \"label\": \"(return ONLY the label text that matches the trending_score: if score 0-10 return 'Unsellable (By Most)', if 11-25 return 'Will Take Up Rent', if 26-40 return 'Niche Vibes Only', if 41-55 return 'Hit-or-Miss', if 56-70 return 'Moves When Ready', if 71-85 return 'Money Maker', if 86-95 return 'Hot Ticket', if 96-100 return 'Win!')\"}, \"market_insights\": \"current 2025 market trends\", \"selling_tips\": \"specific advice for 2025 marketplace\", \"brand_context\": \"brand status and demand in 2025\", \"seasonal_notes\": \"current seasonal considerations\"}`
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: `data:image/jpeg;base64,${imageBuffer.toString('base64')}`
+              }
+            }
+          ]
+        }
+      ],
+      max_tokens: 500
     });
 
-    const aiResponse = completion.choices[0].message.content;
+    // Parse the response
+    const content = response.choices[0].message.content;
+    let analysis;
     
-    // Parse response
-    const analysis = {
-      item_name: "Unknown Item",
-      price_range: "$0-0",
-      style_tier: "Unknown",
-      recommended_platform: "eBay",
-      condition: "Unknown",
-      authenticity_score: "0%",
-      boca_score: "0",
-      buy_price: "$0",
-      resale_average: "$0",
-      market_insights: aiResponse,
-      selling_tips: "Check similar sold listings",
-      brand_context: "",
-      seasonal_notes: ""
-    };
-
-    // Try to extract structured data from response
-    const lines = aiResponse.split('\n');
-    lines.forEach(line => {
-      const lower = line.toLowerCase();
-      if (lower.includes('item:') || lower.includes('identification:')) {
-        analysis.item_name = line.split(':')[1]?.trim() || analysis.item_name;
-      } else if (lower.includes('price') && lower.includes('range')) {
-        const match = line.match(/\$[\d,]+-[\d,]+/);
-        if (match) analysis.price_range = match[0];
-      } else if (lower.includes('authenticity')) {
-        const match = line.match(/(\d+)%/);
-        if (match) analysis.authenticity_score = match[0];
+    try {
+      // Clean up the response (remove markdown, extra text)
+      const jsonMatch = content.match(/\{.*\}/s);
+      if (jsonMatch) {
+        analysis = JSON.parse(jsonMatch[0]);
+      } else {
+        throw new Error('No JSON found in response');
       }
-    });
-
-    // Calculate derived values
-    const avgMatch = analysis.price_range.match(/\$(\d+)-(\d+)/);
-    if (avgMatch) {
-      const avg = (parseInt(avgMatch[1]) + parseInt(avgMatch[2])) / 2;
-      analysis.resale_average = `$${Math.round(avg)}`;
-      analysis.buy_price = `$${Math.round(avg / 5)}`;
+    } catch (error) {
+      console.error('Failed to parse OpenAI response:', content);
+      // If not valid JSON, create a structured response
+      analysis = {
+        item_name: "Unknown Item",
+        price_range: "$10-$50",
+        style_tier: "Entry",
+        recommended_platform: "eBay",
+        recommended_live_platform: "Facebook Live",
+        condition: "Good",
+        authenticity_score: "50%",
+        trending_score_data: {
+          scores: {
+            demand: 12,
+            velocity: 10,
+            platform: 7,
+            recency: 5,
+            scarcity: 5,
+            penalty: 5
+          },
+          trending_score: 50,
+          label: "Hit-or-Miss"
+        },
+        market_insights: "Unable to analyze market trends",
+        selling_tips: "Ensure good lighting and clear photos",
+        brand_context: "Brand information unavailable",
+        seasonal_notes: "No seasonal considerations available",
+        raw_response: content
+      };
     }
 
-    // Post-process for luxury brands
-    const luxuryBrands = ['Louis Vuitton', 'Chanel', 'Gucci', 'Hermès', 'Prada'];
-    if (luxuryBrands.some(brand => analysis.item_name.toLowerCase().includes(brand.toLowerCase()))) {
-      if (isLikelyReplica) {
-        analysis.authenticity_score = "20%";
+    // Calculate buy price (resale price / 5)
+    let buy_price = null;
+    if (analysis.price_range) {
+      // Extract numbers from price range (e.g., "$50-$150" or "$900-$1,000" -> 50 and 150 or 900 and 1000)
+      // Updated regex to handle comma-separated thousands
+      const priceMatch = analysis.price_range.match(/\$?([\d,]+)[-\s]+\$?([\d,]+)/);
+      if (priceMatch) {
+        // Remove commas before parsing
+        const lowPrice = parseInt(priceMatch[1].replace(/,/g, ''));
+        const highPrice = parseInt(priceMatch[2].replace(/,/g, ''));
+        const avgPrice = (lowPrice + highPrice) / 2;
+        const buyPrice = Math.round(avgPrice / 5);
+        buy_price = `$${buyPrice}`;
+        
+        // Add to analysis object
+        analysis.buy_price = buy_price;
+        analysis.resale_average = `$${Math.round(avgPrice)}`;
       }
     }
 
-    const processingTime = Date.now() - req.processingStart;
+    // Ensure all new fields exist with defaults if missing
+    if (!analysis.authenticity_score) analysis.authenticity_score = "50%";
+    if (!analysis.market_insights) analysis.market_insights = "Market insights unavailable";
+    if (!analysis.selling_tips) analysis.selling_tips = "Ensure good lighting and clear photos";
+    if (!analysis.brand_context) analysis.brand_context = "Brand information unavailable";
+    if (!analysis.seasonal_notes) analysis.seasonal_notes = "No seasonal considerations available";
+    
+    // Process trending score data - flatten structure for easier frontend access
+    if (analysis.trending_score_data) {
+      analysis.trending_score = analysis.trending_score_data.trending_score;
+      analysis.trending_label = analysis.trending_score_data.label;
+      analysis.trending_breakdown = analysis.trending_score_data.scores;
+      // Remove the nested structure to keep response clean
+      delete analysis.trending_score_data;
+    } else {
+      // Provide default trending score if AI didn't calculate it
+      analysis.trending_score = 50;
+      analysis.trending_label = "Hit-or-Miss";
+      analysis.trending_breakdown = {
+        demand: 12,
+        velocity: 10,
+        platform: 7,
+        recency: 5,
+        scarcity: 5,
+        penalty: 5
+      };
+    }
 
-    res.json({
-      success: true,
-      data: analysis,
+    const processingTime = Date.now() - req.startTime;
+    console.log(`Analysis completed in ${processingTime}ms`);
+
+
+    res.json({ 
+      success: true, 
+      data: analysis,  // Frontend expects 'data' not 'analysis'
       processing: {
         fileSize: req.file.size,
         processingTime: processingTime,
@@ -179,42 +276,118 @@ ${isLikelyReplica ? 'NOTE: User indicates this may be a replica. Score authentic
     });
 
   } catch (error) {
-    console.error('Scan error:', error);
+    console.error('Analysis error:', error);
     res.status(500).json({ 
-      success: false, 
-      error: error.message || 'Failed to process image',
+      error: 'Failed to analyze image',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
       hint: 'Please try again with a different image'
     });
   }
 });
 
-// Basic error handler
-app.use((err, req, res, next) => {
-  console.error('Global error handler:', err);
-  res.status(500).json({ 
-    success: false, 
-    error: err.message || 'Internal server error',
-    hint: 'Please try again'
+// Request/response logging removed for performance
+
+// Auth routes
+const authRoutes = require('./routes/auth');
+app.use('/auth', authRoutes);
+
+// Feedback route - wrap in try-catch
+const feedbackRoutes = require('./routes/feedback');
+app.use('/api/feedback', (req, res, next) => {
+  try {
+    feedbackRoutes(req, res, next);
+  } catch (error) {
+    console.error('ERROR in feedback routes setup:', error);
+    console.error('Stack:', error.stack);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// Error handling middleware from v2.0 - ENHANCED
+app.use((error, req, res, next) => {
+  console.error('\n=== EXPRESS ERROR HANDLER ===');
+  console.error('URL:', req.url);
+  console.error('Method:', req.method);
+  console.error('Error type:', error.constructor.name);
+  console.error('Error message:', error.message);
+  console.error('Error stack:', error.stack);
+  
+  if (error instanceof multer.MulterError) {
+    if (error.code === 'LIMIT_FILE_SIZE') {
+      return res.status(400).json({
+        error: 'File too large',
+        hint: 'Please use an image smaller than 10MB'
+      });
+    }
+  }
+  
+  // Check if it's a body parser error
+  if (error.type === 'entity.parse.failed') {
+    console.error('Body parser error - likely JSON parsing issue');
+    return res.status(400).json({
+      error: 'Invalid request body',
+      hint: 'Please check your request format'
+    });
+  }
+  
+  // For all other errors
+  res.status(500).json({
+    error: 'Internal server error',
+    hint: 'Please try again later',
+    details: process.env.NODE_ENV === 'development' ? {
+      message: error.message,
+      type: error.constructor.name,
+      stack: error.stack
+    } : undefined
   });
+});
+
+// Process-level error handlers
+process.on('uncaughtException', (error) => {
+  console.error('\n=== UNCAUGHT EXCEPTION ===');
+  console.error('Time:', new Date().toISOString());
+  console.error('Error:', error);
+  console.error('Stack:', error.stack);
+  // Don't exit in development to see more errors
+  if (process.env.NODE_ENV === 'production') {
+    process.exit(1);
+  }
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('\n=== UNHANDLED REJECTION ===');
+  console.error('Time:', new Date().toISOString());
+  console.error('Reason:', reason);
+  console.error('Promise:', promise);
+});
+
+// Serve legal pages
+app.get('/terms', (req, res) => {
+  const path = require('path');
+  res.sendFile(path.join(__dirname, '../mobile-app/terms.html'));
+});
+
+app.get('/privacy', (req, res) => {
+  const path = require('path');
+  res.sendFile(path.join(__dirname, '../mobile-app/privacy.html'));
 });
 
 // Start server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => {
-  console.log(`
-===========================================
-Flippi.ai Backend Server (Minimal Safe Mode)
-===========================================
-Port: ${PORT}
-Environment: ${process.env.NODE_ENV || 'development'}
-Version: 2.0-minimal-safe
-Features:
-  - Image Analysis: ✓
-  - Authentication: ✗ (database unavailable)
-  - Feedback: ✗ (database unavailable)
-===========================================
-Server is running at http://localhost:${PORT}
-Health check: http://localhost:${PORT}/health
-===========================================
-  `);
+const server = app.listen(PORT, () => {
+  console.log(`🚀 Enhanced server v2.0 running on port ${PORT}`);
+  console.log(`🔑 OpenAI API Key: ${process.env.OPENAI_API_KEY ? 'Set' : 'Not set'}`);
+  console.log('✨ Features: Image upload, Camera capture, Paste support, Drag & drop');
+  console.log('📊 Enhanced AI analysis with authenticity and trend scoring');
+});
+
+// Handle server errors
+server.on('error', (error) => {
+  console.error('\n=== SERVER ERROR ===');
+  console.error('Error:', error);
+  console.error('Stack:', error.stack);
 });
