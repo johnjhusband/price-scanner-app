@@ -379,10 +379,6 @@ const server = app.listen(PORT, () => {
   console.log(`🔑 OpenAI API Key: ${process.env.OPENAI_API_KEY ? 'Set' : 'Not set'}`);
   console.log('✨ Features: Image upload, Camera capture, Paste support, Drag & drop');
   console.log('📊 Enhanced AI analysis with authenticity and trend scoring');
-  
-  // Check nginx configuration on startup
-  const checkNginxConfig = require('./checkNginxConfig');
-  checkNginxConfig();
 });
 
 // Handle server errors
