@@ -7,9 +7,8 @@ const session = require('express-session');
 const passport = require('passport');
 const { initializeDatabase } = require('./database');
 
-// Load .env from shared location outside git directories
-const envPath = path.join(__dirname, '../../shared/.env');
-require('dotenv').config({ path: envPath });
+// Load environment variables
+require('dotenv').config();
 
 // Log important environment variables (without exposing secrets)
 // Initialize database
