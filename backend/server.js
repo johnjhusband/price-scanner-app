@@ -295,6 +295,10 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
 const authRoutes = require('./routes/auth');
 app.use('/auth', authRoutes);
 
+// Admin routes
+const adminRoutes = require('./routes/admin');
+app.use('/admin', adminRoutes);
+
 // Feedback route - wrap in try-catch
 const feedbackRoutes = require('./routes/feedback');
 app.use('/api/feedback', (req, res, next) => {
