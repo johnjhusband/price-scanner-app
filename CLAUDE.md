@@ -132,6 +132,56 @@ When code changes are not reflected after deployment:
 
 **Manual interventions mask problems and break the automated workflow.**
 
+### 6. Deployment Workflows
+
+#### CRITICAL: Workflow File Permissions
+**🚨 NEVER MODIFY .github/workflows/ FILES VIA OAUTH/API 🚨**
+
+GitHub blocks OAuth Apps from modifying workflow files for security reasons. This restriction cannot be bypassed even with "all permissions". 
+
+**What happens:**
+```
+refusing to allow an OAuth App to create or update workflow .github/workflows/deploy-*.yml
+```
+
+**The solution:**
+1. NEVER include workflow file changes in commits
+2. Make changes ONLY to application code, scripts, and docs
+3. If workflows need updates, they must be edited manually in GitHub UI
+4. Separate infrastructure changes from code changes
+
+**Failed approaches that DON'T work:**
+- Force push with workflow changes ❌
+- Cherry-pick including workflows ❌
+- Rebase that brings in workflow mods ❌
+- Any commit touching .github/workflows/ ❌
+
+#### Automated Deployment
+GitHub Actions workflows automatically deploy on push:
+- `.github/workflows/deploy-develop.yml` → blue.flippi.ai
+- `.github/workflows/deploy-staging.yml` → green.flippi.ai
+- `.github/workflows/deploy-production.yml` → app.flippi.ai
+
+#### Deployment Process
+Each deployment:
+1. Resets local changes (`git reset --hard`)
+2. Pulls latest code from branch
+3. Installs backend dependencies
+4. Builds frontend with Expo
+5. Restarts PM2 processes
+6. Verifies health endpoint
+
+#### Deployment Documentation
+- **DevOps Checklist**: `docs/DEVOPS-RELEASE-CHECKLIST.md` - Comprehensive deployment procedures
+- **Troubleshooting**: `docs/DEPLOYMENT-TROUBLESHOOTING.md` - Common issues and fixes
+- **Post-deploy scripts**: `scripts/post-deploy-*.sh` - Nginx and legal page fixes
+
+#### Common Deployment Issues
+1. **502 Error**: Backend not running - check PM2 logs
+2. **"Index of dist/"**: Frontend build failed - rebuild manually
+3. **Old code running**: Git pull failed - force reset
+4. **404 on legal pages**: Run post-deploy script
+
 ## Communication Style
 
 - Be concise and direct
@@ -153,13 +203,15 @@ Example: "Error handling is in backend/server.js:261"
 
 For project-specific information, refer to the appropriate documentation:
 
-- **Brand Guidelines**: `/documentation/BRAND-GUIDE.md` - UI/UX standards, colors, accessibility
-- **Technical Guide**: `/documentation/TECHNICAL-GUIDE.md` - Architecture, API, infrastructure, auth details
-- **Development Guide**: `/documentation/DEVELOPMENT-GUIDE.md` - Setup, coding standards, workflows
-- **Operations Manual**: `/documentation/OPERATIONS-MANUAL.md` - Monitoring, troubleshooting, maintenance
-- **Ownership Transfer**: `/documentation/OWNERSHIP-TRANSFER.md` - Transfer procedures and checklist
-- **Launch Readiness**: `/documentation/LAUNCH-READINESS-SUMMARY.md` - Current launch status
-- **Known Issues**: `/documentation/BUG-LEGAL-PAGES.md` - Current bugs and workarounds
+- **Brand Guidelines**: `/docs/BRAND-GUIDE.md` - UI/UX standards, colors, accessibility
+- **Technical Guide**: `/docs/TECHNICAL-GUIDE.md` - Architecture, API, infrastructure, auth details
+- **Development Guide**: `/docs/DEVELOPMENT-GUIDE.md` - Setup, coding standards, workflows
+- **Operations Manual**: `/docs/OPERATIONS-MANUAL.md` - Monitoring, troubleshooting, maintenance
+- **DevOps Checklist**: `/docs/DEVOPS-RELEASE-CHECKLIST.md` - Comprehensive deployment procedures
+- **Deployment Troubleshooting**: `/docs/DEPLOYMENT-TROUBLESHOOTING.md` - Common deployment issues and fixes
+- **Ownership Transfer**: `/docs/OWNERSHIP-TRANSFER.md` - Transfer procedures and checklist
+- **Launch Readiness**: `/docs/LAUNCH-READINESS-SUMMARY.md` - Current launch status
+- **Known Issues**: `/docs/BUG-LEGAL-PAGES.md` - Current bugs and workarounds
 
 ## Key Quick Facts
 
