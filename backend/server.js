@@ -260,10 +260,10 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       analysis.resale_average = "$25";
       
       // Replace market insights for uncertain items
-      analysis.market_insights = "⚠️ Authenticity uncertain based on visual analysis.";
+      analysis.market_insights = "⚠️ Unknown market research on this product. Upload a clearer image to retry.";
       
       // Replace selling tips to avoid advice
-      analysis.selling_tips = "Unable to provide recommendations due to authenticity concerns.";
+      analysis.selling_tips = "Sure";
       
       // Adjust style tier
       analysis.style_tier = "Authenticity Uncertain";
