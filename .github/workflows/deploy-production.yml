@@ -1,0 +1,39 @@
+name: Deploy Production
+on:
+  push:
+    branches: [master]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to app.flippi.ai
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/app.flippi.ai
+            # Reset any local changes to avoid merge conflicts
+            git reset --hard HEAD
+            git clean -fd
+            git pull origin master
+            cd backend && npm install --production
+            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
+            # Debug: Check what directory PM2 is serving from
+            echo "=== PM2 prod-frontend config ==="
+            pm2 describe prod-frontend | grep -E "exec cwd|script|args" || true
+            echo "=== Checking directories ==="
+            ls -la /var/www/app.flippi.ai/mobile-app/ | grep -E "dist|web-build" || true
+            echo "=== Files in dist ==="
+            ls -la /var/www/app.flippi.ai/mobile-app/dist/ | head -5 || true
+            # Just restart, don't delete
+            pm2 restart prod-backend prod-frontend
+            # Wait for services to start
+            sleep 3
+            # Check if backend is running
+            pm2 show prod-backend || true
+            curl -s http://localhost:3000/health || echo "Backend not responding"
+            # Clear nginx cache
+            nginx -s reload
