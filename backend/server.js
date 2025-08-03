@@ -266,11 +266,11 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
     const authenticityScore = parseInt(analysis.authenticity_score) || 50;
     if (authenticityScore < 30) {
       // Override pricing for likely replicas
-      analysis.price_range = "$20-$80";
-      analysis.resale_average = "$50";
+      analysis.price_range = "$5-$50";
+      analysis.resale_average = "$25";
       
       // Update market insights with caution
-      analysis.market_insights = "⚠️ Low authenticity score detected. This item shows signs that may indicate it's not authentic. Pricing has been adjusted to reflect this uncertainty.";
+      analysis.market_insights = "⚠️ " + (analysis.market_insights || "Market insights unavailable");
       
       // Adjust style tier
       analysis.style_tier = "Authenticity Uncertain";
