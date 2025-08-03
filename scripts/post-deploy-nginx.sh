@@ -53,3 +53,54 @@ echo "Backend OAuth endpoint response: $RESPONSE"
 if [ "$RESPONSE" != "302" ] && [ "$RESPONSE" != "301" ]; then
     echo "WARNING: OAuth endpoint not responding with redirect!"
 fi
+
+# Check and fix legal pages routing
+echo ""
+echo "Checking legal pages configuration..."
+if ! grep -q "location = /terms" /etc/nginx/sites-available/$DOMAIN 2>/dev/null; then
+    echo "Legal pages routes missing! Adding them now..."
+    
+    # Create a backup
+    sudo cp /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-available/$DOMAIN.backup.$(date +%Y%m%d_%H%M%S)
+    
+    # Add legal pages routes before the catch-all location /
+    sudo sed -i '/location \/ {/i\
+    # Legal pages - proxy to backend\
+    location = /terms {\
+        proxy_pass http://localhost:'$PORT';\
+        proxy_http_version 1.1;\
+        proxy_set_header Host $host;\
+        proxy_set_header X-Real-IP $remote_addr;\
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\
+        proxy_set_header X-Forwarded-Proto $scheme;\
+    }\
+\
+    location = /privacy {\
+        proxy_pass http://localhost:'$PORT';\
+        proxy_http_version 1.1;\
+        proxy_set_header Host $host;\
+        proxy_set_header X-Real-IP $remote_addr;\
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\
+        proxy_set_header X-Forwarded-Proto $scheme;\
+    }\
+' /etc/nginx/sites-available/$DOMAIN
+    
+    # Test and reload nginx
+    if sudo nginx -t; then
+        sudo systemctl reload nginx
+        echo "Legal pages routes added and nginx reloaded!"
+    else
+        echo "ERROR: Nginx config test failed! Rolling back..."
+        sudo cp /etc/nginx/sites-available/$DOMAIN.backup.$(date +%Y%m%d_%H%M%S) /etc/nginx/sites-available/$DOMAIN
+    fi
+else
+    echo "Legal pages routes already configured!"
+fi
+
+# Test legal pages
+echo ""
+echo "Testing legal pages..."
+for page in terms privacy; do
+    LEGAL_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT/$page || echo "000")
+    echo "/$page endpoint response: $LEGAL_RESPONSE"
+done
