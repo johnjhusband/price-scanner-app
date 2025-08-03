@@ -259,8 +259,11 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       analysis.price_range = "$5-$50";
       analysis.resale_average = "$25";
       
-      // Update market insights with caution
-      analysis.market_insights = "⚠️ " + (analysis.market_insights || "Market insights unavailable");
+      // Replace market insights for uncertain items
+      analysis.market_insights = "⚠️ Authenticity uncertain based on visual analysis.";
+      
+      // Replace selling tips to avoid advice
+      analysis.selling_tips = "Unable to provide recommendations due to authenticity concerns.";
       
       // Adjust style tier
       analysis.style_tier = "Authenticity Uncertain";
