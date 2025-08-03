@@ -971,7 +971,7 @@ export default function App() {
                 marginBottom: 8,
                 paddingHorizontal: 20
               }}>
-                *Flippi can make mistakes. Check important info.
+                *ai can make mistakes. double-check important info
               </Text>
             )}
             
