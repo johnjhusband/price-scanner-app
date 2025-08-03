@@ -9,35 +9,45 @@ const { getDatabase } = require('../database');
 
 // Initialize users table
 const initUsersTable = () => {
-  const db = getDatabase();
-  if (!db) {
-    console.error('No database available for users');
-    return;
-  }
+  try {
+    const db = getDatabase();
+    if (!db) {
+      console.error('No database available for users');
+      return;
+    }
 
-  db.exec(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      google_id TEXT UNIQUE NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      name TEXT,
-      picture_url TEXT,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      last_login DATETIME DEFAULT CURRENT_TIMESTAMP
-    )
-  `);
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        google_id TEXT UNIQUE NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        name TEXT,
+        picture_url TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        last_login DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+  } catch (error) {
+    console.error('Error in initUsersTable:', error.message);
+  }
 };
 
 // Initialize on module load
-initUsersTable();
+try {
+  initUsersTable();
+} catch (error) {
+  console.error('Failed to initialize users table:', error.message);
+  // Continue without database - auth will not work properly
+}
 
 // Configure Google OAuth Strategy
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "/auth/google/callback",
-    proxy: true  // Trust the proxy (nginx) for https
-  },
+if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
+  passport.use(new GoogleStrategy({
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "/auth/google/callback",
+      proxy: true  // Trust the proxy (nginx) for https
+    },
   async (accessToken, refreshToken, profile, done) => {
     try {
       const db = getDatabase();
@@ -76,7 +86,10 @@ passport.use(new GoogleStrategy({
       return done(error);
     }
   }
-));
+  ));
+} else {
+  console.warn('Google OAuth credentials not configured. OAuth will not work.');
+}
 
 // Serialize user for session
 passport.serializeUser((user, done) => {
@@ -84,13 +97,18 @@ passport.serializeUser((user, done) => {
 });
 
 passport.deserializeUser((google_id, done) => {
-  const db = getDatabase();
-  if (!db) {
-    return done(new Error('Database not available'));
-  }
+  try {
+    const db = getDatabase();
+    if (!db) {
+      return done(new Error('Database not available'));
+    }
   
-  const user = db.prepare('SELECT * FROM users WHERE google_id = ?').get(google_id);
-  done(null, user);
+    const user = db.prepare('SELECT * FROM users WHERE google_id = ?').get(google_id);
+    done(null, user);
+  } catch (error) {
+    console.error('Error in deserializeUser:', error.message);
+    done(error);
+  }
 });
 
 // Routes
