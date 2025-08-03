@@ -33,6 +33,10 @@ try {
 
 const app = express();
 
+// Setup legal pages BEFORE other middleware to ensure they're served correctly
+const setupLegalPages = require('./setupLegalPages');
+setupLegalPages(app);
+
 // Enhanced multer configuration from v2.0
 const upload = multer({ 
   memory: true,
@@ -365,16 +369,8 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Promise:', promise);
 });
 
-// Serve legal pages
-app.get('/terms', (req, res) => {
-  const path = require('path');
-  res.sendFile(path.join(__dirname, '../mobile-app/terms.html'));
-});
-
-app.get('/privacy', (req, res) => {
-  const path = require('path');
-  res.sendFile(path.join(__dirname, '../mobile-app/privacy.html'));
-});
+// Legal pages are now served by setupLegalPages middleware at the top of the file
+// This ensures they're served before any other routes or middleware intercept them
 
 // Start server
 const PORT = process.env.PORT || 3000;
