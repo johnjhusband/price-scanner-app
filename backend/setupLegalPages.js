@@ -9,12 +9,9 @@ function setupLegalPages(app) {
   // Serve legal pages with explicit routes BEFORE other middleware
   const legalPagesPath = path.join(__dirname, '../mobile-app');
   
-  console.log('Setting up legal pages from:', legalPagesPath);
-  
   // Terms page
   app.get('/terms', (req, res) => {
     const termsPath = path.join(legalPagesPath, 'terms.html');
-    console.log('Serving terms page from:', termsPath);
     
     // Check if file exists first
     if (fs.existsSync(termsPath)) {
@@ -33,7 +30,6 @@ function setupLegalPages(app) {
   // Privacy page
   app.get('/privacy', (req, res) => {
     const privacyPath = path.join(legalPagesPath, 'privacy.html');
-    console.log('Serving privacy page from:', privacyPath);
     
     // Check if file exists first
     if (fs.existsSync(privacyPath)) {
@@ -48,8 +44,6 @@ function setupLegalPages(app) {
       res.status(404).send('Privacy page not found');
     }
   });
-  
-  console.log('Legal pages routes configured at /terms and /privacy');
 }
 
 module.exports = setupLegalPages;
