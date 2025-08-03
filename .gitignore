@@ -51,3 +51,6 @@ feedback.db
 # Temporary files
 *.tmp
 *.temp
+
+# Sensitive documentation
+docs/DEPLOYMENT-CREDENTIALS.md
