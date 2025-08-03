@@ -322,9 +322,9 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
 const authRoutes = require('./routes/auth');
 app.use('/auth', authRoutes);
 
-// Emergency OAuth fix route
-const forceOAuthRoutes = require('./routes/force-oauth');
-app.use('/api', forceOAuthRoutes);
+// Emergency OAuth fix route - commented out as file doesn't exist
+// const forceOAuthRoutes = require('./routes/force-oauth');
+// app.use('/api', forceOAuthRoutes);
 
 // Feedback route - wrap in try-catch
 const feedbackRoutes = require('./routes/feedback');
