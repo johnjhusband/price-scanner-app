@@ -174,9 +174,7 @@ const EnterScreen = () => {
           >
             Privacy
           </Text>
-        </Text>
-        <Text style={styles.footerText}>
-          {' '}·{' '}
+          {' '}
           <Text 
             style={styles.link}
             onPress={() => {
