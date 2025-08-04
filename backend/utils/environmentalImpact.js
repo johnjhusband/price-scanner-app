@@ -2,32 +2,32 @@
 
 const tagsByCategory = {
   bags: [
-    "♻️ Saved 35 showers",
-    "♻️ Saved 1,800 gallons of water",
-    "♻️ Skipped 5 pounds of CO₂",
-    "♻️ Saved 2 months of drinking water",
-    "♻️ Offset 60 dishwasher cycles"
+    "♻️ Impact: Saved 35 showers",
+    "♻️ Impact: Saved 1,800 gallons of water",
+    "♻️ Impact: Skipped 5 pounds of CO₂",
+    "♻️ Impact: Saved 2 months of drinking water",
+    "♻️ Impact: Offset 60 dishwasher cycles"
   ],
   apparel: [
-    "♻️ Saved enough energy to microwave 80 meals",
-    "♻️ Skipped the emissions of baking 10 cakes",
-    "♻️ Offset 3 days of household energy",
-    "♻️ Saved 3 days of household energy",
-    "♻️ Offset the energy to toast 100 slices of bread"
+    "♻️ Impact: Saved enough energy to microwave 80 meals",
+    "♻️ Impact: Skipped the emissions of baking 10 cakes",
+    "♻️ Impact: Offset 3 days of household energy",
+    "♻️ Impact: Saved 3 days of household energy",
+    "♻️ Impact: Offset the energy to toast 100 slices of bread"
   ],
   shoes: [
-    "♻️ Offset the energy of cooking 30 eggs",
-    "♻️ Equal to 90 scoops of ice cream chilled",
-    "♻️ Saved the water for 15 bowls of soup",
-    "♻️ Saved 40 smoothies",
-    "♻️ Saved the energy used in 30 rice cooker runs"
+    "♻️ Impact: Offset the energy of cooking 30 eggs",
+    "♻️ Impact: Equal to 90 scoops of ice cream chilled",
+    "♻️ Impact: Saved the water for 15 bowls of soup",
+    "♻️ Impact: Saved 40 smoothies",
+    "♻️ Impact: Saved the energy used in 30 rice cooker runs"
   ],
   kitchenware: [
-    "♻️ Equal to 20 pots of coffee brewed",
-    "♻️ Saved enough for 35 servings of pasta",
-    "♻️ Skipped the water used to make 25 loaves of bread",
-    "♻️ Saved enough water to brew 50 cups of tea",
-    "♻️ Offset the packaging of 50 granola bars"
+    "♻️ Impact: Equal to 20 pots of coffee brewed",
+    "♻️ Impact: Saved enough for 35 servings of pasta",
+    "♻️ Impact: Skipped the water used to make 25 loaves of bread",
+    "♻️ Impact: Saved enough water to brew 50 cups of tea",
+    "♻️ Impact: Offset the packaging of 50 granola bars"
   ]
 };
 
@@ -53,7 +53,7 @@ function detectCategory(itemName) {
 
 function getEnvironmentalTag(category) {
   const tags = tagsByCategory[category?.toLowerCase()];
-  if (!tags) return "♻️ Small impact, big love";
+  if (!tags) return "♻️ Impact: Small steps, big love";
   
   // Randomly select a tag from the category
   return tags[Math.floor(Math.random() * tags.length)];
