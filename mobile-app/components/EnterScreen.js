@@ -174,7 +174,7 @@ const EnterScreen = () => {
           >
             Privacy
           </Text>
-          {' '}
+          {' '}·{' '}
           <Text 
             style={styles.link}
             onPress={() => {
