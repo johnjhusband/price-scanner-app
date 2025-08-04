@@ -10,7 +10,6 @@ import FeedbackPrompt from './components/FeedbackPrompt';
 import EnterScreen from './components/EnterScreen';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
-import { loadFonts } from './theme/fonts';
 
 // Responsive design breakpoints
 const { width: windowWidth } = Dimensions.get('window');
@@ -463,10 +462,9 @@ export default function App() {
     checkCameraAvailability();
     setupPasteListener();
     
-    // Set document title and load fonts on web
+    // Set document title on web
     if (Platform.OS === 'web') {
       document.title = 'Flippi.ai™ - Never Over Pay';
-      loadFonts(); // Load custom fonts
     }
     
     // Check authentication on web
@@ -796,21 +794,23 @@ export default function App() {
           styles.uploadContainer,
           isDragOver && styles.dragOver
         ]}>
-          {/* Text input always visible at top */}
-          <TextInput
-            style={[styles.descriptionInput, { 
-              backgroundColor: brandColors.surface,
-              color: brandColors.text,
-              borderColor: brandColors.border || '#ddd',
-              marginBottom: 20
-            }]}
-            placeholder="Describe your item (optional)"
-            placeholderTextColor={brandColors.textSecondary}
-            value={productDescription}
-            onChangeText={setProductDescription}
-            multiline
-            numberOfLines={3}
-          />
+          {/* Text input only visible when no image */}
+          {!image && (
+            <TextInput
+              style={[styles.descriptionInput, { 
+                backgroundColor: brandColors.surface,
+                color: brandColors.text,
+                borderColor: brandColors.border || '#ddd',
+                marginBottom: 20
+              }]}
+              placeholder="Describe your item (optional)"
+              placeholderTextColor={brandColors.textSecondary}
+              value={productDescription}
+              onChangeText={setProductDescription}
+              multiline
+              numberOfLines={3}
+            />
+          )}
           
           {!image ? (
             <>
@@ -919,10 +919,10 @@ export default function App() {
                 
                 {/* TOGGLE BUTTON */}
                 <TouchableOpacity
-                  style={[styles.viewMoreButton, { backgroundColor: brandColors.digitalLavender }]}
+                  style={[styles.viewMoreButton, { backgroundColor: brandColors.deepTeal }]}
                   onPress={() => setShowMoreDetails(!showMoreDetails)}
                 >
-                  <Text style={[styles.viewMoreText, { color: brandColors.trueBlack }]}>
+                  <Text style={[styles.viewMoreText, { color: brandColors.offWhite }]}>
                     {showMoreDetails ? 'Show Less' : 'View More Details'}
                   </Text>
                 </TouchableOpacity>
@@ -1092,13 +1092,12 @@ const styles = StyleSheet.create({
     paddingTop: isMobile ? 80 : 60, // More top padding on mobile to avoid user section
   },
   title: {
-    fontSize: isMobile ? typography.sizes.mobileH1 : typography.sizes.h1,
+    fontSize: 24,
     fontWeight: typography.weights.bold,
-    fontFamily: typography.headingFont,
+    fontFamily: typography.fontFamily,
     marginTop: 20,
     marginBottom: 20,
     textAlign: 'center',
-    letterSpacing: '-0.02em',
   },
   uploadContainer: {
     width: isMobile ? '100%' : '80%', // Responsive width based on screen size
@@ -1166,38 +1165,28 @@ const styles = StyleSheet.create({
     shadowRadius: isMobile ? 0 : 4,
   },
   resultTitle: {
-    fontSize: isMobile ? typography.sizes.mobileH2 : typography.sizes.h2,
-    fontWeight: typography.weights.bold,
-    fontFamily: typography.headingFont,
+    fontSize: 20,
+    fontWeight: 'bold',
     marginBottom: 15,
     textAlign: 'center',
-    letterSpacing: '-0.01em',
   },
   resultItem: {
     marginBottom: 12,
     width: '100%',
   },
   resultLabel: {
-    fontSize: typography.sizes.small,
-    fontFamily: typography.bodyFont,
+    fontSize: isMobile ? 13 : 14,
     marginBottom: 4,
-    letterSpacing: '0.02em',
-    textTransform: 'uppercase',
-    opacity: 0.8,
   },
   resultValue: {
-    fontSize: typography.sizes.body,
-    fontFamily: typography.bodyFont,
-    fontWeight: typography.weights.medium,
+    fontSize: isMobile ? 14 : 16,
+    fontWeight: '500',
     flexShrink: 1,
     flexWrap: 'wrap',
-    lineHeight: typography.lineHeight.relaxed,
   },
   priceValue: {
-    fontSize: 28,
-    fontWeight: typography.weights.bold,
-    fontFamily: typography.monoFont,
-    letterSpacing: '-0.02em',
+    fontSize: 20,
+    fontWeight: 'bold',
   },
   suggestedPriceContainer: {
     padding: 15,
@@ -1278,15 +1267,13 @@ const styles = StyleSheet.create({
   },
   descriptionInput: {
     width: '100%',
-    padding: 16,
+    padding: 12,
     borderWidth: 1,
     borderRadius: 12,
-    fontSize: typography.sizes.body,
-    fontFamily: typography.bodyFont,
+    fontSize: 16,
     marginBottom: 15,
     minHeight: 80,
     textAlignVertical: 'top',
-    lineHeight: typography.lineHeight.relaxed,
   },
   goButton: {
     width: '100%',
