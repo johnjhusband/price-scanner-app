@@ -53,10 +53,9 @@ const MissionModal = ({ visible, onClose }) => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Accessibility Commitment</Text>
             <Text style={styles.paragraph}>
-              Flippi is designed to be accessible to everyone. We meet WCAG 2.1 Level AA standards, 
-              European EN 301 549 accessibility requirements, and ensure our interface works for users 
-              with color blindness. Our clean, high-contrast design helps users with visual impairments 
-              while maintaining simplicity for all.
+              Flippi is designed to be accessible to everyone. Our interface uses high contrast colors 
+              and clear visual indicators that work for users with color blindness. We're committed to 
+              improving accessibility as we grow.
             </Text>
           </View>
           
@@ -80,7 +79,7 @@ const MissionModal = ({ visible, onClose }) => {
               Flippi™ and Flippi.ai™ are trademarks of Boca Belle. All rights reserved.
             </Text>
             <Text style={[styles.footerText, styles.italic]}>
-              COPPA Compliant • Not for children under 13
+              Not for children under 13
             </Text>
             <Text style={[styles.footerText, styles.italic]}>
               *ai can make mistakes. check important info.
