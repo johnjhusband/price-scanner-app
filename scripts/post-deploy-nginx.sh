@@ -83,6 +83,15 @@ if ! grep -q "location = /terms" /etc/nginx/sites-available/$DOMAIN 2>/dev/null;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\
         proxy_set_header X-Forwarded-Proto $scheme;\
     }\
+\
+    location = /mission {\
+        proxy_pass http://localhost:'$PORT';\
+        proxy_http_version 1.1;\
+        proxy_set_header Host $host;\
+        proxy_set_header X-Real-IP $remote_addr;\
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\
+        proxy_set_header X-Forwarded-Proto $scheme;\
+    }\
 ' /etc/nginx/sites-available/$DOMAIN
     
     # Test and reload nginx
@@ -100,7 +109,7 @@ fi
 # Test legal pages
 echo ""
 echo "Testing legal pages..."
-for page in terms privacy; do
+for page in terms privacy mission; do
     LEGAL_RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:$PORT/$page || echo "000")
     echo "/$page endpoint response: $LEGAL_RESPONSE"
 done
