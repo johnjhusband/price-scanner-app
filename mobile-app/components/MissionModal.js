@@ -51,6 +51,15 @@ const MissionModal = ({ visible, onClose }) => {
           </View>
           
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Accessibility Commitment</Text>
+            <Text style={styles.paragraph}>
+              Flippi is designed to be accessible to everyone. We meet WCAG 2.1 color contrast standards, 
+              provide keyboard navigation, and ensure our interface works for users with color blindness. 
+              Our clean, high-contrast design helps users with visual impairments while maintaining simplicity for all.
+            </Text>
+          </View>
+          
+          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Powered by Boca Belle</Text>
             <Text style={styles.paragraph}>
               Flippi.ai is based in Boca Raton, Florida and operated by John and Tara Husband LLC, doing business as Boca Belle.
