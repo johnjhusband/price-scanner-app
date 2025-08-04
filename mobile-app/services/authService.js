@@ -37,29 +37,40 @@ class AuthService {
 
   // Parse token from URL (after OAuth redirect)
   static async parseTokenFromUrl() {
+    console.log('[AuthService] Parsing token from URL...');
+    console.log('[AuthService] Window location:', window.location.href);
+    
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
+    
+    console.log('[AuthService] Token found:', !!token);
     
     if (token) {
       // Decode JWT to get user data
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
+        console.log('[AuthService] Decoded payload:', payload);
+        
         await this.setAuth(token, {
           id: payload.id,
           email: payload.email,
           name: payload.name
         });
         
+        console.log('[AuthService] Auth data saved successfully');
+        
         // Clean URL
         window.history.replaceState({}, document.title, window.location.pathname);
+        console.log('[AuthService] URL cleaned');
         
         return true;
       } catch (error) {
-        console.error('Failed to parse token:', error);
+        console.error('[AuthService] Failed to parse token:', error);
         return false;
       }
     }
     
+    console.log('[AuthService] No token in URL');
     return false;
   }
 }

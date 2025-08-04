@@ -22,6 +22,15 @@ const EnterScreen = () => {
   const [showMissionModal, setShowMissionModal] = useState(false);
   
   const handleGoogleSignIn = () => {
+    // Debug OAuth redirect
+    console.log('[OAuth Debug] Starting Google Sign In...');
+    console.log('[OAuth Debug] Platform:', Platform.OS);
+    console.log('[OAuth Debug] Is Mobile:', isMobile);
+    console.log('[OAuth Debug] Current URL:', window.location.href);
+    console.log('[OAuth Debug] API_URL:', API_URL);
+    console.log('[OAuth Debug] Redirect URL:', `${API_URL}/auth/google`);
+    console.log('[OAuth Debug] User Agent:', navigator.userAgent);
+    
     // Redirect to Google OAuth
     window.location.href = `${API_URL}/auth/google`;
   };
