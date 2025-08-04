@@ -839,13 +839,30 @@ export default function App() {
               <Image source={{ uri: image }} style={styles.image} />
               
               {!analysisResult && !isLoading && (
-                <BrandButton
-                  title="Go"
-                  onPress={analyzeImage}
-                  style={styles.goButton}
-                  variant="accent"
-                  isHighImpact={true}
-                />
+                <>
+                  <TextInput
+                    style={[styles.descriptionInput, { 
+                      backgroundColor: brandColors.surface,
+                      color: brandColors.text,
+                      borderColor: brandColors.border || '#ddd',
+                      marginBottom: 20,
+                      marginTop: 20
+                    }]}
+                    placeholder="Describe your item (optional)"
+                    placeholderTextColor={brandColors.textSecondary}
+                    value={productDescription}
+                    onChangeText={setProductDescription}
+                    multiline
+                    numberOfLines={3}
+                  />
+                  <BrandButton
+                    title="Go"
+                    onPress={analyzeImage}
+                    style={styles.goButton}
+                    variant="accent"
+                    isHighImpact={true}
+                  />
+                </>
               )}
             
             {isLoading && (
