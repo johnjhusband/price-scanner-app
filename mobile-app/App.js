@@ -8,7 +8,6 @@ import FlippiLogo from './components/FlippiLogo';
 import BrandButton from './components/BrandButton';
 import FeedbackPrompt from './components/FeedbackPrompt';
 import EnterScreen from './components/EnterScreen';
-import MissionModal from './components/MissionModal';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
 
@@ -226,7 +225,6 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [showMissionModal, setShowMissionModal] = useState(false);
   
   const scrollViewRef = useRef(null);
   const resultsRef = useRef(null);
@@ -995,28 +993,13 @@ export default function App() {
       
       {/* Legal Footer */}
       <View style={styles.legalFooter}>
-        <View style={styles.footerLinks}>
-          <TouchableOpacity onPress={() => Linking.openURL('mailto:teamflippi@gmail.com')}>
-            <Text style={styles.footerLink}>Contact</Text>
-          </TouchableOpacity>
-          <Text style={styles.footerSeparator}>•</Text>
-          <TouchableOpacity onPress={() => setShowMissionModal(true)}>
-            <Text style={styles.footerLink}>Mission</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={[styles.legalText, { marginBottom: 4, marginTop: 12 }]}>
+        <Text style={[styles.legalText, { marginBottom: 4 }]}>
           ai makes mistakes. check important info
         </Text>
         <Text style={styles.legalText}>
           Flippi™ and Flippi.ai™ are trademarks of Boca Belle. All rights reserved.
         </Text>
       </View>
-      
-      {/* Mission Modal */}
-      <MissionModal 
-        visible={showMissionModal} 
-        onClose={() => setShowMissionModal(false)} 
-      />
     </ScrollView>
   );
 }

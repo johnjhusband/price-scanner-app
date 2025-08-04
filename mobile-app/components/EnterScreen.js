@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Image, ScrollView } from 'react-native';
 import FlippiLogo from './FlippiLogo';
+import MissionModal from './MissionModal';
 import { brandColors, typography } from '../theme/brandColors';
 
 const API_URL = Platform.OS === 'web' 
@@ -12,6 +13,7 @@ const API_URL = Platform.OS === 'web'
 const EnterScreen = () => {
   const [isHovering, setIsHovering] = useState(false);
   const [isOfferHovering, setIsOfferHovering] = useState(false);
+  const [showMissionModal, setShowMissionModal] = useState(false);
   
   const handleGoogleSignIn = () => {
     // Redirect to Google OAuth
@@ -185,8 +187,20 @@ const EnterScreen = () => {
           >
             Contact
           </Text>
+          {' '}·{' '}
+          <Text 
+            style={styles.link}
+            onPress={() => setShowMissionModal(true)}
+          >
+            Mission
+          </Text>
         </Text>
       </View>
+      
+      <MissionModal 
+        visible={showMissionModal} 
+        onClose={() => setShowMissionModal(false)} 
+      />
     </View>
   );
 };
