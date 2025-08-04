@@ -1,8 +1,14 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image, ScrollView, Dimensions } from 'react-native';
 import FlippiLogo from './FlippiLogo';
 import MissionModal from './MissionModal';
 import { brandColors, typography } from '../theme/brandColors';
+
+// Responsive design breakpoints
+const { width: windowWidth } = Dimensions.get('window');
+const isMobile = windowWidth < 768;
+const isTablet = windowWidth >= 768 && windowWidth < 1024;
+const isDesktop = windowWidth >= 1024;
 
 const API_URL = Platform.OS === 'web' 
   ? '' // Same domain - nginx routes /api to backend
@@ -212,15 +218,15 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center',
     justifyContent: 'flex-start',
-    padding: Platform.OS === 'web' ? 20 : 20,
+    padding: 20, // Same padding for all screen sizes
     paddingTop: 0,
     paddingBottom: 100,
   },
   headerSection: {
     width: '100%',
     alignItems: 'center',
-    paddingHorizontal: Platform.OS === 'web' ? 40 : 20,
-    paddingTop: Platform.OS === 'web' ? 40 : 10,
+    paddingHorizontal: isMobile ? 20 : 40, // Responsive horizontal padding
+    paddingTop: isMobile ? 10 : 40, // Responsive top padding
     paddingBottom: 30,
     marginBottom: 10,
     // Subtle luxury gradient - very soft transition
@@ -239,7 +245,7 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 18,
     color: brandColors.slateTeal,
-    marginBottom: Platform.OS === 'web' ? 20 : 10,
+    marginBottom: isMobile ? 10 : 20, // Responsive margin
     textAlign: 'center',
   },
   offerBanner: {
@@ -277,7 +283,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     marginTop: 40, // Space from login section
     marginBottom: 40,
-    width: Platform.OS === 'web' ? '90%' : '100%',
+    width: isMobile ? '100%' : '90%', // Responsive width
     maxWidth: 900, // Generous limit
   },
   platformTitle: {
@@ -308,7 +314,7 @@ const styles = StyleSheet.create({
     lineHeight: 22,
   },
   heroSection: {
-    flexDirection: Platform.OS === 'web' ? 'row' : 'column',
+    flexDirection: isMobile ? 'column' : 'row', // Responsive flex direction
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 30,
@@ -440,7 +446,7 @@ const styles = StyleSheet.create({
   },
   googleButtonText: {
     color: '#FFFFFF', // White text on deep teal
-    fontSize: Platform.OS === 'web' ? 16 : 14,
+    fontSize: isMobile ? 14 : 16, // Responsive font size
     fontWeight: typography.weights.semiBold,
     whiteSpace: 'nowrap', // Prevent text wrapping
   },

@@ -1,35 +1,38 @@
 // Authentication service for managing user sessions
 
+import StorageService from './storage';
+
 const AUTH_TOKEN_KEY = 'flippi_auth_token';
 const USER_DATA_KEY = 'flippi_user_data';
 
 class AuthService {
   // Store token and user data
-  static setAuth(token, userData) {
-    localStorage.setItem(AUTH_TOKEN_KEY, token);
-    localStorage.setItem(USER_DATA_KEY, JSON.stringify(userData));
+  static async setAuth(token, userData) {
+    await StorageService.set(AUTH_TOKEN_KEY, token);
+    await StorageService.set(USER_DATA_KEY, JSON.stringify(userData));
   }
 
   // Get stored token
-  static getToken() {
-    return localStorage.getItem(AUTH_TOKEN_KEY);
+  static async getToken() {
+    return await StorageService.get(AUTH_TOKEN_KEY);
   }
 
   // Get user data
-  static getUser() {
-    const userData = localStorage.getItem(USER_DATA_KEY);
+  static async getUser() {
+    const userData = await StorageService.get(USER_DATA_KEY);
     return userData ? JSON.parse(userData) : null;
   }
 
   // Check if authenticated
-  static isAuthenticated() {
-    return !!this.getToken();
+  static async isAuthenticated() {
+    const token = await this.getToken();
+    return !!token;
   }
 
   // Clear auth data (exit)
-  static exit() {
-    localStorage.removeItem(AUTH_TOKEN_KEY);
-    localStorage.removeItem(USER_DATA_KEY);
+  static async exit() {
+    await StorageService.remove(AUTH_TOKEN_KEY);
+    await StorageService.remove(USER_DATA_KEY);
   }
 
   // Parse token from URL (after OAuth redirect)

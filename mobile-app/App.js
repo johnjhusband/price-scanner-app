@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Linking } from 'react-native';
+import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Linking, Dimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
@@ -10,6 +10,12 @@ import FeedbackPrompt from './components/FeedbackPrompt';
 import EnterScreen from './components/EnterScreen';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
+
+// Responsive design breakpoints
+const { width: windowWidth } = Dimensions.get('window');
+const isMobile = windowWidth < 768;
+const isTablet = windowWidth >= 768 && windowWidth < 1024;
+const isDesktop = windowWidth >= 1024;
 
 const API_URL = Platform.OS === 'web' 
   ? '' // Same domain - nginx routes /api to backend
@@ -465,15 +471,24 @@ export default function App() {
       // Check if token in URL (OAuth callback)
       if (AuthService.parseTokenFromUrl()) {
         setIsAuthenticated(true);
-        setUser(AuthService.getUser());
-        setAuthLoading(false);
-      } else if (AuthService.isAuthenticated()) {
-        // Check existing session
-        setIsAuthenticated(true);
-        setUser(AuthService.getUser());
-        setAuthLoading(false);
+        // Get user asynchronously
+        AuthService.getUser().then(userData => {
+          setUser(userData);
+          setAuthLoading(false);
+        });
       } else {
-        setAuthLoading(false);
+        // Check existing session
+        AuthService.isAuthenticated().then(isAuth => {
+          if (isAuth) {
+            setIsAuthenticated(true);
+            AuthService.getUser().then(userData => {
+              setUser(userData);
+              setAuthLoading(false);
+            });
+          } else {
+            setAuthLoading(false);
+          }
+        });
       }
     } else {
       // Mobile platforms - for now, no auth required
@@ -691,7 +706,7 @@ export default function App() {
       }
       
       // Clear local auth
-      AuthService.exit();
+      await AuthService.exit();
       setIsAuthenticated(false);
       setUser(null);
       resetApp();
@@ -1033,8 +1048,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    padding: Platform.OS === 'web' ? 40 : 10, // Less padding on mobile for more width
-    paddingTop: Platform.OS === 'web' ? 60 : 80, // More top padding to avoid user section
+    padding: isMobile ? 10 : 40, // Responsive padding based on screen width
+    paddingTop: isMobile ? 80 : 60, // More top padding on mobile to avoid user section
   },
   title: {
     fontSize: 24,
@@ -1045,7 +1060,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   uploadContainer: {
-    width: Platform.OS === 'web' ? '80%' : '100%', // 80% on desktop, full on mobile
+    width: isMobile ? '100%' : '80%', // Responsive width based on screen size
     maxWidth: 1000, // Only prevent extreme stretching
     alignItems: 'center',
     marginTop: 10,
@@ -1096,9 +1111,9 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   analysisResult: {
-    width: Platform.OS === 'web' ? '80%' : '100%', // 80% on desktop, full on mobile
+    width: isMobile ? '100%' : '80%', // Responsive width based on screen size
     maxWidth: 1000, // Generous limit only for ultra-wide
-    padding: Platform.OS === 'web' ? 20 : 12,
+    padding: isMobile ? 12 : 20, // Responsive padding
     borderRadius: 10,
     marginBottom: 20,
     alignSelf: 'center',
@@ -1119,11 +1134,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   resultLabel: {
-    fontSize: Platform.OS === 'web' ? 14 : 13,
+    fontSize: isMobile ? 13 : 14, // Responsive font size
     marginBottom: 4,
   },
   resultValue: {
-    fontSize: Platform.OS === 'web' ? 16 : 14,
+    fontSize: isMobile ? 14 : 16, // Responsive font size
     fontWeight: '500',
     flexShrink: 1,
     flexWrap: 'wrap',
@@ -1225,7 +1240,7 @@ const styles = StyleSheet.create({
   // User section styles
   userSection: {
     position: 'absolute',
-    top: Platform.OS === 'web' ? 40 : 20, // Move down to avoid dev banner
+    top: isMobile ? 20 : 40, // Responsive top spacing
     right: 10,
     flexDirection: 'row',
     alignItems: 'center',
