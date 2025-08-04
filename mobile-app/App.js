@@ -771,11 +771,11 @@ export default function App() {
         </View>
       )}
       
-      {/* You section - User info and Exit - Outside content for better positioning */}
+      {/* You section - Exit button only - Outside content for better positioning */}
       {Platform.OS === 'web' && user && (
         <View style={styles.userSection}>
           <View style={styles.userInfo}>
-            <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
+            <Text style={styles.userEmail} numberOfLines={1}>Welcome!</Text>
           </View>
           <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
             <Text style={styles.exitText}>Exit</Text>
