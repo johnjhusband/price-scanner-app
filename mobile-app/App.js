@@ -974,11 +974,6 @@ export default function App() {
                   </View>
                 )}
                 
-                    {parseInt(analysisResult.authenticity_score) < 50 && (
-                      <Text style={[styles.warningText, { color: componentColors.scores.low }]}>
-                        ⚠️ Warning: Low authenticity - verify carefully
-                      </Text>
-                    )}
                 
                 {analysisResult.trending_score !== undefined && (
                   <View style={styles.resultItem}>
