@@ -1,21 +1,32 @@
-// Flippi.ai Brand Color System - 2025 Refresh
-// Luxury Trust & Authentication Color Palette
+// Flippi.ai Brand Color System - The Resale Revolution
+// Sustainable, Empowering, Community-Driven
 
 export const brandColors = {
-  // Primary Brand Colors - Updated for 2025
-  slateTeal: '#3F5954',         // Keep original - Primary UI color
-  deepTeal: '#1D5C5A',          // Keep original - Buttons, headers, CTAs
-  softCream: '#F3EFEA',         // Keep original - Backgrounds, sections
-  offWhite: '#FBF8F2',          // Keep original - Secondary background
-  matteGold: '#C8A863',         // Keep original - Accent text
-  mutedGraphite: '#1E2A28',     // Keep original - Body text
-  softTaupeBeige: '#D6C6B5',    // Keep original - Secondary UI elements
+  // Primary Palette - Earth & Prosperity
+  soil: '#1F2937',              // Rich earth black for grounding
+  forest: '#065F46',            // Deep forest green - sustainability
+  leaf: '#10B981',              // Fresh leaf green - growth & money
+  honey: '#F59E0B',             // Warm honey - valuable finds
+  sunset: '#DC2626',            // Sunset red - urgent action
+  ocean: '#0891B2',             // Ocean blue - trust & clarity
+  cream: '#FFFBEB',             // Warm cream background
+  sand: '#FEF3C7',              // Light sand for sections
+  stone: '#6B7280',             // Natural stone for secondary
   
-  // Additional colors for accessibility
-  ctaBlue: '#0066CC',           // Color blind friendly CTA
-  successBlue: '#2563EB',       // Color blind friendly success
-  warningAmber: '#F59E0B',      // Color blind friendly warning
-  errorRed: '#DC2626',          // Color blind friendly error
+  // Legacy mappings for compatibility
+  slateTeal: '#6B7280',         // Maps to stone
+  deepTeal: '#065F46',          // Maps to forest
+  softCream: '#FEF3C7',         // Maps to sand
+  offWhite: '#FFFBEB',          // Maps to cream
+  matteGold: '#F59E0B',         // Maps to honey
+  mutedGraphite: '#1F2937',     // Maps to soil
+  softTaupeBeige: '#E5E7EB',    // Light border
+  
+  // Semantic colors
+  success: '#10B981',           // Leaf - planet & profit win!
+  warning: '#F59E0B',           // Honey - opportunity alert
+  error: '#DC2626',             // Sunset - take action
+  info: '#0891B2',              // Ocean - knowledge is power
   
   // Legacy color mappings (for compatibility)
   charcoalGray: '#0A0A0A',      // Maps to trueBlack
@@ -31,25 +42,26 @@ export const brandColors = {
   info: '#3182CE',              // Info states
   
   // Text Colors
-  primaryText: '#1E2A28',       // Main text (mutedGraphite)
-  secondaryText: '#3F5954',     // Notes, smaller UI (slateTeal)
-  disabledText: '#D6C6B5',      // Inactive states (softTaupeBeige)
+  primaryText: '#1F2937',       // Main text (soil)
+  secondaryText: '#6B7280',     // Notes, smaller UI (stone)
+  disabledText: '#D1D5DB',      // Inactive states
   
   // Favicon Background
-  faviconBg: '#1D5C5A',         // Favicon background color (deepTeal)
+  faviconBg: '#065F46',         // Favicon background color (forest)
   
   // App Background
   background: '#FBF8F2',        // Off-white background for luxury feel
   surface: '#F3EFEA',           // Soft cream for cards and results
   
   // UI Elements
-  border: '#D6C6B5',            // Soft taupe beige for borders
+  border: '#F3E8D5',            // Natural border
+  borderFocus: '#10B981',       // Leaf focus
   
   // Additional colors for specific uses
-  text: '#1E2A28',              // Alias for primaryText
-  textSecondary: '#3F5954',     // Alias for secondaryText
-  primary: '#1D5C5A',           // Primary action color (deepTeal)
-  accent: '#0066CC',            // Color blind friendly accent
+  text: '#1F2937',              // Alias for primaryText
+  textSecondary: '#6B7280',     // Alias for secondaryText
+  primary: '#065F46',           // Primary action color (forest)
+  accent: '#10B981',            // Accent color (leaf)
   
   // Shadows
   shadowLight: 'rgba(0, 0, 0, 0.05)',
@@ -91,22 +103,22 @@ export const typography = {
   }
 };
 
-// Button styling constants
+// Button styling constants - Movement Design
 export const buttonStyles = {
   primary: {
-    backgroundColor: brandColors.deepTeal,
+    backgroundColor: brandColors.leaf,
     color: '#FFFFFF',
-    hoverBackground: '#174B49',
+    hoverBackground: brandColors.forest,
   },
   secondary: {
-    backgroundColor: brandColors.softTaupeBeige,
-    color: brandColors.mutedGraphite,
-    hoverBackground: '#C4B4A3',
+    backgroundColor: brandColors.sand,
+    color: brandColors.forest,
+    hoverBackground: brandColors.cream,
   },
   accent: {
-    backgroundColor: '#0066CC',  // Color blind friendly blue for CTAs
+    backgroundColor: brandColors.leaf,
     color: '#FFFFFF', 
-    hoverBackground: '#0052A3',
+    hoverBackground: brandColors.forest,
   },
   borderRadius: '8px',
   padding: {
@@ -121,19 +133,19 @@ export const buttonStyles = {
 // Component-specific colors - 2025 update
 export const componentColors = {
   uploadArea: {
-    border: brandColors.softTaupeBeige,
-    background: brandColors.softCream,
-    hoverBorder: brandColors.deepTeal,
-    hoverBackground: brandColors.offWhite,
+    border: brandColors.border,
+    background: brandColors.sand,
+    hoverBorder: brandColors.leaf,
+    hoverBackground: brandColors.cream,
   },
   results: {
     background: brandColors.softCream,
     border: brandColors.border,
   },
   scores: {
-    high: brandColors.deepTeal,         // Success/high scores
-    medium: brandColors.matteGold,      // Medium scores
-    low: '#8A8A8A',                     // Low scores
+    high: brandColors.leaf,             // Earth & wallet win!
+    medium: brandColors.honey,          // Worth considering
+    low: brandColors.stone,             // Pass for now
   },
   trending: {
     hot: brandColors.livingCoral,       // Hot items
@@ -141,8 +153,13 @@ export const componentColors = {
     cool: brandColors.digitalLavender,  // Niche items
   },
   authentication: {
-    verified: '#2563EB',         // Blue for verified (color blind safe)
-    uncertain: '#F59E0B',        // Amber for uncertain (distinguishable)
-    low: '#DC2626',              // Red for low (with pattern/icon support)
+    verified: brandColors.leaf,         // Authentic & sustainable
+    uncertain: brandColors.honey,       // Research more
+    low: brandColors.sunset,            // Red flag
+  },
+  movement: {
+    impact: brandColors.leaf,           // Environmental impact
+    community: brandColors.ocean,       // Community power
+    value: brandColors.honey,           // True value found
   },
 }; 

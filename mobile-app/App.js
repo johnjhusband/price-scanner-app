@@ -919,11 +919,15 @@ export default function App() {
                 
                 {/* TOGGLE BUTTON */}
                 <TouchableOpacity
-                  style={[styles.viewMoreButton, { backgroundColor: brandColors.deepTeal }]}
+                  style={[styles.viewMoreButton, { 
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderColor: brandColors.leaf,
+                  }]}
                   onPress={() => setShowMoreDetails(!showMoreDetails)}
                 >
-                  <Text style={[styles.viewMoreText, { color: brandColors.offWhite }]}>
-                    {showMoreDetails ? 'Show Less' : 'View More Details'}
+                  <Text style={[styles.viewMoreText, { color: brandColors.leaf }]}>
+                    {showMoreDetails ? '− Hide Impact Details' : '+ Show Impact Details'}
                   </Text>
                 </TouchableOpacity>
                 
