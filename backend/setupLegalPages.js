@@ -62,6 +62,24 @@ function setupLegalPages(app) {
       res.status(404).send('Mission page not found');
     }
   });
+  
+  // Contact page
+  app.get('/contact', (req, res) => {
+    const contactPath = path.join(legalPagesPath, 'contact.html');
+    
+    // Check if file exists first
+    if (fs.existsSync(contactPath)) {
+      res.sendFile(contactPath, (err) => {
+        if (err) {
+          console.error('Error serving contact.html:', err);
+          res.status(500).send('Error loading contact page');
+        }
+      });
+    } else {
+      console.error('contact.html not found at:', contactPath);
+      res.status(404).send('Contact page not found');
+    }
+  });
 }
 
 module.exports = setupLegalPages;
