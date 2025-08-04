@@ -926,7 +926,16 @@ export default function App() {
                   {analysisResult.recommended_platform && (
                     <View style={styles.resultItem}>
                       <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Best Platform:</Text>
-                      <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 18 }]}>{analysisResult.recommended_platform}</Text>
+                      <View>
+                        <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 18 }]}>
+                          {analysisResult.recommended_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_platform}
+                        </Text>
+                        {analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown' && (
+                          <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 16, marginTop: 4 }]}>
+                            Live: {analysisResult.recommended_live_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_live_platform}
+                          </Text>
+                        )}
+                      </View>
                     </View>
                   )}
                 </View>
@@ -963,16 +972,12 @@ export default function App() {
                           return brandColors.slateBlueGray;
                         })()
                       }]}>
-                        <Text style={styles.styleTierBadgeText}>{analysisResult.style_tier}</Text>
+                        <Text style={styles.styleTierBadgeText}>
+                          {parseInt(analysisResult.authenticity_score) <= 30 ? 'Entry / Possibly Fake' : analysisResult.style_tier}
+                        </Text>
                       </View>
                     </View>
                     
-                    {analysisResult.recommended_live_platform && (
-                  <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Live:</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.recommended_live_platform}</Text>
-                  </View>
-                )}
                 
                 
                 {analysisResult.trending_score !== undefined && (
