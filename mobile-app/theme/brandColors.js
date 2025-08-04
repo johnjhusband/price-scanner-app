@@ -117,6 +117,7 @@ export const buttonStyles = {
     backgroundColor: '#1B5E5F',  // Same as primary for consistency
     color: '#FFFFFF', 
     hoverBackground: '#134E4F',
+  },
   borderRadius: '8px',
   padding: {
     horizontal: '24px',
