@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
@@ -993,7 +993,16 @@ export default function App() {
       
       {/* Legal Footer */}
       <View style={styles.legalFooter}>
-        <Text style={[styles.legalText, { marginBottom: 4 }]}>
+        <View style={styles.footerLinks}>
+          <TouchableOpacity onPress={() => Linking.openURL('mailto:teamflippi@gmail.com')}>
+            <Text style={styles.footerLink}>Contact</Text>
+          </TouchableOpacity>
+          <Text style={styles.footerSeparator}>•</Text>
+          <TouchableOpacity onPress={() => window.open('/mission', '_blank')}>
+            <Text style={styles.footerLink}>Mission</Text>
+          </TouchableOpacity>
+        </View>
+        <Text style={[styles.legalText, { marginBottom: 4, marginTop: 12 }]}>
           ai makes mistakes. check important info
         </Text>
         <Text style={styles.legalText}>
@@ -1283,6 +1292,24 @@ const styles = StyleSheet.create({
     color: brandColors.textSecondary,
     fontFamily: typography.fontFamily,
     textAlign: 'center',
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  footerLink: {
+    fontSize: 14,
+    color: brandColors.deepTeal,
+    fontFamily: typography.fontFamily,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
+  },
+  footerSeparator: {
+    fontSize: 14,
+    color: brandColors.textSecondary,
+    marginHorizontal: 12,
   },
   environmentalContainer: {
     marginTop: 12,
