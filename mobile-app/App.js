@@ -925,17 +925,13 @@ export default function App() {
                   
                   {analysisResult.recommended_platform && (
                     <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Best Platform:</Text>
-                      <View>
-                        <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 18 }]}>
-                          {analysisResult.recommended_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_platform}
-                        </Text>
-                        {analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown' && (
-                          <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 16, marginTop: 4 }]}>
-                            Live: {analysisResult.recommended_live_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_live_platform}
-                          </Text>
-                        )}
-                      </View>
+                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Best Platforms:</Text>
+                      <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 18 }]}>
+                        {analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown' 
+                          ? `${analysisResult.recommended_live_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_live_platform}, ${analysisResult.recommended_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_platform}`
+                          : analysisResult.recommended_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_platform
+                        }
+                      </Text>
                     </View>
                   )}
                 </View>
