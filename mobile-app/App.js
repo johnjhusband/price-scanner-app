@@ -8,6 +8,7 @@ import FlippiLogo from './components/FlippiLogo';
 import BrandButton from './components/BrandButton';
 import FeedbackPrompt from './components/FeedbackPrompt';
 import EnterScreen from './components/EnterScreen';
+import MissionModal from './components/MissionModal';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
 
@@ -225,6 +226,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [showMissionModal, setShowMissionModal] = useState(false);
   
   const scrollViewRef = useRef(null);
   const resultsRef = useRef(null);
@@ -998,7 +1000,7 @@ export default function App() {
             <Text style={styles.footerLink}>Contact</Text>
           </TouchableOpacity>
           <Text style={styles.footerSeparator}>•</Text>
-          <TouchableOpacity onPress={() => window.open('/mission', '_blank')}>
+          <TouchableOpacity onPress={() => setShowMissionModal(true)}>
             <Text style={styles.footerLink}>Mission</Text>
           </TouchableOpacity>
         </View>
@@ -1009,6 +1011,12 @@ export default function App() {
           Flippi™ and Flippi.ai™ are trademarks of Boca Belle. All rights reserved.
         </Text>
       </View>
+      
+      {/* Mission Modal */}
+      <MissionModal 
+        visible={showMissionModal} 
+        onClose={() => setShowMissionModal(false)} 
+      />
     </ScrollView>
   );
 }
