@@ -23,8 +23,6 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
         ? '' // Same domain - nginx routes /api to backend
         : 'http://localhost:3000';
 
-      console.log('Submitting feedback to:', `${baseUrl}/api/feedback`);
-      
       const response = await fetch(`${baseUrl}/api/feedback`, {
         method: 'POST',
         headers: {
@@ -39,10 +37,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
         })
       });
 
-      console.log('Response status:', response.status);
-      
       const result = await response.json();
-      console.log('Response data:', result);
 
       if (result.success) {
         setIsSubmitted(true);

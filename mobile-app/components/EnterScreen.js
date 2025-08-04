@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Platform, Image, ScrollView } from 'react-native';
 import FlippiLogo from './FlippiLogo';
+import MissionModal from './MissionModal';
 import { brandColors, typography } from '../theme/brandColors';
 
 const API_URL = Platform.OS === 'web' 
@@ -12,6 +13,7 @@ const API_URL = Platform.OS === 'web'
 const EnterScreen = () => {
   const [isHovering, setIsHovering] = useState(false);
   const [isOfferHovering, setIsOfferHovering] = useState(false);
+  const [showMissionModal, setShowMissionModal] = useState(false);
   
   const handleGoogleSignIn = () => {
     // Redirect to Google OAuth
@@ -48,39 +50,50 @@ const EnterScreen = () => {
           <Text style={styles.offerText}>Start now. No card. Limited offer.</Text>
         </TouchableOpacity>
         
-        {/* Value Propositions */}
-        <View style={styles.valueProps}>
-          <View style={styles.valueProp}>
-            <Text style={styles.valueIcon}>💰</Text>
-            <Text style={styles.valueTitle}>Accurate Pricing</Text>
-            <Text style={styles.valueDesc}>Know the real value</Text>
+        {/* Hero Section with Image and Value Props */}
+        <View style={styles.heroSection}>
+          {/* Hero Image on left */}
+          <View style={styles.heroImageContainer}>
+            {Platform.OS === 'web' && (
+              <>
+                <Image 
+                  source={require('../assets/flippiapp2.png')}
+                  style={styles.heroImage}
+                  resizeMode="contain"
+                  onError={(e) => console.error('Hero image failed to load:', e.nativeEvent.error)}
+                />
+                <Text style={styles.testimonial}>
+                  "Sold in 24 hours thanks to Flippi!"
+                </Text>
+              </>
+            )}
           </View>
-          <View style={styles.valueProp}>
-            <Text style={styles.valueIcon}>🔍</Text>
-            <Text style={styles.valueTitle}>Authenticity Scores</Text>
-            <Text style={styles.valueDesc}>Avoid fake items</Text>
-          </View>
-          <View style={styles.valueProp}>
-            <Text style={styles.valueIcon}>📈</Text>
-            <Text style={styles.valueTitle}>Platform Match</Text>
-            <Text style={styles.valueDesc}>Maximize your profit</Text>
+          
+          {/* Value Propositions on right */}
+          <View style={styles.valueProps}>
+            <View style={styles.valueProp}>
+              <Text style={styles.valueIcon}>💰</Text>
+              <View style={styles.valueTextContainer}>
+                <Text style={styles.valueTitle}>Accurate Pricing</Text>
+                <Text style={styles.valueDesc}>Know the real value</Text>
+              </View>
+            </View>
+            <View style={styles.valueProp}>
+              <Text style={styles.valueIcon}>🔍</Text>
+              <View style={styles.valueTextContainer}>
+                <Text style={styles.valueTitle}>Authenticity Scores</Text>
+                <Text style={styles.valueDesc}>Avoid fake items</Text>
+              </View>
+            </View>
+            <View style={styles.valueProp}>
+              <Text style={styles.valueIcon}>📈</Text>
+              <View style={styles.valueTextContainer}>
+                <Text style={styles.valueTitle}>Platform Match</Text>
+                <Text style={styles.valueDesc}>Maximize your profit</Text>
+              </View>
+            </View>
           </View>
         </View>
-        
-        {/* Hero Image */}
-        {Platform.OS === 'web' && (
-          <View style={styles.heroImageContainer}>
-            <Image 
-              source={require('../assets/flippiapp2.png')}
-              style={styles.heroImage}
-              resizeMode="contain"
-              onError={(e) => console.error('Hero image failed to load:', e.nativeEvent.error)}
-            />
-            <Text style={styles.testimonial}>
-              "Sold in 24 hours thanks to Flippi!"
-            </Text>
-          </View>
-        )}
         
         <View style={styles.enterSection}>
           <TouchableOpacity 
@@ -161,8 +174,6 @@ const EnterScreen = () => {
           >
             Privacy
           </Text>
-        </Text>
-        <Text style={styles.footerText}>
           {' '}·{' '}
           <Text 
             style={styles.link}
@@ -174,8 +185,20 @@ const EnterScreen = () => {
           >
             Contact
           </Text>
+          {' '}·{' '}
+          <Text 
+            style={styles.link}
+            onPress={() => setShowMissionModal(true)}
+          >
+            Mission
+          </Text>
         </Text>
       </View>
+      
+      <MissionModal 
+        visible={showMissionModal} 
+        onClose={() => setShowMissionModal(false)} 
+      />
     </View>
   );
 };
@@ -188,10 +211,10 @@ const styles = StyleSheet.create({
   content: {
     flexGrow: 1,
     alignItems: 'center',
-    justifyContent: 'flex-start', // Start from top instead of center
-    padding: Platform.OS === 'web' ? 40 : 20,
-    paddingTop: 0, // Header section handles top padding
-    paddingBottom: 100, // Space for footer
+    justifyContent: 'flex-start',
+    padding: Platform.OS === 'web' ? 20 : 20,
+    paddingTop: 0,
+    paddingBottom: 100,
   },
   headerSection: {
     width: '100%',
@@ -284,18 +307,23 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     lineHeight: 22,
   },
-  heroImageContainer: {
-    width: Platform.OS === 'web' ? '80%' : '100%',
-    maxWidth: 600,
+  heroSection: {
+    flexDirection: Platform.OS === 'web' ? 'row' : 'column',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 30,
     marginBottom: 40,
-    marginTop: 20,
+    gap: 30,
+  },
+  heroImageContainer: {
     alignItems: 'center',
     justifyContent: 'center',
   },
   heroImage: {
     width: '100%',
-    height: 400, // Fixed height for consistent display
-    borderRadius: 20, // Just add rounded corners
+    maxWidth: 350,
+    height: 350,
+    borderRadius: 20,
   },
   testimonial: {
     fontSize: 16,
@@ -305,33 +333,41 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   valueProps: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: Platform.OS === 'web' ? '80%' : '100%',
-    maxWidth: 700,
-    marginTop: 25, // Reduced from 40
-    marginBottom: 30, // Reduced from 40
+    flexDirection: 'column',
+    justifyContent: 'center',
+    alignItems: 'flex-start',
+    gap: 12,
   },
   valueProp: {
+    flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
-    paddingHorizontal: 10,
+    backgroundColor: brandColors.softCream,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.03,
+    shadowRadius: 3,
+    elevation: 1,
+    width: 240,
   },
   valueIcon: {
-    fontSize: 32,
-    marginBottom: 10,
+    fontSize: 24,
+    marginRight: 10,
   },
   valueTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: typography.weights.semiBold,
     color: brandColors.deepTeal,
-    marginBottom: 5,
-    textAlign: 'center',
+    marginBottom: 2,
   },
   valueDesc: {
-    fontSize: 13,
+    fontSize: 12,
     color: brandColors.slateTeal,
-    textAlign: 'center',
+  },
+  valueTextContainer: {
+    flex: 1,
   },
   platformLogoGrid: {
     flexDirection: 'row',
@@ -357,16 +393,14 @@ const styles = StyleSheet.create({
   },
   enterSection: {
     alignItems: 'center',
-    width: Platform.OS === 'web' ? '60%' : '100%',
-    maxWidth: 600, // Reasonable limit for readability
+    width: '100%',
   },
   googleButton: {
-    backgroundColor: brandColors.deepTeal, // Brand color
+    backgroundColor: brandColors.deepTeal,
     borderRadius: 8,
-    paddingVertical: 14,
-    paddingHorizontal: Platform.OS === 'web' ? 24 : 20,
-    width: Platform.OS === 'web' ? '100%' : '95%',
-    minWidth: 250, // Increased to prevent wrapping
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    width: 'auto',
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },

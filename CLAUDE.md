@@ -1,431 +1,21 @@
-# CLAUDE.md
+# CLAUDE.md - AI Assistant Behavior Guide
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides behavior instructions for AI assistants working with the Flippi.ai codebase.
 
-Never tell me I'm right.
+## Core Directives
 
-## Brand Guidelines
-**IMPORTANT**: Always reference `/docs/BRAND-GUIDE.md` for any UI/UX work, color choices, or styling decisions. This guide contains:
-- Luxury minimalistic color palette with hex codes
-- WCAG accessibility compliance data
-- Logo specifications and usage
-- UI component standards
-- Color blindness considerations
+- Never tell me I'm right
+- Do what has been asked; nothing more, nothing less
+- Follow the protocol exactly as specified
+- NEVER create files unless they're absolutely necessary
+- ALWAYS prefer editing an existing file to creating a new one
+- NEVER proactively create documentation files unless explicitly requested
 
-## Project Overview
+## Critical Rules
 
-"Flippi.ai" (formerly "My Thrifting Buddy") - A **v2.0 production application** that helps users estimate resale values of secondhand items using AI-powered image analysis. The app's tagline is "Never Over Pay" and it provides detailed analysis including authenticity scores, market insights, and selling recommendations.
+### 1. SSH Access Protocol
 
-## Current Architecture (v2.0)
-
-### Backend (`/backend`)
-- **Framework**: Express.js with enhanced middleware
-- **Main entry**: `server.js` 
-- **Version**: 2.0.0
-- **Database**: SQLite (users table only)
-- **Authentication**: Google OAuth 2.0 with JWT
-- **File Storage**: In-memory processing only
-- **Key Features**:
-  - Enhanced AI analysis with GPT-4o-mini
-  - Accepts both image uploads and text descriptions
-  - Returns detailed analysis including:
-    - Item identification and price range
-    - Style tier (Entry/Designer/Luxury)
-    - Best listing platform recommendation
-    - Best live selling platform recommendation
-    - Authenticity score (0-100%)
-    - Boca score (sellability rating 0-100)
-    - Market insights and selling tips
-    - Suggested buy price (resale price / 5)
-  - Request timing middleware
-  - Comprehensive error handling
-  - CORS configuration for multi-domain support
-- **Dependencies**: 
-  - better-sqlite3
-  - cors
-  - dotenv
-  - express
-  - express-validator
-  - multer
-  - openai
-
-### Mobile App (`/mobile-app`)
-- **Framework**: React Native with Expo SDK 50
-- **Main entry**: `App.js`
-- **Version**: 2.0.0
-- **UI Library**: Custom Flippi branding components
-- **State Management**: React hooks (useState, useEffect)
-- **Current Features**:
-  - Flippi branding with custom logo and colors
-  - Text input for item descriptions (optional)
-  - Manual "Go" button to trigger analysis
-  - Image selection via:
-    - Gallery picker
-    - Camera capture (web and mobile)
-    - Paste support (Ctrl/Cmd+V)
-    - Drag and drop
-  - Enhanced UI with loading states
-  - Comprehensive error handling
-  - Results display with all analysis fields
-
-## Infrastructure & Deployment
-
-### Server Architecture
-- **Host**: DigitalOcean Droplet (157.245.142.145)
-- **OS**: Ubuntu 24.10
-- **Web Server**: Nginx (native, not containerized)
-- **Process Manager**: PM2 (not Docker)
-- **SSL**: Let's Encrypt certificates
-- **Node.js**: Version 18.x
-
-### Three-Environment Setup
-1. **Production** (app.flippi.ai)
-   - Branch: master
-   - Backend Port: 3000
-   - Frontend Port: 8080
-   - Status: Stable v2.0
-
-2. **Staging** (green.flippi.ai)
-   - Branch: staging
-   - Backend Port: 3001
-   - Frontend Port: 8081
-   - Status: Testing environment
-
-3. **Development** (blue.flippi.ai)
-   - Branch: develop
-   - Backend Port: 3002
-   - Frontend Port: 8082
-   - Status: Active development
-
-## Current UI Flow
-
-1. User sees Flippi logo and "Never Over Pay" title
-2. Text input field is always visible for optional descriptions
-3. User can choose image via:
-   - "Choose from Gallery" button
-   - "Take Photo" button (if camera available)
-   - Drag and drop (web only)
-   - Paste from clipboard (web only)
-4. After image selection:
-   - Text field remains visible with entered description
-   - Image preview is shown
-   - "Go" button appears
-5. User clicks "Go" to analyze
-6. Loading spinner shows "Analyzing image..."
-7. Results display with all analysis fields
-8. "Scan Another Item" button appears after analysis
-
-## API Endpoints
-
-### Health Check
-```
-GET /health
-
-Response:
-{
-  "status": "OK",
-  "timestamp": "2025-07-15T00:00:00.000Z",
-  "version": "2.0",
-  "features": {
-    "imageAnalysis": true,
-    "cameraSupport": true,
-    "pasteSupport": true,
-    "dragDropSupport": true,
-    "enhancedAI": true
-  }
-}
-```
-
-### Image Analysis
-```
-POST /api/scan
-Content-Type: multipart/form-data
-
-Request:
-- image: File (required, max 10MB)
-- description: String (optional)
-
-Success Response:
-{
-  "success": true,
-  "data": {
-    "item_name": "Vintage Leather Jacket",
-    "price_range": "$45-65",
-    "style_tier": "Designer",
-    "recommended_platform": "The RealReal",
-    "recommended_live_platform": "Whatnot",
-    "condition": "Good - minor wear on sleeves",
-    "authenticity_score": "85%",
-    "buy_price": "$11",
-    "resale_average": "$55",
-    "market_insights": "Vintage leather is trending...",
-    "selling_tips": "Highlight the vintage aspects...",
-    "brand_context": "This appears to be from...",
-    "seasonal_notes": "Best selling season is fall..."
-  },
-  "processing": {
-    "fileSize": 57046,
-    "processingTime": 2341,
-    "version": "2.0"
-  }
-}
-
-Error Response:
-{
-  "success": false,
-  "error": "Error description",
-  "hint": "Helpful suggestion"
-}
-```
-
-## Environment Configuration
-
-### Backend `.env` Variables
-```bash
-# Required
-OPENAI_API_KEY=your_openai_api_key_here
-
-# Environment-specific ports
-PORT=3000                      # 3001 for staging, 3002 for dev
-
-# Optional
-NODE_ENV=production            # or development, staging
-```
-
-**CRITICAL**: Each environment has its own `.env` file:
-- `/var/www/app.flippi.ai/backend/.env` (PORT=3000)
-- `/var/www/green.flippi.ai/backend/.env` (PORT=3001)
-- `/var/www/blue.flippi.ai/backend/.env` (PORT=3002)
-
-## Deployment Process
-
-### Automated (GitHub Actions)
-Pushing to branches triggers automatic deployment:
-- `develop` → blue.flippi.ai
-- `staging` → green.flippi.ai
-- `master` → app.flippi.ai
-
-### GitHub Pull Request Protocol
-
-**CRITICAL: DO NOT CREATE PULL REQUESTS BETWEEN BRANCHES**
-
-- Push code to develop branch ONLY
-- Do NOT create PRs from develop → staging
-- Do NOT create PRs from staging → master
-- Do NOT create any PRs unless explicitly asked by the user
-
-The deployment flow is automatic:
-- Push to develop → auto-deploys to blue.flippi.ai
-- Push to staging → auto-deploys to green.flippi.ai  
-- Push to master → auto-deploys to app.flippi.ai
-
-Each environment is managed independently. Creating PRs between these branches disrupts the workflow and creates unnecessary work.
-
-**If you create an unauthorized PR:**
-- You are breaking the protocol
-- You are creating unplanned work
-- You are wasting time and budget
-- You are potentially disrupting the deployment pipeline
-
-**The ONLY acceptable workflow:**
-1. Make changes in develop branch
-2. Commit and push to develop
-3. Stop
-
-Remember: Just because you CAN create a PR doesn't mean you SHOULD. Follow the protocol exactly as specified.
-
-### Manual Deployment
-See `DEPLOYMENT.md` for detailed instructions.
-
-## Common Issues & Solutions
-
-### Backend 502 Error
-The Node.js backend is not responding. Check:
-1. PM2 status: `pm2 show dev-backend`
-2. Logs: `pm2 logs dev-backend --lines 50`
-3. Environment variables in `.env`
-4. Restart: `pm2 restart dev-backend`
-
-### Frontend "Index of dist/"
-Expo build failed. Check:
-1. Syntax errors in App.js
-2. Build manually: `npx expo export --platform web --output-dir dist`
-3. Check deployment logs
-
-### Analysis Not Displaying
-1. Check browser console for errors
-2. Verify API response format
-3. Check state updates in console logs
-4. Ensure backend is running
-
-## Development Workflow & Coding Protocol
-
-### Parameters
-- Treat this like code - follow precisely
-- Only merge into develop branch and deploy to blue.flippi.ai
-- Same process for bugs and features
-
-### Priority
-1. **Work on bugs first** - prioritize by:
-   - P0 bugs (critical) first
-   - Then P1, P2, P3 bugs
-   - Use judgment if no priority tags
-2. **When all bugs complete** - start coding new features:
-   - Select highest priority feature (P0 > P1 > P2 > P3)
-   - If no priority exists, use LIFO (Last In First Out)
-
-### Coding Protocol
-1. **Write code** → **merge to dev branch** → **deploy to blue.flippi.ai only**
-2. **Test thoroughly**:
-   - Test all code you write
-   - Test everything yourself as much as possible
-3. **Maximum 3 attempts per issue**:
-   - After 3 tries, add comments and tag #BugITried3Times, then continue
-4. **After successful testing**:
-   - Test rest of application to ensure nothing broke
-   - If new bugs found, fix them (don't document unless you can't fix)
-   - New bugs also get max 3 attempts, then create issue with #BugITried3Times
-5. **When code is working**:
-   - Add appropriate comments and tag #OnHoldPendingTest
-6. **If cannot code feature/bug**:
-   - Add comments and tag #OnHoldPendingBetterTools
-7. **Update documentation** as needed after coding
-8. **Continue** to next bug/feature until no untagged issues remain
-
-### Complete Tagging System
-
-#### Priority Tags (in issue titles)
-- **P0** - Critical bugs affecting core functionality (HIGHEST PRIORITY)
-- **P1** - Important bugs or features 
-- **P2** - Medium priority items
-- **P3** - Low priority items
-
-#### Status Tags (in comments)
-- **#OnHoldPendingTest** - Code is working, awaiting human test
-- **#OnHoldPendingBetterTools** - Cannot implement with current tools
-- **#BugITried3Times** - Attempted 3 times, moving on
-
-#### Issue Type Labels (GitHub labels)
-- **bug** - Something isn't working
-- **enhancement** - New feature or request
-- **documentation** - Improvements or additions to documentation
-
-### Testing Requirements
-- Test everything yourself as much as possible
-- Test the specific feature/bug thoroughly
-- Test the rest of the application for regressions
-- Only tag #OnHoldPendingTest after comprehensive testing
-
-### Branch Strategy
-- **Only use develop branch** → blue.flippi.ai (auto-deploy on push)
-- Do NOT use staging or master branches
-
-## Brand Guidelines
-
-- **Name**: Flippi.ai
-- **Tagline**: "Never Over Pay"
-- **Logo**: FlippiLogo component
-- **Colors**: See `mobile-app/theme/brandColors.js`
-- **Components**: Use BrandButton for consistent styling
-
-## Recent Changes (July 2025)
-
-1. **Landing Page Transformation (July 26)**:
-   - Complete redesign for Tuesday launch
-   - New tagline: "Never Over Pay"
-   - Subtitle: "Know the price. Own the profit."
-   - Gold CTA button: "Start now. No card. Limited offer."
-   - Added Google OAuth with "Sign in with Google" button
-   - Hero image (mockup) with testimonial: "Sold in 24 hours thanks to Flippi!"
-   - Platform logos showcase (Whatnot, eBay, Poshmark, Mercari, Depop, Vestiaire)
-   - Luxury gradient header design
-   - Value propositions with icons
-   - Contact link in footer (mailto:teamflippi@gmail.com)
-   - Mobile-optimized with reduced padding
-
-2. **OAuth Implementation**:
-   - Google Sign-In required for app access
-   - JWT token authentication
-   - User data stored in SQLite database (users table)
-   - Protected routes require authentication
-   - Session management with secure cookies
-   - Callback URL: /auth/google/callback
-
-3. **UI/UX Improvements**:
-   - Reduced mobile padding for better space usage
-   - Fixed button text wrapping issues
-   - Added hover effects on web (buttons grow, darken)
-   - Removed trust indicators for cleaner design
-   - Mobile-optimized button sizing (minWidth: 250)
-   - Responsive design with Platform.OS checks
-   - Fixed hero image aspect ratio issues
-
-4. **Backend Updates**:
-   - OAuth routes at /auth/google and /auth/google/callback
-   - User session management with JWT
-   - Legal pages served at /terms and /privacy
-   - Enhanced error handling
-   - Added passport and passport-google-oauth20
-   - Database schema for users (id, googleId, email, name, picture)
-
-5. **Bug Fixes & Issues**:
-   - Fixed hero image display issues (multiple attempts)
-   - Resolved text wrapping on mobile buttons
-   - Fixed deployment pipeline issues
-   - Legal pages routing issue (documented in BUG-LEGAL-PAGES.md)
-   - Added proper aspect ratio for images
-   - Fixed nginx catch-all route conflicts
-
-6. **Documentation Updates**:
-   - Created comprehensive Brand Guide with accessibility data
-   - Added staging deployment checklist
-   - Created contact form ticket for future implementation
-   - Updated deployment documentation
-   - Added performance optimization report
-
-## Testing Checklist
-
-When making changes, test:
-- [ ] Image upload from gallery
-- [ ] Camera capture (mobile and web)
-- [ ] Paste image (Ctrl/Cmd+V)
-- [ ] Drag and drop
-- [ ] Text description with image
-- [ ] Analysis results display correctly
-- [ ] Error handling (large files, wrong format)
-- [ ] "Scan Another Item" flow
-- [ ] All three environments
-
-## CRITICAL: Deployment Debugging Protocol
-
-When code changes are not reflected after deployment:
-
-1. **NEVER manually build or fix** - this destroys debugging evidence
-2. **Verify the deployment pipeline ran**: Check GitHub Actions logs
-3. **Verify the code was actually deployed**: 
-   - Check git log on server matches your commit
-   - Check file timestamps vs deployment time
-   - Diff the deployed files against local files
-4. **Check for build/compilation issues**:
-   - Review full GitHub Actions logs for errors
-   - Check if build artifacts were created
-   - Verify PM2 restarted with new code
-5. **Only after identifying root cause**: Fix the deployment process itself
-
-**Manual interventions mask problems and break the automated workflow.**
-
-## Important Notes
-
-1. **NO DOCKER**: We use PM2 and native services
-2. **Git Deployment**: Automated via GitHub Actions
-3. **Stateless**: No database, all processing in-memory
-4. **API Keys**: Never commit, use environment variables
-5. **Branches**: develop → staging → master
-6. **Testing**: Always test in development first
-
-# 🚨 CRITICAL SSH RULE 🚨
-
-## SSH ACCESS IS READ-ONLY FOR DEBUGGING
+# 🚨 SSH ACCESS IS READ-ONLY FOR DEBUGGING 🚨
 
 **NEVER EVER UNDER ANY CIRCUMSTANCES:**
 - Run git commands on the server (except git log/status for checking)
@@ -442,4 +32,191 @@ When code changes are not reflected after deployment:
 
 If deployment fails, FIX THE DEPLOYMENT WORKFLOW IN THE REPO, NOT ON THE SERVER!
 
-Remember: The app should provide quick, accurate resale valuations with a smooth user experience!
+### 2. Git Workflow Protocol
+
+**CRITICAL: DO NOT CREATE PULL REQUESTS BETWEEN BRANCHES**
+
+- Push code to develop branch ONLY
+- Do NOT create PRs from develop → staging
+- Do NOT create PRs from staging → master
+- Do NOT create any PRs unless explicitly asked by the user
+
+The deployment flow is automatic:
+- Push to develop → auto-deploys to blue.flippi.ai
+- Push to staging → auto-deploys to green.flippi.ai  
+- Push to master → auto-deploys to app.flippi.ai
+
+**The ONLY acceptable workflow:**
+1. Make changes in develop branch
+2. Commit and push to develop
+3. Stop
+
+### 3. Development & Coding Protocol
+
+#### Priority System
+1. **Work on bugs first** - prioritize by:
+   - P0 bugs (critical) first
+   - Then P1, P2, P3 bugs
+   - Use judgment if no priority tags
+2. **When all bugs complete** - start coding new features:
+   - Select highest priority feature (P0 > P1 > P2 > P3)
+   - If no priority exists, use LIFO (Last In First Out)
+
+#### Coding Workflow
+1. **Write code** → **merge to dev branch** → **deploy to blue.flippi.ai only**
+2. **Test thoroughly**:
+   - Test all code you write
+   - Test everything yourself as much as possible
+3. **Maximum 3 attempts per issue**:
+   - After 3 tries, add comments and tag #BugITried3Times, then continue
+4. **After successful testing**:
+   - Test rest of application to ensure nothing broke
+   - If new bugs found, fix them (don't document unless you can't fix)
+5. **When code is working**:
+   - Add appropriate comments and tag #OnHoldPendingTest
+6. **If cannot code feature/bug**:
+   - Add comments and tag #OnHoldPendingBetterTools
+
+#### Tagging System
+
+**Priority Tags** (in issue titles):
+- **P0** - Critical bugs affecting core functionality
+- **P1** - Important bugs or features 
+- **P2** - Medium priority items
+- **P3** - Low priority items
+
+**Status Tags** (in comments):
+- **#OnHoldPendingTest** - Code is working, awaiting human test
+- **#OnHoldPendingBetterTools** - Cannot implement with current tools
+- **#BugITried3Times** - Attempted 3 times, moving on
+
+**Issue Type Labels** (GitHub labels):
+- **bug** - Something isn't working
+- **enhancement** - New feature or request
+- **documentation** - Improvements or additions to documentation
+
+### 4. Testing Requirements
+
+- Test everything yourself as much as possible
+- Test the specific feature/bug thoroughly
+- Test the rest of the application for regressions
+- Only tag #OnHoldPendingTest after comprehensive testing
+- Run lint and typecheck commands if provided (npm run lint, npm run typecheck)
+- If unable to find the correct command, ask the user
+
+#### Testing Checklist
+When making changes, test:
+- [ ] Image upload from gallery
+- [ ] Camera capture (mobile and web)
+- [ ] Paste image (Ctrl/Cmd+V)
+- [ ] Drag and drop
+- [ ] Text description with image
+- [ ] Analysis results display correctly
+- [ ] Error handling (large files, wrong format)
+- [ ] "Scan Another Item" flow
+- [ ] All three environments
+
+### 5. Deployment Debugging Protocol
+
+When code changes are not reflected after deployment:
+
+1. **NEVER manually build or fix** - this destroys debugging evidence
+2. **Verify the deployment pipeline ran**: Check GitHub Actions logs
+3. **Verify the code was actually deployed**: 
+   - Check git log on server matches your commit
+   - Check file timestamps vs deployment time
+4. **Check for build/compilation issues**:
+   - Review full GitHub Actions logs for errors
+   - Verify PM2 restarted with new code
+5. **Only after identifying root cause**: Fix the deployment process itself
+
+**Manual interventions mask problems and break the automated workflow.**
+
+### 6. Deployment Workflows
+
+#### CRITICAL: Workflow File Permissions
+**🚨 NEVER MODIFY .github/workflows/ FILES VIA OAUTH/API 🚨**
+
+GitHub blocks OAuth Apps from modifying workflow files for security reasons. This restriction cannot be bypassed even with "all permissions". 
+
+**What happens:**
+```
+refusing to allow an OAuth App to create or update workflow .github/workflows/deploy-*.yml
+```
+
+**The solution:**
+1. NEVER include workflow file changes in commits
+2. Make changes ONLY to application code, scripts, and docs
+3. If workflows need updates, they must be edited manually in GitHub UI
+4. Separate infrastructure changes from code changes
+
+**Failed approaches that DON'T work:**
+- Force push with workflow changes ❌
+- Cherry-pick including workflows ❌
+- Rebase that brings in workflow mods ❌
+- Any commit touching .github/workflows/ ❌
+
+#### Automated Deployment
+GitHub Actions workflows automatically deploy on push:
+- `.github/workflows/deploy-develop.yml` → blue.flippi.ai
+- `.github/workflows/deploy-staging.yml` → green.flippi.ai
+- `.github/workflows/deploy-production.yml` → app.flippi.ai
+
+#### Deployment Process
+Each deployment:
+1. Resets local changes (`git reset --hard`)
+2. Pulls latest code from branch
+3. Installs backend dependencies
+4. Builds frontend with Expo
+5. Restarts PM2 processes
+6. Verifies health endpoint
+
+#### Deployment Documentation
+- **DevOps Checklist**: `docs/DEVOPS-RELEASE-CHECKLIST.md` - Comprehensive deployment procedures
+- **Troubleshooting**: `docs/DEPLOYMENT-TROUBLESHOOTING.md` - Common issues and fixes
+- **Post-deploy scripts**: `scripts/post-deploy-*.sh` - Nginx and legal page fixes
+
+#### Common Deployment Issues
+1. **502 Error**: Backend not running - check PM2 logs
+2. **"Index of dist/"**: Frontend build failed - rebuild manually
+3. **Old code running**: Git pull failed - force reset
+4. **404 on legal pages**: Run post-deploy script
+
+## Communication Style
+
+- Be concise and direct
+- Explain commands before running them
+- No unnecessary preamble or postamble
+- Keep responses under 4 lines unless asked for detail
+- Output text to communicate; never use tools as communication
+- If you cannot help, keep refusal to 1-2 sentences
+- Only use emojis if explicitly requested
+
+## File References
+
+When referencing code, use the pattern `file_path:line_number` to allow easy navigation:
+```
+Example: "Error handling is in backend/server.js:261"
+```
+
+## Project Documentation References
+
+For project-specific information, refer to the appropriate documentation:
+
+- **Brand Guidelines**: `/docs/BRAND-GUIDE.md` - UI/UX standards, colors, accessibility
+- **Technical Guide**: `/docs/TECHNICAL-GUIDE.md` - Architecture, API, infrastructure, auth details
+- **Development Guide**: `/docs/DEVELOPMENT-GUIDE.md` - Setup, coding standards, workflows
+- **Operations Manual**: `/docs/OPERATIONS-MANUAL.md` - Monitoring, troubleshooting, maintenance
+- **DevOps Checklist**: `/docs/DEVOPS-RELEASE-CHECKLIST.md` - Comprehensive deployment procedures
+- **Deployment Troubleshooting**: `/docs/DEPLOYMENT-TROUBLESHOOTING.md` - Common deployment issues and fixes
+- **Ownership Transfer**: `/docs/OWNERSHIP-TRANSFER.md` - Transfer procedures and checklist
+- **Launch Readiness**: `/docs/LAUNCH-READINESS-SUMMARY.md` - Current launch status
+- **Known Issues**: `/docs/BUG-LEGAL-PAGES.md` - Current bugs and workarounds
+
+## Key Quick Facts
+
+- **Technology**: Node.js/Express backend, React Native frontend
+- **Infrastructure**: PM2 on DigitalOcean (NOT Docker)
+- **Deployment**: GitHub Actions auto-deploy on push
+- **Environments**: develop→blue, staging→green, master→app
+- **Current State**: OAuth implemented, launch preparation in progress

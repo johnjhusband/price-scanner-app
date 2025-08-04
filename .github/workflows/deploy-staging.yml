@@ -20,7 +20,11 @@ jobs:
             git clean -fd
             git pull origin staging
             
-            # Apply OAuth nginx fix IMMEDIATELY after pull
+            # Install dependencies and build
+            cd backend && npm install --production
+            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
+            
+            # Apply OAuth nginx fix IMMEDIATELY after build
             echo "=== Applying OAuth fix ==="
             if [ -f scripts/fix-staging-oauth-verbose.sh ]; then
               echo "Running VERBOSE nginx OAuth fix..."
@@ -33,6 +37,30 @@ jobs:
               ls -la scripts/
             fi
             
+            # Apply post-deployment nginx configuration for legal pages
+            if [ -f scripts/post-deploy-nginx.sh ]; then
+              echo "=== Applying nginx configuration for legal pages ==="
+              bash scripts/post-deploy-nginx.sh
+            fi
+            
+            # Debug: Check what directory PM2 is serving from
+            echo "=== PM2 staging-frontend config ==="
+            pm2 describe staging-frontend | grep -E "exec cwd|script|args" || true
+            echo "=== Checking directories ==="
+            ls -la /var/www/green.flippi.ai/mobile-app/ | grep -E "dist|web-build" || true
+            echo "=== Files in dist ==="
+            ls -la /var/www/green.flippi.ai/mobile-app/dist/ | head -5 || true
+            
+            # Just restart, don't delete
+            pm2 restart staging-backend staging-frontend
+            
+            # Wait for services to start
+            sleep 3
+            
+            # Check if backend is running
+            pm2 show staging-backend || true
+            curl -s http://localhost:3001/health || echo "Backend not responding"
+            
             # Check OAuth status (but don't fail deployment)
             echo "=== Checking OAuth Status ==="
             OAUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -I https://green.flippi.ai/auth/google)
@@ -43,23 +71,6 @@ jobs:
               echo "⚠️ OAuth still returns $OAUTH_STATUS - may need time to propagate"
             fi
             
-            cd backend && npm install --production
-            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
-            # Debug: Check what directory PM2 is serving from
-            echo "=== PM2 staging-frontend config ==="
-            pm2 describe staging-frontend | grep -E "exec cwd|script|args" || true
-            echo "=== Checking directories ==="
-            ls -la /var/www/green.flippi.ai/mobile-app/ | grep -E "dist|web-build" || true
-            echo "=== Files in dist ==="
-            ls -la /var/www/green.flippi.ai/mobile-app/dist/ | head -5 || true
-            # Just restart, don't delete
-            pm2 restart staging-backend staging-frontend
-            # Wait for services to start
-            sleep 3
-            # Check if backend is running
-            pm2 show staging-backend || true
-            curl -s http://localhost:3001/health || echo "Backend not responding"
-            
             # Output OAuth fix log
             echo "=== OAuth Fix Log Contents ==="
             cat /tmp/oauth-fix-* 2>/dev/null || echo "⚠️ No OAuth fix log found"
@@ -68,3 +79,6 @@ jobs:
             # Final OAuth test
             echo "=== Final OAuth Status Check ==="
             curl -I https://green.flippi.ai/auth/google
+            
+            # Clear nginx cache
+            nginx -s reload

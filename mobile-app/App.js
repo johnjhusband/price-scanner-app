@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
+import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Linking } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
@@ -51,8 +51,6 @@ const WebCameraView = ({ onCapture, onCancel }) => {
 
   const requestCameraPermission = async () => {
     try {
-      console.log('Requesting camera permission...');
-      
       // Check if getUserMedia is supported
       if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         setHasPermission(false);
@@ -75,10 +73,6 @@ const WebCameraView = ({ onCapture, onCancel }) => {
           height: { ideal: 720 }
         }
       });
-      
-      console.log('Got media stream:', mediaStream);
-      console.log('Stream tracks:', mediaStream.getTracks());
-      
       streamRef.current = mediaStream;
       setStream(mediaStream);
       setHasPermission(true);
@@ -105,28 +99,16 @@ const WebCameraView = ({ onCapture, onCancel }) => {
   };
 
   const attachStreamToVideo = () => {
-    console.log('Attaching stream to video element...');
-    console.log('Video ref status:', videoRef.current ? 'available' : 'not available');
-    console.log('Stream status:', stream ? 'available' : 'not available');
-    
     if (!videoRef.current || !stream) {
       console.error('Missing video ref or stream');
       return;
     }
-    
-    console.log('Setting video stream...');
-    console.log('Video element:', videoRef.current);
-    console.log('Video dimensions:', videoRef.current.offsetWidth, 'x', videoRef.current.offsetHeight);
-    
     videoRef.current.srcObject = stream;
     
     // Add multiple event listeners for better compatibility
     videoRef.current.onloadedmetadata = () => {
-      console.log('Video metadata loaded');
-      console.log('Video ready state:', videoRef.current.readyState);
       videoRef.current.play().then(() => {
         setIsReady(true);
-        console.log('Camera ready and playing');
       }).catch(err => {
         console.error('Error playing video:', err);
         // Try to set ready anyway
@@ -136,7 +118,6 @@ const WebCameraView = ({ onCapture, onCancel }) => {
     
     // Fallback for some browsers
     videoRef.current.oncanplay = () => {
-      console.log('Video can play');
       if (!isReady) {
         setIsReady(true);
       }
@@ -145,7 +126,6 @@ const WebCameraView = ({ onCapture, onCancel }) => {
     // Force a play attempt after a short delay
     setTimeout(() => {
       if (videoRef.current && !isReady) {
-        console.log('Forcing video play after timeout');
         videoRef.current.play().catch(() => {});
         setIsReady(true);
       }
@@ -233,8 +213,6 @@ const WebCameraView = ({ onCapture, onCancel }) => {
 
 export default function App() {
   // Build version for cache busting
-  console.log('App version: 2025-07-26-v3 - Rotating greetings FIXED');
-  
   const [image, setImage] = useState(null);
   const [analysisResult, setAnalysisResult] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -257,8 +235,6 @@ export default function App() {
       // Check if browser supports camera and we're on HTTPS
       const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
       const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-      
-      console.log('Camera availability check:', { isSecure, hasMediaDevices });
       setHasCamera(isSecure && hasMediaDevices);
     } else {
       // Mobile platforms - check camera permissions
@@ -322,26 +298,21 @@ export default function App() {
 
   // Enhanced paste handler for Mac compatibility
   const handlePaste = (event) => {
-    console.log('Paste event triggered');
     event.preventDefault(); // Important for Mac
     
     // Try multiple ways to access clipboard data for better compatibility
     const clipboardData = event.clipboardData || window.clipboardData;
     if (!clipboardData) {
-      console.log('No clipboard data available');
       return;
     }
 
     // Check items first (modern browsers)
     if (clipboardData.items) {
       const items = Array.from(clipboardData.items);
-      console.log('Clipboard items:', items.map(item => item.type));
-      
       for (let item of items) {
         if (item.type.indexOf('image') !== -1 || item.kind === 'file') {
           const file = item.getAsFile();
           if (file) {
-            console.log('Processing pasted file:', file.name, file.type, file.size);
             processImageFile(file);
             return;
           }
@@ -353,7 +324,6 @@ export default function App() {
     if (clipboardData.files && clipboardData.files.length > 0) {
       const file = clipboardData.files[0];
       if (isImageFile(file)) {
-        console.log('Processing pasted file (fallback):', file.name, file.type);
         processImageFile(file);
       }
     }
@@ -364,21 +334,17 @@ export default function App() {
     if (Platform.OS === 'web') {
       // Use capture phase and non-passive for better Mac compatibility
       document.addEventListener('paste', handlePaste, { capture: true, passive: false });
-      console.log('Paste listener added');
     }
   };
 
   const removePasteListener = () => {
     if (Platform.OS === 'web') {
       document.removeEventListener('paste', handlePaste, { capture: true });
-      console.log('Paste listener removed');
     }
   };
 
   // Process image file from drag/drop or paste (v2.0 feature)
   const processImageFile = (file) => {
-    console.log('Processing file:', file.name, file.type, file.size);
-    
     if (!isImageFile(file)) {
       Alert.alert('Error', 'Please select an image file (JPEG, PNG, GIF, WEBP, HEIC, or HEIF)');
       return;
@@ -438,17 +404,12 @@ export default function App() {
       e.preventDefault();
       e.stopPropagation();
       setIsDragOver(false);
-      
-      console.log('Drop event triggered');
-      
       const dataTransfer = e.dataTransfer;
       if (!dataTransfer) return;
 
       // Try items first (modern approach, better for Mac)
       if (dataTransfer.items && dataTransfer.items.length > 0) {
         const items = Array.from(dataTransfer.items);
-        console.log('Dropped items:', items.map(item => `${item.kind}: ${item.type}`));
-        
         for (let item of items) {
           if (item.kind === 'file') {
             const file = item.getAsFile();
@@ -463,7 +424,6 @@ export default function App() {
       // Fallback to files
       if (dataTransfer.files && dataTransfer.files.length > 0) {
         const file = dataTransfer.files[0];
-        console.log('Dropped file:', file.name, file.type);
         if (isImageFile(file)) {
           processImageFile(file);
         }
@@ -495,6 +455,11 @@ export default function App() {
     checkCameraAvailability();
     setupPasteListener();
     
+    // Set document title on web
+    if (Platform.OS === 'web') {
+      document.title = 'Flippi.ai™ - Never Over Pay';
+    }
+    
     // Check authentication on web
     if (Platform.OS === 'web') {
       // Check if token in URL (OAuth callback)
@@ -520,10 +485,6 @@ export default function App() {
   
   // Debug analysisResult changes
   useEffect(() => {
-    console.log('analysisResult changed:', analysisResult);
-    console.log('analysisResult is null?', analysisResult === null);
-    console.log('analysisResult is undefined?', analysisResult === undefined);
-    console.log('analysisResult keys:', analysisResult ? Object.keys(analysisResult) : 'no keys');
   }, [analysisResult]);
 
   const pickImage = async () => {
@@ -537,7 +498,6 @@ export default function App() {
       input.onchange = (e) => {
         const file = e.target.files[0];
         if (file) {
-          console.log('File selected:', file.name, file.type, file.size);
           processImageFile(file);
         }
       };
@@ -600,10 +560,6 @@ export default function App() {
   };
 
   const analyzeImage = async () => {
-    console.log('analyzeImage called');
-    console.log('Current image:', image ? 'exists' : 'null');
-    console.log('Current description:', productDescription);
-    
     if (!image) {
       Alert.alert('Error', 'Please select an image first');
       return;
@@ -611,8 +567,6 @@ export default function App() {
     
     setIsLoading(true);
     setAnalysisResult(null);
-    console.log('Loading state set to true');
-
     try {
       const formData = new FormData();
       
@@ -669,23 +623,14 @@ export default function App() {
       });
 
       const responseText = await apiResponse.text();
-      console.log('API Response:', apiResponse.status, responseText);
-
       if (apiResponse.ok) {
         try {
           const data = JSON.parse(responseText);
-          console.log('Parsed data:', data);
           if (data.success && data.data) {
-            console.log('Setting analysis result:', data.data);
-            console.log('Type of data.data:', typeof data.data);
-            console.log('data.data keys:', Object.keys(data.data));
-            
             // Create a new object to ensure React detects the change
             const newResult = { ...data.data };
             setAnalysisResult(newResult);
             setShowFeedback(true);
-            console.log('Analysis result state should be set now');
-            
             // Scroll to results after a brief delay
             setTimeout(() => {
               if (resultsRef.current && scrollViewRef.current) {
@@ -720,7 +665,6 @@ export default function App() {
         error.message || 'Unable to analyze image. Please try again.'
       );
     } finally {
-      console.log('Setting loading to false in finally block');
       setIsLoading(false);
     }
   };
@@ -1012,24 +956,19 @@ export default function App() {
                     </Text>
                   </View>
                 )}
+                
+                {analysisResult.environmental_tag && (
+                  <View style={[styles.environmentalContainer, { backgroundColor: '#E8F5E9' }]}>
+                    <Text style={[styles.environmentalTag, { color: '#2E7D32' }]}>
+                      {analysisResult.environmental_tag}
+                    </Text>
+                  </View>
+                )}
               </View>
             ) : (!isLoading && !analysisResult && image) ? (
               <Text style={{ color: brandColors.text, marginTop: 20 }}>No results yet. Press Go to analyze.</Text>
             ) : null}
             
-            {analysisResult && (
-              <Text style={{ 
-                color: brandColors.placeholder, 
-                fontSize: 12, 
-                fontStyle: 'italic',
-                textAlign: 'center',
-                marginTop: 16,
-                marginBottom: 8,
-                paddingHorizontal: 20
-              }}>
-                *Flippi can make mistakes. Check important info.
-              </Text>
-            )}
             
             {analysisResult && showFeedback && (
               <FeedbackPrompt
@@ -1050,6 +989,16 @@ export default function App() {
             </View>
           )}
         </View>
+      </View>
+      
+      {/* Legal Footer */}
+      <View style={styles.legalFooter}>
+        <Text style={[styles.legalText, { marginBottom: 4 }]}>
+          ai makes mistakes. check important info
+        </Text>
+        <Text style={styles.legalText}>
+          Flippi™ and Flippi.ai™ are trademarks of Boca Belle. All rights reserved.
+        </Text>
       </View>
     </ScrollView>
   );
@@ -1321,5 +1270,50 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#FFFFFF',
     fontWeight: typography.weights.medium,
+  },
+  legalFooter: {
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    borderTopWidth: 1,
+    borderTopColor: brandColors.border,
+    alignItems: 'center',
+  },
+  legalText: {
+    fontSize: 12,
+    color: brandColors.textSecondary,
+    fontFamily: typography.fontFamily,
+    textAlign: 'center',
+  },
+  footerLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 8,
+  },
+  footerLink: {
+    fontSize: 14,
+    color: brandColors.deepTeal,
+    fontFamily: typography.fontFamily,
+    fontWeight: '500',
+    textDecorationLine: 'underline',
+  },
+  footerSeparator: {
+    fontSize: 14,
+    color: brandColors.textSecondary,
+    marginHorizontal: 12,
+  },
+  environmentalContainer: {
+    marginTop: 12,
+    marginHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  environmentalTag: {
+    fontSize: 14,
+    fontFamily: typography.fontFamily,
+    fontWeight: typography.weights.medium,
+    textAlign: 'center',
   },
 });

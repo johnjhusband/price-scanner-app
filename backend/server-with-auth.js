@@ -6,14 +6,11 @@ const path = require('path');
 const session = require('express-session');
 const passport = require('passport');
 const { initializeDatabase } = require('./database');
-const { getEnvironmentalTagByItemName } = require('./utils/environmentalImpact');
 
-// Load .env from shared location outside git directories
-const envPath = path.join(__dirname, '../../shared/.env');
-require('dotenv').config({ path: envPath });
+// Load environment variables
+require('dotenv').config();
 
-// Environment variables are loaded from .env file
-
+// Log important environment variables (without exposing secrets)
 // Initialize database
 try {
   initializeDatabase();
@@ -26,10 +23,6 @@ try {
 }
 
 const app = express();
-
-// Setup legal pages BEFORE other middleware to ensure they're served correctly
-const setupLegalPages = require('./setupLegalPages');
-setupLegalPages(app);
 
 // Enhanced multer configuration from v2.0
 const upload = multer({ 
@@ -76,8 +69,6 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-
-
 // Configure body parsers with increased limits
 // Using explicit body-parser to ensure limits are applied
 const { jsonParser, urlencodedParser, bodyParserLogger } = require('./middleware/bodyParser');
@@ -98,6 +89,14 @@ const openai = new OpenAI({
 
 // Enhanced health check from v2.0
 app.get('/health', (req, res) => {
+  // Emergency OAuth check for production
+  if (process.env.PORT === '3000') {
+    try {
+      require('./health-check-oauth')();
+    } catch (e) {
+    }
+  }
+  
   res.json({ 
     status: 'OK', 
     timestamp: new Date().toISOString(),
@@ -125,8 +124,7 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
     // Get the user prompt/description from the form data
     const userPrompt = req.body.userPrompt || req.body.description || '';
 
-    // Process the image file
-
+    // Log file info for debugging
     // Validate file size
     if (req.file.size > 10 * 1024 * 1024) {
       return res.status(400).json({ 
@@ -147,18 +145,28 @@ app.post('/api/scan', upload.single('image'), async (req, res) => {
           content: [
             {
               type: "text",
-              text: `${userPrompt ? `User says: ${userPrompt}\n\n` : ''}You are an expert authentication specialist and resale value appraiser in 2025. 
+              text: `${userPrompt ? `User says: ${userPrompt}\n\n` : ''}You are an expert resale value appraiser in 2025. Consider current market trends, platform popularity shifts, and recent sales data. 
 
-AUTHENTICITY FIRST: Before anything else, carefully examine the image for signs this could be a replica. For ANY luxury brand item (YSL, Louis Vuitton, Chanel, Gucci, etc.), start with the assumption it MIGHT be fake and look for proof of authenticity, not the other way around. Check:
-- Stitching quality (replicas often have loose, uneven, or crooked stitches)
-- Logo placement and font (even slight deviations = fake)
-- Hardware color and weight appearance
-- Material quality and texture
-- Overall craftsmanship
+IMPORTANT: Be VERY strict on authenticity scoring. For luxury brands (Louis Vuitton, Chanel, Gucci, Hermès, Prada, Fendi, Dior, Balenciaga, Burberry, Coach, Bottega Veneta, Celine, Givenchy, Saint Laurent, Valentino, Versace, Dolce & Gabbana, Miu Miu), examine these specific indicators:
+- Logo accuracy (spelling, font, placement, size)
+- Pattern alignment and symmetry
+- Hardware quality and color consistency  
+- Stitching quality and straightness
+- Material quality indicators
+- Brand-specific details:
+  * Louis Vuitton: monogram alignment, date codes, vachetta leather aging
+  * Chanel: quilting pattern, CC turn lock alignment, chain weight
+  * Gucci: GG pattern spacing, serial numbers, dust bag quality
+  * Hermès: stamp depth, leather grain, hardware weight
+  * Coach: creed patch, YKK zippers, leather quality
+  * Prada: triangle logo placement, R curve in logo
+  * Burberry: nova check pattern alignment, knight logo
+  * Fendi: FF pattern symmetry, hologram stickers
+  * Balenciaga: distressing consistency, hardware aging
 
-If you cannot clearly see authentication details or if ANYTHING looks off, score 30% or lower. When in doubt, score LOW. It's better to undervalue a real item than overvalue a fake.
+If multiple red flags exist, score should be <30%. If user mentions "replica", "inspired", "style", "dupe", "look alike", "similar to", "homage", "tribute", or "vegan leather", cap authenticity at 20%.
 
-Analyze this item and provide: 1) What the item is, 2) Estimated resale value range based on CURRENT 2025 market conditions, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best STANDARD platform to list it on (eBay, Poshmark, Facebook Marketplace, Mercari, The RealReal, Vestiaire Collective, Grailed, Depop, Etsy, Rebag, or Shopify - choose based on current platform trends and item type), 5) Best LIVE selling platform (Whatnot, Poshmark Live, TikTok Shop, Instagram Live, Facebook Live, YouTube Live, Amazon Live, eBay Live, or Shopify Live - consider current platform popularity and audience demographics), 6) Condition assessment, 7) Authenticity likelihood (0-100% score - DEFAULT TO LOW for luxury brands unless you can clearly verify authentic details), 8) TRENDING SCORE: Calculate a score from 0-100 using this formula: (1.0 × Demand[0-25]) + (0.8 × Velocity[0-20]) + (0.6 × Platform[0-15]) + (0.5 × Recency[0-10]) + (0.5 × Scarcity[0-10]) - (1.0 × Penalty[0-20]). Demand=search volume/likes/wishlist adds. Velocity=sell-through rate. Platform=trending on multiple platforms. Recency=seasonal/viral trends. Scarcity=limited runs/rare items. Penalty=high supply/counterfeits/bad condition. BE DECISIVE - use extreme values when justified. Avoid clustering around 40-60. Consider inflation, current fashion trends, and platform algorithm changes. Respond with JSON: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"recommended_live_platform\": \"live platform\", \"condition\": \"condition\", \"authenticity_score\": \"X%\", \"trending_score_data\": {\"scores\": {\"demand\": X, \"velocity\": X, \"platform\": X, \"recency\": X, \"scarcity\": X, \"penalty\": X}, \"trending_score\": X, \"label\": \"(return ONLY the label text that matches the trending_score: if score 0-10 return 'Unsellable (By Most)', if 11-25 return 'Will Take Up Rent', if 26-40 return 'Niche Vibes Only', if 41-55 return 'Hit-or-Miss', if 56-70 return 'Moves When Ready', if 71-85 return 'Money Maker', if 86-95 return 'Hot Ticket', if 96-100 return 'Win!')\"}, \"market_insights\": \"current 2025 market trends\", \"selling_tips\": \"specific advice for 2025 marketplace\", \"brand_context\": \"brand status and demand in 2025\", \"seasonal_notes\": \"current seasonal considerations\"}`
+Analyze this item and provide: 1) What the item is, 2) Estimated resale value range based on CURRENT 2025 market conditions, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best STANDARD platform to list it on (eBay, Poshmark, Facebook Marketplace, Mercari, The RealReal, Vestiaire Collective, Grailed, Depop, Etsy, Rebag, or Shopify - choose based on current platform trends and item type), 5) Best LIVE selling platform (Whatnot, Poshmark Live, TikTok Shop, Instagram Live, Facebook Live, YouTube Live, Amazon Live, eBay Live, or Shopify Live - consider current platform popularity and audience demographics), 6) Condition assessment, 7) Authenticity likelihood (0-100% score based on visible indicators), 8) TRENDING SCORE: Calculate a score from 0-100 using this formula: (1.0 × Demand[0-25]) + (0.8 × Velocity[0-20]) + (0.6 × Platform[0-15]) + (0.5 × Recency[0-10]) + (0.5 × Scarcity[0-10]) - (1.0 × Penalty[0-20]). Demand=search volume/likes/wishlist adds. Velocity=sell-through rate. Platform=trending on multiple platforms. Recency=seasonal/viral trends. Scarcity=limited runs/rare items. Penalty=high supply/counterfeits/bad condition. BE DECISIVE - use extreme values when justified. Avoid clustering around 40-60. Consider inflation, current fashion trends, and platform algorithm changes. Respond with JSON: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"recommended_live_platform\": \"live platform\", \"condition\": \"condition\", \"authenticity_score\": \"X%\", \"trending_score_data\": {\"scores\": {\"demand\": X, \"velocity\": X, \"platform\": X, \"recency\": X, \"scarcity\": X, \"penalty\": X}, \"trending_score\": X, \"label\": \"(return ONLY the label text that matches the trending_score: if score 0-10 return 'Unsellable (By Most)', if 11-25 return 'Will Take Up Rent', if 26-40 return 'Niche Vibes Only', if 41-55 return 'Hit-or-Miss', if 56-70 return 'Moves When Ready', if 71-85 return 'Money Maker', if 86-95 return 'Hot Ticket', if 96-100 return 'Win!')\"}, \"market_insights\": \"current 2025 market trends\", \"selling_tips\": \"specific advice for 2025 marketplace\", \"brand_context\": \"brand status and demand in 2025\", \"seasonal_notes\": \"current seasonal considerations\"}`
             },
             {
               type: "image_url",
@@ -229,49 +237,14 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       'similar to', 'homage', 'tribute', 'vegan leather'
     ];
 
-    const itemNameLower = (analysis.item_name || '').toLowerCase();
-    const descriptionLower = (userPrompt || '').toLowerCase();
-    
-    // Check if item is a luxury brand
-    const isLuxuryBrand = luxuryBrands.some(brand => 
-      itemNameLower.includes(brand.toLowerCase()) || 
-      descriptionLower.includes(brand.toLowerCase())
-    );
-
-    // Check for replica indicators
-    const hasReplicaIndicators = replicaIndicators.some(indicator => 
-      descriptionLower.includes(indicator)
-    );
-
-    // Adjust authenticity score if needed
-    if (isLuxuryBrand && hasReplicaIndicators) {
-      // Cap at 20% for luxury brands with replica keywords
-      const currentScore = parseInt(analysis.authenticity_score) || 50;
-      if (currentScore > 20) {
-        analysis.authenticity_score = "20%";
-        analysis.authenticity_note = "Score capped due to replica indicators";
+    // If it's a luxury brand and has replica keywords, cap authenticity at 20%
+    if (luxuryBrands.some(brand => analysis.item_name.toLowerCase().includes(brand.toLowerCase()))) {
+      if (replicaIndicators.some(word => userPrompt?.toLowerCase().includes(word))) {
+        const currentScore = parseInt(analysis.authenticity_score);
+        if (currentScore > 20) {
+          analysis.authenticity_score = "20%";
+        }
       }
-    }
-
-    // Adjust pricing for low authenticity items
-    const authenticityScore = parseInt(analysis.authenticity_score) || 50;
-    if (authenticityScore <= 30) {
-      // Override pricing for likely replicas
-      analysis.price_range = "$5-$50";
-      analysis.resale_average = "$25";
-      
-      // Replace market insights for uncertain items
-      analysis.market_insights = "⚠️ Unknown market research on this product. Upload a clearer image to retry.";
-      
-      // Replace selling tips to avoid advice
-      analysis.selling_tips = "Unknown";
-      
-      // Adjust style tier
-      analysis.style_tier = "Authenticity Uncertain";
-      
-      // Don't recommend platforms for uncertain authenticity items
-      analysis.recommended_platform = "Unknown";
-      analysis.recommended_live_platform = "Unknown";
     }
 
     // Calculate buy price (resale price / 5)
@@ -323,10 +296,6 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
     }
 
     const processingTime = Date.now() - req.startTime;
-
-    // Add environmental impact tag based on item name
-    analysis.environmental_tag = getEnvironmentalTagByItemName(analysis.item_name);
-
     res.json({ 
       success: true, 
       data: analysis,  // Frontend expects 'data' not 'analysis'
@@ -353,9 +322,9 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
 const authRoutes = require('./routes/auth');
 app.use('/auth', authRoutes);
 
-// Admin routes
-const adminRoutes = require('./routes/admin');
-app.use('/admin', adminRoutes);
+// Emergency OAuth fix route - commented out as file doesn't exist
+// const forceOAuthRoutes = require('./routes/force-oauth');
+// app.use('/api', forceOAuthRoutes);
 
 // Feedback route - wrap in try-catch
 const feedbackRoutes = require('./routes/feedback');
@@ -431,13 +400,20 @@ process.on('unhandledRejection', (reason, promise) => {
   console.error('Promise:', promise);
 });
 
-// Legal pages are now served by setupLegalPages middleware at the top of the file
-// This ensures they're served before any other routes or middleware intercept them
+// Serve legal pages
+app.get('/terms', (req, res) => {
+  const path = require('path');
+  res.sendFile(path.join(__dirname, '../mobile-app/terms.html'));
+});
+
+app.get('/privacy', (req, res) => {
+  const path = require('path');
+  res.sendFile(path.join(__dirname, '../mobile-app/privacy.html'));
+});
 
 // Start server
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
-  // Server is running on port ${PORT}
 });
 
 // Handle server errors

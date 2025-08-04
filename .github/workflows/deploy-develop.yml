@@ -40,3 +40,5 @@ jobs:
             curl -s http://localhost:3002/health || echo "Backend not responding"
             # Clear nginx cache
             nginx -s reload
+            # Run post-deploy nginx fixes
+            cd /var/www/blue.flippi.ai && bash scripts/post-deploy-nginx.sh || true

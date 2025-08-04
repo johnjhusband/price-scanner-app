@@ -16,10 +16,7 @@ router.get('/test', (req, res) => {
 
 // POST /api/feedback/echo - Echo back the request for debugging
 router.post('/echo', (req, res) => {
-  console.log('\n=== ECHO ENDPOINT ===');
-  console.log('Headers:', req.headers);
-  console.log('Body:', req.body);
-  
+
   res.json({
     success: true,
     headers: req.headers,
@@ -29,16 +26,100 @@ router.post('/echo', (req, res) => {
   });
 });
 
-// GET /api/feedback/health - Check if feedback system is working
-router.get('/health', (req, res) => {
-  console.log('\n=== FEEDBACK HEALTH CHECK ===');
+// GET /api/feedback/recent - Get recent feedback entries
+router.get('/recent', (req, res) => {
+
   try {
     const db = getDatabase();
-    console.log('Got database instance');
+    const limit = parseInt(req.query.limit) || 100;
     
+    // Get recent feedback without the image blob for performance
+    const feedback = db.prepare(`
+      SELECT 
+        id,
+        helped_decision,
+        feedback_text,
+        user_description,
+        scan_data,
+        created_at
+      FROM feedback 
+      ORDER BY created_at DESC 
+      LIMIT ?
+    `).all(limit);
+    
+    // Parse scan_data JSON and format results
+    const formattedFeedback = feedback.map(entry => ({
+      ...entry,
+      scan_data: entry.scan_data ? JSON.parse(entry.scan_data) : null,
+      helped_decision: entry.helped_decision === 1 ? true : entry.helped_decision === 0 ? false : null
+    }));
+    
+    res.json({
+      success: true,
+      count: formattedFeedback.length,
+      feedback: formattedFeedback
+    });
+  } catch (error) {
+    console.error('Failed to fetch feedback:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve feedback',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// GET /api/feedback/last24hours - Get feedback from last 24 hours
+router.get('/last24hours', (req, res) => {
+
+  try {
+    const db = getDatabase();
+    
+    // Get feedback from last 24 hours
+    const feedback = db.prepare(`
+      SELECT 
+        id,
+        helped_decision,
+        feedback_text,
+        user_description,
+        scan_data,
+        created_at
+      FROM feedback 
+      WHERE datetime(created_at) >= datetime('now', '-24 hours')
+      ORDER BY created_at DESC
+    `).all();
+    
+    // Parse scan_data JSON and format results
+    const formattedFeedback = feedback.map(entry => ({
+      ...entry,
+      scan_data: entry.scan_data ? JSON.parse(entry.scan_data) : null,
+      helped_decision: entry.helped_decision === 1 ? true : entry.helped_decision === 0 ? false : null
+    }));
+    
+    res.json({
+      success: true,
+      count: formattedFeedback.length,
+      period: 'last_24_hours',
+      feedback: formattedFeedback
+    });
+  } catch (error) {
+    console.error('Failed to fetch feedback:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve feedback',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// GET /api/feedback/health - Check if feedback system is working
+router.get('/health', (req, res) => {
+
+  try {
+    const db = getDatabase();
+
     const count = db.prepare('SELECT COUNT(*) as count FROM feedback').get();
-    console.log('Query executed successfully, count:', count.count);
-    
+
     res.json({
       success: true,
       status: 'Feedback system operational',
@@ -109,21 +190,11 @@ const feedbackValidation = [
 
 // POST /api/feedback
 router.post('/', feedbackValidation, (req, res) => {
-  console.log('\n=== FEEDBACK POST REQUEST ===');
-  console.log('Timestamp:', new Date().toISOString());
-  console.log('Request headers:', JSON.stringify(req.headers, null, 2));
-  console.log('Request body received:', req.body ? 'Yes' : 'No');
-  console.log('Request body keys:', req.body ? Object.keys(req.body) : 'No body');
-  
+
   if (req.body) {
-    console.log('helped_decision:', req.body.helped_decision);
-    console.log('feedback_text length:', req.body.feedback_text ? req.body.feedback_text.length : 'not provided');
-    console.log('user_description length:', req.body.user_description ? req.body.user_description.length : 'not provided');
-    console.log('image_data length:', req.body.image_data ? req.body.image_data.length : 'MISSING');
-    console.log('scan_data:', req.body.scan_data ? 'Present' : 'MISSING');
-    
+
     if (req.body.image_data) {
-      console.log('image_data first 100 chars:', req.body.image_data.substring(0, 100));
+
     }
   }
   
@@ -151,7 +222,7 @@ router.post('/', feedbackValidation, (req, res) => {
     let db;
     try {
       db = getDatabase();
-      console.log('Database instance obtained successfully');
+
     } catch (dbError) {
       console.error('Failed to get database instance:', dbError);
       console.error('Database error stack:', dbError.stack);
@@ -174,7 +245,7 @@ router.post('/', feedbackValidation, (req, res) => {
           scan_data
         ) VALUES (?, ?, ?, ?, ?)
       `);
-      console.log('SQL statement prepared successfully');
+
     } catch (prepError) {
       console.error('Failed to prepare SQL statement:', prepError);
       return res.status(500).json({
@@ -188,7 +259,7 @@ router.post('/', feedbackValidation, (req, res) => {
     let imageBuffer;
     try {
       imageBuffer = Buffer.from(image_data, 'base64');
-      console.log('Image buffer created, size:', imageBuffer.length);
+
     } catch (bufferError) {
       console.error('Failed to create buffer from base64:', bufferError);
       return res.status(400).json({
@@ -208,7 +279,7 @@ router.post('/', feedbackValidation, (req, res) => {
         imageBuffer,
         JSON.stringify(scan_data)
       );
-      console.log(`Feedback saved with ID: ${result.lastInsertRowid}`);
+
     } catch (insertError) {
       console.error('Failed to insert feedback:', insertError);
       console.error('Insert error stack:', insertError.stack);
@@ -237,20 +308,15 @@ router.post('/', feedbackValidation, (req, res) => {
 
 // POST /api/feedback/test-bypass - Test endpoint with NO validation
 router.post('/test-bypass', (req, res) => {
-  console.log('\n=== TEST BYPASS ENDPOINT HIT ===');
-  
+
   try {
     // Log everything about the request
-    console.log('Headers:', JSON.stringify(req.headers, null, 2));
-    console.log('Body exists:', !!req.body);
-    console.log('Body type:', typeof req.body);
-    console.log('Body:', JSON.stringify(req.body, null, 2).substring(0, 500) + '...');
-    
+
     // Try to get database
     let db;
     try {
       db = getDatabase();
-      console.log('Database obtained successfully');
+
     } catch (dbErr) {
       console.error('Database error:', dbErr.message);
       return res.status(500).json({
@@ -279,9 +345,7 @@ router.post('/test-bypass', (req, res) => {
         Buffer.from('test', 'utf8'), // Small test buffer
         JSON.stringify({ test: true })
       );
-      
-      console.log('Test insert successful, ID:', result.lastInsertRowid);
-      
+
       res.json({
         success: true,
         message: 'Test bypass successful',
@@ -310,8 +374,7 @@ router.post('/test-bypass', (req, res) => {
 
 // GET /api/feedback/list - Retrieve all feedback entries
 router.get('/list', (req, res) => {
-  console.log('\n=== FEEDBACK LIST REQUEST ===');
-  
+
   try {
     const db = getDatabase();
     
