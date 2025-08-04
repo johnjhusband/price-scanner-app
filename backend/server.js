@@ -326,6 +326,34 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
 
     // Add environmental impact tag based on item name
     analysis.environmental_tag = getEnvironmentalTagByItemName(analysis.item_name);
+    
+    // Reduce text content for mobile (Issue #91)
+    if (analysis.market_insights && analysis.market_insights.length > 100) {
+      // Truncate to first sentence or 100 chars
+      const firstSentence = analysis.market_insights.match(/^[^.!?]+[.!?]/);
+      analysis.market_insights = firstSentence ? firstSentence[0] : analysis.market_insights.substring(0, 97) + '...';
+    }
+    
+    if (analysis.selling_tips && analysis.selling_tips !== "Unknown" && analysis.selling_tips.length > 150) {
+      // Convert to bullet points - split by sentence or comma
+      const tips = analysis.selling_tips.split(/[.,;]/).filter(tip => tip.trim());
+      if (tips.length > 3) {
+        // Take only first 3 tips
+        analysis.selling_tips = tips.slice(0, 3).map(tip => '• ' + tip.trim()).join('\n');
+      } else {
+        analysis.selling_tips = tips.map(tip => '• ' + tip.trim()).join('\n');
+      }
+    }
+    
+    // Shorten brand context
+    if (analysis.brand_context && analysis.brand_context.length > 80) {
+      analysis.brand_context = analysis.brand_context.substring(0, 77) + '...';
+    }
+    
+    // Simplify seasonal notes
+    if (analysis.seasonal_notes && analysis.seasonal_notes.length > 60) {
+      analysis.seasonal_notes = analysis.seasonal_notes.substring(0, 57) + '...';
+    }
 
     res.json({ 
       success: true, 

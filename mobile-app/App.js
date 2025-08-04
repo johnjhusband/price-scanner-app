@@ -931,7 +931,7 @@ export default function App() {
                     
                     {analysisResult.recommended_live_platform && (
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Live Platform:</Text>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Live:</Text>
                     <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.recommended_live_platform}</Text>
                   </View>
                 )}
@@ -944,7 +944,7 @@ export default function App() {
                 
                 {analysisResult.trending_score !== undefined && (
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Boca Score (Sellability):</Text>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Sellability:</Text>
                     <Text style={[styles.resultValue, { 
                       color: (() => {
                         const score = parseInt(analysisResult.trending_score);
@@ -966,7 +966,7 @@ export default function App() {
                 {analysisResult.buy_price && (
                   <View style={[styles.suggestedPriceContainer, { backgroundColor: brandColors.softCream }]}>
                     <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
-                      Suggested Buy Price:
+                      Buy at:
                     </Text>
                     <Text style={[styles.suggestedPriceValue, { color: brandColors.deepTeal }]}>
                       {analysisResult.buy_price}
@@ -976,7 +976,7 @@ export default function App() {
                 
                 {analysisResult.market_insights && (
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Market Insights:</Text>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Market:</Text>
                     <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.market_insights}</Text>
                   </View>
                 )}
@@ -984,7 +984,7 @@ export default function App() {
                 {analysisResult.selling_tips && (
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Selling Tips:</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>
+                    <Text style={[styles.resultValue, { color: brandColors.text, lineHeight: 22 }]}>
                       {analysisResult.selling_tips}
                     </Text>
                   </View>
