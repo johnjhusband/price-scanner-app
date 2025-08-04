@@ -45,21 +45,21 @@ function setupLegalPages(app) {
     }
   });
   
-  // About page
-  app.get('/about', (req, res) => {
-    const aboutPath = path.join(legalPagesPath, 'about.html');
+  // Mission page
+  app.get('/mission', (req, res) => {
+    const missionPath = path.join(legalPagesPath, 'mission.html');
     
     // Check if file exists first
-    if (fs.existsSync(aboutPath)) {
-      res.sendFile(aboutPath, (err) => {
+    if (fs.existsSync(missionPath)) {
+      res.sendFile(missionPath, (err) => {
         if (err) {
-          console.error('Error serving about.html:', err);
-          res.status(500).send('Error loading about page');
+          console.error('Error serving mission.html:', err);
+          res.status(500).send('Error loading mission page');
         }
       });
     } else {
-      console.error('about.html not found at:', aboutPath);
-      res.status(404).send('About page not found');
+      console.error('mission.html not found at:', missionPath);
+      res.status(404).send('Mission page not found');
     }
   });
 }
