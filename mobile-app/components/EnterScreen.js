@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   offerBanner: {
-    backgroundColor: brandColors.matteGold,
+    backgroundColor: brandColors.primary,  // Use primary teal
     paddingHorizontal: 25,
     paddingVertical: 12,
     borderRadius: 8, // Rounded square instead of pill
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
     }),
   },
   offerBannerHover: {
-    backgroundColor: '#B09756', // Darker gold
+    backgroundColor: '#134E4F', // Darker teal
     transform: [{ scale: 1.02 }],
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -287,7 +287,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.semiBold,
   },
   platformSection: {
-    backgroundColor: brandColors.softCream,
+    backgroundColor: '#F9FAFB',  // Very light gray
     padding: 30,
     borderRadius: 12,
     marginTop: 40, // Space from login section
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
   valueProp: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: brandColors.softCream,
+    backgroundColor: '#F9FAFB',  // Very light gray
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 10,
@@ -392,7 +392,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
   },
   platformLogo: {
-    backgroundColor: brandColors.offWhite,
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,

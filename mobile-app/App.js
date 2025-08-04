@@ -798,7 +798,7 @@ export default function App() {
           {!image && (
             <TextInput
               style={[styles.descriptionInput, { 
-                backgroundColor: brandColors.surface,
+                backgroundColor: '#FFFFFF',
                 color: brandColors.text,
                 borderColor: brandColors.border || '#ddd',
                 marginBottom: 20
@@ -869,7 +869,7 @@ export default function App() {
                     resultsRef.current = ref._nativeTag || ref;
                   }
                 }}
-                style={[styles.analysisResult, { backgroundColor: brandColors.surface }]}>
+                style={[styles.analysisResult, { backgroundColor: '#FFFFFF' }]}>
                 <Text style={[styles.resultTitle, { color: brandColors.text }]}>Analysis Results</Text>
                 
                 <View style={styles.resultItem}>
@@ -878,7 +878,7 @@ export default function App() {
                 </View>
                 
                 {/* PRIMARY INFO - Always visible */}
-                <View style={[styles.primaryInfoSection, { backgroundColor: brandColors.background, borderRadius: 12, padding: 16, marginVertical: 10 }]}>
+                <View style={[styles.primaryInfoSection, { backgroundColor: '#F9FAFB', borderRadius: 12, padding: 16, marginVertical: 10 }]}>
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Estimated Value:</Text>
                     <Text style={[styles.resultValue, styles.priceValue, { color: brandColors.success, fontSize: 24 }]}>
@@ -898,12 +898,6 @@ export default function App() {
                           return componentColors.authentication.low;
                         })()
                       }]}>
-                        {(() => {
-                          const score = parseInt(analysisResult.authenticity_score);
-                          if (score >= 80) return '✓ ';  // Checkmark for verified
-                          if (score >= 50) return '⚠ ';  // Warning for uncertain
-                          return '✗ ';                   // X for low
-                        })()}
                         {analysisResult.authenticity_score}
                       </Text>
                     </View>
@@ -922,12 +916,12 @@ export default function App() {
                   style={[styles.viewMoreButton, { 
                     backgroundColor: 'transparent',
                     borderWidth: 1,
-                    borderColor: brandColors.leaf,
+                    borderColor: brandColors.primary,
                   }]}
                   onPress={() => setShowMoreDetails(!showMoreDetails)}
                 >
-                  <Text style={[styles.viewMoreText, { color: brandColors.leaf }]}>
-                    {showMoreDetails ? '− Hide Impact Details' : '+ Show Impact Details'}
+                  <Text style={[styles.viewMoreText, { color: brandColors.primary }]}>
+                    {showMoreDetails ? '− Hide Details' : '+ View Details'}
                   </Text>
                 </TouchableOpacity>
                 
@@ -961,8 +955,8 @@ export default function App() {
                 )}
                 
                     {parseInt(analysisResult.authenticity_score) < 50 && (
-                      <Text style={[styles.warningText, { color: componentColors.scores.low }]}>
-                        ⚠️ Warning: Low authenticity - verify carefully
+                      <Text style={[styles.warningText, { color: brandColors.textSecondary }]}>
+                        Note: Low authenticity - verify carefully
                       </Text>
                     )}
                 
@@ -988,7 +982,7 @@ export default function App() {
                 )}
                 
                 {analysisResult.buy_price && (
-                  <View style={[styles.suggestedPriceContainer, { backgroundColor: brandColors.softCream }]}>
+                  <View style={[styles.suggestedPriceContainer, { backgroundColor: '#F9FAFB' }]}>
                     <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
                       Buy at:
                     </Text>
