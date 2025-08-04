@@ -44,6 +44,24 @@ function setupLegalPages(app) {
       res.status(404).send('Privacy page not found');
     }
   });
+  
+  // About page
+  app.get('/about', (req, res) => {
+    const aboutPath = path.join(legalPagesPath, 'about.html');
+    
+    // Check if file exists first
+    if (fs.existsSync(aboutPath)) {
+      res.sendFile(aboutPath, (err) => {
+        if (err) {
+          console.error('Error serving about.html:', err);
+          res.status(500).send('Error loading about page');
+        }
+      });
+    } else {
+      console.error('about.html not found at:', aboutPath);
+      res.status(404).send('About page not found');
+    }
+  });
 }
 
 module.exports = setupLegalPages;
