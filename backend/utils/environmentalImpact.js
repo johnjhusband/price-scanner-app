@@ -2,32 +2,57 @@
 
 const tagsByCategory = {
   bags: [
-    "♻️ Impact: Saved 35 showers",
-    "♻️ Impact: Saved 1,800 gallons of water",
-    "♻️ Impact: Skipped 5 pounds of CO₂",
-    "♻️ Impact: Saved 2 months of drinking water",
-    "♻️ Impact: Offset 60 dishwasher cycles"
+    "♻️ Saves 35 showers",
+    "♻️ Saves water for 60 cups of coffee",
+    "♻️ Offsets 2 months of drinking water",
+    "♻️ Offsets 60 dishwasher loads",
+    "♻️ Saves water for 45 smoothies",
+    "♻️ Replaces water for 90 glasses of lemonade",
+    "♻️ Equals 50 tea refills at a café"
   ],
   apparel: [
-    "♻️ Impact: Saved enough energy to microwave 80 meals",
-    "♻️ Impact: Skipped the emissions of baking 10 cakes",
-    "♻️ Impact: Offset 3 days of household energy",
-    "♻️ Impact: Saved 3 days of household energy",
-    "♻️ Impact: Offset the energy to toast 100 slices of bread"
+    "♻️ Microwaves 80 meals",
+    "♻️ Bakes 10 cakes",
+    "♻️ Toasts 100 slices of bread",
+    "♻️ Boils 90 cups of tea",
+    "♻️ Cooks 50 bowls of oatmeal",
+    "♻️ Steeps 120 herbal teas",
+    "♻️ Juices 100 oranges"
   ],
   shoes: [
-    "♻️ Impact: Offset the energy of cooking 30 eggs",
-    "♻️ Impact: Equal to 90 scoops of ice cream chilled",
-    "♻️ Impact: Saved the water for 15 bowls of soup",
-    "♻️ Impact: Saved 40 smoothies",
-    "♻️ Impact: Saved the energy used in 30 rice cooker runs"
+    "♻️ Cooks 30 eggs",
+    "♻️ Chills 90 scoops of ice cream",
+    "♻️ Brews 35 cups of coffee",
+    "♻️ Mixes 40 smoothies",
+    "♻️ Steeps 60 tea bags",
+    "♻️ Blends 25 green juices",
+    "♻️ Whips 40 pancake stacks"
   ],
   kitchenware: [
-    "♻️ Impact: Equal to 20 pots of coffee brewed",
-    "♻️ Impact: Saved enough for 35 servings of pasta",
-    "♻️ Impact: Skipped the water used to make 25 loaves of bread",
-    "♻️ Impact: Saved enough water to brew 50 cups of tea",
-    "♻️ Impact: Offset the packaging of 50 granola bars"
+    "♻️ Brews 20 pots of coffee",
+    "♻️ Boils 35 servings of pasta",
+    "♻️ Bakes 25 loaves of bread",
+    "♻️ Brews 50 cups of tea",
+    "♻️ Wraps 50 granola bars",
+    "♻️ Pops 80 bags of popcorn",
+    "♻️ Grills 25 burgers",
+    "♻️ Blends 45 protein shakes",
+    "♻️ Freezes 30 smoothie packs",
+    "♻️ Mixes 90 mugs of hot cocoa"
+  ],
+  toys: [
+    "♻️ Preps 60 baby bottles",
+    "♻️ Warms 40 jars of baby food",
+    "♻️ Steams 35 kids' meals",
+    "♻️ Brews 70 cups of toddler tea",
+    "♻️ Cools 25 servings of applesauce"
+  ],
+  accessories: [
+    "♻️ Steeps 40 cups of calming tea",
+    "♻️ Saves energy for 30 espresso shots",
+    "♻️ Equal to 50 cocktail mixers",
+    "♻️ Blends 20 fruit bowls",
+    "♻️ Chills 45 iced coffees"
   ]
 };
 
@@ -36,7 +61,9 @@ const categoryKeywords = {
   bags: ['bag', 'purse', 'tote', 'clutch', 'backpack', 'wallet', 'pouch', 'satchel', 'handbag', 'crossbody'],
   apparel: ['shirt', 'dress', 'pants', 'jeans', 'jacket', 'coat', 'sweater', 'hoodie', 'top', 'blouse', 'skirt', 'suit', 'blazer', 'cardigan', 't-shirt', 'shorts', 'leggings'],
   shoes: ['shoe', 'sneaker', 'boot', 'sandal', 'heel', 'loafer', 'pump', 'flat', 'slipper', 'trainer', 'runner'],
-  kitchenware: ['plate', 'bowl', 'cup', 'mug', 'pot', 'pan', 'utensil', 'kitchen', 'cookware', 'dinnerware', 'glass', 'pitcher', 'teapot']
+  kitchenware: ['plate', 'bowl', 'cup', 'mug', 'pot', 'pan', 'utensil', 'kitchen', 'cookware', 'dinnerware', 'glass', 'pitcher', 'teapot'],
+  toys: ['toy', 'doll', 'game', 'puzzle', 'lego', 'baby', 'stroller', 'crib', 'highchair', 'playpen', 'rattle', 'teether'],
+  accessories: ['watch', 'jewelry', 'necklace', 'bracelet', 'ring', 'earring', 'sunglasses', 'glasses', 'belt', 'scarf', 'hat', 'cap', 'tie']
 };
 
 function detectCategory(itemName) {
@@ -53,7 +80,7 @@ function detectCategory(itemName) {
 
 function getEnvironmentalTag(category) {
   const tags = tagsByCategory[category?.toLowerCase()];
-  if (!tags) return "♻️ Impact: Small steps, big love";
+  if (!tags) return "♻️ Small steps, big love";
   
   // Randomly select a tag from the category
   return tags[Math.floor(Math.random() * tags.length)];
