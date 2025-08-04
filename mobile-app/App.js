@@ -1015,7 +1015,9 @@ export default function App() {
                 {analysisResult.market_insights && (
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Market:</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.market_insights}</Text>
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>
+                      {analysisResult.market_insights.replace(/Note:.*?Low authenticity.*?verify carefully\.?\s*/gi, '').trim()}
+                    </Text>
                   </View>
                 )}
                 
@@ -1023,7 +1025,7 @@ export default function App() {
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Selling Tips:</Text>
                     <Text style={[styles.resultValue, { color: brandColors.text, lineHeight: 22 }]}>
-                      {analysisResult.selling_tips}
+                      {analysisResult.selling_tips.replace(/Note:.*?Low authenticity.*?verify carefully\.?\s*/gi, '').trim()}
                     </Text>
                   </View>
                 )}
