@@ -41,9 +41,21 @@
    - Displays in green container below results
 
 8. ✅ **UI Updates**
-   - Disclaimer text: "*ai can make mistakes. double-check important info"
+   - Disclaimer text: "*ai makes mistakes. check important info" (moved to footer)
    - Footer trademark: "Flippi™ and Flippi.ai™ are trademarks of Boca Belle"
    - Legal pages accessible at /terms and /privacy
+   - Contact and Mission links in login page footer
+
+9. ✅ **Mission Page Implementation**
+   - Mission modal accessible from login page
+   - Framed Mission and Contact pages created
+   - Backend routes added for /mission and /contact
+   - All legal pages updated with brand guidelines
+
+10. ✅ **Environmental Message Updates**
+   - Comprehensive new environmental impact messages
+   - Messages updated for all categories
+   - Removed "Impact:" prefix per user preference
 
 ## Pre-Release Checklist
 
