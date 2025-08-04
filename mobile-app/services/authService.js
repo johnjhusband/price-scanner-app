@@ -36,7 +36,7 @@ class AuthService {
   }
 
   // Parse token from URL (after OAuth redirect)
-  static parseTokenFromUrl() {
+  static async parseTokenFromUrl() {
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
     
@@ -44,7 +44,7 @@ class AuthService {
       // Decode JWT to get user data
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        this.setAuth(token, {
+        await this.setAuth(token, {
           id: payload.id,
           email: payload.email,
           name: payload.name

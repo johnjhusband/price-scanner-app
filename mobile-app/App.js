@@ -470,27 +470,28 @@ export default function App() {
     // Check authentication on web
     if (Platform.OS === 'web') {
       // Check if token in URL (OAuth callback)
-      if (AuthService.parseTokenFromUrl()) {
-        setIsAuthenticated(true);
-        // Get user asynchronously
-        AuthService.getUser().then(userData => {
-          setUser(userData);
-          setAuthLoading(false);
-        });
-      } else {
-        // Check existing session
-        AuthService.isAuthenticated().then(isAuth => {
-          if (isAuth) {
-            setIsAuthenticated(true);
-            AuthService.getUser().then(userData => {
-              setUser(userData);
-              setAuthLoading(false);
-            });
-          } else {
+      AuthService.parseTokenFromUrl().then(hasToken => {
+        if (hasToken) {
+          setIsAuthenticated(true);
+          // Get user asynchronously
+          AuthService.getUser().then(userData => {
+            setUser(userData);
             setAuthLoading(false);
-          }
-        });
-      }
+          });
+          // Check existing session
+          AuthService.isAuthenticated().then(isAuth => {
+            if (isAuth) {
+              setIsAuthenticated(true);
+              AuthService.getUser().then(userData => {
+                setUser(userData);
+                setAuthLoading(false);
+              });
+            } else {
+              setAuthLoading(false);
+            }
+          });
+        }
+      });
     } else {
       // Mobile platforms - for now, no auth required
       setAuthLoading(false);
