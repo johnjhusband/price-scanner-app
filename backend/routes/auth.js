@@ -131,11 +131,21 @@ router.get('/google/callback',
     );
 
     // Redirect to frontend with token
-    const frontendUrl = process.env.NODE_ENV === 'production' 
-      ? 'https://app.flippi.ai'
-      : process.env.NODE_ENV === 'staging'
-      ? 'https://green.flippi.ai'
-      : 'https://blue.flippi.ai';
+    // Determine frontend URL based on the request host
+    let frontendUrl;
+    const host = req.get('host');
+    
+    if (host && host.includes('green.flippi.ai')) {
+      frontendUrl = 'https://green.flippi.ai';
+    } else if (host && host.includes('blue.flippi.ai')) {
+      frontendUrl = 'https://blue.flippi.ai';
+    } else if (process.env.NODE_ENV === 'production') {
+      frontendUrl = 'https://app.flippi.ai';
+    } else if (process.env.NODE_ENV === 'staging') {
+      frontendUrl = 'https://green.flippi.ai';
+    } else {
+      frontendUrl = 'https://blue.flippi.ai';
+    }
     
     res.redirect(`${frontendUrl}?token=${token}`);
   }
