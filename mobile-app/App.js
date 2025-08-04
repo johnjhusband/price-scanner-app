@@ -175,7 +175,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
   if (hasPermission === false) {
     return (
       <View style={[styles.cameraContainer, { backgroundColor: brandColors.background }]}>
-        <Text style={[styles.cameraText, { color: brandColors.danger }]}>Camera permission not granted</Text>
+        <Text style={[styles.cameraText, { color: brandColors.error }]}>Camera permission not granted</Text>
         <BrandButton title="Close" onPress={handleCloseCamera} />
       </View>
     );
@@ -853,7 +853,7 @@ export default function App() {
             
             {isLoading && (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={brandColors.deepOceanBlue} />
+                <ActivityIndicator size="large" color={brandColors.primary} />
                 <Text style={[styles.loadingText, { color: brandColors.text }]}>
                   Analyzing image...
                 </Text>
