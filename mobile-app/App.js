@@ -231,6 +231,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
   
   const scrollViewRef = useRef(null);
   const resultsRef = useRef(null);
@@ -691,6 +692,7 @@ export default function App() {
     setProductDescription('');
     setImageBase64(null);
     setShowFeedback(false);
+    setShowMoreDetails(false);
   };
   
   const handleExit = async () => {
@@ -855,51 +857,20 @@ export default function App() {
                   <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.item_name}</Text>
                 </View>
                 
-                <View style={styles.resultItem}>
-                  <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Estimated Value:</Text>
-                  <Text style={[styles.resultValue, styles.priceValue, { color: brandColors.success }]}>
-                    {analysisResult.price_range}
-                  </Text>
-                </View>
-                
-                <View style={styles.resultItem}>
-                  <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Condition:</Text>
-                  <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.condition}</Text>
-                </View>
-                
-                <View style={styles.resultItem}>
-                  <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Style Tier:</Text>
-                  <View style={[styles.styleTierBadge, {
-                    backgroundColor: (() => {
-                      const tier = analysisResult.style_tier.toLowerCase();
-                      if (tier === 'luxury') return componentColors.scores.high;
-                      if (tier === 'designer') return componentColors.scores.medium;
-                      return brandColors.slateBlueGray;
-                    })()
-                  }]}>
-                    <Text style={styles.styleTierBadgeText}>{analysisResult.style_tier}</Text>
-                  </View>
-                </View>
-                
-                {analysisResult.recommended_platform && (
+                {/* PRIMARY INFO - Always visible */}
+                <View style={[styles.primaryInfoSection, { backgroundColor: brandColors.background, borderRadius: 12, padding: 16, marginVertical: 10 }]}>
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Listing Platform:</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.recommended_platform}</Text>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Estimated Value:</Text>
+                    <Text style={[styles.resultValue, styles.priceValue, { color: brandColors.success, fontSize: 24 }]}>
+                      {analysisResult.price_range}
+                    </Text>
                   </View>
-                )}
-                
-                {analysisResult.recommended_live_platform && (
-                  <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Live Platform:</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.recommended_live_platform}</Text>
-                  </View>
-                )}
-                
-                {analysisResult.authenticity_score && (
-                  <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Authenticity Score:</Text>
-                    <View>
+                  
+                  {analysisResult.authenticity_score && (
+                    <View style={styles.resultItem}>
+                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Authenticity:</Text>
                       <Text style={[styles.resultValue, { 
+                        fontSize: 20,
                         color: (() => {
                           const score = parseInt(analysisResult.authenticity_score);
                           if (score >= 80) return componentColors.scores.high;
@@ -915,14 +886,61 @@ export default function App() {
                         })()}
                         {analysisResult.authenticity_score}
                       </Text>
-                      {parseInt(analysisResult.authenticity_score) < 50 && (
-                        <Text style={[styles.warningText, { color: componentColors.scores.low }]}>
-                          ⚠️ Warning: Low authenticity - verify carefully
-                        </Text>
-                      )}
                     </View>
+                  )}
+                  
+                  {analysisResult.recommended_platform && (
+                    <View style={styles.resultItem}>
+                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Best Platform:</Text>
+                      <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 18 }]}>{analysisResult.recommended_platform}</Text>
+                    </View>
+                  )}
+                </View>
+                
+                {/* TOGGLE BUTTON */}
+                <TouchableOpacity
+                  style={[styles.viewMoreButton, { backgroundColor: brandColors.deepTeal }]}
+                  onPress={() => setShowMoreDetails(!showMoreDetails)}
+                >
+                  <Text style={[styles.viewMoreText, { color: brandColors.offWhite }]}>
+                    {showMoreDetails ? 'Show Less' : 'View More Details'}
+                  </Text>
+                </TouchableOpacity>
+                
+                {/* SECONDARY INFO - Hidden by default */}
+                {showMoreDetails && (
+                  <View style={styles.secondaryInfoSection}>
+                    <View style={styles.resultItem}>
+                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Condition:</Text>
+                      <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.condition}</Text>
+                    </View>
+                    
+                    <View style={styles.resultItem}>
+                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Style Tier:</Text>
+                      <View style={[styles.styleTierBadge, {
+                        backgroundColor: (() => {
+                          const tier = analysisResult.style_tier.toLowerCase();
+                          if (tier === 'luxury') return componentColors.scores.high;
+                          if (tier === 'designer') return componentColors.scores.medium;
+                          return brandColors.slateBlueGray;
+                        })()
+                      }]}>
+                        <Text style={styles.styleTierBadgeText}>{analysisResult.style_tier}</Text>
+                      </View>
+                    </View>
+                    
+                    {analysisResult.recommended_live_platform && (
+                  <View style={styles.resultItem}>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Live Platform:</Text>
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.recommended_live_platform}</Text>
                   </View>
                 )}
+                
+                    {parseInt(analysisResult.authenticity_score) < 50 && (
+                      <Text style={[styles.warningText, { color: componentColors.scores.low }]}>
+                        ⚠️ Warning: Low authenticity - verify carefully
+                      </Text>
+                    )}
                 
                 {analysisResult.trending_score !== undefined && (
                   <View style={styles.resultItem}>
@@ -977,6 +995,8 @@ export default function App() {
                     <Text style={[styles.environmentalTag, { color: '#2E7D32' }]}>
                       {analysisResult.environmental_tag}
                     </Text>
+                  </View>
+                )}
                   </View>
                 )}
               </View>
@@ -1330,5 +1350,22 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily,
     fontWeight: typography.weights.medium,
     textAlign: 'center',
+  },
+  primaryInfoSection: {
+    marginVertical: 10,
+  },
+  secondaryInfoSection: {
+    marginTop: 10,
+  },
+  viewMoreButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  viewMoreText: {
+    fontSize: 16,
+    fontWeight: typography.weights.semiBold,
   },
 });
