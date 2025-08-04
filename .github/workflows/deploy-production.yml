@@ -18,7 +18,9 @@ jobs:
             # Reset any local changes to avoid merge conflicts
             git reset --hard HEAD
             git clean -fd
-            git pull origin master
+            # Force update to match remote exactly
+            git fetch origin master
+            git reset --hard origin/master
             cd backend && npm install --production
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
             # Debug: Check what directory PM2 is serving from
@@ -37,3 +39,5 @@ jobs:
             curl -s http://localhost:3000/health || echo "Backend not responding"
             # Clear nginx cache
             nginx -s reload
+            # Run post-deploy nginx fixes
+            cd /var/www/app.flippi.ai && bash scripts/post-deploy-nginx.sh || true
