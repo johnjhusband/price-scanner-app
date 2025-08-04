@@ -927,10 +927,16 @@ export default function App() {
                     <View style={styles.resultItem}>
                       <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Best Platforms:</Text>
                       <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 18 }]}>
-                        {analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown' 
-                          ? `${analysisResult.recommended_live_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_live_platform}, ${analysisResult.recommended_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_platform}`
-                          : analysisResult.recommended_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_platform
-                        }
+                        {(() => {
+                          const platforms = [];
+                          if (analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown') {
+                            platforms.push(analysisResult.recommended_live_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_live_platform);
+                          }
+                          if (analysisResult.recommended_platform && analysisResult.recommended_platform !== 'uknown') {
+                            platforms.push(analysisResult.recommended_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_platform);
+                          }
+                          return platforms.join(', ') || 'Unknown';
+                        })()}
                       </Text>
                     </View>
                   )}
