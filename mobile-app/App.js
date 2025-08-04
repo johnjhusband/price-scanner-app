@@ -10,6 +10,7 @@ import FeedbackPrompt from './components/FeedbackPrompt';
 import EnterScreen from './components/EnterScreen';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
+import { loadFonts } from './theme/fonts';
 
 // Responsive design breakpoints
 const { width: windowWidth } = Dimensions.get('window');
@@ -462,35 +463,37 @@ export default function App() {
     checkCameraAvailability();
     setupPasteListener();
     
-    // Set document title on web
+    // Set document title and load fonts on web
     if (Platform.OS === 'web') {
       document.title = 'Flippi.ai™ - Never Over Pay';
+      loadFonts(); // Load custom fonts
     }
     
     // Check authentication on web
     if (Platform.OS === 'web') {
       // Check if token in URL (OAuth callback)
-      if (AuthService.parseTokenFromUrl()) {
-        setIsAuthenticated(true);
-        // Get user asynchronously
-        AuthService.getUser().then(userData => {
-          setUser(userData);
-          setAuthLoading(false);
-        });
-      } else {
-        // Check existing session
-        AuthService.isAuthenticated().then(isAuth => {
-          if (isAuth) {
-            setIsAuthenticated(true);
-            AuthService.getUser().then(userData => {
-              setUser(userData);
-              setAuthLoading(false);
-            });
-          } else {
+      AuthService.parseTokenFromUrl().then(hasToken => {
+        if (hasToken) {
+          setIsAuthenticated(true);
+          // Get user asynchronously
+          AuthService.getUser().then(userData => {
+            setUser(userData);
             setAuthLoading(false);
-          }
-        });
-      }
+          });
+          // Check existing session
+          AuthService.isAuthenticated().then(isAuth => {
+            if (isAuth) {
+              setIsAuthenticated(true);
+              AuthService.getUser().then(userData => {
+                setUser(userData);
+                setAuthLoading(false);
+              });
+            } else {
+              setAuthLoading(false);
+            }
+          });
+        }
+      });
     } else {
       // Mobile platforms - for now, no auth required
       setAuthLoading(false);
@@ -828,12 +831,14 @@ export default function App() {
                   title="Go"
                   onPress={analyzeImage}
                   style={styles.goButton}
+                  variant="accent"
+                  isHighImpact={true}
                 />
               )}
             
             {isLoading && (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={brandColors.charcoalGray} />
+                <ActivityIndicator size="large" color={brandColors.deepOceanBlue} />
                 <Text style={[styles.loadingText, { color: brandColors.text }]}>
                   Analyzing image...
                 </Text>
@@ -873,9 +878,9 @@ export default function App() {
                         fontSize: 20,
                         color: (() => {
                           const score = parseInt(analysisResult.authenticity_score);
-                          if (score >= 80) return componentColors.scores.high;
-                          if (score >= 50) return componentColors.scores.medium;
-                          return componentColors.scores.low;
+                          if (score >= 80) return componentColors.authentication.verified;
+                          if (score >= 50) return componentColors.authentication.uncertain;
+                          return componentColors.authentication.low;
                         })()
                       }]}>
                         {(() => {
@@ -899,10 +904,10 @@ export default function App() {
                 
                 {/* TOGGLE BUTTON */}
                 <TouchableOpacity
-                  style={[styles.viewMoreButton, { backgroundColor: brandColors.deepTeal }]}
+                  style={[styles.viewMoreButton, { backgroundColor: brandColors.digitalLavender }]}
                   onPress={() => setShowMoreDetails(!showMoreDetails)}
                 >
-                  <Text style={[styles.viewMoreText, { color: brandColors.offWhite }]}>
+                  <Text style={[styles.viewMoreText, { color: brandColors.trueBlack }]}>
                     {showMoreDetails ? 'Show Less' : 'View More Details'}
                   </Text>
                 </TouchableOpacity>
@@ -1072,12 +1077,13 @@ const styles = StyleSheet.create({
     paddingTop: isMobile ? 80 : 60, // More top padding on mobile to avoid user section
   },
   title: {
-    fontSize: 24,
+    fontSize: isMobile ? typography.sizes.mobileH1 : typography.sizes.h1,
     fontWeight: typography.weights.bold,
-    fontFamily: typography.fontFamily,
+    fontFamily: typography.headingFont,
     marginTop: 20,
     marginBottom: 20,
     textAlign: 'center',
+    letterSpacing: '-0.02em',
   },
   uploadContainer: {
     width: isMobile ? '100%' : '80%', // Responsive width based on screen size
@@ -1132,40 +1138,51 @@ const styles = StyleSheet.create({
   },
   analysisResult: {
     width: isMobile ? '100%' : '80%', // Responsive width based on screen size
-    maxWidth: 1000, // Generous limit only for ultra-wide
-    padding: isMobile ? 12 : 20, // Responsive padding
-    borderRadius: 10,
-    marginBottom: 20,
+    maxWidth: isMobile ? '100%' : 800, // Full width on mobile, constrained on desktop
+    padding: isMobile ? 16 : 24, // More padding for better touch targets
+    paddingVertical: isMobile ? 20 : 28, // Extra vertical padding
+    borderRadius: isMobile ? 0 : 12, // No border radius on mobile for full width
+    marginBottom: isMobile ? 0 : 20, // No margin on mobile
     alignSelf: 'center',
-    elevation: 3,
+    elevation: isMobile ? 0 : 3, // Flat on mobile
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: isMobile ? 0 : 2 },
+    shadowOpacity: isMobile ? 0 : 0.1,
+    shadowRadius: isMobile ? 0 : 4,
   },
   resultTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: isMobile ? typography.sizes.mobileH2 : typography.sizes.h2,
+    fontWeight: typography.weights.bold,
+    fontFamily: typography.headingFont,
     marginBottom: 15,
     textAlign: 'center',
+    letterSpacing: '-0.01em',
   },
   resultItem: {
     marginBottom: 12,
     width: '100%',
   },
   resultLabel: {
-    fontSize: isMobile ? 13 : 14, // Responsive font size
+    fontSize: typography.sizes.small,
+    fontFamily: typography.bodyFont,
     marginBottom: 4,
+    letterSpacing: '0.02em',
+    textTransform: 'uppercase',
+    opacity: 0.8,
   },
   resultValue: {
-    fontSize: isMobile ? 14 : 16, // Responsive font size
-    fontWeight: '500',
+    fontSize: typography.sizes.body,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.medium,
     flexShrink: 1,
     flexWrap: 'wrap',
+    lineHeight: typography.lineHeight.relaxed,
   },
   priceValue: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 28,
+    fontWeight: typography.weights.bold,
+    fontFamily: typography.monoFont,
+    letterSpacing: '-0.02em',
   },
   suggestedPriceContainer: {
     padding: 15,
@@ -1246,13 +1263,15 @@ const styles = StyleSheet.create({
   },
   descriptionInput: {
     width: '100%',
-    padding: 12,
+    padding: 16,
     borderWidth: 1,
     borderRadius: 12,
-    fontSize: 16,
+    fontSize: typography.sizes.body,
+    fontFamily: typography.bodyFont,
     marginBottom: 15,
     minHeight: 80,
     textAlignVertical: 'top',
+    lineHeight: typography.lineHeight.relaxed,
   },
   goButton: {
     width: '100%',

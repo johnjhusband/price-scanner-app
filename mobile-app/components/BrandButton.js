@@ -4,11 +4,12 @@ import { brandColors, typography, buttonStyles } from '../theme/brandColors';
 
 export const BrandButton = ({ 
   title, 
-  variant = 'primary', 
+  variant = 'primary', // 'primary', 'secondary', 'accent'
   onPress, 
   disabled = false,
   style,
-  textStyle
+  textStyle,
+  isHighImpact = false // For CTA buttons like 'Go' or 'Scan Now'
 }) => {
   const getButtonStyle = () => {
     if (disabled) {
@@ -17,6 +18,8 @@ export const BrandButton = ({
     
     if (variant === 'primary') {
       return [styles.button, styles.primaryButton, style];
+    } else if (variant === 'accent' || isHighImpact) {
+      return [styles.button, styles.accentButton, style];
     } else {
       return [styles.button, styles.secondaryButton, style];
     }
@@ -29,6 +32,8 @@ export const BrandButton = ({
     
     if (variant === 'primary') {
       return [styles.buttonText, styles.primaryText, textStyle];
+    } else if (variant === 'accent' || isHighImpact) {
+      return [styles.buttonText, styles.accentText, textStyle];
     } else {
       return [styles.buttonText, styles.secondaryText, textStyle];
     }
@@ -41,7 +46,7 @@ export const BrandButton = ({
       disabled={disabled}
       activeOpacity={0.8}
     >
-      <Text style={getTextStyle()}>{title.toUpperCase()}</Text>
+      <Text style={getTextStyle()}>{title}</Text>
     </TouchableOpacity>
   );
 };
@@ -63,20 +68,26 @@ const styles = StyleSheet.create({
   secondaryButton: {
     backgroundColor: buttonStyles.secondary.backgroundColor,
   },
+  accentButton: {
+    backgroundColor: buttonStyles.accent.backgroundColor,
+  },
   disabledButton: {
     backgroundColor: brandColors.disabledText,
   },
   buttonText: {
-    fontFamily: typography.fontFamily,
-    fontWeight: typography.weights.semiBold,
-    fontSize: 14,
-    letterSpacing: 1,
+    fontFamily: typography.bodyFont,
+    fontWeight: buttonStyles.fontWeight || typography.weights.semiBold,
+    fontSize: 16,
+    letterSpacing: 0.5,
   },
   primaryText: {
     color: buttonStyles.primary.color,
   },
   secondaryText: {
     color: buttonStyles.secondary.color,
+  },
+  accentText: {
+    color: buttonStyles.accent.color,
   },
   disabledText: {
     color: brandColors.disabledText,
