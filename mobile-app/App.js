@@ -469,28 +469,43 @@ export default function App() {
     
     // Check authentication on web
     if (Platform.OS === 'web') {
+      console.log('[Auth Debug] Starting authentication check...');
+      console.log('[Auth Debug] Current URL:', window.location.href);
+      console.log('[Auth Debug] User Agent:', navigator.userAgent);
+      
       // Check if token in URL (OAuth callback)
       AuthService.parseTokenFromUrl().then(hasToken => {
+        console.log('[Auth Debug] Token in URL:', hasToken);
+        
         if (hasToken) {
           setIsAuthenticated(true);
           // Get user asynchronously
           AuthService.getUser().then(userData => {
+            console.log('[Auth Debug] User data loaded:', userData);
             setUser(userData);
             setAuthLoading(false);
           });
-          // Check existing session
+        } else {
+          // No token in URL, check existing session
           AuthService.isAuthenticated().then(isAuth => {
+            console.log('[Auth Debug] Existing session:', isAuth);
+            
             if (isAuth) {
               setIsAuthenticated(true);
               AuthService.getUser().then(userData => {
+                console.log('[Auth Debug] User data from session:', userData);
                 setUser(userData);
                 setAuthLoading(false);
               });
             } else {
+              console.log('[Auth Debug] No authentication found');
               setAuthLoading(false);
             }
           });
         }
+      }).catch(error => {
+        console.error('[Auth Debug] Error during authentication:', error);
+        setAuthLoading(false);
       });
     } else {
       // Mobile platforms - for now, no auth required

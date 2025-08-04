@@ -119,6 +119,12 @@ router.get('/google',
 router.get('/google/callback',
   passport.authenticate('google', { failureRedirect: '/' }),
   (req, res) => {
+    // Log request details for debugging
+    console.log('[OAuth Callback] User authenticated:', req.user.email);
+    console.log('[OAuth Callback] User agent:', req.get('user-agent'));
+    console.log('[OAuth Callback] Host:', req.get('host'));
+    console.log('[OAuth Callback] Referer:', req.get('referer'));
+    
     // Generate JWT token
     const token = jwt.sign(
       { 
@@ -147,7 +153,31 @@ router.get('/google/callback',
       frontendUrl = 'https://blue.flippi.ai';
     }
     
-    res.redirect(`${frontendUrl}?token=${token}`);
+    const redirectUrl = `${frontendUrl}?token=${token}`;
+    console.log('[OAuth Callback] Redirecting to:', redirectUrl);
+    
+    // Check if this is a mobile browser that might have issues with redirects
+    const userAgent = req.get('user-agent') || '';
+    const isMobileBrowser = /Mobile|Android|iPhone|iPad/i.test(userAgent);
+    
+    if (isMobileBrowser) {
+      // For mobile browsers, try using a meta refresh as fallback
+      console.log('[OAuth Callback] Mobile browser detected, using meta refresh fallback');
+      res.send(`
+        <html>
+          <head>
+            <meta http-equiv="refresh" content="0;url=${redirectUrl}">
+            <script>window.location.href = '${redirectUrl}';</script>
+          </head>
+          <body>
+            <p>Signing you in...</p>
+            <p>If you are not redirected, <a href="${redirectUrl}">click here</a>.</p>
+          </body>
+        </html>
+      `);
+    } else {
+      res.redirect(redirectUrl);
+    }
   }
 );
 
