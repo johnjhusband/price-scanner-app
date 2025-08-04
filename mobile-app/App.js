@@ -956,6 +956,14 @@ export default function App() {
                     </Text>
                   </View>
                 )}
+                
+                {analysisResult.environmental_tag && (
+                  <View style={[styles.environmentalContainer, { backgroundColor: '#E8F5E9' }]}>
+                    <Text style={[styles.environmentalTag, { color: '#2E7D32' }]}>
+                      {analysisResult.environmental_tag}
+                    </Text>
+                  </View>
+                )}
               </View>
             ) : (!isLoading && !analysisResult && image) ? (
               <Text style={{ color: brandColors.text, marginTop: 20 }}>No results yet. Press Go to analyze.</Text>
@@ -1284,6 +1292,20 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: brandColors.textSecondary,
     fontFamily: typography.fontFamily,
+    textAlign: 'center',
+  },
+  environmentalContainer: {
+    marginTop: 12,
+    marginHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  environmentalTag: {
+    fontSize: 14,
+    fontFamily: typography.fontFamily,
+    fontWeight: typography.weights.medium,
     textAlign: 'center',
   },
 });

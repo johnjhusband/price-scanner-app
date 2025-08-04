@@ -6,6 +6,7 @@ const path = require('path');
 const session = require('express-session');
 const passport = require('passport');
 const { initializeDatabase } = require('./database');
+const { getEnvironmentalTagByItemName } = require('./utils/environmentalImpact');
 
 // Load .env from shared location outside git directories
 const envPath = path.join(__dirname, '../../shared/.env');
@@ -322,6 +323,9 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
     }
 
     const processingTime = Date.now() - req.startTime;
+
+    // Add environmental impact tag based on item name
+    analysis.environmental_tag = getEnvironmentalTagByItemName(analysis.item_name);
 
     res.json({ 
       success: true, 
