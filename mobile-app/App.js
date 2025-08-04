@@ -994,7 +994,7 @@ export default function App() {
       {/* Legal Footer */}
       <View style={styles.legalFooter}>
         <Text style={[styles.legalText, { marginBottom: 4 }]}>
-          *ai makes mistakes. check important info
+          ai makes mistakes. check important info
         </Text>
         <Text style={styles.legalText}>
           Flippi™ and Flippi.ai™ are trademarks of Boca Belle. All rights reserved.
