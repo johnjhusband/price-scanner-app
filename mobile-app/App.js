@@ -898,7 +898,19 @@ export default function App() {
                           return componentColors.authentication.low;
                         })()
                       }]}>
-                        {analysisResult.authenticity_score}
+                        {(() => {
+                          const score = parseInt(analysisResult.authenticity_score);
+                          if (score >= 80) return '✓ ';  // Checkmark
+                          if (score >= 50) return '⚠ ';  // Warning
+                          return '✗ ';                   // X
+                        })()}
+                        {analysisResult.authenticity_score}%
+                        {(() => {
+                          const score = parseInt(analysisResult.authenticity_score);
+                          if (score >= 80) return ' (Verified)';
+                          if (score >= 50) return ' (Check carefully)';
+                          return ' (Low confidence)';
+                        })()}
                       </Text>
                     </View>
                   )}

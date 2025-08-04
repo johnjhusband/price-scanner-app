@@ -11,7 +11,7 @@ export const brandColors = {
   border: '#E5E7EB',            // Light gray borders
   
   // Accent Colors - Used sparingly
-  success: '#10B981',           // Green - only for success states
+  success: '#059669',           // Darker green - WCAG AA compliant (4.97:1)
   error: '#DC2626',             // Red - only for errors
   
   // Legacy mappings for compatibility
