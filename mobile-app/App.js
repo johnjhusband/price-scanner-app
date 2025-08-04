@@ -900,9 +900,9 @@ export default function App() {
                       }]}>
                         {(() => {
                           const score = parseInt(analysisResult.authenticity_score);
-                          if (score >= 80) return '✓ ';
-                          if (score >= 50) return '◐ ';
-                          return '○ ';
+                          if (score >= 80) return '✓ ';  // Checkmark for verified
+                          if (score >= 50) return '⚠ ';  // Warning for uncertain
+                          return '✗ ';                   // X for low
                         })()}
                         {analysisResult.authenticity_score}
                       </Text>
@@ -975,9 +975,9 @@ export default function App() {
                     }]}>
                       {analysisResult.trending_score}/100 {(() => {
                         const score = parseInt(analysisResult.trending_score);
-                        if (score >= 80) return '🔥';
-                        if (score >= 50) return '📈';
-                        return '📉';
+                        if (score >= 80) return '▲▲▲'; // Three up arrows for hot
+                        if (score >= 50) return '▲▲';   // Two up arrows for warm
+                        return '▲';                      // One up arrow for cool
                       })()} - {analysisResult.trending_label || 'N/A'}
                     </Text>
                   </View>

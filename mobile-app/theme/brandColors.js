@@ -10,6 +10,7 @@ export const brandColors = {
   offWhite: '#FBF8F2',          // Secondary background and form areas (kept)
   digitalLavender: '#B8A9E5',   // Gen Z engagement, social features
   livingCoral: '#FF6B6B',       // High-converting CTAs, urgency
+  ctaBlue: '#0066CC',          // Color blind friendly CTA alternative
   sageGreen: '#87A96B',         // Sustainability, environmental messaging
   
   // Legacy mappings for compatibility
@@ -114,9 +115,9 @@ export const buttonStyles = {
     hoverBackground: '#E7E3DE',
   },
   accent: {
-    backgroundColor: brandColors.livingCoral,
+    backgroundColor: '#0066CC',  // Color blind friendly blue
     color: '#FFFFFF', 
-    hoverBackground: '#FF5252', // Darker coral
+    hoverBackground: '#0052A3', // Darker blue
   },
   borderRadius: '8px',
   padding: {
@@ -151,8 +152,8 @@ export const componentColors = {
     cool: brandColors.digitalLavender,  // Niche items
   },
   authentication: {
-    verified: brandColors.sageGreen,
-    uncertain: brandColors.warmMocha,
-    low: brandColors.error,
+    verified: '#2563EB',         // Blue for verified (color blind safe)
+    uncertain: '#F59E0B',        // Amber for uncertain (distinguishable)
+    low: '#DC2626',              // Red for low (with pattern/icon support)
   },
 }; 
