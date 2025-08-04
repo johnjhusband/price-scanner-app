@@ -775,7 +775,17 @@ export default function App() {
       {Platform.OS === 'web' && user && (
         <View style={styles.userSection}>
           <View style={styles.userInfo}>
-            <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
+            <Text style={styles.userEmail} numberOfLines={1}>
+              {(() => {
+                if (user.name) return user.name;
+                if (user.email) {
+                  // Show first letter and dots: j****@gmail.com
+                  const [localPart, domain] = user.email.split('@');
+                  return `${localPart[0]}${'*'.repeat(4)}@${domain}`;
+                }
+                return 'Account';
+              })()}
+            </Text>
           </View>
           <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
             <Text style={styles.exitText}>Exit</Text>
