@@ -57,7 +57,7 @@ fi
 # Check and fix legal pages routing
 echo ""
 echo "Checking legal pages configuration..."
-if ! grep -q "location = /terms" /etc/nginx/sites-available/$DOMAIN 2>/dev/null; then
+if ! grep -q "location = /terms" /etc/nginx/sites-available/$DOMAIN 2>/dev/null || ! grep -q "location = /mission" /etc/nginx/sites-available/$DOMAIN 2>/dev/null; then
     echo "Legal pages routes missing! Adding them now..."
     
     # Create a backup
