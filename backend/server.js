@@ -158,7 +158,7 @@ AUTHENTICITY FIRST: Before anything else, carefully examine the image for signs 
 
 If you cannot clearly see authentication details or if ANYTHING looks off, score 30% or lower. When in doubt, score LOW. It's better to undervalue a real item than overvalue a fake.
 
-Analyze this item and provide: 1) What the item is, 2) Estimated resale value range based on CURRENT 2025 market conditions, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best STANDARD platform to list it on (eBay, Poshmark, Facebook Marketplace, Mercari, The RealReal, Vestiaire Collective, Grailed, Depop, Etsy, Rebag, or Shopify - choose based on current platform trends and item type), 5) Best LIVE selling platform (Whatnot, Poshmark Live, TikTok Shop, Instagram Live, Facebook Live, YouTube Live, Amazon Live, eBay Live, or Shopify Live - consider current platform popularity and audience demographics), 6) Condition assessment, 7) Authenticity likelihood (0-100% score - DEFAULT TO LOW for luxury brands unless you can clearly verify authentic details), 8) TRENDING SCORE: Calculate a score from 0-100 using this formula: (1.0 × Demand[0-25]) + (0.8 × Velocity[0-20]) + (0.6 × Platform[0-15]) + (0.5 × Recency[0-10]) + (0.5 × Scarcity[0-10]) - (1.0 × Penalty[0-20]). Demand=search volume/likes/wishlist adds. Velocity=sell-through rate. Platform=trending on multiple platforms. Recency=seasonal/viral trends. Scarcity=limited runs/rare items. Penalty=high supply/counterfeits/bad condition. BE DECISIVE - use extreme values when justified. Avoid clustering around 40-60. Consider inflation, current fashion trends, and platform algorithm changes. Respond with JSON: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"recommended_live_platform\": \"live platform\", \"condition\": \"condition\", \"authenticity_score\": \"X%\", \"trending_score_data\": {\"scores\": {\"demand\": X, \"velocity\": X, \"platform\": X, \"recency\": X, \"scarcity\": X, \"penalty\": X}, \"trending_score\": X, \"label\": \"(return ONLY the label text that matches the trending_score: if score 0-10 return 'Unsellable (By Most)', if 11-25 return 'Will Take Up Rent', if 26-40 return 'Niche Vibes Only', if 41-55 return 'Hit-or-Miss', if 56-70 return 'Moves When Ready', if 71-85 return 'Money Maker', if 86-95 return 'Hot Ticket', if 96-100 return 'Win!')\"}, \"market_insights\": \"current 2025 market trends\", \"selling_tips\": \"specific advice for 2025 marketplace\", \"brand_context\": \"brand status and demand in 2025\", \"seasonal_notes\": \"current seasonal considerations\"}`
+Analyze this item and provide: 1) What the item is, 2) Estimated resale value range based on CURRENT 2025 market conditions, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best STANDARD platform to list it on (eBay, Poshmark, Facebook Marketplace, Mercari, The RealReal, Vestiaire Collective, Grailed, Depop, Etsy, Rebag, or Shopify - choose based on current platform trends and item type), 5) Best LIVE selling platform (Whatnot, Poshmark Live, TikTok Shop, Instagram Live, Facebook Live, YouTube Live, Amazon Live, eBay Live, or Shopify Live - consider current platform popularity and audience demographics), 6) Condition assessment, 7) Authenticity likelihood (0-100 score - DEFAULT TO LOW for luxury brands unless you can clearly verify authentic details), 8) TRENDING SCORE: Calculate a score from 0-100 using this formula: (1.0 × Demand[0-25]) + (0.8 × Velocity[0-20]) + (0.6 × Platform[0-15]) + (0.5 × Recency[0-10]) + (0.5 × Scarcity[0-10]) - (1.0 × Penalty[0-20]). Demand=search volume/likes/wishlist adds. Velocity=sell-through rate. Platform=trending on multiple platforms. Recency=seasonal/viral trends. Scarcity=limited runs/rare items. Penalty=high supply/counterfeits/bad condition. BE DECISIVE - use extreme values when justified. Avoid clustering around 40-60. Consider inflation, current fashion trends, and platform algorithm changes. Respond with JSON: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"recommended_live_platform\": \"live platform\", \"condition\": \"condition\", \"authenticity_score\": X, \"trending_score_data\": {\"scores\": {\"demand\": X, \"velocity\": X, \"platform\": X, \"recency\": X, \"scarcity\": X, \"penalty\": X}, \"trending_score\": X, \"label\": \"(return ONLY the label text that matches the trending_score: if score 0-10 return 'Unsellable (By Most)', if 11-25 return 'Will Take Up Rent', if 26-40 return 'Niche Vibes Only', if 41-55 return 'Hit-or-Miss', if 56-70 return 'Moves When Ready', if 71-85 return 'Money Maker', if 86-95 return 'Hot Ticket', if 96-100 return 'Win!')\"}, \"market_insights\": \"current 2025 market trends\", \"selling_tips\": \"specific advice for 2025 marketplace\", \"brand_context\": \"brand status and demand in 2025\", \"seasonal_notes\": \"current seasonal considerations\"}`
             },
             {
               type: "image_url",
@@ -194,7 +194,7 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
         recommended_platform: "eBay",
         recommended_live_platform: "Facebook Live",
         condition: "Good",
-        authenticity_score: "50%",
+        authenticity_score: 50,
         trending_score_data: {
           scores: {
             demand: 12,
@@ -248,13 +248,13 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       // Cap at 20% for luxury brands with replica keywords
       const currentScore = parseInt(analysis.authenticity_score) || 50;
       if (currentScore > 20) {
-        analysis.authenticity_score = "20%";
+        analysis.authenticity_score = 20;
         analysis.authenticity_note = "Score capped due to replica indicators";
       }
     }
 
     // Adjust pricing for low authenticity items
-    const authenticityScore = parseInt(analysis.authenticity_score) || 50;
+    const authenticityScore = analysis.authenticity_score || 50;
     if (authenticityScore <= 30) {
       // Override pricing for likely replicas
       analysis.price_range = "$5-$50";
@@ -349,7 +349,7 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
     }
 
     // Ensure all new fields exist with defaults if missing
-    if (!analysis.authenticity_score) analysis.authenticity_score = "50%";
+    if (!analysis.authenticity_score) analysis.authenticity_score = 50;
     if (!analysis.market_insights) analysis.market_insights = "Market insights unavailable";
     if (!analysis.selling_tips) analysis.selling_tips = "Ensure good lighting and clear photos";
     if (!analysis.brand_context) analysis.brand_context = "Brand information unavailable";
@@ -407,6 +407,11 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
     // Simplify seasonal notes
     if (analysis.seasonal_notes && analysis.seasonal_notes.length > 60) {
       analysis.seasonal_notes = analysis.seasonal_notes.substring(0, 57) + '...';
+    }
+    
+    // Format authenticity score with % for frontend
+    if (analysis.authenticity_score !== undefined && typeof analysis.authenticity_score === 'number') {
+      analysis.authenticity_score = analysis.authenticity_score + '%';
     }
 
     res.json({ 

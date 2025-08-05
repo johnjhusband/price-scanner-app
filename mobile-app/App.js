@@ -918,7 +918,7 @@ export default function App() {
                           if (score >= 50) return '⚠ ';  // Warning
                           return '✗ ';                   // X
                         })()}
-                        {analysisResult.authenticity_score}%
+                        {analysisResult.authenticity_score}
                         {(() => {
                           const score = parseInt(analysisResult.authenticity_score);
                           if (score >= 80) return ' (Verified)';
