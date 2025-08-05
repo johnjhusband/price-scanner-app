@@ -185,7 +185,18 @@ For items scoring below 70:
 
 Round final score to nearest 5. This is signal-based guidance, not authentication.
 
-Analyze this item and provide: 1) What the item is, 2) Estimated resale value range based on CURRENT 2025 market conditions, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best STANDARD platform to list it on (eBay, Poshmark, Facebook Marketplace, Mercari, The RealReal, Vestiaire Collective, Grailed, Depop, Etsy, Rebag, or Shopify - choose based on current platform trends and item type), 5) Best LIVE selling platform (Whatnot, Poshmark Live, TikTok Shop, Instagram Live, Facebook Live, YouTube Live, Amazon Live, eBay Live, or Shopify Live - consider current platform popularity and audience demographics), 6) Condition assessment, 7) Real Score (0-100 confidence rating rounded to nearest 5), 8) TRENDING SCORE: Calculate a score from 0-100 using this formula: (1.0 × Demand[0-25]) + (0.8 × Velocity[0-20]) + (0.6 × Platform[0-15]) + (0.5 × Recency[0-10]) + (0.5 × Scarcity[0-10]) - (1.0 × Penalty[0-20]). Demand=search volume/likes/wishlist adds. Velocity=sell-through rate. Platform=trending on multiple platforms. Recency=seasonal/viral trends. Scarcity=limited runs/rare items. Penalty=high supply/counterfeits/bad condition. BE DECISIVE - use extreme values when justified. Avoid clustering around 40-60. Consider inflation, current fashion trends, and platform algorithm changes. Respond with JSON: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"recommended_live_platform\": \"live platform\", \"condition\": \"condition\", \"real_score\": X, \"trending_score_data\": {\"scores\": {\"demand\": X, \"velocity\": X, \"platform\": X, \"recency\": X, \"scarcity\": X, \"penalty\": X}, \"trending_score\": X, \"label\": \"(return ONLY the label text that matches the trending_score: if score 0-10 return 'Unsellable (By Most)', if 11-25 return 'Will Take Up Rent', if 26-40 return 'Niche Vibes Only', if 41-55 return 'Hit-or-Miss', if 56-70 return 'Moves When Ready', if 71-85 return 'Money Maker', if 86-95 return 'Hot Ticket', if 96-100 return 'Win!')\"}, \"market_insights\": \"current 2025 market trends\", \"selling_tips\": \"specific advice for 2025 marketplace\", \"brand_context\": \"brand status and demand in 2025\", \"seasonal_notes\": \"current seasonal considerations\"}`
+Analyze this item and provide: 1) What the item is, 2) Estimated resale value range based on CURRENT 2025 market conditions, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best STANDARD platform to list it on (eBay, Poshmark, Facebook Marketplace, Mercari, The RealReal, Vestiaire Collective, Grailed, Depop, Etsy, Rebag, or Shopify - choose based on current platform trends and item type), 5) Best LIVE selling platform (Whatnot, Poshmark Live, TikTok Shop, Instagram Live, Facebook Live, YouTube Live, Amazon Live, eBay Live, or Shopify Live - consider current platform popularity and audience demographics), 6) Condition assessment, 7) Real Score (0-100 confidence rating rounded to nearest 5), 8) TRENDING SCORE: Calculate a score from 0-100 using this formula: (1.0 × Demand[0-25]) + (0.8 × Velocity[0-20]) + (0.6 × Platform[0-15]) + (0.5 × Recency[0-10]) + (0.5 × Scarcity[0-10]) - (1.0 × Penalty[0-20]). 
+
+CRITICAL TRENDING ADJUSTMENTS for 2025:
+- Marc Jacobs Sherpa/Teddy Totes: Demand=25, Velocity=20, Scarcity=10 (viral sold-out item)
+- GANNI bags: Demand=22, Velocity=18
+- Staud structured bags: Demand=20, Velocity=17
+- Pink/Lilac colorways: +5 to demand
+- "Sherpa", "Teddy", "Fuzzy" textures: +10 to demand
+- "Sold out" items: Velocity=18-20
+- TikTok viral items: Platform=15
+
+BE DECISIVE - use extreme values when justified. Items selling for 2x+ retail should score 85+. Avoid clustering around 40-60. Consider inflation, current fashion trends, and platform algorithm changes. Respond with JSON: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"recommended_live_platform\": \"live platform\", \"condition\": \"condition\", \"real_score\": X, \"trending_score_data\": {\"scores\": {\"demand\": X, \"velocity\": X, \"platform\": X, \"recency\": X, \"scarcity\": X, \"penalty\": X}, \"trending_score\": X, \"label\": \"(return ONLY the label text that matches the trending_score: if score 0-10 return 'Unsellable (By Most)', if 11-25 return 'Will Take Up Rent', if 26-40 return 'Niche Vibes Only', if 41-55 return 'Hit-or-Miss', if 56-70 return 'Moves When Ready', if 71-85 return 'Money Maker', if 86-95 return 'Hot Ticket', if 96-100 return 'Win!')\"}, \"market_insights\": \"current 2025 market trends\", \"selling_tips\": \"specific advice for 2025 marketplace\", \"brand_context\": \"brand status and demand in 2025\", \"seasonal_notes\": \"current seasonal considerations\"}`
             },
             {
               type: "image_url",
@@ -490,6 +501,38 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
     }
     
     if (sourceFlags.length > 0) {
+      analysis.source_flags = sourceFlags.join(", ");
+    }
+    
+    // Trending item boost for viral/sold-out items
+    const trendingItems = [
+      { pattern: /marc\s*jacobs.*sherpa|marc\s*jacobs.*teddy/i, boost: 30, note: "Marc Jacobs Sherpa/Teddy viral item" },
+      { pattern: /ganni.*bou|ganni.*bag/i, boost: 25, note: "GANNI bag high demand" },
+      { pattern: /staud.*moon|staud.*bag/i, boost: 20, note: "Staud structured bag trending" },
+      { pattern: /stanley.*valentine|stanley.*target/i, boost: 35, note: "Stanley limited edition" },
+      { pattern: /jellycat.*coffee|jellycat.*large/i, boost: 30, note: "Jellycat viral plush" }
+    ];
+    
+    let trendingBoost = 0;
+    let trendingNote = null;
+    
+    for (const trend of trendingItems) {
+      if (trend.pattern.test(itemNameLower) || trend.pattern.test(descriptionLower)) {
+        if (trend.boost > trendingBoost) {
+          trendingBoost = trend.boost;
+          trendingNote = trend.note;
+        }
+      }
+    }
+    
+    // Apply trending boost
+    if (trendingBoost > 0) {
+      realScore = Math.min(100, realScore + trendingBoost);
+      if (sourceFlags.indexOf(trendingNote) === -1) {
+        sourceFlags.push(trendingNote);
+      }
+      
+      // Update source flags
       analysis.source_flags = sourceFlags.join(", ");
     }
 
