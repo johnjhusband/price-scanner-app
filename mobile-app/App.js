@@ -900,31 +900,14 @@ export default function App() {
                     </Text>
                   </View>
                   
-                  {analysisResult.authenticity_score && (
+                  {(analysisResult.real_score !== undefined || analysisResult.authenticity_score !== undefined) && (
                     <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Authenticity:</Text>
+                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Real Score:</Text>
                       <Text style={[styles.resultValue, { 
                         fontSize: 20,
-                        color: (() => {
-                          const score = parseInt(analysisResult.authenticity_score);
-                          if (score >= 80) return componentColors.authentication.verified;
-                          if (score >= 50) return componentColors.authentication.uncertain;
-                          return componentColors.authentication.low;
-                        })()
+                        color: brandColors.text
                       }]}>
-                        {(() => {
-                          const score = parseInt(analysisResult.authenticity_score);
-                          if (score >= 80) return '✓ ';  // Checkmark
-                          if (score >= 50) return '⚠ ';  // Warning
-                          return '✗ ';                   // X
-                        })()}
-                        {analysisResult.authenticity_score}
-                        {(() => {
-                          const score = parseInt(analysisResult.authenticity_score);
-                          if (score >= 80) return ' (Verified)';
-                          if (score >= 50) return ' (Check carefully)';
-                          return ' (Low confidence)';
-                        })()}
+                        {analysisResult.real_score || analysisResult.authenticity_score}
                       </Text>
                     </View>
                   )}
@@ -936,12 +919,12 @@ export default function App() {
                         {(() => {
                           const platforms = [];
                           if (analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown') {
-                            platforms.push(analysisResult.recommended_live_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_live_platform);
+                            platforms.push(analysisResult.recommended_live_platform === 'uknown' ? 'Personal Use' : analysisResult.recommended_live_platform);
                           }
                           if (analysisResult.recommended_platform && analysisResult.recommended_platform !== 'uknown') {
-                            platforms.push(analysisResult.recommended_platform === 'uknown' ? 'Unknown' : analysisResult.recommended_platform);
+                            platforms.push(analysisResult.recommended_platform === 'uknown' ? 'Craft Fair' : analysisResult.recommended_platform);
                           }
-                          return platforms.join(', ') || 'Unknown';
+                          return platforms.join(', ') || 'Craft Fair, Personal Use';
                         })()}
                       </Text>
                     </View>
@@ -981,7 +964,7 @@ export default function App() {
                         })()
                       }]}>
                         <Text style={styles.styleTierBadgeText}>
-                          {parseInt(analysisResult.authenticity_score) <= 30 ? 'Entry / Possibly Fake' : analysisResult.style_tier}
+                          {analysisResult.style_tier}
                         </Text>
                       </View>
                     </View>

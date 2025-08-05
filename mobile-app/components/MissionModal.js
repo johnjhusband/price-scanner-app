@@ -51,6 +51,19 @@ const MissionModal = ({ visible, onClose }) => {
           </View>
           
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Flippi's Authentication Philosophy</Text>
+            <Text style={styles.paragraph}>
+              Flippi uses computer vision to give you a Real Score — a percentage-based confidence rating powered by AI.
+            </Text>
+            <Text style={styles.paragraph}>
+              We analyze visual cues from a single photo, including logo placement, stitching patterns, shapes, and known design elements. It's not authentication — it's signal-based guidance. A fast, lightweight tool built to support smarter sourcing decisions, especially in the real-world chaos of thrifting, reselling, or flipping.
+            </Text>
+            <Text style={[styles.paragraph, styles.italic]}>
+              We believe in buying authentic and building trust. This feature is here to help — not to certify. Use it as a first impression, not a final verdict.
+            </Text>
+          </View>
+          
+          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Accessibility Commitment</Text>
             <Text style={styles.paragraph}>
               Flippi is designed to be accessible to everyone. Our interface uses high contrast colors 
