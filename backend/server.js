@@ -267,6 +267,29 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
     const itemNameLower = (analysis.item_name || '').toLowerCase();
     const descriptionLower = (userPrompt || '').toLowerCase();
     
+    // Brand, source, and serial number detection
+    const allBrands = [
+      ...luxuryBrands,
+      'ModCloth', 'Anthropologie', 'Zara', 'H&M', 'Nike', 'Adidas', 
+      'Lululemon', 'Free People', 'Urban Outfitters', 'Gap', 'Banana Republic',
+      'J.Crew', 'Kate Spade', 'Michael Kors', 'Tory Burch', 'Marc Jacobs'
+    ];
+    
+    const trustedSources = [
+      'gucci.com', 'nordstrom', 'neiman marcus', 'the realreal', 'saks', 
+      'anthropologie', 'bergdorf', 'barneys', 'net-a-porter', 'ssense',
+      'farfetch', 'mytheresa', 'matches fashion', 'selfridges', 'harrods'
+    ];
+    
+    const replicaSources = [
+      'dhgate', 'aliexpress', 'wish', 'temu', 'taobao', 'shein',
+      'ioffer', '1688', 'alibaba', 'wholesale'
+    ];
+    
+    // Suspicious TLDs and patterns for adaptive learning
+    const suspiciousTLDs = ['.vip', '.ru', '.shop', '.top', '.tk', '.ml'];
+    const replicaTriggerWords = ['lux', 'rep', 'cheap', 'aaacopy', 'mirror', '1:1'];
+    
     // Check if item is a luxury brand
     const isLuxuryBrand = luxuryBrands.some(brand => 
       itemNameLower.includes(brand.toLowerCase()) || 
@@ -378,12 +401,96 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       }
     }
     
+    // Brand and source detection logic
+    let sourceFlags = [];
+    let forceReplicaPlatforms = false;
+    
+    // Check for brand confirmation
+    const brandConfirmed = allBrands.some(brand => 
+      descriptionLower.includes(brand.toLowerCase())
+    );
+    
+    if (brandConfirmed) {
+      realScore += 10;
+      sourceFlags.push("Brand Confirmed by User");
+    }
+    
+    // Check for trusted sources
+    const hasTrustedSource = trustedSources.some(source => 
+      descriptionLower.includes(source.toLowerCase())
+    );
+    
+    if (hasTrustedSource) {
+      realScore += 10;
+      sourceFlags.push("Trusted Source");
+    }
+    
+    // Check for replica sources
+    const hasReplicaSource = replicaSources.some(source => 
+      descriptionLower.includes(source.toLowerCase())
+    );
+    
+    if (hasReplicaSource) {
+      realScore = Math.min(realScore, 40);
+      sourceFlags.push("Replica Source Risk");
+      forceReplicaPlatforms = true;
+    }
+    
+    // Adaptive replica detection for unknown sources
+    if (!hasReplicaSource && !hasTrustedSource) {
+      // Extract potential domain names
+      const domainMatch = descriptionLower.match(/(?:from |at |on )?([a-z0-9-]+\.[a-z.]{2,})/);
+      if (domainMatch) {
+        const domain = domainMatch[1];
+        
+        // Check for suspicious TLDs
+        const hasSuspiciousTLD = suspiciousTLDs.some(tld => domain.endsWith(tld));
+        
+        // Check for replica trigger words in domain
+        const hasReplicaTrigger = replicaTriggerWords.some(trigger => 
+          domain.includes(trigger)
+        );
+        
+        if (hasSuspiciousTLD || hasReplicaTrigger) {
+          realScore = Math.min(realScore, 40);
+          sourceFlags.push("Potential Replica Source");
+          forceReplicaPlatforms = true;
+          
+          // Log for future review (in production, this would go to a database)
+          console.log('Flagged potential replica source:', {
+            user_input: descriptionLower,
+            flagged_domain: domain,
+            reason: hasSuspiciousTLD ? 'suspicious TLD' : 'replica trigger word'
+          });
+        }
+      }
+    }
+    
+    // Check for serial numbers
+    const serialPattern = /\b[A-Z]{1,3}\d{4,}\b|\b\d{4,}[A-Z]{1,3}\b/;
+    const hasSerialNumber = serialPattern.test(userPrompt);
+    
+    if (hasSerialNumber) {
+      sourceFlags.push("Serial Number Provided");
+      // No score change for serial numbers - future feature
+    }
+    
+    // Cap total boost from brand + source
+    if (brandConfirmed && hasTrustedSource) {
+      // Max boost is 15, not 20
+      realScore = Math.min(realScore, analysis.real_score + 15);
+    }
+    
     // Ensure score stays within bounds
     realScore = Math.max(5, Math.min(100, realScore));
     analysis.real_score = realScore;
     
     if (penalties.length > 0) {
       analysis.score_penalties = penalties.join(", ");
+    }
+    
+    if (sourceFlags.length > 0) {
+      analysis.source_flags = sourceFlags.join(", ");
     }
 
     // Adjust for low real scores
@@ -414,6 +521,12 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       if (authPlatforms.includes(analysis.recommended_live_platform)) {
         analysis.recommended_live_platform = "Facebook Live";
       }
+    }
+    
+    // Force replica platforms if source detected
+    if (forceReplicaPlatforms) {
+      analysis.recommended_platform = "Craft Fair";
+      analysis.recommended_live_platform = "Personal Use";
     }
 
     // Calculate buy price (resale price / 5)

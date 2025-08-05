@@ -800,7 +800,7 @@ export default function App() {
                 borderColor: brandColors.border || '#ddd',
                 marginBottom: 20
               }]}
-              placeholder="Describe your item (optional)"
+              placeholder="Brand, source, or serial number?"
               placeholderTextColor={brandColors.textSecondary}
               value={productDescription}
               onChangeText={setProductDescription}
@@ -848,7 +848,7 @@ export default function App() {
                       marginBottom: 20,
                       marginTop: 20
                     }]}
-                    placeholder="Describe your item (optional)"
+                    placeholder="Brand, source, or serial number?"
                     placeholderTextColor={brandColors.textSecondary}
                     value={productDescription}
                     onChangeText={setProductDescription}
