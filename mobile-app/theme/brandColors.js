@@ -2,26 +2,28 @@
 // Focus on clarity, trust, and ease of use
 
 export const brandColors = {
-  // Core Colors - Minimal palette
-  primary: '#1B5E5F',           // Deep Teal - trust & sophistication
+  // Core Colors - Warmer palette with better contrast
+  primary: '#2D5F5F',           // Warmer teal - trust & sophistication
   text: '#1A1A1A',              // Near black - high readability
-  textSecondary: '#6B7280',     // Medium gray - secondary info
-  background: '#FAFAFA',        // Clean white background
+  textSecondary: '#4B5563',     // Darker gray - better contrast
+  background: '#FAF9F7',        // Warm white background (slight cream)
   surface: '#FFFFFF',           // Pure white for cards
-  border: '#E5E7EB',            // Light gray borders
+  border: '#D1D5DB',            // Darker gray borders for visibility
   
   // Accent Colors - Used sparingly
   success: '#059669',           // Darker green - WCAG AA compliant (4.97:1)
   error: '#DC2626',             // Red - only for errors
+  accent: '#D97853',            // Warm terracotta - for special CTAs and highlights
+  accentLight: '#E8A584',       // Lighter warm accent
   
   // Legacy mappings for compatibility
-  slateTeal: '#6B7280',         // Maps to textSecondary
-  deepTeal: '#1B5E5F',          // Maps to primary
-  softCream: '#FAFAFA',         // Maps to background
+  slateTeal: '#4B5563',         // Maps to textSecondary
+  deepTeal: '#2D5F5F',          // Maps to primary
+  softCream: '#FAF9F7',         // Maps to background
   offWhite: '#FFFFFF',          // Maps to surface
-  matteGold: '#1B5E5F',         // Maps to primary (for CTAs)
+  matteGold: '#D97853',         // Maps to accent (for CTAs)
   mutedGraphite: '#1A1A1A',     // Maps to text
-  softTaupeBeige: '#E5E7EB',    // Maps to border
+  softTaupeBeige: '#D1D5DB',    // Maps to border
   
   // Additional legacy mappings
   soil: '#1A1A1A',              // Maps to text
@@ -103,20 +105,20 @@ export const typography = {
 // Button styling constants - Clean Design
 export const buttonStyles = {
   primary: {
-    backgroundColor: '#1B5E5F',  // Deep teal
+    backgroundColor: '#2D5F5F',  // Warmer teal
     color: '#FFFFFF',
-    hoverBackground: '#134E4F',  // Darker teal
+    hoverBackground: '#234A4A',  // Darker on hover
   },
   secondary: {
-    backgroundColor: '#FFFFFF',  // White
-    color: '#1B5E5F',           // Deep teal text
-    hoverBackground: '#F3F4F6', // Light gray
-    borderColor: '#E5E7EB',     // Light border
+    backgroundColor: '#F3F4F6',  // Light gray background for visibility
+    color: '#2D5F5F',           // Warmer teal text
+    hoverBackground: '#E5E7EB', // Darker gray on hover
+    borderColor: '#D1D5DB',     // More visible border
   },
   accent: {
-    backgroundColor: '#1B5E5F',  // Same as primary for consistency
+    backgroundColor: '#D97853',  // Warm terracotta accent
     color: '#FFFFFF', 
-    hoverBackground: '#134E4F',
+    hoverBackground: '#C56642',  // Darker terracotta on hover
   },
   borderRadius: '8px',
   padding: {
