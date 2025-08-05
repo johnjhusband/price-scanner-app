@@ -155,14 +155,26 @@ REAL SCORE ASSESSMENT: Analyze visual signals to provide a confidence rating. Fo
 - Design elements and proportions
 - Material appearance
 - Overall craftsmanship
+- Interior tags and labels
 
 Adjust for real-world conditions:
 - Poor lighting: +10-15 points if key features visible
 - Cluttered background: +5-10 points if item is distinguishable
 - Off-angle photos: +5-10 points if brand markers present
-- If logo detected AND pattern present: +15 points
 
-Round final score to nearest 5 for consistency. This is signal-based guidance, not authentication.
+REPLICA PENALTIES (CRITICAL):
+- Excessive logo repetition/density: -20 to -30 points
+- Non-core brand colorways (bright/unusual): -15 to -25 points
+- No visible interior tags: CAP at 50 max
+- Perfect logos with poor construction: -30 points
+- DHGate/AliExpress style presentation: -40 points
+
+For items scoring below 70:
+- Do NOT suggest authentication platforms (The RealReal, Vestiaire)
+- Use "Craft Fair" or "Personal Use" only
+- Provide "Clean with care" as selling tip
+
+Round final score to nearest 5. This is signal-based guidance, not authentication.
 
 Analyze this item and provide: 1) What the item is, 2) Estimated resale value range based on CURRENT 2025 market conditions, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best STANDARD platform to list it on (eBay, Poshmark, Facebook Marketplace, Mercari, The RealReal, Vestiaire Collective, Grailed, Depop, Etsy, Rebag, or Shopify - choose based on current platform trends and item type), 5) Best LIVE selling platform (Whatnot, Poshmark Live, TikTok Shop, Instagram Live, Facebook Live, YouTube Live, Amazon Live, eBay Live, or Shopify Live - consider current platform popularity and audience demographics), 6) Condition assessment, 7) Real Score (0-100 confidence rating rounded to nearest 5), 8) TRENDING SCORE: Calculate a score from 0-100 using this formula: (1.0 × Demand[0-25]) + (0.8 × Velocity[0-20]) + (0.6 × Platform[0-15]) + (0.5 × Recency[0-10]) + (0.5 × Scarcity[0-10]) - (1.0 × Penalty[0-20]). Demand=search volume/likes/wishlist adds. Velocity=sell-through rate. Platform=trending on multiple platforms. Recency=seasonal/viral trends. Scarcity=limited runs/rare items. Penalty=high supply/counterfeits/bad condition. BE DECISIVE - use extreme values when justified. Avoid clustering around 40-60. Consider inflation, current fashion trends, and platform algorithm changes. Respond with JSON: {\"item_name\": \"name\", \"price_range\": \"$X-$Y\", \"style_tier\": \"Entry|Designer|Luxury\", \"recommended_platform\": \"platform\", \"recommended_live_platform\": \"live platform\", \"condition\": \"condition\", \"real_score\": X, \"trending_score_data\": {\"scores\": {\"demand\": X, \"velocity\": X, \"platform\": X, \"recency\": X, \"scarcity\": X, \"penalty\": X}, \"trending_score\": X, \"label\": \"(return ONLY the label text that matches the trending_score: if score 0-10 return 'Unsellable (By Most)', if 11-25 return 'Will Take Up Rent', if 26-40 return 'Niche Vibes Only', if 41-55 return 'Hit-or-Miss', if 56-70 return 'Moves When Ready', if 71-85 return 'Money Maker', if 86-95 return 'Hot Ticket', if 96-100 return 'Win!')\"}, \"market_insights\": \"current 2025 market trends\", \"selling_tips\": \"specific advice for 2025 marketplace\", \"brand_context\": \"brand status and demand in 2025\", \"seasonal_notes\": \"current seasonal considerations\"}`
             },
@@ -257,18 +269,82 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       descriptionLower.includes(indicator)
     );
 
-    // Adjust authenticity score if needed
-    if (isLuxuryBrand && hasReplicaIndicators) {
-      // Cap at 20% for luxury brands with replica keywords
-      const currentScore = parseInt(analysis.real_score) || 50;
-      if (currentScore > 20) {
-        analysis.real_score = 20;
-        analysis.authenticity_note = "Score capped due to replica indicators";
+    // Apply replica penalties and adjustments
+    let realScore = parseInt(analysis.real_score) || 50;
+    let penalties = [];
+    
+    if (isLuxuryBrand) {
+      // Check for replica indicators in description
+      if (hasReplicaIndicators) {
+        realScore = Math.min(realScore, 20);
+        penalties.push("replica keywords detected");
       }
+      
+      // Check for excessive logo patterns (common in replicas)
+      const logoPatterns = ['gg', 'lv', 'cc', 'ff', 'dg'];
+      const hasExcessiveLogos = logoPatterns.some(pattern => {
+        const regex = new RegExp(pattern, 'gi');
+        const matches = (itemNameLower + ' ' + descriptionLower).match(regex);
+        return matches && matches.length > 3;
+      });
+      
+      // Special check for Gucci GG pattern density
+      if (itemNameLower.includes('gucci') && (itemNameLower.includes('gg') || descriptionLower.includes('gg'))) {
+        if (descriptionLower.includes('all over') || descriptionLower.includes('repeat') || 
+            descriptionLower.includes('pattern') || descriptionLower.includes('monogram')) {
+          realScore -= 15;
+          penalties.push("dense GG pattern");
+        }
+      }
+      
+      if (hasExcessiveLogos) {
+        realScore -= 25;
+        penalties.push("excessive logo repetition");
+      }
+      
+      // Check for unusual colorways
+      const unusualColors = ['neon', 'fluorescent', 'electric', 'rainbow', 'multicolor', 'bright orange', 'bright blue'];
+      const hasUnusualColors = unusualColors.some(color => 
+        itemNameLower.includes(color) || descriptionLower.includes(color)
+      );
+      
+      if (hasUnusualColors) {
+        realScore -= 20;
+        penalties.push("non-core brand colorway");
+      }
+      
+      // Check for missing interior tags mention
+      const tagKeywords = ['tag', 'label', 'interior', 'inside', 'serial', 'date code', 'authenticity card'];
+      const mentionsInteriorDetails = tagKeywords.some(keyword => 
+        descriptionLower.includes(keyword)
+      );
+      
+      if (!mentionsInteriorDetails && realScore > 50) {
+        realScore = Math.min(realScore, 50);
+        penalties.push("no interior tag verification");
+      }
+      
+      // Apply DHGate/AliExpress style penalty
+      const suspiciousSources = ['dhgate', 'aliexpress', 'wish', 'shein', 'wholesale'];
+      const fromSuspiciousSource = suspiciousSources.some(source => 
+        descriptionLower.includes(source)
+      );
+      
+      if (fromSuspiciousSource) {
+        realScore -= 40;
+        penalties.push("suspicious source mentioned");
+      }
+    }
+    
+    // Ensure score stays within bounds
+    realScore = Math.max(5, Math.min(100, realScore));
+    analysis.real_score = realScore;
+    
+    if (penalties.length > 0) {
+      analysis.score_penalties = penalties.join(", ");
     }
 
     // Adjust for low real scores
-    const realScore = analysis.real_score || 50;
     if (realScore <= 30) {
       // Override pricing for low confidence items
       analysis.price_range = "$5-$50";
@@ -286,6 +362,16 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       // Platform-safe fallback suggestions
       analysis.recommended_platform = "Craft Fair";
       analysis.recommended_live_platform = "Personal Use";
+    } else if (realScore < 70 && isLuxuryBrand) {
+      // For luxury items with medium confidence (31-69), avoid authentication platforms
+      const authPlatforms = ['The RealReal', 'Vestiaire Collective', 'Rebag', 'Fashionphile'];
+      
+      if (authPlatforms.includes(analysis.recommended_platform)) {
+        analysis.recommended_platform = "eBay";
+      }
+      if (authPlatforms.includes(analysis.recommended_live_platform)) {
+        analysis.recommended_live_platform = "Facebook Live";
+      }
     }
 
     // Calculate buy price (resale price / 5)
