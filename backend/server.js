@@ -293,6 +293,60 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
         analysis.resale_average = `$${Math.round(avgPrice)}`;
       }
     }
+    
+    // HOLD_LIST - Legacy brands that retain value regardless of sellability
+    const HOLD_LIST = [
+      'Hermès',
+      'Chanel',
+      'Louis Vuitton',
+      'Cartier',
+      'Gucci',
+      'Fendi',
+      'Goyard',
+      'Céline (Phoebe Philo era)',
+      'Chloe Paddington (niche)',
+      'Vintage Coach (Made in USA)'
+    ];
+    
+    // Adjust prices based on sellability score (trending_score), unless it's a HOLD_LIST brand
+    if (analysis.trending_score !== undefined && analysis.price_range && authenticityScore > 30) {
+      const sellabilityScore = parseInt(analysis.trending_score) || 50;
+      const itemName = (analysis.item_name || '').toLowerCase();
+      
+      // Check if item is from a HOLD_LIST brand
+      const isHoldListBrand = HOLD_LIST.some(brand => 
+        itemName.includes(brand.toLowerCase())
+      );
+      
+      if (!isHoldListBrand && sellabilityScore < 70) {
+        // Apply sellability adjustment for non-HOLD_LIST items
+        const adjustmentFactor = sellabilityScore / 100;
+        
+        // Re-extract and adjust prices
+        const priceMatch = analysis.price_range.match(/\$?([\d,]+)[-\s]+\$?([\d,]+)/);
+        if (priceMatch) {
+          const lowPrice = parseInt(priceMatch[1].replace(/,/g, ''));
+          const highPrice = parseInt(priceMatch[2].replace(/,/g, ''));
+          
+          // Apply adjustment and round up
+          const adjustedLowPrice = Math.ceil(lowPrice * adjustmentFactor);
+          const adjustedHighPrice = Math.ceil(highPrice * adjustmentFactor);
+          const adjustedAvgPrice = (adjustedLowPrice + adjustedHighPrice) / 2;
+          const adjustedBuyPrice = Math.ceil(adjustedAvgPrice / 5);
+          
+          // Update analysis with adjusted values
+          analysis.price_range = `$${adjustedLowPrice}-$${adjustedHighPrice}`;
+          analysis.buy_price = `$${adjustedBuyPrice}`;
+          analysis.resale_average = `$${Math.round(adjustedAvgPrice)}`;
+          analysis.price_adjusted = true;
+          analysis.adjustment_reason = `Price adjusted ${Math.round((1 - adjustmentFactor) * 100)}% due to sellability score`;
+        }
+      } else if (isHoldListBrand) {
+        // Add legacy brand indicator
+        analysis.legacy_brand = true;
+        analysis.hold_value = true;
+      }
+    }
 
     // Ensure all new fields exist with defaults if missing
     if (!analysis.authenticity_score) analysis.authenticity_score = "50%";

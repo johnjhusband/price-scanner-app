@@ -1019,6 +1019,20 @@ export default function App() {
                   </View>
                 )}
                 
+                {analysisResult.legacy_brand && (
+                  <View style={[styles.legacyBrandBadge, { backgroundColor: brandColors.matteGold }]}>
+                    <Text style={[styles.legacyBrandText, { color: '#FFFFFF' }]}>
+                      ⭐ Legacy Brand — Premium Hold
+                    </Text>
+                  </View>
+                )}
+                
+                {analysisResult.price_adjusted && (
+                  <Text style={[styles.priceAdjustmentNote, { color: brandColors.textSecondary }]}>
+                    {analysisResult.adjustment_reason}
+                  </Text>
+                )}
+                
                 {analysisResult.market_insights && (
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Market:</Text>
@@ -1232,6 +1246,25 @@ const styles = StyleSheet.create({
   suggestedPriceValue: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  legacyBrandBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  legacyBrandText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  priceAdjustmentNote: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 5,
+    marginBottom: 10,
   },
   styleTierBadge: {
     paddingHorizontal: 12,
