@@ -163,16 +163,25 @@ Adjust for real-world conditions:
 - Off-angle photos: +5-10 points if brand markers present
 
 REPLICA PENALTIES (CRITICAL):
-- Excessive logo repetition/density: -20 to -30 points
-- Non-core brand colorways (bright/unusual): -15 to -25 points
+- Excessive logo repetition/density: -30 to -40 points
+- Non-core brand colorways (bright/unusual): -20 to -30 points
 - No visible interior tags: CAP at 50 max
-- Perfect logos with poor construction: -30 points
+- Loud/statement design (hype mimicking): -20 points
+- Perfect logos with generic construction: -30 points
 - DHGate/AliExpress style presentation: -40 points
+- Obscured/missing collar tags: -15 points
+- Aggressive pattern density: -20 points
+
+Base scoring approach:
+- Start at 50-60 for single photo luxury items
+- Add points ONLY with clear authentication signals
+- Subtract heavily for replica indicators
+- Default to 40 or below when multiple flags present
 
 For items scoring below 70:
 - Do NOT suggest authentication platforms (The RealReal, Vestiaire)
 - Use "Craft Fair" or "Personal Use" only
-- Provide "Clean with care" as selling tip
+- Provide "Clean with care. Style it your way." as selling tip
 
 Round final score to nearest 5. This is signal-based guidance, not authentication.
 
@@ -274,6 +283,12 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
     let penalties = [];
     
     if (isLuxuryBrand) {
+      // Start luxury items at 50-60 for single photo unless clear authentication signals
+      if (realScore > 60 && !descriptionLower.includes('authenticated') && 
+          !descriptionLower.includes('receipt') && !descriptionLower.includes('serial')) {
+        realScore = 60;
+        penalties.push("single photo luxury item");
+      }
       // Check for replica indicators in description
       if (hasReplicaIndicators) {
         realScore = Math.min(realScore, 20);
@@ -298,19 +313,30 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       }
       
       if (hasExcessiveLogos) {
-        realScore -= 25;
+        realScore -= 35;
         penalties.push("excessive logo repetition");
       }
       
       // Check for unusual colorways
-      const unusualColors = ['neon', 'fluorescent', 'electric', 'rainbow', 'multicolor', 'bright orange', 'bright blue'];
+      const unusualColors = ['neon', 'fluorescent', 'electric', 'rainbow', 'multicolor', 'bright orange', 'bright blue', 'orange blue', 'blue orange'];
       const hasUnusualColors = unusualColors.some(color => 
         itemNameLower.includes(color) || descriptionLower.includes(color)
       );
       
       if (hasUnusualColors) {
-        realScore -= 20;
+        realScore -= 25;
         penalties.push("non-core brand colorway");
+      }
+      
+      // Check for loud/statement design (hype mimicking)
+      const hypeIndicators = ['statement', 'loud', 'bold', 'vibrant', 'eye-catching', 'flashy'];
+      const hasHypeDesign = hypeIndicators.some(indicator => 
+        itemNameLower.includes(indicator) || descriptionLower.includes(indicator)
+      );
+      
+      if (hasHypeDesign) {
+        realScore -= 20;
+        penalties.push("loud/statement design");
       }
       
       // Check for missing interior tags mention
@@ -325,7 +351,7 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       }
       
       // Apply DHGate/AliExpress style penalty
-      const suspiciousSources = ['dhgate', 'aliexpress', 'wish', 'shein', 'wholesale'];
+      const suspiciousSources = ['dhgate', 'aliexpress', 'wish', 'shein', 'wholesale', 'replica', 'dupe'];
       const fromSuspiciousSource = suspiciousSources.some(source => 
         descriptionLower.includes(source)
       );
@@ -333,6 +359,22 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       if (fromSuspiciousSource) {
         realScore -= 40;
         penalties.push("suspicious source mentioned");
+      }
+      
+      // Check for obscured/missing collar tags
+      const collarTagMissing = descriptionLower.includes('collar') && 
+        (descriptionLower.includes('obscured') || descriptionLower.includes('missing') || 
+         descriptionLower.includes('no tag') || descriptionLower.includes('no label'));
+      
+      if (collarTagMissing) {
+        realScore -= 15;
+        penalties.push("collar tag obscured/missing");
+      }
+      
+      // Apply aggressive pattern density penalty
+      if (descriptionLower.includes('aggressive') && descriptionLower.includes('pattern')) {
+        realScore -= 20;
+        penalties.push("aggressive pattern density");
       }
     }
     
@@ -354,7 +396,7 @@ Analyze this item and provide: 1) What the item is, 2) Estimated resale value ra
       analysis.market_insights = "Limited market data available.";
       
       // Replace selling tips with platform-safe advice
-      analysis.selling_tips = "Clean with care.";
+      analysis.selling_tips = "Clean with care. Style it your way.";
       
       // Adjust style tier
       analysis.style_tier = "Entry";
