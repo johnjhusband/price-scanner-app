@@ -943,7 +943,7 @@ export default function App() {
                 {/* PRIMARY INFO - Always visible */}
                 <View style={[styles.primaryInfoSection, { backgroundColor: '#F9FAFB', borderRadius: 12, padding: 16, marginVertical: 10 }]}>
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Estimated Value:</Text>
+                    <Text style={[styles.resultLabel]}>Estimated Value:</Text>
                     <Text style={[styles.resultValue, styles.priceValue, styles.numericalEmphasis]}>
                       {analysisResult.price_range}
                     </Text>
@@ -951,8 +951,8 @@ export default function App() {
                   
                   {(analysisResult.real_score !== undefined || analysisResult.authenticity_score !== undefined) && (
                     <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Real Score:</Text>
-                      <Text style={[styles.resultValue, styles.numericalEmphasis, { fontSize: 20 }]}>
+                      <Text style={[styles.resultLabel]}>Real Score:</Text>
+                      <Text style={[styles.resultValue, styles.realScoreEmphasis, { fontSize: 20 }]}>
                         {analysisResult.real_score || analysisResult.authenticity_score}
                       </Text>
                     </View>
@@ -960,7 +960,7 @@ export default function App() {
                   
                   {analysisResult.recommended_platform && (
                     <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Best Platforms:</Text>
+                      <Text style={[styles.resultLabel]}>Best Platforms:</Text>
                       <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 18 }]}>
                         {(() => {
                           const platforms = [];
@@ -1004,12 +1004,25 @@ export default function App() {
                       <View style={[styles.styleTierBadge, {
                         backgroundColor: (() => {
                           const tier = analysisResult.style_tier.toLowerCase();
-                          if (tier === 'luxury') return componentColors.scores.high;
-                          if (tier === 'designer') return componentColors.scores.medium;
-                          return brandColors.slateBlueGray;
+                          if (tier === 'luxury') return '#F3F4F6'; // Light gray
+                          if (tier === 'designer') return '#F9FAFB'; // Very light gray
+                          return '#FFFFFF'; // White
+                        })(),
+                        borderColor: (() => {
+                          const tier = analysisResult.style_tier.toLowerCase();
+                          if (tier === 'luxury') return '#1F2937'; // Dark gray border
+                          if (tier === 'designer') return '#6B7280'; // Medium gray border
+                          return '#D1D5DB'; // Light gray border
                         })()
                       }]}>
-                        <Text style={styles.styleTierBadgeText}>
+                        <Text style={[styles.styleTierBadgeText, {
+                          color: (() => {
+                            const tier = analysisResult.style_tier.toLowerCase();
+                            if (tier === 'luxury') return '#1F2937'; // Dark gray text
+                            if (tier === 'designer') return '#4B5563'; // Medium gray text
+                            return '#6B7280'; // Light gray text
+                          })()
+                        }]}>
                           {analysisResult.style_tier}
                         </Text>
                       </View>
@@ -1027,7 +1040,7 @@ export default function App() {
                         if (score >= 80) return '▲▲▲'; // Three up arrows for hot
                         if (score >= 50) return '▲▲';   // Two up arrows for warm
                         return '▲';                      // One up arrow for cool
-                      })()} - {analysisResult.trending_label || 'N/A'}
+                      })()} <Text style={styles.trendingLabel}>- {analysisResult.trending_label || 'N/A'}</Text>
                     </Text>
                   </View>
                 )}
@@ -1148,7 +1161,7 @@ const styles = StyleSheet.create({
   environmentText: {
     color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: 'bold',
+    fontWeight: typography.weights.bold,
     letterSpacing: 1,
   },
   content: {
@@ -1230,7 +1243,7 @@ const styles = StyleSheet.create({
   },
   resultTitle: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: typography.weights.bold,
     marginBottom: 15,
     textAlign: 'center',
   },
@@ -1239,18 +1252,23 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   resultLabel: {
-    fontSize: isMobile ? 13 : 14,
+    fontSize: 16,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.regular,
+    color: brandColors.textSecondary,
     marginBottom: 4,
   },
   resultValue: {
-    fontSize: isMobile ? 14 : 16,
-    fontWeight: '500',
+    fontSize: 18,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.medium,
+    color: brandColors.text,
     flexShrink: 1,
     flexWrap: 'wrap',
   },
   priceValue: {
     fontSize: 20,
-    fontWeight: 'bold',
+    fontWeight: typography.weights.bold,
   },
   suggestedPriceContainer: {
     padding: 15,
@@ -1268,7 +1286,7 @@ const styles = StyleSheet.create({
   },
   suggestedPriceValue: {
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: typography.weights.bold,
   },
   legacyBrandBadge: {
     paddingHorizontal: 16,
@@ -1280,7 +1298,7 @@ const styles = StyleSheet.create({
   },
   legacyBrandText: {
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: typography.weights.semiBold,
   },
   priceAdjustmentNote: {
     fontSize: 12,
@@ -1290,15 +1308,19 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   styleTierBadge: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 6,
+    borderRadius: 20, // More rounded for badge look
     alignSelf: 'flex-start',
+    borderWidth: 1.5,
+    borderColor: 'transparent',
   },
   styleTierBadgeText: {
     color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+    fontSize: 11,
+    fontWeight: typography.weights.medium,
+    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
   warningText: {
     fontSize: 12,
@@ -1435,7 +1457,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: brandColors.textSecondary,
     fontFamily: typography.fontFamily,
-    fontWeight: '500',
+    fontWeight: typography.weights.medium,
     textDecorationLine: 'underline',
   },
   footerSeparator: {
@@ -1476,7 +1498,17 @@ const styles = StyleSheet.create({
   },
   numericalEmphasis: {
     color: '#F59E0B', // Amber for numerical values
-    fontWeight: '600',
+    fontWeight: typography.weights.semiBold,
     fontSize: 24,
+  },
+  realScoreEmphasis: {
+    color: '#10B981', // Emerald green for Real Score
+    fontWeight: typography.weights.semiBold,
+    fontSize: 24,
+  },
+  trendingLabel: {
+    color: brandColors.textSecondary,
+    fontStyle: 'italic',
+    fontSize: 14,
   },
 });
