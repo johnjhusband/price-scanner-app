@@ -813,15 +813,23 @@ export default function App() {
         </View>
       )}
       
-      <View style={styles.content}>
+      <View style={[styles.content, isAuthenticated && styles.contentLoggedIn]}>
         
-        <FlippiLogo size="large" responsive={true} />
-        <Text style={[styles.title, { color: brandColors.text }]}>
-          Never Over Pay
-        </Text>
-        <Text style={styles.subtitle}>
-          Know the price. Own the profit.
-        </Text>
+        <FlippiLogo 
+          size={isAuthenticated ? "small" : "large"} 
+          responsive={true} 
+          style={isAuthenticated ? { marginBottom: 20 } : {}}
+        />
+        {!isAuthenticated && (
+          <>
+            <Text style={[styles.title, { color: brandColors.text }]}>
+              Never Over Pay
+            </Text>
+            <Text style={styles.subtitle}>
+              Know the price. Own the profit.
+            </Text>
+          </>
+        )}
         
         <View style={[
           styles.uploadContainer,
@@ -1172,6 +1180,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: isMobile ? 10 : 40, // Responsive padding based on screen width
     paddingTop: isMobile ? 80 : 60, // More top padding on mobile to avoid user section
+  },
+  contentLoggedIn: {
+    paddingTop: isMobile ? 20 : 30, // Much less top padding when logged in
   },
   title: {
     fontSize: isMobile ? 24 : 28,
