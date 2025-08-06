@@ -15,6 +15,11 @@ import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
 import { appleStyles } from './theme/appleStyles';
 
+// Import web styles for web platform
+if (Platform.OS === 'web') {
+  require('./web-styles.css');
+}
+
 // Responsive design breakpoints
 const { width: windowWidth } = Dimensions.get('window');
 const isMobile = windowWidth < 768;
