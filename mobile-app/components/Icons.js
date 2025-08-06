@@ -1,27 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-
-// Platform-specific SVG handling
-let Svg, Path, Rect, Circle;
-if (typeof window !== 'undefined' && window.document) {
-  // Web platform - use inline SVG
-  const WebSvg = ({ children, ...props }) => <svg {...props}>{children}</svg>;
-  const WebPath = (props) => <path {...props} />;
-  const WebRect = (props) => <rect {...props} />;
-  const WebCircle = (props) => <circle {...props} />;
-  
-  Svg = WebSvg;
-  Path = WebPath;
-  Rect = WebRect;
-  Circle = WebCircle;
-} else {
-  // Native platform - use react-native-svg
-  const svgComponents = require('react-native-svg');
-  Svg = svgComponents.Svg;
-  Path = svgComponents.Path;
-  Rect = svgComponents.Rect;
-  Circle = svgComponents.Circle;
-}
+import Svg, { Path, Rect, Circle } from 'react-native-svg';
 
 // Camera icon - thin stroke style
 export const CameraIcon = ({ size = 20, color = '#000000', strokeWidth = 1.5 }) => (
