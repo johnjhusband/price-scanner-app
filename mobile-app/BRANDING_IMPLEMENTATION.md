@@ -2,7 +2,7 @@
 
 ## 🎨 Overview
 
-This document outlines the complete Flippi.ai branding implementation for the price scanner app, including all brand colors, typography, components, and styling guidelines.
+This document outlines the complete Flippi.ai branding implementation for the price scanner app, following Apple's Human Interface Guidelines with a minimal, accessible design system.
 
 ## 📁 File Structure
 
@@ -33,26 +33,35 @@ mobile-app/
 5. **Poppins Font**: Typography system with all weights
 6. **Button Styling**: Branded buttons with hover states
 
-### 🎨 Brand Color System
+### 🎨 Brand Color System (Updated)
 
 ```javascript
-// Primary Brand Colors
-charcoalGray: '#23292C'      // Logo "flippi", headlines, buttons
-lightGray: '#BFC2C4'         // ".ai", subtitles, icon dot
-slateBlueGray: '#4A5A5F'     // App background, icon fill
+// Core UI Colors - WCAG AAA Compliant
+primary: '#000000'           // Pure black - All buttons and primary actions
+text: '#000000'              // Pure black - Maximum readability
+textSecondary: '#3C3C43'     // Apple system gray - Secondary text
+background: '#FFFFFF'        // Pure white - Clean canvas
+surface: '#F2F2F7'           // Apple surface gray - Cards and panels
+border: '#C7C7CC'            // Apple separator - Visible to all
 
-// Accent & Background Colors
-coolWhite: '#F5F6F7'         // Backgrounds, cards, CTA areas
-actionBlue: '#3478F6'        // CTA buttons
-actionBlueHover: '#2C68D0'   // Button hover state
-successGreen: '#3C8C4E'      // Resale value success highlight
+// Special Use Colors (Limited Application)
+success: '#10B981'           // Emerald green - Real Score only
+accent: '#F59E0B'            // Amber - Numerical values only (prices, scores)
+error: '#FF453A'             // Apple red - Error states
+
+// Button System
+- All buttons: Black (#000000) background with white text
+- Google Sign-In: White background with slate border
+- No amber or blue buttons anymore
 ```
 
 ### 🔤 Typography System
 
-- **Font Family**: Poppins (Google Fonts)
-- **Weights**: 300, 400, 500, 600, 700
-- **Sizes**: Custom scale from 12px to 36px
+- **Font Family**: San Francisco / System Fonts
+  - `-apple-system, BlinkMacSystemFont, system-ui, Roboto, Arial, sans-serif`
+- **Weights**: All weights from ultraLight (100) to black (900)
+- **Sizes**: ADA compliant scale from 14px minimum to 48px
+- **Line Heights**: 1.1 to 1.8 for optimal readability
 
 ## 🚀 Setup Instructions
 
@@ -99,12 +108,18 @@ import { brandColors, typography, componentColors } from './theme/brandColors';
 // Use in styles
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: brandColors.coolWhite,
+    backgroundColor: brandColors.background,
   },
   title: {
-    fontFamily: typography.fontFamily,
+    fontFamily: typography.bodyFont,
     fontWeight: typography.weights.semiBold,
-    color: brandColors.charcoalGray,
+    color: brandColors.text,
+  },
+  numericalValue: {
+    color: '#F59E0B',  // Amber for numbers only
+  },
+  realScore: {
+    color: '#10B981',  // Emerald green for Real Score
   },
 });
 ```
@@ -117,17 +132,21 @@ const styles = StyleSheet.create({
 - **Centered alignment**: Always center the logo component
 
 ### Button Guidelines
-- **Primary buttons**: Action blue (#3478F6) with white text
-- **Secondary buttons**: Light gray (#BFC2C4) with charcoal text
-- **Hover states**: Darker variants with subtle animations
-- **Minimum size**: 48px height, 120px width
-- **Border radius**: 8px for modern appearance
+- **Primary buttons**: Black (#000000) with white text
+- **Secondary buttons**: Black (#000000) with white text
+- **Outline buttons**: Transparent with black border
+- **Google Sign-In**: White background, slate border, black text
+- **Hover states**: Subtle darkening (#111827) for black buttons
+- **Minimum size**: 52px height, 140px width
+- **Border radius**: 14px for Apple-style appearance
 
 ### Color Usage
-- **Backgrounds**: Cool white (#F5F6F7) for main areas
-- **Text**: Charcoal gray (#23292C) for primary text
-- **Accents**: Action blue (#3478F6) for CTAs
-- **Success**: Green (#3C8C4E) for positive indicators
+- **Backgrounds**: Pure white (#FFFFFF) for main areas
+- **Text**: Pure black (#000000) for primary text
+- **Numerical Values**: Amber (#F59E0B) for prices and scores
+- **Real Score**: Emerald green (#10B981) to differentiate from prices
+- **Style Tier Badge**: Light gray backgrounds with matching borders
+- **Trending Labels**: Gray italic text for movement indicators
 
 ## 🌐 Web-Specific Features
 
@@ -234,15 +253,49 @@ export const typography = {
 
 ## 🎯 Brand Compliance
 
-This implementation follows the Flippi.ai brand guide specifications:
-- ✅ Exact color codes used
-- ✅ Proper typography hierarchy
-- ✅ Consistent component styling
-- ✅ Responsive design principles
-- ✅ Accessibility considerations
+This implementation follows Apple Human Interface Guidelines:
+- ✅ WCAG AAA compliant color contrasts
+- ✅ Minimal black and white design
+- ✅ Amber reserved for numerical values only
+- ✅ No "Halloween" color combinations
+- ✅ Consistent typography using system fonts
+- ✅ Larger touch targets (52px minimum)
+- ✅ Clean icon system (Feather icons)
 
 ---
 
-**Last Updated**: Implementation completed
-**Version**: 1.0
-**Status**: Ready for testing and deployment 
+## 📱 Icon System
+
+### Lucide Icons License
+- **License Type**: ISC License (MIT-compatible)
+- **Attribution**: Not required but appreciated
+- **Commercial Use**: Allowed
+- **Implementation**: Using @expo/vector-icons for compatibility
+
+### Icon Usage
+- **Feather Icons**: Primary icon set
+- **Size**: 20-24px for UI elements
+- **Color**: Match text color or use brandColors
+- **Examples**:
+  - Thumbs up/down for feedback
+  - Camera, upload, clipboard for actions
+  - Dollar sign, search, trending for value props
+
+## 🎨 Recent UI/UX Updates
+
+### Issue #100 Implementation
+1. **Real Score Color**: Changed from amber to emerald green (#10B981)
+2. **Trending Labels**: Added italic gray styling for "Moves When Ready" text
+3. **Style Tier Badge**: Redesigned with light backgrounds and borders
+4. **Font Standardization**: All weights use typography constants
+
+### Button Hierarchy (Bug #97)
+1. **Take Photo** - Primary black button (most important)
+2. **Upload Photo** - Outline button (secondary)
+3. **Paste Image** - Ghost button (tertiary)
+
+---
+
+**Last Updated**: UI/UX improvements from issue #100
+**Version**: 2.0
+**Status**: Live on blue.flippi.ai 
