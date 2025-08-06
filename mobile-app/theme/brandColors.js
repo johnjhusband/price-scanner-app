@@ -1,50 +1,50 @@
-// Flippi.ai Brand Color System - Clean & Simple
-// Focus on clarity, trust, and ease of use
+// Flippi.ai Brand Color System - Sophisticated & Inclusive
+// Designed for women entrepreneurs who value authenticity and luxury
 
 export const brandColors = {
-  // Core Colors - Minimal palette
-  primary: '#1B5E5F',           // Deep Teal - trust & sophistication
+  // Core Colors - Natural luxury palette
+  primary: '#5B4B8A',           // Deep amethyst - creativity & luxury
   text: '#1A1A1A',              // Near black - high readability
   textSecondary: '#6B7280',     // Medium gray - secondary info
-  background: '#FAFAFA',        // Clean white background
+  background: '#FAF9F7',        // Warm white with hint of cream
   surface: '#FFFFFF',           // Pure white for cards
-  border: '#E5E7EB',            // Light gray borders
+  border: '#E8E5E0',            // Warm gray borders
   
   // Accent Colors - Used sparingly
-  success: '#059669',           // Darker green - WCAG AA compliant (4.97:1)
+  success: '#7B8E77',           // Sage green - growth & authenticity
   error: '#DC2626',             // Red - only for errors
   
   // Legacy mappings for compatibility
   slateTeal: '#6B7280',         // Maps to textSecondary
-  deepTeal: '#1B5E5F',          // Maps to primary
-  softCream: '#FAFAFA',         // Maps to background
+  deepTeal: '#5B4B8A',          // Maps to primary (amethyst)
+  softCream: '#FAF9F7',         // Maps to background
   offWhite: '#FFFFFF',          // Maps to surface
-  matteGold: '#1B5E5F',         // Maps to primary (for CTAs)
+  matteGold: '#B5985A',         // Soft gold - premium feel
   mutedGraphite: '#1A1A1A',     // Maps to text
-  softTaupeBeige: '#E5E7EB',    // Maps to border
+  softTaupeBeige: '#E8E5E0',    // Maps to border
   
   // Additional legacy mappings
   soil: '#1A1A1A',              // Maps to text
-  forest: '#1B5E5F',            // Maps to primary
-  leaf: '#10B981',              // Maps to success
-  honey: '#F59E0B',             // Remove - too many colors
+  forest: '#7B8E77',            // Maps to sage green
+  leaf: '#7B8E77',              // Maps to success
+  honey: '#B5985A',             // Soft gold accent
   sunset: '#DC2626',            // Maps to error
-  ocean: '#1B5E5F',             // Maps to primary
-  cream: '#FAFAFA',             // Maps to background
-  sand: '#FAFAFA',              // Maps to background
+  ocean: '#5B4B8A',             // Maps to primary
+  cream: '#FAF9F7',             // Maps to background
+  sand: '#FAF9F7',              // Maps to background
   stone: '#6B7280',             // Maps to textSecondary
   
   // Legacy color mappings (for compatibility)
   charcoalGray: '#1A1A1A',      // Maps to text
-  lightGray: '#E5E7EB',         // Maps to border
-  slateBlueGray: '#1B5E5F',     // Maps to primary
-  actionPurple: '#1B5E5F',      // Maps to primary for CTA buttons
-  actionPurpleHover: '#134E4F', // Darker teal for hover state
-  successGreen: '#10B981',      // Maps to success
+  lightGray: '#E8E5E0',         // Maps to border
+  slateBlueGray: '#5B4B8A',     // Maps to primary
+  actionPurple: '#5B4B8A',      // Maps to primary for CTA buttons
+  actionPurpleHover: '#4A3C70', // Darker amethyst for hover state
+  successGreen: '#7B8E77',      // Maps to success
   
   // Semantic colors
-  warning: '#F59E0B',           // Warning states only
-  info: '#3B82F6',              // Info states only
+  warning: '#B5985A',           // Soft gold for warnings
+  info: '#8B7FB5',              // Light amethyst for info
   
   // Text Colors
   primaryText: '#1A1A1A',       // Main text
@@ -52,13 +52,13 @@ export const brandColors = {
   disabledText: '#D1D5DB',      // Inactive states
   
   // Favicon Background
-  faviconBg: '#1B5E5F',         // Favicon background color (primary)
+  faviconBg: '#5B4B8A',         // Favicon background color (primary)
   
   // Keep these for backward compatibility
-  electric: '#1B5E5F',          // Maps to primary
+  electric: '#5B4B8A',          // Maps to primary
   
   // Focus states
-  borderFocus: '#1B5E5F',       // Primary focus
+  borderFocus: '#5B4B8A',       // Primary focus
   
   // Shadows
   shadowLight: 'rgba(0, 0, 0, 0.05)',
@@ -100,23 +100,23 @@ export const typography = {
   }
 };
 
-// Button styling constants - Clean Design
+// Button styling constants - Sophisticated Design
 export const buttonStyles = {
   primary: {
-    backgroundColor: '#1B5E5F',  // Deep teal
+    backgroundColor: '#5B4B8A',  // Deep amethyst
     color: '#FFFFFF',
-    hoverBackground: '#134E4F',  // Darker teal
+    hoverBackground: '#4A3C70',  // Darker amethyst
   },
   secondary: {
-    backgroundColor: '#FFFFFF',  // White
-    color: '#1B5E5F',           // Deep teal text
-    hoverBackground: '#F3F4F6', // Light gray
-    borderColor: '#E5E7EB',     // Light border
+    backgroundColor: '#FAF9F7',  // Warm white
+    color: '#5B4B8A',           // Amethyst text
+    hoverBackground: '#F0EDE8', // Slightly darker cream
+    borderColor: '#E8E5E0',     // Warm border
   },
   accent: {
-    backgroundColor: '#1B5E5F',  // Same as primary for consistency
+    backgroundColor: '#B5985A',  // Soft gold for special CTAs
     color: '#FFFFFF', 
-    hoverBackground: '#134E4F',
+    hoverBackground: '#9B8149',
   },
   borderRadius: '8px',
   padding: {
@@ -128,26 +128,26 @@ export const buttonStyles = {
   fontWeight: '600',
 };
 
-// Component-specific colors - Clean & Simple
+// Component-specific colors - Sophisticated & Warm
 export const componentColors = {
   uploadArea: {
-    border: '#E5E7EB',
+    border: '#E8E5E0',
     background: '#FFFFFF',
-    hoverBorder: '#1B5E5F',
-    hoverBackground: '#F9FAFB',
+    hoverBorder: '#5B4B8A',
+    hoverBackground: '#FAF9F7',
   },
   results: {
     background: '#FFFFFF',
-    border: '#E5E7EB',
+    border: '#E8E5E0',
   },
   scores: {
-    high: '#10B981',             // Green for good
-    medium: '#F59E0B',           // Orange for medium
+    high: '#7B8E77',             // Sage green for good
+    medium: '#B5985A',           // Soft gold for medium
     low: '#6B7280',              // Gray for low
   },
   authentication: {
-    verified: '#10B981',         // Green checkmark
-    uncertain: '#F59E0B',        // Orange warning
+    verified: '#7B8E77',         // Sage green checkmark
+    uncertain: '#B5985A',        // Gold warning
     low: '#DC2626',              // Red alert
   },
 }; 
