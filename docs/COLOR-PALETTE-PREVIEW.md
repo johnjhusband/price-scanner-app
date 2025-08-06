@@ -1,41 +1,41 @@
-# Flippi.ai Color Palette - Timeless & Sustainable
+# Flippi.ai Color Palette - Modern & Sophisticated
 
-## Color System for Daily Use Without Fatigue
+## Contemporary Navy and Steel Gray with Strategic Pops
 
 ### Primary Colors
-- **Mocha Mousse** (#8B7355) - Primary brand color (Pantone 2025)
-  - Represents: Sophistication, warmth, stability
-  - Psychology: Neutral earth tone that never goes out of style
+- **Deep Charcoal Navy** (#1F2937) - Primary brand color
+  - Represents: Sophistication, authority, modernity
+  - Psychology: Current interior design trend - deep, rich, professional
   - Usage: Primary buttons, headers, brand elements
 
-- **Soft Blue** (#6B8CAE) - Accent color
-  - Represents: Trust, calm, professionalism
-  - Psychology: Gentle blue that's gender-neutral and calming
-  - Usage: Special CTAs, highlights, links
+- **Amber** (#F59E0B) - Strategic pop of color
+  - Represents: Energy, warmth, attention
+  - Psychology: Catches the eye without overwhelming
+  - Usage: Special CTAs like "Go", important highlights
 
-- **Sage Green** (#7B8E77) - Success/Growth color
-  - Represents: Natural, authentic, sustainable
-  - Psychology: Calming green that doesn't fatigue
+- **Emerald Green** (#10B981) - Success/Growth color
+  - Represents: Success, verification, positive outcomes
+  - Psychology: Vibrant but professional
   - Usage: Success states, positive feedback, "verified" indicators
 
 ### Neutral Palette
-- **Soft Black** (#2C2825) - Primary text (easier on eyes than pure black)
-- **Warm Gray-Brown** (#6B625A) - Secondary text
-- **Cream White** (#FAF8F5) - Background with subtle warmth
+- **Almost Black** (#111827) - Primary text (crisp and modern)
+- **Steel Gray** (#6B7280) - Secondary text
+- **Cool White** (#FAFBFC) - Background with hint of blue
 - **Pure White** (#FFFFFF) - Cards and surfaces
-- **Warm Beige** (#E8E2DB) - Borders
+- **Light Steel Gray** (#E5E7EB) - Borders
 
-### Button Hierarchy with Timeless Colors
-1. **Primary Actions** (Mocha Mousse #8B7355)
+### Button Hierarchy - Modern Approach
+1. **Primary Actions** (Deep Navy #1F2937)
    - "Take Photo"
    - Main brand actions
 
-2. **Special CTAs** (Soft Blue #6B8CAE)
+2. **Special CTAs** (Amber Pop #F59E0B)
    - "Go" analyze button
    - "Capture Photo" in camera
-   - Trust-building actions
+   - High-impact actions that need attention
 
-3. **Secondary Actions** (Cream White #FAF8F5)
+3. **Secondary Actions** (Light Steel Gray #F3F4F6)
    - "Upload Photo"
    - "Scan Another Item"
    - Supporting actions
@@ -45,22 +45,22 @@
    - "Cancel"
    - De-emphasized actions
 
-### Why This Palette is Sustainable for Daily Use
+### Why This Palette Works
 
-1. **Mocha Mousse**: 2025's color of the year - warm, grounding, never tiring
-2. **Soft Blues**: Proven to be calming without being masculine
-3. **Earth Tones**: Natural colors our eyes are designed to see all day
-4. **Warm Neutrals**: Cream undertones reduce eye strain
-5. **No Bright Colors**: Nothing that will fatigue or go out of style
+1. **Deep Navy**: On-trend with current interior design (walls, cabinets)
+2. **Steel Grays**: Modern, clean, never goes out of style
+3. **Amber Pop**: Provides energy without being overwhelming
+4. **Cool Tones**: Professional and contemporary
+5. **Strategic Color**: Pop of amber only where it matters
 
-### Research-Based Benefits
-- Earth tones and warm neutrals are proven to reduce eye fatigue
-- Soft blues create trust without gender bias
-- These colors work across all industries and won't date
-- Perfect for interfaces used daily by entrepreneurs
+### Design Inspiration
+- Current interior design: Deep navy walls with steel gray accents
+- Modern tech companies: Navy/gray with strategic color pops
+- Gender-neutral while still sophisticated
+- Works for both light and dark mode considerations
 
 ### Comparison
-- **Before**: Purple/Gold (attention-grabbing but fatiguing)
-- **Current**: Mocha/Blue/Sage (timeless and sustainable)
+- **Previous attempts**: Earth tones (felt dated), Purple/gold (too much)
+- **Current**: Navy/Steel/Amber (modern and sustainable)
 
-This palette is designed to look fresh in 2025 and still be relevant in 2035.
+This palette reflects current design trends while remaining professional and suitable for daily use by entrepreneurs.

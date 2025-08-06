@@ -1,52 +1,52 @@
-// Flippi.ai Brand Color System - Timeless & Sustainable
-// Designed for daily use without fatigue, appealing to modern entrepreneurs
+// Flippi.ai Brand Color System - Modern & Sophisticated
+// Deep navy and steel gray with strategic color pops - current interior design trends
 
 export const brandColors = {
-  // Core Colors - Warm neutral base inspired by 2025 trends
-  primary: '#8B7355',           // Mocha mousse - Pantone 2025, sophisticated warmth
-  text: '#2C2825',              // Soft black - easier on eyes than pure black
-  textSecondary: '#6B625A',     // Warm gray-brown - gentle contrast
-  background: '#FAF8F5',        // Cream white - subtle warmth
+  // Core Colors - Contemporary navy and steel palette
+  primary: '#1F2937',           // Deep charcoal navy - sophisticated, modern
+  text: '#111827',              // Almost black - crisp and clean
+  textSecondary: '#6B7280',     // Steel gray - neutral contrast
+  background: '#FAFBFC',        // Cool white with hint of blue
   surface: '#FFFFFF',           // Pure white for cards
-  border: '#E8E2DB',            // Warm beige borders
+  border: '#E5E7EB',            // Light steel gray borders
   
-  // Accent Colors - Used sparingly
-  success: '#7B8E77',           // Sage green - calming, natural
-  error: '#C26B5C',             // Terracotta red - softer than pure red
-  accent: '#6B8CAE',            // Soft blue - trust without masculinity
-  accentLight: '#A3B8CC',       // Light blue-gray
+  // Accent Colors - Strategic pops of color
+  success: '#10B981',           // Emerald green - vibrant but professional
+  error: '#EF4444',             // True red - clear communication
+  accent: '#F59E0B',            // Amber - warm pop of color for CTAs
+  accentLight: '#FCD34D',       // Light amber
   
   // Legacy mappings for compatibility
-  slateTeal: '#6B625A',         // Maps to textSecondary
-  deepTeal: '#8B7355',          // Maps to primary (mocha)
-  softCream: '#FAF8F5',         // Maps to background
+  slateTeal: '#6B7280',         // Maps to textSecondary
+  deepTeal: '#1F2937',          // Maps to primary (navy)
+  softCream: '#FAFBFC',         // Maps to background
   offWhite: '#FFFFFF',          // Maps to surface
-  matteGold: '#8B7355',         // Maps to primary for warmth
-  mutedGraphite: '#2C2825',     // Maps to text
-  softTaupeBeige: '#E8E2DB',    // Maps to border
+  matteGold: '#F59E0B',         // Maps to accent (amber)
+  mutedGraphite: '#111827',     // Maps to text
+  softTaupeBeige: '#E5E7EB',    // Maps to border
   
   // Additional legacy mappings
-  soil: '#2C2825',              // Maps to text
-  forest: '#7B8E77',            // Maps to sage green
-  leaf: '#7B8E77',              // Maps to success
-  honey: '#D4A574',             // Warm honey tone
-  sunset: '#C26B5C',            // Maps to error
-  ocean: '#6B8CAE',             // Maps to accent
-  cream: '#FAF8F5',             // Maps to background
-  sand: '#FAF8F5',              // Maps to background
-  stone: '#6B625A',             // Maps to textSecondary
+  soil: '#111827',              // Maps to text
+  forest: '#10B981',            // Maps to emerald green
+  leaf: '#10B981',              // Maps to success
+  honey: '#F59E0B',             // Maps to amber accent
+  sunset: '#EF4444',            // Maps to error
+  ocean: '#1F2937',             // Maps to primary
+  cream: '#FAFBFC',             // Maps to background
+  sand: '#FAFBFC',              // Maps to background
+  stone: '#6B7280',             // Maps to textSecondary
   
   // Legacy color mappings (for compatibility)
-  charcoalGray: '#2C2825',      // Maps to text
-  lightGray: '#E8E2DB',         // Maps to border
-  slateBlueGray: '#8B7355',     // Maps to primary
-  actionPurple: '#8B7355',      // Maps to primary for CTA buttons
-  actionPurpleHover: '#6F5D47', // Darker mocha for hover state
-  successGreen: '#7B8E77',      // Maps to success
+  charcoalGray: '#111827',      // Maps to text
+  lightGray: '#E5E7EB',         // Maps to border
+  slateBlueGray: '#1F2937',     // Maps to primary
+  actionPurple: '#1F2937',      // Maps to primary for CTA buttons
+  actionPurpleHover: '#111827', // Darker navy for hover state
+  successGreen: '#10B981',      // Maps to success
   
   // Semantic colors
-  warning: '#D4A574',           // Warm honey for warnings
-  info: '#6B8CAE',              // Soft blue for info
+  warning: '#F59E0B',           // Amber for warnings
+  info: '#3B82F6',              // Bright blue for info
   
   // Text Colors
   primaryText: '#1A1A1A',       // Main text
@@ -54,13 +54,13 @@ export const brandColors = {
   disabledText: '#D1D5DB',      // Inactive states
   
   // Favicon Background
-  faviconBg: '#8B7355',         // Favicon background color (primary)
+  faviconBg: '#1F2937',         // Favicon background color (primary)
   
   // Keep these for backward compatibility
-  electric: '#8B7355',          // Maps to primary
+  electric: '#1F2937',          // Maps to primary
   
   // Focus states
-  borderFocus: '#8B7355',       // Primary focus
+  borderFocus: '#1F2937',       // Primary focus
   
   // Shadows
   shadowLight: 'rgba(0, 0, 0, 0.05)',
@@ -102,23 +102,23 @@ export const typography = {
   }
 };
 
-// Button styling constants - Timeless Design
+// Button styling constants - Modern Design
 export const buttonStyles = {
   primary: {
-    backgroundColor: '#8B7355',  // Mocha mousse
+    backgroundColor: '#1F2937',  // Deep charcoal navy
     color: '#FFFFFF',
-    hoverBackground: '#6F5D47',  // Darker mocha
+    hoverBackground: '#111827',  // Darker navy
   },
   secondary: {
-    backgroundColor: '#FAF8F5',  // Cream white
-    color: '#8B7355',           // Mocha text
-    hoverBackground: '#F0EBE5', // Slightly darker cream
-    borderColor: '#E8E2DB',     // Warm border
+    backgroundColor: '#F3F4F6',  // Light steel gray
+    color: '#1F2937',           // Navy text
+    hoverBackground: '#E5E7EB', // Slightly darker gray
+    borderColor: '#D1D5DB',     // Steel border
   },
   accent: {
-    backgroundColor: '#6B8CAE',  // Soft blue for special CTAs
+    backgroundColor: '#F59E0B',  // Amber pop for special CTAs
     color: '#FFFFFF', 
-    hoverBackground: '#557491',
+    hoverBackground: '#D97706',  // Darker amber
   },
   ghost: {
     backgroundColor: 'transparent',  // No background
@@ -136,26 +136,26 @@ export const buttonStyles = {
   fontWeight: '600',
 };
 
-// Component-specific colors - Timeless & Calming
+// Component-specific colors - Modern & Clean
 export const componentColors = {
   uploadArea: {
-    border: '#E8E2DB',
+    border: '#E5E7EB',
     background: '#FFFFFF',
-    hoverBorder: '#8B7355',
-    hoverBackground: '#FAF8F5',
+    hoverBorder: '#1F2937',
+    hoverBackground: '#F9FAFB',
   },
   results: {
     background: '#FFFFFF',
-    border: '#E8E2DB',
+    border: '#E5E7EB',
   },
   scores: {
-    high: '#7B8E77',             // Sage green for good
-    medium: '#D4A574',           // Warm honey for medium
-    low: '#6B625A',              // Warm gray for low
+    high: '#10B981',             // Emerald for good
+    medium: '#F59E0B',           // Amber for medium
+    low: '#6B7280',              // Steel gray for low
   },
   authentication: {
-    verified: '#7B8E77',         // Sage green checkmark
-    uncertain: '#D4A574',        // Honey warning
-    low: '#C26B5C',              // Terracotta alert
+    verified: '#10B981',         // Emerald checkmark
+    uncertain: '#F59E0B',        // Amber warning
+    low: '#EF4444',              // Red alert
   },
 }; 
