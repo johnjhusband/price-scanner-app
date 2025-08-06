@@ -1246,7 +1246,8 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     justifyContent: 'flex-start',
-    paddingHorizontal: isMobile ? 0 : 20,
+    paddingHorizontal: isMobile ? 8 : 20, // Minimal padding on mobile
+    paddingTop: isMobile ? 0 : 16, // No top padding on mobile
   },
   actionButton: {
     marginVertical: 8,
@@ -1279,11 +1280,11 @@ const styles = StyleSheet.create({
   imagePreviewContainer: {
     flex: 1, // Allow to grow
     width: '100%',
-    maxWidth: 900, // Larger max width
-    maxHeight: '70vh', // Limit to 70% of viewport height
+    maxWidth: isMobile ? '100%' : 900, // Full width on mobile
+    height: isMobile ? '40vh' : '50vh', // Fixed height for consistency
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 4, // Less padding
+    borderRadius: isMobile ? 8 : 16, // Smaller radius on mobile
+    padding: isMobile ? 0 : 8, // No padding on mobile
     marginBottom: 16, // Less margin
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
@@ -1296,9 +1297,8 @@ const styles = StyleSheet.create({
   imagePreview: {
     width: '100%',
     height: '100%',
-    maxHeight: isMobile ? '60vh' : '65vh', // Dynamic height based on viewport
     resizeMode: 'contain',
-    borderRadius: 12,
+    borderRadius: isMobile ? 8 : 12,
     backgroundColor: '#F9FAFB',
   },
   image: {
