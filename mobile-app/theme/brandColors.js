@@ -105,9 +105,11 @@ export const typography = {
 // Button styling constants - Minimal Apple Design
 export const buttonStyles = {
   primary: {
-    backgroundColor: '#000000',  // Pure black
-    color: '#FFFFFF',
-    hoverBackground: '#1C1C1E',  // Slightly lighter black
+    backgroundColor: '#FFFFFF',  // White background
+    color: '#007AFF',           // Blue text for friendlier feel
+    hoverBackground: '#F2F2F7',  // Light gray on hover
+    borderWidth: 1.5,           // Slightly thicker border
+    borderColor: '#007AFF',     // Blue border to match text
   },
   secondary: {
     backgroundColor: '#F2F2F7',  // Apple light gray

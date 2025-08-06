@@ -68,6 +68,8 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: buttonStyles.primary.backgroundColor,
+    borderWidth: buttonStyles.primary.borderWidth || 0,
+    borderColor: buttonStyles.primary.borderColor || 'transparent',
   },
   secondaryButton: {
     backgroundColor: buttonStyles.secondary.backgroundColor,
