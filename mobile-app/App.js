@@ -972,11 +972,11 @@ export default function App() {
                   style={[styles.viewMoreButton, { 
                     backgroundColor: 'transparent',
                     borderWidth: 1,
-                    borderColor: brandColors.primary,
+                    borderColor: brandColors.border,
                   }]}
                   onPress={() => setShowMoreDetails(!showMoreDetails)}
                 >
-                  <Text style={[styles.viewMoreText, { color: brandColors.primary }]}>
+                  <Text style={[styles.viewMoreText, { color: brandColors.text }]}>
                     {showMoreDetails ? '− Hide Details' : '+ View Details'}
                   </Text>
                 </TouchableOpacity>
@@ -1032,15 +1032,15 @@ export default function App() {
                     <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
                       Buy at:
                     </Text>
-                    <Text style={[styles.suggestedPriceValue, { color: brandColors.deepTeal }]}>
+                    <Text style={[styles.suggestedPriceValue, { color: brandColors.text }]}>
                       {analysisResult.buy_price}
                     </Text>
                   </View>
                 )}
                 
                 {analysisResult.legacy_brand && (
-                  <View style={[styles.legacyBrandBadge, { backgroundColor: brandColors.matteGold }]}>
-                    <Text style={[styles.legacyBrandText, { color: '#FFFFFF' }]}>
+                  <View style={[styles.legacyBrandBadge, { backgroundColor: brandColors.border }]}>
+                    <Text style={[styles.legacyBrandText, { color: brandColors.text }]}>
                       ⭐ Legacy Brand — Premium Hold
                     </Text>
                   </View>
@@ -1398,13 +1398,15 @@ const styles = StyleSheet.create({
   exitButton: {
     paddingHorizontal: 12,
     paddingVertical: 4,
-    backgroundColor: brandColors.deepTeal,
+    backgroundColor: 'transparent',
     borderRadius: 4,
     marginLeft: 8,
+    borderWidth: 1,
+    borderColor: brandColors.border,
   },
   exitText: {
     fontSize: 12,
-    color: '#FFFFFF',
+    color: brandColors.text,
     fontWeight: typography.weights.medium,
   },
   legalFooter: {
@@ -1428,7 +1430,7 @@ const styles = StyleSheet.create({
   },
   footerLink: {
     fontSize: 14,
-    color: brandColors.deepTeal,
+    color: brandColors.textSecondary,
     fontFamily: typography.fontFamily,
     fontWeight: '500',
     textDecorationLine: 'underline',

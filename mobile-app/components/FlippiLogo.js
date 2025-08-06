@@ -45,7 +45,7 @@ const styles = StyleSheet.create({
   },
   aiText: {
     fontWeight: typography.weights.regular,
-    color: brandColors.matteGold,      // Gold accent for luxury touch
+    color: brandColors.textSecondary,  // Slate gray for subtle contrast
   },
 });
 
