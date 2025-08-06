@@ -38,7 +38,9 @@ jobs:
             # Check if backend is running
             pm2 show dev-backend || true
             curl -s http://localhost:3002/health || echo "Backend not responding"
+            # Fix any duplicate nginx locations first
+            cd /var/www/blue.flippi.ai && bash scripts/post-deploy-nginx-fix.sh || true
             # Clear nginx cache
-            nginx -s reload
-            # Run post-deploy nginx fixes
-            cd /var/www/blue.flippi.ai && bash scripts/post-deploy-nginx.sh || true
+            nginx -s reload || true
+            # Run post-deploy nginx updates (skip if already configured)
+            # cd /var/www/blue.flippi.ai && bash scripts/post-deploy-nginx.sh || true
