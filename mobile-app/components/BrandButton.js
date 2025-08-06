@@ -51,14 +51,7 @@ export const BrandButton = ({
       disabled={disabled}
       activeOpacity={0.8}
     >
-      {icon ? (
-        <View style={styles.buttonContent}>
-          {icon}
-          <Text style={getTextStyle()}>{title}</Text>
-        </View>
-      ) : (
-        <Text style={getTextStyle()}>{title}</Text>
-      )}
+      <Text style={getTextStyle()}>{title}</Text>
     </TouchableOpacity>
   );
 };
