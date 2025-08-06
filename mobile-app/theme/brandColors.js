@@ -71,12 +71,13 @@ export const brandColors = {
 
 export const typography = {
   // San Francisco font stack - Apple's system font
-  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  // Temporarily simplified to debug Chrome issues
+  fontFamily: '-apple-system, BlinkMacSystemFont, system-ui, Roboto, Arial, sans-serif',
   
   // Display vs Text fonts for optimal readability (ADA compliant sizes)
-  headingFont: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif',
-  bodyFont: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif',
-  monoFont: '"SF Mono", ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Courier New", monospace',
+  headingFont: '-apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif',
+  bodyFont: '-apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif',
+  monoFont: 'ui-monospace, Menlo, Monaco, monospace',
   
   weights: {
     ultraLight: '100',
