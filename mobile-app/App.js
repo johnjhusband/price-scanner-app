@@ -1257,7 +1257,7 @@ const styles = StyleSheet.create({
     width: isMobile ? '100%' : '80%', // Responsive width based on screen size
     maxWidth: 800, // Better max width for visual balance
     alignItems: 'center',
-    marginTop: isAuthenticated ? 16 : 10,
+    marginTop: 16,
     marginBottom: 20,
   },
   resultContainer: {
