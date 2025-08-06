@@ -247,42 +247,33 @@ const styles = StyleSheet.create({
   tagline: {
     fontSize: 28,
     fontWeight: typography.weights.bold,
-    color: brandColors.mutedGraphite,
+    color: brandColors.text,
     marginTop: 30,
     marginBottom: 15,
   },
   subtitle: {
     fontSize: 18,
-    color: brandColors.slateTeal,
+    color: brandColors.textSecondary,
     marginBottom: isMobile ? 10 : 20, // Responsive margin
     textAlign: 'center',
   },
   offerBanner: {
-    backgroundColor: brandColors.primary,  // Use primary teal
+    backgroundColor: brandColors.accent,  // Apple blue
     paddingHorizontal: 25,
     paddingVertical: 12,
-    borderRadius: 8, // Rounded square instead of pill
-    marginBottom: 15, // Reduced from 30
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderRadius: 14, // Apple style radius
+    marginBottom: 15,
     ...(Platform.OS === 'web' && {
       transition: 'all 0.2s ease',
       cursor: 'pointer',
     }),
   },
   offerBannerHover: {
-    backgroundColor: '#134E4F', // Darker teal
-    transform: [{ scale: 1.02 }],
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
+    backgroundColor: '#0051D5', // Darker blue
+    transform: [{ scale: 1.01 }],
   },
   offerText: {
-    color: brandColors.offWhite,
+    color: '#FFFFFF',
     fontSize: 15,
     fontWeight: typography.weights.semiBold,
   },
@@ -298,7 +289,7 @@ const styles = StyleSheet.create({
   platformTitle: {
     fontSize: 20,
     fontWeight: typography.weights.semiBold,
-    color: brandColors.deepTeal,
+    color: brandColors.text,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -313,12 +304,12 @@ const styles = StyleSheet.create({
   platformCategory: {
     fontSize: 16,
     fontWeight: typography.weights.semiBold,
-    color: brandColors.mutedGraphite,
+    color: brandColors.text,
     marginBottom: 10,
   },
   platformList: {
     fontSize: 14,
-    color: brandColors.slateTeal,
+    color: brandColors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -343,7 +334,7 @@ const styles = StyleSheet.create({
   testimonial: {
     fontSize: 16,
     fontStyle: 'italic',
-    color: brandColors.slateTeal,
+    color: brandColors.textSecondary,
     marginTop: 15,
     textAlign: 'center',
   },
@@ -374,12 +365,12 @@ const styles = StyleSheet.create({
   valueTitle: {
     fontSize: 15,
     fontWeight: typography.weights.semiBold,
-    color: brandColors.deepTeal,
+    color: brandColors.text,
     marginBottom: 2,
   },
   valueDesc: {
     fontSize: 12,
-    color: brandColors.slateTeal,
+    color: brandColors.textSecondary,
   },
   valueTextContainer: {
     flex: 1,
@@ -404,35 +395,31 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 14,
     fontWeight: typography.weights.medium,
-    color: brandColors.slateTeal,
+    color: brandColors.textSecondary,
   },
   enterSection: {
     alignItems: 'center',
     width: '100%',
   },
   googleButton: {
-    backgroundColor: brandColors.deepTeal,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    width: 'auto',
-    elevation: 2,
+    backgroundColor: brandColors.primary, // Black
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    minWidth: 280,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
     shadowRadius: 4,
+    elevation: 2,
     ...(Platform.OS === 'web' && {
       transition: 'all 0.2s ease',
       cursor: 'pointer',
     }),
   },
   googleButtonHover: {
-    backgroundColor: '#174B49', // Darker teal
-    transform: [{ scale: 1.02 }],
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
+    backgroundColor: '#1A1A1A', // Slightly lighter black
+    transform: [{ scale: 1.01 }],
   },
   googleButtonContent: {
     flexDirection: 'row',
@@ -449,7 +436,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   googleG: {
-    color: brandColors.deepTeal,
+    color: '#4285F4', // Google blue
     fontSize: 16,
     fontWeight: 'bold',
   },
@@ -461,7 +448,7 @@ const styles = StyleSheet.create({
   },
   securityNote: {
     fontSize: 12,
-    color: brandColors.slateTeal,
+    color: brandColors.textSecondary,
     marginTop: 8,
     marginBottom: 20,
     textAlign: 'center',

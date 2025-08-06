@@ -41,7 +41,7 @@ const styles = StyleSheet.create({
   },
   flippiText: {
     fontWeight: typography.weights.semiBold,
-    color: brandColors.mutedGraphite,  // Updated to new luxury color
+    color: brandColors.text,  // Pure black
   },
   aiText: {
     fontWeight: typography.weights.regular,
