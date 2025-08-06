@@ -3,8 +3,8 @@ import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOp
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
-// Import Lucide icons
-import { Camera as CameraIcon, Upload as UploadIcon, Clipboard as PasteIcon } from 'lucide-react-native';
+// Import Expo vector icons - better compatibility with web builds
+import { MaterialIcons, Feather } from '@expo/vector-icons';
 
 // Import brand components and theme
 import FlippiLogo from './components/FlippiLogo';
@@ -845,7 +845,7 @@ export default function App() {
                 onPress={pickImage}
                 style={styles.actionButton}
                 variant="secondary"
-                icon={<UploadIcon size={20} color={brandColors.text} strokeWidth={1.5} />}
+                icon={<Feather name="upload" size={20} color={brandColors.text} />}
               />
               
               {hasCamera && (
@@ -854,7 +854,7 @@ export default function App() {
                   onPress={takePhoto}
                   style={styles.actionButton}
                   variant="primary"
-                  icon={<CameraIcon size={20} color="#FFFFFF" strokeWidth={1.5} />}
+                  icon={<Feather name="camera" size={20} color="#FFFFFF" />}
                 />
               )}
               
@@ -868,7 +868,7 @@ export default function App() {
                     }}
                     style={styles.actionButton}
                     variant="ghost"
-                    icon={<PasteIcon size={20} color={brandColors.textSecondary} strokeWidth={1.5} />}
+                    icon={<Feather name="clipboard" size={20} color={brandColors.textSecondary} />}
                   />
                   <View style={[styles.dropZone, isDragOver && styles.dropZoneActive]}>
                     <Text style={[styles.dropZoneText, { color: brandColors.textSecondary }]}>
