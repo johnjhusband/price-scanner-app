@@ -800,6 +800,16 @@ export default function App() {
         <Text style={{ marginTop: 20, fontSize: 16, color: brandColors.textSecondary }}>
           Loading flippi.ai...
         </Text>
+        <TouchableOpacity 
+          style={{ marginTop: 20, padding: 10, backgroundColor: brandColors.primary, borderRadius: 8 }}
+          onPress={() => {
+            console.log('[Auth Debug] Skip auth button pressed');
+            setAuthLoading(false);
+            setIsAuthenticated(false);
+          }}
+        >
+          <Text style={{ color: '#FFFFFF' }}>Skip to Login</Text>
+        </TouchableOpacity>
       </View>
     );
   }

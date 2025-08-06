@@ -19,7 +19,7 @@ echo "Fixing nginx configuration for $DOMAIN..."
 # Check if there are duplicate location blocks
 PRIVACY_COUNT=$(grep -c "location = /privacy" /etc/nginx/sites-available/$DOMAIN 2>/dev/null || echo "0")
 
-if [ "$PRIVACY_COUNT" -gt 1 ]; then
+if [ "$PRIVACY_COUNT" -gt "1" ]; then
     echo "Found $PRIVACY_COUNT duplicate /privacy location blocks. Creating cleaned config..."
     
     # Backup current config
