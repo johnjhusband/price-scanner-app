@@ -51,6 +51,28 @@ const MissionModal = ({ visible, onClose }) => {
           </View>
           
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Flippi's Authentication Philosophy</Text>
+            <Text style={styles.paragraph}>
+              Flippi uses computer vision to give you a Real Score — a percentage-based confidence rating powered by AI.
+            </Text>
+            <Text style={styles.paragraph}>
+              We analyze visual cues from a single photo, including logo placement, stitching patterns, shapes, and known design elements. It's not authentication — it's signal-based guidance. A fast, lightweight tool built to support smarter sourcing decisions, especially in the real-world chaos of thrifting, reselling, or flipping.
+            </Text>
+            <Text style={[styles.paragraph, styles.italic]}>
+              We believe in buying authentic and building trust. This feature is here to help — not to certify. Use it as a first impression, not a final verdict.
+            </Text>
+          </View>
+          
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Accessibility Commitment</Text>
+            <Text style={styles.paragraph}>
+              Flippi is designed to be accessible to everyone. Our interface uses high contrast colors 
+              and clear visual indicators that work for users with color blindness. We're committed to 
+              improving accessibility as we grow.
+            </Text>
+          </View>
+          
+          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Powered by Boca Belle</Text>
             <Text style={styles.paragraph}>
               Flippi.ai is based in Boca Raton, Florida and operated by John and Tara Husband LLC, doing business as Boca Belle.
@@ -68,6 +90,9 @@ const MissionModal = ({ visible, onClose }) => {
           <View style={styles.footer}>
             <Text style={styles.footerText}>
               Flippi™ and Flippi.ai™ are trademarks of Boca Belle. All rights reserved.
+            </Text>
+            <Text style={[styles.footerText, styles.italic]}>
+              Not for children under 13
             </Text>
             <Text style={[styles.footerText, styles.italic]}>
               *ai can make mistakes. check important info.

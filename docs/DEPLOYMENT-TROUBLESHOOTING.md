@@ -341,6 +341,72 @@ certbot renew --force-renewal
 nginx -s reload
 ```
 
+## Git Branch Issues
+
+### Divergent Branches Error
+
+**Symptoms:**
+- Deployment fails with "fatal: Need to specify how to reconcile divergent branches"
+- Git pull fails during deployment
+- Local and remote branches have different commits
+
+**Root Cause:**
+- Server has local commits not in remote
+- Someone made manual changes on server
+- Git configuration changed default behavior
+
+**Solution:**
+```bash
+# In deployment workflow, replace git pull with:
+git fetch origin <branch>
+git reset --hard origin/<branch>
+```
+
+**Manual fix on server:**
+```bash
+cd /var/www/[environment].flippi.ai
+git fetch origin
+git reset --hard origin/[branch]
+```
+
+### Test Branch Deployment Strategy
+
+**Use Case:** Testing risky changes without affecting main develop branch
+
+**Deploy test branch to blue:**
+```bash
+# 1. Create test branch locally
+git checkout -b test/feature-name
+git add .
+git commit -m "Test changes for feature"
+
+# 2. Push to remote
+git push origin test/feature-name
+
+# 3. Deploy to blue by overwriting develop
+git push origin test/feature-name:develop --force
+
+# Blue.flippi.ai now runs test branch code
+```
+
+**Revert blue to normal develop:**
+```bash
+# 1. Ensure local develop is up to date
+git checkout develop
+git pull origin develop
+
+# 2. Force push to restore
+git push origin develop --force
+
+# Blue.flippi.ai now back to develop branch
+```
+
+**Important Notes:**
+- Only use for blue environment
+- Always communicate with team before force pushing
+- Document what test branch contains
+- Test thoroughly before promoting to staging
+
 ## Recovery Procedures
 
 ### Emergency Rollback

@@ -8,6 +8,30 @@ This document provides comprehensive checklists for deploying to all three envir
 - **Staging (green.flippi.ai)**: Branch: `staging`, Port: 3001/8081  
 - **Production (app.flippi.ai)**: Branch: `master`, Port: 3000/8080
 
+## Critical Warnings
+
+### ⚠️ Workflow File Restrictions
+- **NEVER** include changes to `.github/workflows/` files in OAuth commits
+- GitHub blocks OAuth Apps from modifying workflow files
+- Update workflows manually through GitHub UI only
+- Separate infrastructure changes from code changes
+
+### ⚠️ Branch Divergence Check
+Before any deployment, check for divergent branches:
+```bash
+git fetch origin
+git status
+# If divergent, DO NOT use git pull
+# Use: git reset --hard origin/<branch>
+```
+
+### ⚠️ Test Branch Deployments
+For risky changes to blue environment:
+1. Create test branch: `git checkout -b test/feature-name`
+2. Deploy: `git push origin test/feature-name:develop --force`
+3. Revert: `git push origin develop --force`
+4. Only use for blue environment testing
+
 ## Pre-Deployment Checklist (All Environments)
 
 ### Code Quality

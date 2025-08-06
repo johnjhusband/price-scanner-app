@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Linking } from 'react-native';
+import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Linking, Dimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
@@ -10,6 +10,12 @@ import FeedbackPrompt from './components/FeedbackPrompt';
 import EnterScreen from './components/EnterScreen';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
+
+// Responsive design breakpoints
+const { width: windowWidth } = Dimensions.get('window');
+const isMobile = windowWidth < 768;
+const isTablet = windowWidth >= 768 && windowWidth < 1024;
+const isDesktop = windowWidth >= 1024;
 
 const API_URL = Platform.OS === 'web' 
   ? '' // Same domain - nginx routes /api to backend
@@ -169,7 +175,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
   if (hasPermission === false) {
     return (
       <View style={[styles.cameraContainer, { backgroundColor: brandColors.background }]}>
-        <Text style={[styles.cameraText, { color: brandColors.danger }]}>Camera permission not granted</Text>
+        <Text style={[styles.cameraText, { color: brandColors.error }]}>Camera permission not granted</Text>
         <BrandButton title="Close" onPress={handleCloseCamera} />
       </View>
     );
@@ -225,6 +231,7 @@ export default function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
+  const [showMoreDetails, setShowMoreDetails] = useState(false);
   
   const scrollViewRef = useRef(null);
   const resultsRef = useRef(null);
@@ -462,19 +469,44 @@ export default function App() {
     
     // Check authentication on web
     if (Platform.OS === 'web') {
+      console.log('[Auth Debug] Starting authentication check...');
+      console.log('[Auth Debug] Current URL:', window.location.href);
+      console.log('[Auth Debug] User Agent:', navigator.userAgent);
+      
       // Check if token in URL (OAuth callback)
-      if (AuthService.parseTokenFromUrl()) {
-        setIsAuthenticated(true);
-        setUser(AuthService.getUser());
+      AuthService.parseTokenFromUrl().then(hasToken => {
+        console.log('[Auth Debug] Token in URL:', hasToken);
+        
+        if (hasToken) {
+          setIsAuthenticated(true);
+          // Get user asynchronously
+          AuthService.getUser().then(userData => {
+            console.log('[Auth Debug] User data loaded:', userData);
+            setUser(userData);
+            setAuthLoading(false);
+          });
+        } else {
+          // No token in URL, check existing session
+          AuthService.isAuthenticated().then(isAuth => {
+            console.log('[Auth Debug] Existing session:', isAuth);
+            
+            if (isAuth) {
+              setIsAuthenticated(true);
+              AuthService.getUser().then(userData => {
+                console.log('[Auth Debug] User data from session:', userData);
+                setUser(userData);
+                setAuthLoading(false);
+              });
+            } else {
+              console.log('[Auth Debug] No authentication found');
+              setAuthLoading(false);
+            }
+          });
+        }
+      }).catch(error => {
+        console.error('[Auth Debug] Error during authentication:', error);
         setAuthLoading(false);
-      } else if (AuthService.isAuthenticated()) {
-        // Check existing session
-        setIsAuthenticated(true);
-        setUser(AuthService.getUser());
-        setAuthLoading(false);
-      } else {
-        setAuthLoading(false);
-      }
+      });
     } else {
       // Mobile platforms - for now, no auth required
       setAuthLoading(false);
@@ -676,6 +708,7 @@ export default function App() {
     setProductDescription('');
     setImageBase64(null);
     setShowFeedback(false);
+    setShowMoreDetails(false);
   };
   
   const handleExit = async () => {
@@ -691,7 +724,7 @@ export default function App() {
       }
       
       // Clear local auth
-      AuthService.exit();
+      await AuthService.exit();
       setIsAuthenticated(false);
       setUser(null);
       resetApp();
@@ -738,12 +771,9 @@ export default function App() {
         </View>
       )}
       
-      {/* You section - User info and Exit - Outside content for better positioning */}
+      {/* You section - Exit button only - Outside content for better positioning */}
       {Platform.OS === 'web' && user && (
         <View style={styles.userSection}>
-          <View style={styles.userInfo}>
-            <Text style={styles.userEmail} numberOfLines={1}>{user.email}</Text>
-          </View>
           <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
             <Text style={styles.exitText}>Exit</Text>
           </TouchableOpacity>
@@ -761,21 +791,23 @@ export default function App() {
           styles.uploadContainer,
           isDragOver && styles.dragOver
         ]}>
-          {/* Text input always visible at top */}
-          <TextInput
-            style={[styles.descriptionInput, { 
-              backgroundColor: brandColors.surface,
-              color: brandColors.text,
-              borderColor: brandColors.border || '#ddd',
-              marginBottom: 20
-            }]}
-            placeholder="Describe your item (optional)"
-            placeholderTextColor={brandColors.textSecondary}
-            value={productDescription}
-            onChangeText={setProductDescription}
-            multiline
-            numberOfLines={3}
-          />
+          {/* Text input only visible when no image */}
+          {!image && (
+            <TextInput
+              style={[styles.descriptionInput, { 
+                backgroundColor: '#FFFFFF',
+                color: brandColors.text,
+                borderColor: brandColors.border || '#ddd',
+                marginBottom: 20
+              }]}
+              placeholder="Brand, source, or serial number?"
+              placeholderTextColor={brandColors.textSecondary}
+              value={productDescription}
+              onChangeText={setProductDescription}
+              multiline
+              numberOfLines={3}
+            />
+          )}
           
           {!image ? (
             <>
@@ -807,16 +839,35 @@ export default function App() {
               <Image source={{ uri: image }} style={styles.image} />
               
               {!analysisResult && !isLoading && (
-                <BrandButton
-                  title="Go"
-                  onPress={analyzeImage}
-                  style={styles.goButton}
-                />
+                <>
+                  <TextInput
+                    style={[styles.descriptionInput, { 
+                      backgroundColor: brandColors.surface,
+                      color: brandColors.text,
+                      borderColor: brandColors.border || '#ddd',
+                      marginBottom: 20,
+                      marginTop: 20
+                    }]}
+                    placeholder="Brand, source, or serial number?"
+                    placeholderTextColor={brandColors.textSecondary}
+                    value={productDescription}
+                    onChangeText={setProductDescription}
+                    multiline
+                    numberOfLines={3}
+                  />
+                  <BrandButton
+                    title="Go"
+                    onPress={analyzeImage}
+                    style={styles.goButton}
+                    variant="accent"
+                    isHighImpact={true}
+                  />
+                </>
               )}
             
             {isLoading && (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={brandColors.charcoalGray} />
+                <ActivityIndicator size="large" color={brandColors.primary} />
                 <Text style={[styles.loadingText, { color: brandColors.text }]}>
                   Analyzing image...
                 </Text>
@@ -832,7 +883,7 @@ export default function App() {
                     resultsRef.current = ref._nativeTag || ref;
                   }
                 }}
-                style={[styles.analysisResult, { backgroundColor: brandColors.surface }]}>
+                style={[styles.analysisResult, { backgroundColor: '#FFFFFF' }]}>
                 <Text style={[styles.resultTitle, { color: brandColors.text }]}>Analysis Results</Text>
                 
                 <View style={styles.resultItem}>
@@ -840,78 +891,88 @@ export default function App() {
                   <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.item_name}</Text>
                 </View>
                 
-                <View style={styles.resultItem}>
-                  <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Estimated Value:</Text>
-                  <Text style={[styles.resultValue, styles.priceValue, { color: brandColors.success }]}>
-                    {analysisResult.price_range}
-                  </Text>
-                </View>
-                
-                <View style={styles.resultItem}>
-                  <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Condition:</Text>
-                  <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.condition}</Text>
-                </View>
-                
-                <View style={styles.resultItem}>
-                  <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Style Tier:</Text>
-                  <View style={[styles.styleTierBadge, {
-                    backgroundColor: (() => {
-                      const tier = analysisResult.style_tier.toLowerCase();
-                      if (tier === 'luxury') return componentColors.scores.high;
-                      if (tier === 'designer') return componentColors.scores.medium;
-                      return brandColors.slateBlueGray;
-                    })()
-                  }]}>
-                    <Text style={styles.styleTierBadgeText}>{analysisResult.style_tier}</Text>
-                  </View>
-                </View>
-                
-                {analysisResult.recommended_platform && (
+                {/* PRIMARY INFO - Always visible */}
+                <View style={[styles.primaryInfoSection, { backgroundColor: '#F9FAFB', borderRadius: 12, padding: 16, marginVertical: 10 }]}>
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Listing Platform:</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.recommended_platform}</Text>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Estimated Value:</Text>
+                    <Text style={[styles.resultValue, styles.priceValue, { color: brandColors.success, fontSize: 24 }]}>
+                      {analysisResult.price_range}
+                    </Text>
                   </View>
-                )}
-                
-                {analysisResult.recommended_live_platform && (
-                  <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Live Platform:</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.recommended_live_platform}</Text>
-                  </View>
-                )}
-                
-                {analysisResult.authenticity_score && (
-                  <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Authenticity Score:</Text>
-                    <View>
+                  
+                  {(analysisResult.real_score !== undefined || analysisResult.authenticity_score !== undefined) && (
+                    <View style={styles.resultItem}>
+                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Real Score:</Text>
                       <Text style={[styles.resultValue, { 
-                        color: (() => {
-                          const score = parseInt(analysisResult.authenticity_score);
-                          if (score >= 80) return componentColors.scores.high;
-                          if (score >= 50) return componentColors.scores.medium;
-                          return componentColors.scores.low;
+                        fontSize: 20,
+                        color: brandColors.text
+                      }]}>
+                        {analysisResult.real_score || analysisResult.authenticity_score}
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {analysisResult.recommended_platform && (
+                    <View style={styles.resultItem}>
+                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Best Platforms:</Text>
+                      <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 18 }]}>
+                        {(() => {
+                          const platforms = [];
+                          if (analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown') {
+                            platforms.push(analysisResult.recommended_live_platform === 'uknown' ? 'Personal Use' : analysisResult.recommended_live_platform);
+                          }
+                          if (analysisResult.recommended_platform && analysisResult.recommended_platform !== 'uknown') {
+                            platforms.push(analysisResult.recommended_platform === 'uknown' ? 'Craft Fair' : analysisResult.recommended_platform);
+                          }
+                          return platforms.join(', ') || 'Craft Fair, Personal Use';
+                        })()}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+                
+                {/* TOGGLE BUTTON */}
+                <TouchableOpacity
+                  style={[styles.viewMoreButton, { 
+                    backgroundColor: 'transparent',
+                    borderWidth: 1,
+                    borderColor: brandColors.primary,
+                  }]}
+                  onPress={() => setShowMoreDetails(!showMoreDetails)}
+                >
+                  <Text style={[styles.viewMoreText, { color: brandColors.primary }]}>
+                    {showMoreDetails ? '− Hide Details' : '+ View Details'}
+                  </Text>
+                </TouchableOpacity>
+                
+                {/* SECONDARY INFO - Hidden by default */}
+                {showMoreDetails && (
+                  <View style={styles.secondaryInfoSection}>
+                    <View style={styles.resultItem}>
+                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Condition:</Text>
+                      <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.condition}</Text>
+                    </View>
+                    
+                    <View style={styles.resultItem}>
+                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Style Tier:</Text>
+                      <View style={[styles.styleTierBadge, {
+                        backgroundColor: (() => {
+                          const tier = analysisResult.style_tier.toLowerCase();
+                          if (tier === 'luxury') return componentColors.scores.high;
+                          if (tier === 'designer') return componentColors.scores.medium;
+                          return brandColors.slateBlueGray;
                         })()
                       }]}>
-                        {(() => {
-                          const score = parseInt(analysisResult.authenticity_score);
-                          if (score >= 80) return '✓ ';
-                          if (score >= 50) return '◐ ';
-                          return '○ ';
-                        })()}
-                        {analysisResult.authenticity_score}
-                      </Text>
-                      {parseInt(analysisResult.authenticity_score) < 50 && (
-                        <Text style={[styles.warningText, { color: componentColors.scores.low }]}>
-                          ⚠️ Warning: Low authenticity - verify carefully
+                        <Text style={styles.styleTierBadgeText}>
+                          {analysisResult.style_tier}
                         </Text>
-                      )}
+                      </View>
                     </View>
-                  </View>
-                )}
+                    
                 
                 {analysisResult.trending_score !== undefined && (
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Boca Score (Sellability):</Text>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Sellability:</Text>
                     <Text style={[styles.resultValue, { 
                       color: (() => {
                         const score = parseInt(analysisResult.trending_score);
@@ -922,18 +983,18 @@ export default function App() {
                     }]}>
                       {analysisResult.trending_score}/100 {(() => {
                         const score = parseInt(analysisResult.trending_score);
-                        if (score >= 80) return '🔥';
-                        if (score >= 50) return '📈';
-                        return '📉';
+                        if (score >= 80) return '▲▲▲'; // Three up arrows for hot
+                        if (score >= 50) return '▲▲';   // Two up arrows for warm
+                        return '▲';                      // One up arrow for cool
                       })()} - {analysisResult.trending_label || 'N/A'}
                     </Text>
                   </View>
                 )}
                 
                 {analysisResult.buy_price && (
-                  <View style={[styles.suggestedPriceContainer, { backgroundColor: brandColors.softCream }]}>
+                  <View style={[styles.suggestedPriceContainer, { backgroundColor: '#F9FAFB' }]}>
                     <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
-                      Suggested Buy Price:
+                      Buy at:
                     </Text>
                     <Text style={[styles.suggestedPriceValue, { color: brandColors.deepTeal }]}>
                       {analysisResult.buy_price}
@@ -941,18 +1002,34 @@ export default function App() {
                   </View>
                 )}
                 
+                {analysisResult.legacy_brand && (
+                  <View style={[styles.legacyBrandBadge, { backgroundColor: brandColors.matteGold }]}>
+                    <Text style={[styles.legacyBrandText, { color: '#FFFFFF' }]}>
+                      ⭐ Legacy Brand — Premium Hold
+                    </Text>
+                  </View>
+                )}
+                
+                {analysisResult.price_adjusted && (
+                  <Text style={[styles.priceAdjustmentNote, { color: brandColors.textSecondary }]}>
+                    {analysisResult.adjustment_reason}
+                  </Text>
+                )}
+                
                 {analysisResult.market_insights && (
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Market Insights:</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.market_insights}</Text>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Market:</Text>
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>
+                      {analysisResult.market_insights.replace(/Note:.*?Low authenticity.*?verify carefully\.?\s*/gi, '').trim()}
+                    </Text>
                   </View>
                 )}
                 
                 {analysisResult.selling_tips && (
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Selling Tips:</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>
-                      {analysisResult.selling_tips}
+                    <Text style={[styles.resultValue, { color: brandColors.text, lineHeight: 22 }]}>
+                      {analysisResult.selling_tips.replace(/Note:.*?Low authenticity.*?verify carefully\.?\s*/gi, '').trim()}
                     </Text>
                   </View>
                 )}
@@ -962,6 +1039,8 @@ export default function App() {
                     <Text style={[styles.environmentalTag, { color: '#2E7D32' }]}>
                       {analysisResult.environmental_tag}
                     </Text>
+                  </View>
+                )}
                   </View>
                 )}
               </View>
@@ -1033,8 +1112,8 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    padding: Platform.OS === 'web' ? 40 : 10, // Less padding on mobile for more width
-    paddingTop: Platform.OS === 'web' ? 60 : 80, // More top padding to avoid user section
+    padding: isMobile ? 10 : 40, // Responsive padding based on screen width
+    paddingTop: isMobile ? 80 : 60, // More top padding on mobile to avoid user section
   },
   title: {
     fontSize: 24,
@@ -1045,7 +1124,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   uploadContainer: {
-    width: Platform.OS === 'web' ? '80%' : '100%', // 80% on desktop, full on mobile
+    width: isMobile ? '100%' : '80%', // Responsive width based on screen size
     maxWidth: 1000, // Only prevent extreme stretching
     alignItems: 'center',
     marginTop: 10,
@@ -1096,17 +1175,18 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   analysisResult: {
-    width: Platform.OS === 'web' ? '80%' : '100%', // 80% on desktop, full on mobile
-    maxWidth: 1000, // Generous limit only for ultra-wide
-    padding: Platform.OS === 'web' ? 20 : 12,
-    borderRadius: 10,
-    marginBottom: 20,
+    width: isMobile ? '100%' : '80%', // Responsive width based on screen size
+    maxWidth: isMobile ? '100%' : 800, // Full width on mobile, constrained on desktop
+    padding: isMobile ? 16 : 24, // More padding for better touch targets
+    paddingVertical: isMobile ? 20 : 28, // Extra vertical padding
+    borderRadius: isMobile ? 0 : 12, // No border radius on mobile for full width
+    marginBottom: isMobile ? 0 : 20, // No margin on mobile
     alignSelf: 'center',
-    elevation: 3,
+    elevation: isMobile ? 0 : 3, // Flat on mobile
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    shadowOffset: { width: 0, height: isMobile ? 0 : 2 },
+    shadowOpacity: isMobile ? 0 : 0.1,
+    shadowRadius: isMobile ? 0 : 4,
   },
   resultTitle: {
     fontSize: 20,
@@ -1119,11 +1199,11 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   resultLabel: {
-    fontSize: Platform.OS === 'web' ? 14 : 13,
+    fontSize: isMobile ? 13 : 14,
     marginBottom: 4,
   },
   resultValue: {
-    fontSize: Platform.OS === 'web' ? 16 : 14,
+    fontSize: isMobile ? 14 : 16,
     fontWeight: '500',
     flexShrink: 1,
     flexWrap: 'wrap',
@@ -1149,6 +1229,25 @@ const styles = StyleSheet.create({
   suggestedPriceValue: {
     fontSize: 24,
     fontWeight: 'bold',
+  },
+  legacyBrandBadge: {
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+    alignSelf: 'center',
+    marginTop: 10,
+    marginBottom: 5,
+  },
+  legacyBrandText: {
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  priceAdjustmentNote: {
+    fontSize: 12,
+    fontStyle: 'italic',
+    textAlign: 'center',
+    marginTop: 5,
+    marginBottom: 10,
   },
   styleTierBadge: {
     paddingHorizontal: 12,
@@ -1225,7 +1324,7 @@ const styles = StyleSheet.create({
   // User section styles
   userSection: {
     position: 'absolute',
-    top: Platform.OS === 'web' ? 40 : 20, // Move down to avoid dev banner
+    top: isMobile ? 20 : 40, // Responsive top spacing
     right: 10,
     flexDirection: 'row',
     alignItems: 'center',
@@ -1315,5 +1414,22 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily,
     fontWeight: typography.weights.medium,
     textAlign: 'center',
+  },
+  primaryInfoSection: {
+    marginVertical: 10,
+  },
+  secondaryInfoSection: {
+    marginTop: 10,
+  },
+  viewMoreButton: {
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  viewMoreText: {
+    fontSize: 16,
+    fontWeight: typography.weights.semiBold,
   },
 });
