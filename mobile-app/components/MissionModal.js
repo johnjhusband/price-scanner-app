@@ -35,19 +35,19 @@ const MissionModal = ({ visible, onClose }) => {
           <Text style={styles.sectionTitle}>With every scan, Flippi helps you:</Text>
           <View style={styles.benefitList}>
             <View style={styles.benefitRow}>
-              <Feather name="search" size={20} color={brandColors.accent} />
+              <Feather name="search" size={20} color={brandColors.text} />
               <Text style={styles.benefitItem}>Instantly understand resale potential</Text>
             </View>
             <View style={styles.benefitRow}>
-              <Feather name="trending-down" size={20} color={brandColors.accent} />
+              <Feather name="trending-down" size={20} color={brandColors.text} />
               <Text style={styles.benefitItem}>Avoid costly mistakes</Text>
             </View>
             <View style={styles.benefitRow}>
-              <MaterialIcons name="eco" size={20} color={brandColors.accent} />
+              <MaterialIcons name="eco" size={20} color={brandColors.text} />
               <Text style={styles.benefitItem}>Track your positive environmental impact</Text>
             </View>
             <View style={styles.benefitRow}>
-              <Feather name="trending-up" size={20} color={brandColors.accent} />
+              <Feather name="trending-up" size={20} color={brandColors.text} />
               <Text style={styles.benefitItem}>Make faster, better decisions—on the spot</Text>
             </View>
           </View>

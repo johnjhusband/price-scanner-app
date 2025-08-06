@@ -89,7 +89,7 @@ const EnterScreen = () => {
           <View style={styles.valueProps}>
             <View style={styles.valueProp}>
               <View style={styles.valueIcon}>
-                <Feather name="dollar-sign" size={24} color={brandColors.accent} />
+                <Feather name="dollar-sign" size={24} color={brandColors.text} />
               </View>
               <View style={styles.valueTextContainer}>
                 <Text style={styles.valueTitle}>Accurate Pricing</Text>
@@ -98,7 +98,7 @@ const EnterScreen = () => {
             </View>
             <View style={styles.valueProp}>
               <View style={styles.valueIcon}>
-                <Feather name="search" size={24} color={brandColors.accent} />
+                <Feather name="search" size={24} color={brandColors.text} />
               </View>
               <View style={styles.valueTextContainer}>
                 <Text style={styles.valueTitle}>Authenticity Scores</Text>
@@ -107,7 +107,7 @@ const EnterScreen = () => {
             </View>
             <View style={styles.valueProp}>
               <View style={styles.valueIcon}>
-                <Feather name="trending-up" size={24} color={brandColors.accent} />
+                <Feather name="trending-up" size={24} color={brandColors.text} />
               </View>
               <View style={styles.valueTextContainer}>
                 <Text style={styles.valueTitle}>Platform Match</Text>
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   offerBanner: {
-    backgroundColor: brandColors.accent,  // Amber for primary CTA
+    backgroundColor: '#000000',  // Black for primary CTA
     paddingHorizontal: 25,
     paddingVertical: 12,
     borderRadius: 14, // Apple style radius
@@ -276,11 +276,11 @@ const styles = StyleSheet.create({
     }),
   },
   offerBannerHover: {
-    backgroundColor: brandColors.accentDark, // Darker amber
+    backgroundColor: '#111827', // Subtle darkening
     transform: [{ scale: 1.01 }],
   },
   offerText: {
-    color: brandColors.slate, // Dark gray text for WCAG AA on amber
+    color: '#FFFFFF', // White text on black
     fontSize: 15,
     fontWeight: typography.weights.semiBold,
   },
@@ -412,11 +412,13 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   googleButton: {
-    backgroundColor: brandColors.slate, // Slate for secondary actions
+    backgroundColor: '#FFFFFF', // White background
     borderRadius: 14,
     paddingVertical: 16,
     paddingHorizontal: 32,
     minWidth: 280,
+    borderWidth: 1,
+    borderColor: brandColors.slate, // Slate border
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -428,7 +430,7 @@ const styles = StyleSheet.create({
     }),
   },
   googleButtonHover: {
-    backgroundColor: brandColors.slateDark, // Darker slate
+    backgroundColor: '#F9FAFB', // Subtle gray on hover
     transform: [{ scale: 1.01 }],
   },
   googleButtonContent: {
@@ -451,7 +453,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   googleButtonText: {
-    color: '#FFFFFF', // White text on deep teal
+    color: '#000000', // Black text on white
     fontSize: isMobile ? 14 : 16, // Responsive font size
     fontWeight: typography.weights.semiBold,
     whiteSpace: 'nowrap', // Prevent text wrapping

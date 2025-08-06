@@ -63,27 +63,27 @@ h1, .headline {
 }
 
 .brand-button-primary {
-  background: #F59E0B; /* Amber for primary CTAs */
-  color: #1F2937; /* Slate text for WCAG AA compliance */
+  background: #000000; /* Black for primary CTAs */
+  color: #FFFFFF; /* White text */
   border: none;
   font-weight: 600;
 }
 
 .brand-button-primary:hover {
-  background: #D97706; /* Darker amber on hover */
-  box-shadow: 0 4px 16px rgba(245,158,11,0.18);
+  background: #111827; /* Subtle darkening on hover */
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
   transform: translateY(-2px) scale(1.03);
 }
 
 .brand-button-secondary {
-  background: #1F2937; /* Slate for secondary actions */
+  background: #000000; /* Black for secondary actions too */
   color: #fff;
   border: none;
 }
 
 .brand-button-secondary:hover {
-  background: #111827; /* Darker slate on hover */
-  box-shadow: 0 4px 16px rgba(31,41,55,0.18);
+  background: #111827; /* Subtle darkening on hover */
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
   transform: translateY(-2px) scale(1.03);
 }
 
@@ -121,7 +121,7 @@ h1, .headline {
 
 .analyzing {
   font-size: 1.1rem;
-  color: #F59E0B; /* Amber for analyzing state */
+  color: #000000; /* Black for analyzing state */
   font-weight: 600;
   animation: pulse 1.5s ease-in-out infinite;
 }
@@ -166,7 +166,7 @@ h1, .headline {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #F59E0B; /* Amber for scrollbar */
+  background: #1F2937; /* Slate for scrollbar */
   border-radius: 4px;
 }
 
@@ -177,7 +177,7 @@ h1, .headline {
 /* Web-specific focus states for accessibility */
 .brand-button:focus,
 .upload-area:focus {
-  outline: 2px solid #F59E0B; /* Amber focus outline */
+  outline: 2px solid #000000; /* Black focus outline */
   outline-offset: 2px;
 }
 

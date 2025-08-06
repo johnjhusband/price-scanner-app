@@ -4,7 +4,7 @@ import { brandColors, typography, buttonStyles } from '../theme/brandColors';
 
 export const BrandButton = ({ 
   title, 
-  variant = 'primary', // 'primary', 'secondary', 'accent', 'ghost'
+  variant = 'primary', // 'primary', 'secondary', 'accent', 'ghost', 'googleSignIn'
   onPress, 
   disabled = false,
   style,
@@ -23,6 +23,8 @@ export const BrandButton = ({
       return [styles.button, styles.accentButton, style];
     } else if (variant === 'ghost') {
       return [styles.button, styles.ghostButton, style];
+    } else if (variant === 'googleSignIn') {
+      return [styles.button, styles.googleSignInButton, style];
     } else {
       return [styles.button, styles.secondaryButton, style];
     }
@@ -39,6 +41,8 @@ export const BrandButton = ({
       return [styles.buttonText, styles.accentText, textStyle];
     } else if (variant === 'ghost') {
       return [styles.buttonText, styles.ghostText, textStyle];
+    } else if (variant === 'googleSignIn') {
+      return [styles.buttonText, styles.googleSignInText, textStyle];
     } else {
       return [styles.buttonText, styles.secondaryText, textStyle];
     }
@@ -95,6 +99,11 @@ const styles = StyleSheet.create({
   disabledButton: {
     backgroundColor: brandColors.disabledText,
   },
+  googleSignInButton: {
+    backgroundColor: buttonStyles.googleSignIn.backgroundColor,
+    borderWidth: buttonStyles.googleSignIn.borderWidth,
+    borderColor: buttonStyles.googleSignIn.borderColor,
+  },
   buttonText: {
     fontFamily: typography.bodyFont,
     fontWeight: buttonStyles.fontWeight || typography.weights.semiBold,
@@ -115,6 +124,9 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: brandColors.disabledText,
+  },
+  googleSignInText: {
+    color: buttonStyles.googleSignIn.color,
   },
   buttonContent: {
     flexDirection: 'row',

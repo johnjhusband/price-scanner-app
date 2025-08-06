@@ -88,7 +88,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
             <Feather 
               name="thumbs-up" 
               size={20} 
-              color={helpedDecision === true ? brandColors.accent : brandColors.textSecondary} 
+              color={helpedDecision === true ? '#000000' : brandColors.textSecondary} 
             />
             <Text style={[
               styles.buttonText,
@@ -109,7 +109,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
             <Feather 
               name="thumbs-down" 
               size={20} 
-              color={helpedDecision === false ? brandColors.accent : brandColors.textSecondary} 
+              color={helpedDecision === false ? '#000000' : brandColors.textSecondary} 
             />
             <Text style={[
               styles.buttonText,
@@ -191,8 +191,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   selectedButton: {
-    borderColor: brandColors.accent,
-    backgroundColor: brandColors.accentLight,
+    borderColor: '#000000', // Black border when selected
+    backgroundColor: '#F9FAFB', // Very light gray background
     borderWidth: 1.5,
   },
   buttonText: {
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     color: brandColors.textSecondary,
   },
   selectedButtonText: {
-    color: brandColors.accent,
+    color: '#000000', // Black text when selected
     fontWeight: typography.weights.semiBold,
   },
   buttonContent: {
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     lineHeight: 27,
   },
   submitButton: {
-    backgroundColor: brandColors.primary,
+    backgroundColor: '#000000', // Black for primary CTAs
     paddingVertical: 16,
     paddingHorizontal: 32,
     borderRadius: 14, // Apple style
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   submitButtonText: {
-    color: brandColors.background,
+    color: '#FFFFFF', // White text on black
     fontSize: 17,
     fontFamily: typography.bodyFont,
     fontWeight: typography.weights.semiBold,

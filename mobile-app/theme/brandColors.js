@@ -122,32 +122,40 @@ export const typography = {
   }
 };
 
-// Button styling constants - Minimal Apple Design with Brand Colors
+// Button styling constants - Final consolidated design
 export const buttonStyles = {
   primary: {
-    backgroundColor: brandColors.slate,  // Slate for login/secondary actions
-    color: '#FFFFFF',                   // White text on dark background
-    hoverBackground: brandColors.slateDark,  // Darker slate on hover
+    backgroundColor: '#000000',         // Black for all primary CTAs
+    color: '#FFFFFF',                  // White text
+    hoverBackground: '#111827',        // Subtle darkening on hover
     borderWidth: 0,
     borderColor: 'transparent',
   },
   secondary: {
-    backgroundColor: '#F2F2F7',  // Apple light gray
-    color: brandColors.text,     // Black text
-    hoverBackground: '#E5E5EA',  // Slightly darker gray
-    borderColor: 'transparent',  // No borders
+    backgroundColor: '#000000',        // Black for secondary actions too
+    color: '#FFFFFF',                  // White text
+    hoverBackground: '#111827',        // Subtle darkening on hover
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   accent: {
-    backgroundColor: brandColors.accent,     // Amber for primary CTAs
-    color: brandColors.slate,               // Dark gray text for WCAG AA
-    hoverBackground: brandColors.accentDark, // Darker amber
-    fontWeight: '600',                      // Heavier weight for readability
+    backgroundColor: '#000000',        // Black (no more amber for buttons)
+    color: '#FFFFFF',                  // White text
+    hoverBackground: '#111827',        // Subtle darkening on hover
+    fontWeight: '600',
   },
   ghost: {
-    backgroundColor: 'transparent',  // No background
-    color: '#4B5563',               // Medium gray text
-    hoverBackground: '#F3F4F6',     // Light gray on hover
-    borderColor: 'transparent',     // No border
+    backgroundColor: 'transparent',    // Transparent background
+    color: brandColors.text,          // Black text
+    hoverBackground: '#F3F4F6',       // Light gray on hover
+    borderColor: 'transparent',
+  },
+  googleSignIn: {
+    backgroundColor: '#FFFFFF',        // White background
+    color: '#000000',                 // Black text
+    borderWidth: 1,
+    borderColor: brandColors.slate,   // Slate border
+    hoverBackground: '#F9FAFB',       // Subtle gray on hover
   },
   borderRadius: '14px',          // Even more rounded, modern Apple
   padding: {
