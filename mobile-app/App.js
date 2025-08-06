@@ -772,7 +772,11 @@ export default function App() {
   if (authLoading && Platform.OS === 'web') {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color={brandColors.charcoalGray} />
+        <FlippiLogo size="large" style={{ marginBottom: 20 }} />
+        <ActivityIndicator size="large" color={brandColors.primary} />
+        <Text style={{ marginTop: 20, fontSize: 16, color: brandColors.textSecondary }}>
+          Loading flippi.ai...
+        </Text>
       </View>
     );
   }
