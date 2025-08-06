@@ -263,7 +263,7 @@ export default function App() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(false); // TEMP: Skip auth for debugging
+  const [authLoading, setAuthLoading] = useState(true);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
   
   const scrollViewRef = useRef(null);
@@ -502,64 +502,62 @@ export default function App() {
     
     // Check authentication on web
     if (Platform.OS === 'web') {
-      console.log('[Auth Debug] Starting authentication check...');
-      console.log('[Auth Debug] Current URL:', window.location.href);
-      console.log('[Auth Debug] User Agent:', navigator.userAgent);
+      // Check authentication
       
       // Set a timeout for auth check to prevent infinite loading
       const authTimeout = setTimeout(() => {
-        console.log('[Auth Debug] Auth check timeout - proceeding without auth');
+        // Auth check timeout
         setAuthLoading(false);
         setIsAuthenticated(false);
       }, 5000); // 5 second timeout
       
       // Check if token in URL (OAuth callback)
       AuthService.parseTokenFromUrl().then(hasToken => {
-        console.log('[Auth Debug] Token in URL:', hasToken);
+        // Check if we have a token
         
         if (hasToken) {
           setIsAuthenticated(true);
           // Get user asynchronously
           AuthService.getUser().then(userData => {
-            console.log('[Auth Debug] User data loaded:', userData);
+            // User data loaded
             setUser(userData);
             clearTimeout(authTimeout);
             setAuthLoading(false);
           }).catch(error => {
-            console.error('[Auth Debug] Error getting user data:', error);
+            console.error('Error getting user data:', error);
             clearTimeout(authTimeout);
             setAuthLoading(false);
           });
         } else {
           // No token in URL, check existing session
           AuthService.isAuthenticated().then(isAuth => {
-            console.log('[Auth Debug] Existing session:', isAuth);
+            // Check existing session
             
             if (isAuth) {
               setIsAuthenticated(true);
               AuthService.getUser().then(userData => {
-                console.log('[Auth Debug] User data from session:', userData);
+                // User data loaded from session
                 setUser(userData);
                 clearTimeout(authTimeout);
                 setAuthLoading(false);
               }).catch(error => {
-                console.error('[Auth Debug] Error getting user from session:', error);
+                console.error('Error getting user from session:', error);
                 clearTimeout(authTimeout);
                 setAuthLoading(false);
               });
             } else {
-              console.log('[Auth Debug] No authentication found');
+              // No authentication found
               clearTimeout(authTimeout);
               setAuthLoading(false);
             }
           }).catch(error => {
-            console.error('[Auth Debug] Error checking auth status:', error);
+            console.error('Error checking auth status:', error);
             clearTimeout(authTimeout);
             setAuthLoading(false);
           });
         }
       }).catch(error => {
-        console.error('[Auth Debug] Error during authentication:', error);
+        console.error('Error during authentication:', error);
         clearTimeout(authTimeout);
         setAuthLoading(false);
       });
@@ -794,30 +792,11 @@ export default function App() {
   // Show loading while checking auth
   if (authLoading && Platform.OS === 'web') {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }]}>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <FlippiLogo size="large" style={{ marginBottom: 20 }} />
-        <ActivityIndicator size="large" color="#000000" />
-        <Text style={{ marginTop: 20, fontSize: 16, color: '#000000' }}>
+        <ActivityIndicator size="large" color={brandColors.primary} />
+        <Text style={{ marginTop: 20, fontSize: 16, color: brandColors.textSecondary }}>
           Loading flippi.ai...
-        </Text>
-        <TouchableOpacity 
-          style={{ 
-            marginTop: 30, 
-            paddingVertical: 16,
-            paddingHorizontal: 32,
-            backgroundColor: '#000000',
-            borderRadius: 12,
-          }}
-          onPress={() => {
-            console.log('[Auth Debug] Skip auth button pressed');
-            setAuthLoading(false);
-            setIsAuthenticated(false);
-          }}
-        >
-          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Skip to Login</Text>
-        </TouchableOpacity>
-        <Text style={{ marginTop: 10, fontSize: 14, color: '#666666' }}>
-          (Click if loading takes too long)
         </Text>
       </View>
     );
