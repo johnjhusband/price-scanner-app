@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+  <title>Test Chrome Loading</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 20px;
+    }
+    .status {
+      padding: 20px;
+      background: #f0f0f0;
+      border-radius: 8px;
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chrome Compatibility Test</h1>
+  <div id="test-results"></div>
+  
+  <script>
+    const results = document.getElementById('test-results');
+    
+    function addResult(test, passed, details) {
+      const div = document.createElement('div');
+      div.className = 'status';
+      div.style.backgroundColor = passed ? '#d4edda' : '#f8d7da';
+      div.innerHTML = `<strong>${test}:</strong> ${passed ? '✅ PASS' : '❌ FAIL'}<br>${details || ''}`;
+      results.appendChild(div);
+    }
+    
+    // Test 1: Basic JavaScript
+    try {
+      const test = { a: 1, b: 2 };
+      const spread = { ...test, c: 3 };
+      addResult('Object spread operator', true, 'Works correctly');
+    } catch (e) {
+      addResult('Object spread operator', false, e.message);
+    }
+    
+    // Test 2: Optional chaining (should fail in old browsers)
+    try {
+      const obj = { a: { b: 1 } };
+      // Test without optional chaining first
+      const value = obj && obj.a && obj.a.b;
+      addResult('Conditional property access', true, 'Works correctly');
+    } catch (e) {
+      addResult('Conditional property access', false, e.message);
+    }
+    
+    // Test 3: Array methods
+    try {
+      const arr = [1, 2, 3];
+      const mapped = arr.map(x => x * 2);
+      addResult('Array.map with arrow functions', true, 'Works correctly');
+    } catch (e) {
+      addResult('Array.map with arrow functions', false, e.message);
+    }
+    
+    // Test 4: Async/await
+    try {
+      (async function() {
+        const result = await Promise.resolve('test');
+        addResult('Async/await', true, 'Works correctly');
+      })();
+    } catch (e) {
+      addResult('Async/await', false, e.message);
+    }
+    
+    // Test 5: Template literals
+    try {
+      const name = 'World';
+      const greeting = `Hello, ${name}!`;
+      addResult('Template literals', true, greeting);
+    } catch (e) {
+      addResult('Template literals', false, e.message);
+    }
+    
+    // Test 6: Fetch API
+    try {
+      if (window.fetch) {
+        addResult('Fetch API', true, 'Available');
+      } else {
+        addResult('Fetch API', false, 'Not available');
+      }
+    } catch (e) {
+      addResult('Fetch API', false, e.message);
+    }
+    
+    // Add browser info
+    const browserInfo = document.createElement('div');
+    browserInfo.className = 'status';
+    browserInfo.innerHTML = `<strong>Browser Info:</strong><br>User Agent: ${navigator.userAgent}`;
+    results.appendChild(browserInfo);
+  </script>
+</body>
+</html>

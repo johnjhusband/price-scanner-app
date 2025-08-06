@@ -57,13 +57,13 @@ export const BrandButton = ({
 
 const styles = StyleSheet.create({
   button: {
-    paddingHorizontal: parseInt(buttonStyles.padding.horizontal),
-    paddingVertical: parseInt(buttonStyles.padding.vertical),
+    paddingHorizontal: 32,
+    paddingVertical: 16,
     borderRadius: 14, // Modern Apple style
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: parseInt(buttonStyles.minHeight),
-    minWidth: parseInt(buttonStyles.minWidth),
+    minHeight: 52,
+    minWidth: 140,
     // Subtle shadow for depth
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },

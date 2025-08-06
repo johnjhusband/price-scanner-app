@@ -146,13 +146,13 @@ const styles = StyleSheet.create({
     elevation: 2,
   },
   question: {
-    fontSize: parseInt(typography.sizes.body),
+    fontSize: 17,
     fontFamily: typography.bodyFont,
     fontWeight: typography.weights.semiBold,
     textAlign: 'center',
     marginBottom: 20,
     color: brandColors.text,
-    lineHeight: parseInt(typography.sizes.body) * parseFloat(typography.lineHeight.relaxed),
+    lineHeight: 27,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -178,7 +178,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   buttonText: {
-    fontSize: parseInt(typography.sizes.body),
+    fontSize: 17,
     fontFamily: typography.bodyFont,
     textAlign: 'center',
     color: brandColors.textSecondary,
@@ -193,13 +193,13 @@ const styles = StyleSheet.create({
     borderColor: brandColors.border,
     borderRadius: 14, // Apple style
     padding: 16,
-    fontSize: parseInt(typography.sizes.body),
+    fontSize: 17,
     fontFamily: typography.bodyFont,
     minHeight: 100,
     textAlignVertical: 'top',
     marginBottom: 15,
     color: brandColors.text,
-    lineHeight: parseInt(typography.sizes.body) * parseFloat(typography.lineHeight.relaxed),
+    lineHeight: 27,
   },
   submitButton: {
     backgroundColor: brandColors.primary,
@@ -220,19 +220,19 @@ const styles = StyleSheet.create({
   },
   submitButtonText: {
     color: brandColors.background,
-    fontSize: parseInt(typography.sizes.body),
+    fontSize: 17,
     fontFamily: typography.bodyFont,
     fontWeight: typography.weights.semiBold,
     letterSpacing: typography.letterSpacing.wide,
   },
   successMessage: {
-    fontSize: parseInt(typography.sizes.body),
+    fontSize: 17,
     fontFamily: typography.bodyFont,
     textAlign: 'center',
     color: brandColors.success,
     fontWeight: typography.weights.semiBold,
     paddingVertical: 20,
-    lineHeight: parseInt(typography.sizes.body) * parseFloat(typography.lineHeight.relaxed),
+    lineHeight: 27,
   },
 });
 
