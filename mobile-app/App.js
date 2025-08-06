@@ -794,22 +794,31 @@ export default function App() {
   // Show loading while checking auth
   if (authLoading && Platform.OS === 'web') {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF' }]}>
         <FlippiLogo size="large" style={{ marginBottom: 20 }} />
-        <ActivityIndicator size="large" color={brandColors.primary} />
-        <Text style={{ marginTop: 20, fontSize: 16, color: brandColors.textSecondary }}>
+        <ActivityIndicator size="large" color="#000000" />
+        <Text style={{ marginTop: 20, fontSize: 16, color: '#000000' }}>
           Loading flippi.ai...
         </Text>
         <TouchableOpacity 
-          style={{ marginTop: 20, padding: 10, backgroundColor: brandColors.primary, borderRadius: 8 }}
+          style={{ 
+            marginTop: 30, 
+            paddingVertical: 16,
+            paddingHorizontal: 32,
+            backgroundColor: '#000000',
+            borderRadius: 12,
+          }}
           onPress={() => {
             console.log('[Auth Debug] Skip auth button pressed');
             setAuthLoading(false);
             setIsAuthenticated(false);
           }}
         >
-          <Text style={{ color: '#FFFFFF' }}>Skip to Login</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 18, fontWeight: '600' }}>Skip to Login</Text>
         </TouchableOpacity>
+        <Text style={{ marginTop: 10, fontSize: 14, color: '#666666' }}>
+          (Click if loading takes too long)
+        </Text>
       </View>
     );
   }
@@ -1192,6 +1201,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%', // Ensure full width
+    backgroundColor: brandColors.background, // Ensure white background
   },
   contentContainer: {
     flexGrow: 1,
