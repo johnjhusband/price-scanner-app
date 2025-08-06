@@ -506,6 +506,13 @@ export default function App() {
       console.log('[Auth Debug] Current URL:', window.location.href);
       console.log('[Auth Debug] User Agent:', navigator.userAgent);
       
+      // Set a timeout for auth check to prevent infinite loading
+      const authTimeout = setTimeout(() => {
+        console.log('[Auth Debug] Auth check timeout - proceeding without auth');
+        setAuthLoading(false);
+        setIsAuthenticated(false);
+      }, 5000); // 5 second timeout
+      
       // Check if token in URL (OAuth callback)
       AuthService.parseTokenFromUrl().then(hasToken => {
         console.log('[Auth Debug] Token in URL:', hasToken);
@@ -516,6 +523,11 @@ export default function App() {
           AuthService.getUser().then(userData => {
             console.log('[Auth Debug] User data loaded:', userData);
             setUser(userData);
+            clearTimeout(authTimeout);
+            setAuthLoading(false);
+          }).catch(error => {
+            console.error('[Auth Debug] Error getting user data:', error);
+            clearTimeout(authTimeout);
             setAuthLoading(false);
           });
         } else {
@@ -528,16 +540,27 @@ export default function App() {
               AuthService.getUser().then(userData => {
                 console.log('[Auth Debug] User data from session:', userData);
                 setUser(userData);
+                clearTimeout(authTimeout);
+                setAuthLoading(false);
+              }).catch(error => {
+                console.error('[Auth Debug] Error getting user from session:', error);
+                clearTimeout(authTimeout);
                 setAuthLoading(false);
               });
             } else {
               console.log('[Auth Debug] No authentication found');
+              clearTimeout(authTimeout);
               setAuthLoading(false);
             }
+          }).catch(error => {
+            console.error('[Auth Debug] Error checking auth status:', error);
+            clearTimeout(authTimeout);
+            setAuthLoading(false);
           });
         }
       }).catch(error => {
         console.error('[Auth Debug] Error during authentication:', error);
+        clearTimeout(authTimeout);
         setAuthLoading(false);
       });
     } else {
