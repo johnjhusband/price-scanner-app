@@ -85,7 +85,7 @@ const styles = StyleSheet.create({
     backgroundColor: buttonStyles.accent.backgroundColor,
   },
   ghostButton: {
-    backgroundColor: buttonStyles.ghost?.backgroundColor || 'transparent',
+    backgroundColor: (buttonStyles.ghost && buttonStyles.ghost.backgroundColor) || 'transparent',
     borderWidth: 0,
   },
   disabledButton: {
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     color: buttonStyles.accent.color,
   },
   ghostText: {
-    color: buttonStyles.ghost?.color || brandColors.textSecondary,
+    color: (buttonStyles.ghost && buttonStyles.ghost.color) || brandColors.textSecondary,
   },
   disabledText: {
     color: brandColors.disabledText,
