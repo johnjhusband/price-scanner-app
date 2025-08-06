@@ -11,11 +11,16 @@ export const brandColors = {
   surface: '#F2F2F7',           // Apple surface gray - better distinction
   border: '#C7C7CC',            // Apple separator - visible to all
   
+  // Brand Action Colors
+  slate: '#1F2937',             // Slate for secondary actions
+  slateDark: '#111827',         // Dark slate for hover states
+  
   // Accent Colors - Colorblind Safe (Deuteranopia/Protanopia/Tritanopia tested)
-  success: '#30D158',           // Apple green - distinguishable in all color blindness types
+  success: '#10B981',           // Emerald - for value/verification only
   error: '#FF453A',             // Apple red - higher contrast than standard red
-  accent: '#007AFF',            // Apple blue - colorblind safe
-  accentLight: '#E5F1FF',       // Light blue tint - maintains 3:1 contrast
+  accent: '#F59E0B',            // Amber - primary CTAs
+  accentLight: '#FEF3C7',       // Light amber tint
+  accentDark: '#D97706',        // Dark amber for hover states
   
   // Legacy mappings for compatibility
   slateTeal: '#3C3C43',         // Maps to textSecondary
@@ -117,25 +122,26 @@ export const typography = {
   }
 };
 
-// Button styling constants - Minimal Apple Design
+// Button styling constants - Minimal Apple Design with Brand Colors
 export const buttonStyles = {
   primary: {
-    backgroundColor: '#FFFFFF',  // White background
-    color: '#007AFF',           // Blue text for friendlier feel
-    hoverBackground: '#F2F2F7',  // Light gray on hover
-    borderWidth: 1.5,           // Slightly thicker border
-    borderColor: '#007AFF',     // Blue border to match text
+    backgroundColor: brandColors.slate,  // Slate for login/secondary actions
+    color: '#FFFFFF',                   // White text on dark background
+    hoverBackground: brandColors.slateDark,  // Darker slate on hover
+    borderWidth: 0,
+    borderColor: 'transparent',
   },
   secondary: {
     backgroundColor: '#F2F2F7',  // Apple light gray
-    color: '#000000',           // Black text
-    hoverBackground: '#E5E5EA', // Slightly darker gray
-    borderColor: 'transparent', // No borders
+    color: brandColors.text,     // Black text
+    hoverBackground: '#E5E5EA',  // Slightly darker gray
+    borderColor: 'transparent',  // No borders
   },
   accent: {
-    backgroundColor: '#007AFF',  // Apple blue for key CTAs only
-    color: '#FFFFFF', 
-    hoverBackground: '#0051D5',  // Darker blue
+    backgroundColor: brandColors.accent,     // Amber for primary CTAs
+    color: brandColors.slate,               // Dark gray text for WCAG AA
+    hoverBackground: brandColors.accentDark, // Darker amber
+    fontWeight: '600',                      // Heavier weight for readability
   },
   ghost: {
     backgroundColor: 'transparent',  // No background
@@ -168,13 +174,13 @@ export const componentColors = {
     border: '#D2D2D7',
   },
   scores: {
-    high: '#34C759',                 // Apple green (success only)
+    high: brandColors.success,       // Emerald (data/verification only)
     medium: '#FF9500',               // Apple orange (caution only)
     low: '#86868B',                  // Apple gray (neutral)
-    spark: '#007AFF',                // Blue (used sparingly)
+    spark: brandColors.accent,       // Amber (used sparingly)
   },
   authentication: {
-    verified: '#34C759',             // Apple green
+    verified: brandColors.success,   // Emerald for verification
     uncertain: '#FF9500',            // Apple orange
     low: '#FF3B30',                  // Apple red
   },

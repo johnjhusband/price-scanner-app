@@ -63,26 +63,27 @@ h1, .headline {
 }
 
 .brand-button-primary {
-  background: linear-gradient(90deg, #3478F6 60%, #2C68D0 100%);
-  color: #fff;
+  background: #F59E0B; /* Amber for primary CTAs */
+  color: #1F2937; /* Slate text for WCAG AA compliance */
   border: none;
+  font-weight: 600;
 }
 
 .brand-button-primary:hover {
-  background: linear-gradient(90deg, #2C68D0 0%, #3478F6 100%);
-  box-shadow: 0 4px 16px rgba(52,120,246,0.18);
+  background: #D97706; /* Darker amber on hover */
+  box-shadow: 0 4px 16px rgba(245,158,11,0.18);
   transform: translateY(-2px) scale(1.03);
 }
 
 .brand-button-secondary {
-  background: linear-gradient(90deg, #BFC2C4 60%, #A5A8AA 100%);
-  color: #23292C;
+  background: #1F2937; /* Slate for secondary actions */
+  color: #fff;
   border: none;
 }
 
 .brand-button-secondary:hover {
-  background: linear-gradient(90deg, #A5A8AA 0%, #BFC2C4 100%);
-  box-shadow: 0 4px 16px rgba(191,194,196,0.18);
+  background: #111827; /* Darker slate on hover */
+  box-shadow: 0 4px 16px rgba(31,41,55,0.18);
   transform: translateY(-2px) scale(1.03);
 }
 
@@ -120,7 +121,7 @@ h1, .headline {
 
 .analyzing {
   font-size: 1.1rem;
-  color: #3478F6;
+  color: #F59E0B; /* Amber for analyzing state */
   font-weight: 600;
   animation: pulse 1.5s ease-in-out infinite;
 }
@@ -165,7 +166,7 @@ h1, .headline {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3478F6;
+  background: #F59E0B; /* Amber for scrollbar */
   border-radius: 4px;
 }
 
@@ -176,7 +177,7 @@ h1, .headline {
 /* Web-specific focus states for accessibility */
 .brand-button:focus,
 .upload-area:focus {
-  outline: 2px solid #3478F6;
+  outline: 2px solid #F59E0B; /* Amber focus outline */
   outline-offset: 2px;
 }
 

@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   offerBanner: {
-    backgroundColor: brandColors.accent,  // Apple blue
+    backgroundColor: brandColors.accent,  // Amber for primary CTA
     paddingHorizontal: 25,
     paddingVertical: 12,
     borderRadius: 14, // Apple style radius
@@ -269,11 +269,11 @@ const styles = StyleSheet.create({
     }),
   },
   offerBannerHover: {
-    backgroundColor: '#0051D5', // Darker blue
+    backgroundColor: brandColors.accentDark, // Darker amber
     transform: [{ scale: 1.01 }],
   },
   offerText: {
-    color: '#FFFFFF',
+    color: brandColors.slate, // Dark gray text for WCAG AA on amber
     fontSize: 15,
     fontWeight: typography.weights.semiBold,
   },
@@ -402,7 +402,7 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   googleButton: {
-    backgroundColor: brandColors.primary, // Black
+    backgroundColor: brandColors.slate, // Slate for secondary actions
     borderRadius: 14,
     paddingVertical: 16,
     paddingHorizontal: 32,
@@ -418,7 +418,7 @@ const styles = StyleSheet.create({
     }),
   },
   googleButtonHover: {
-    backgroundColor: '#1A1A1A', // Slightly lighter black
+    backgroundColor: brandColors.slateDark, // Darker slate
     transform: [{ scale: 1.01 }],
   },
   googleButtonContent: {
