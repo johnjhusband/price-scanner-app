@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Flippi.ai Test Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .status { 
+            padding: 10px; 
+            margin: 10px 0; 
+            border-radius: 4px; 
+        }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+        .info { background: #d1ecf1; color: #0c5460; }
+    </style>
+</head>
+<body>
+    <h1>Flippi.ai System Test</h1>
+    
+    <div class="status info">
+        <strong>Browser:</strong> <span id="browser"></span>
+    </div>
+    
+    <div class="status info">
+        <strong>JavaScript:</strong> Working ✓
+    </div>
+    
+    <div id="api-test" class="status info">
+        <strong>API Test:</strong> Testing...
+    </div>
+    
+    <div id="modern-js-test" class="status info">
+        <strong>Modern JS Test:</strong> Testing...
+    </div>
+    
+    <script>
+        // Browser detection
+        document.getElementById('browser').textContent = navigator.userAgent;
+        
+        // Test API
+        fetch('/api/health')
+            .then(res => res.json())
+            .then(data => {
+                const div = document.getElementById('api-test');
+                div.className = 'status success';
+                div.innerHTML = '<strong>API Test:</strong> Backend is running ✓';
+            })
+            .catch(err => {
+                const div = document.getElementById('api-test');
+                div.className = 'status error';
+                div.innerHTML = '<strong>API Test:</strong> Backend error: ' + err.message;
+            });
+            
+        // Test modern JS features
+        try {
+            // Test optional chaining
+            const obj = { a: { b: 1 } };
+            const result1 = obj?.a?.b;
+            
+            // Test nullish coalescing
+            const result2 = null ?? 'default';
+            
+            // Test arrow functions
+            const arrow = () => 'works';
+            
+            const div = document.getElementById('modern-js-test');
+            div.className = 'status success';
+            div.innerHTML = '<strong>Modern JS Test:</strong> All features supported ✓';
+        } catch (e) {
+            const div = document.getElementById('modern-js-test');
+            div.className = 'status error';
+            div.innerHTML = '<strong>Modern JS Test:</strong> ' + e.message + ' (This browser needs transpilation)';
+        }
+    </script>
+</body>
+</html>
