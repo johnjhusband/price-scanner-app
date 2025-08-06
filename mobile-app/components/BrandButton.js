@@ -4,7 +4,7 @@ import { brandColors, typography, buttonStyles } from '../theme/brandColors';
 
 export const BrandButton = ({ 
   title, 
-  variant = 'primary', // 'primary', 'secondary', 'accent'
+  variant = 'primary', // 'primary', 'secondary', 'accent', 'ghost'
   onPress, 
   disabled = false,
   style,
@@ -20,6 +20,8 @@ export const BrandButton = ({
       return [styles.button, styles.primaryButton, style];
     } else if (variant === 'accent' || isHighImpact) {
       return [styles.button, styles.accentButton, style];
+    } else if (variant === 'ghost') {
+      return [styles.button, styles.ghostButton, style];
     } else {
       return [styles.button, styles.secondaryButton, style];
     }
@@ -34,6 +36,8 @@ export const BrandButton = ({
       return [styles.buttonText, styles.primaryText, textStyle];
     } else if (variant === 'accent' || isHighImpact) {
       return [styles.buttonText, styles.accentText, textStyle];
+    } else if (variant === 'ghost') {
+      return [styles.buttonText, styles.ghostText, textStyle];
     } else {
       return [styles.buttonText, styles.secondaryText, textStyle];
     }
@@ -73,6 +77,10 @@ const styles = StyleSheet.create({
   accentButton: {
     backgroundColor: buttonStyles.accent.backgroundColor,
   },
+  ghostButton: {
+    backgroundColor: buttonStyles.ghost?.backgroundColor || 'transparent',
+    borderWidth: 0,
+  },
   disabledButton: {
     backgroundColor: brandColors.disabledText,
   },
@@ -90,6 +98,9 @@ const styles = StyleSheet.create({
   },
   accentText: {
     color: buttonStyles.accent.color,
+  },
+  ghostText: {
+    color: buttonStyles.ghost?.color || brandColors.textSecondary,
   },
   disabledText: {
     color: brandColors.disabledText,

@@ -120,6 +120,12 @@ export const buttonStyles = {
     color: '#FFFFFF', 
     hoverBackground: '#C56642',  // Darker terracotta on hover
   },
+  ghost: {
+    backgroundColor: 'transparent',  // No background
+    color: '#4B5563',               // Medium gray text
+    hoverBackground: '#F3F4F6',     // Light gray on hover
+    borderColor: 'transparent',     // No border
+  },
   borderRadius: '8px',
   padding: {
     horizontal: '24px',

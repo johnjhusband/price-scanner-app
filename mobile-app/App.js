@@ -205,12 +205,13 @@ const WebCameraView = ({ onCapture, onCancel }) => {
         <BrandButton 
           title="Cancel" 
           onPress={handleCloseCamera} 
-          variant="primary"
+          variant="ghost"
         />
         <BrandButton 
           title="Capture Photo" 
           onPress={capturePhoto} 
           disabled={!isReady}
+          variant="accent"
         />
       </View>
     </View>
