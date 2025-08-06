@@ -22,11 +22,29 @@ export const appleStyles = {
     transition: 'all 0.2s ease',
   },
   
-  // Subtle shadows for depth
+  // Subtle shadows for depth - React Native compatible
   shadows: {
-    small: '0 1px 4px rgba(0, 0, 0, 0.05)',
-    medium: '0 2px 8px rgba(0, 0, 0, 0.08)',
-    large: '0 4px 16px rgba(0, 0, 0, 0.12)',
+    small: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
+    },
+    medium: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.08,
+      shadowRadius: 4,
+      elevation: 2,
+    },
+    large: {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.12,
+      shadowRadius: 8,
+      elevation: 4,
+    },
   },
   
   // Frosted glass effect (for mobile/overlay elements)

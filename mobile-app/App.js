@@ -809,7 +809,7 @@ export default function App() {
       <View style={styles.content}>
         
         <FlippiLogo />
-        <Text style={[styles.title, { color: brandColors.text }, appleStyles.heading]}>
+        <Text style={[styles.title, { color: brandColors.text }]}>
           Never Over Pay
         </Text>
         
@@ -825,7 +825,7 @@ export default function App() {
                 color: brandColors.text,
                 borderColor: brandColors.border,
                 marginBottom: 20,
-                ...appleStyles.shadows.small
+                boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)'
               }]}
               placeholder="Brand, source, or serial number?"
               placeholderTextColor={brandColors.disabledText}
@@ -1130,10 +1130,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%', // Ensure full width
-    ...(Platform.OS === 'web' ? {
-      WebkitFontSmoothing: 'antialiased',
-      MozOsxFontSmoothing: 'grayscale',
-    } : {}),
   },
   contentContainer: {
     flexGrow: 1,
@@ -1195,7 +1191,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 20,
     padding: 20,
-    ...appleStyles.shadows.small,
+    // Shadow removed for Chrome compatibility
   },
   dropZoneActive: {
     borderColor: '#4CAF50',
@@ -1231,7 +1227,7 @@ const styles = StyleSheet.create({
     marginBottom: isMobile ? 0 : 20, // No margin on mobile
     alignSelf: 'center',
     backgroundColor: brandColors.surface,
-    ...appleStyles.shadows.medium,
+    // Shadow removed for Chrome compatibility
   },
   resultTitle: {
     fontSize: 20,
@@ -1362,7 +1358,6 @@ const styles = StyleSheet.create({
     marginBottom: 15,
     minHeight: 80,
     textAlignVertical: 'top',
-    transition: 'all 0.2s ease',
   },
   goButton: {
     width: '100%',
