@@ -263,7 +263,7 @@ export default function App() {
   const [showFeedback, setShowFeedback] = useState(false);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  const [authLoading, setAuthLoading] = useState(false); // TEMP: Skip auth for debugging
   const [showMoreDetails, setShowMoreDetails] = useState(false);
   
   const scrollViewRef = useRef(null);
