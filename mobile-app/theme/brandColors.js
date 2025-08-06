@@ -1,52 +1,52 @@
-// Flippi.ai Brand Color System - Modern, Clean & Playfully Bold
-// Contemporary base with hyperpop accents for memorable brand experience
+// Flippi.ai Brand Color System - Minimal & Sophisticated
+// Apple-inspired design: Let typography and spacing speak, not colors
 
 export const brandColors = {
-  // Core Colors - Clean base with bold accents
-  primary: '#7C3AED',           // Hyperpop purple - bold, memorable, modern
-  text: '#111827',              // Almost black - crisp and clean
-  textSecondary: '#6B7280',     // Slate gray - neutral contrast
-  background: '#FAFBFC',        // Cool white with hint of blue
+  // Core Colors - Crisp black and white
+  primary: '#000000',           // Pure black - confident, minimal
+  text: '#000000',              // Pure black - maximum contrast
+  textSecondary: '#86868B',     // Apple gray - subtle hierarchy
+  background: '#FFFFFF',        // Pure white - clean canvas
   surface: '#FFFFFF',           // Pure white for cards
-  border: '#E5E7EB',            // Light cool gray borders
+  border: '#D2D2D7',            // Apple light gray - barely there
   
-  // Accent Colors - Playful pops of color
-  success: '#10B981',           // Emerald - confidence and trust
-  error: '#EF4444',             // True red - clear communication
-  accent: '#EC4899',            // Electric pink - energy and flair
-  accentLight: '#FBCFE8',       // Light pink
+  // Accent Colors - Minimal and purposeful
+  success: '#34C759',           // Apple green - only for success
+  error: '#FF3B30',             // Apple red - only for errors
+  accent: '#007AFF',            // Apple blue - primary actions only
+  accentLight: '#E5F1FF',       // Very light blue tint
   
   // Legacy mappings for compatibility
-  slateTeal: '#6B7280',         // Maps to textSecondary
-  deepTeal: '#7C3AED',          // Maps to primary (purple)
-  softCream: '#FAFBFC',         // Maps to background
+  slateTeal: '#86868B',         // Maps to textSecondary
+  deepTeal: '#000000',          // Maps to primary (black)
+  softCream: '#FFFFFF',         // Maps to background
   offWhite: '#FFFFFF',          // Maps to surface
-  matteGold: '#EC4899',         // Maps to accent (pink)
-  mutedGraphite: '#111827',     // Maps to text
-  softTaupeBeige: '#E5E7EB',    // Maps to border
+  matteGold: '#007AFF',         // Maps to accent (blue)
+  mutedGraphite: '#000000',     // Maps to text
+  softTaupeBeige: '#D2D2D7',    // Maps to border
   
   // Additional legacy mappings
-  soil: '#111827',              // Maps to text
-  forest: '#10B981',            // Maps to emerald green
-  leaf: '#10B981',              // Maps to success
-  honey: '#F59E0B',             // Amber (kept for compatibility)
-  sunset: '#EF4444',            // Maps to error
-  ocean: '#7C3AED',             // Maps to primary
-  cream: '#FAFBFC',             // Maps to background
-  sand: '#FAFBFC',              // Maps to background
-  stone: '#6B7280',             // Maps to textSecondary
+  soil: '#000000',              // Maps to text
+  forest: '#34C759',            // Maps to success
+  leaf: '#34C759',              // Maps to success
+  honey: '#FF9500',             // Apple orange (kept minimal)
+  sunset: '#FF3B30',            // Maps to error
+  ocean: '#007AFF',             // Maps to accent
+  cream: '#FFFFFF',             // Maps to background
+  sand: '#FFFFFF',              // Maps to background
+  stone: '#86868B',             // Maps to textSecondary
   
   // Legacy color mappings (for compatibility)
-  charcoalGray: '#111827',      // Maps to text
-  lightGray: '#E5E7EB',         // Maps to border
-  slateBlueGray: '#7C3AED',     // Maps to primary
-  actionPurple: '#7C3AED',      // Maps to primary for CTA buttons
-  actionPurpleHover: '#6D28D9', // Darker purple for hover state
-  successGreen: '#10B981',      // Maps to success
+  charcoalGray: '#000000',      // Maps to text
+  lightGray: '#D2D2D7',         // Maps to border
+  slateBlueGray: '#000000',     // Maps to primary
+  actionPurple: '#007AFF',      // Maps to accent for CTA buttons
+  actionPurpleHover: '#0051D5', // Darker blue for hover state
+  successGreen: '#34C759',      // Maps to success
   
   // Semantic colors
-  warning: '#F59E0B',           // Amber for warnings
-  info: '#0284C7',              // Blue for info (matches badge)
+  warning: '#FF9500',           // Apple orange for warnings
+  info: '#007AFF',              // Apple blue for info
   
   // Text Colors
   primaryText: '#1A1A1A',       // Main text
@@ -54,13 +54,13 @@ export const brandColors = {
   disabledText: '#D1D5DB',      // Inactive states
   
   // Favicon Background
-  faviconBg: '#7C3AED',         // Favicon background color (primary)
+  faviconBg: '#000000',         // Favicon background color (primary)
   
   // Keep these for backward compatibility
-  electric: '#EC4899',          // Maps to accent (pink)
+  electric: '#007AFF',          // Maps to accent (blue)
   
   // Focus states
-  borderFocus: '#7C3AED',       // Primary focus
+  borderFocus: '#007AFF',       // Primary focus (blue)
   
   // Shadows
   shadowLight: 'rgba(0, 0, 0, 0.05)',
@@ -69,12 +69,12 @@ export const brandColors = {
 };
 
 export const typography = {
-  // Single font family for entire app
-  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  // Apple-style typography - let the fonts do the work
+  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif',
   
-  // All text uses system fonts for consistency
-  headingFont: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
-  bodyFont: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif',
+  // Display vs Text fonts for optimal readability
+  headingFont: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", sans-serif',
+  bodyFont: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif',
   monoFont: '"SF Mono", Monaco, Consolas, monospace',
   
   weights: {
@@ -87,12 +87,12 @@ export const typography = {
   },
   sizes: {
     logo: 'custom',
-    h1: '36px',
-    h2: '28px',
-    h3: '24px',
-    body: '16px',
-    small: '14px',
-    notes: '12px'
+    h1: '48px',     // Bigger, bolder
+    h2: '36px',     // More hierarchy
+    h3: '28px',     // Clear distinction
+    body: '17px',   // Optimal readability
+    small: '15px',  // Still readable
+    notes: '13px'   // Minimum size
   },
   lineHeight: {
     tight: '1.2',
@@ -102,23 +102,23 @@ export const typography = {
   }
 };
 
-// Button styling constants - Playfully Bold Design
+// Button styling constants - Minimal Apple Design
 export const buttonStyles = {
   primary: {
-    backgroundColor: '#7C3AED',  // Hyperpop purple
+    backgroundColor: '#000000',  // Pure black
     color: '#FFFFFF',
-    hoverBackground: '#6D28D9',  // Darker purple
+    hoverBackground: '#1C1C1E',  // Slightly lighter black
   },
   secondary: {
-    backgroundColor: '#F3F4F6',  // Light gray
-    color: '#111827',           // Almost black text
-    hoverBackground: '#E5E7EB', // Slightly darker gray
-    borderColor: '#D1D5DB',     // Gray border
+    backgroundColor: '#F2F2F7',  // Apple light gray
+    color: '#000000',           // Black text
+    hoverBackground: '#E5E5EA', // Slightly darker gray
+    borderColor: 'transparent', // No borders
   },
   accent: {
-    backgroundColor: '#EC4899',  // Electric pink for special CTAs
+    backgroundColor: '#007AFF',  // Apple blue for key CTAs only
     color: '#FFFFFF', 
-    hoverBackground: '#DB2777',  // Darker pink
+    hoverBackground: '#0051D5',  // Darker blue
   },
   ghost: {
     backgroundColor: 'transparent',  // No background
@@ -126,41 +126,41 @@ export const buttonStyles = {
     hoverBackground: '#F3F4F6',     // Light gray on hover
     borderColor: 'transparent',     // No border
   },
-  borderRadius: '8px',
+  borderRadius: '12px',          // More rounded, Apple-style
   padding: {
-    horizontal: '24px',
-    vertical: '12px',
+    horizontal: '32px',          // More breathing room
+    vertical: '16px',            // Taller buttons
   },
-  minHeight: '48px',
-  minWidth: '120px',
-  fontWeight: '600',
+  minHeight: '52px',             // Bigger touch targets
+  minWidth: '140px',             // More substantial
+  fontWeight: '500',             // Medium weight, not too bold
 };
 
-// Component-specific colors - Modern, Clean, & Playfully Bold
+// Component-specific colors - Minimal Apple Design
 export const componentColors = {
   uploadArea: {
-    border: '#E5E7EB',               // Light cool gray (neutral base)
+    border: '#D2D2D7',               // Subtle gray border
     background: '#FFFFFF',           // White
-    hoverBorder: '#7C3AED',          // Hyperpop purple punch
-    hoverBackground: '#F5F3FF',      // Lavender haze (subtle contrast)
+    hoverBorder: '#000000',          // Black on hover
+    hoverBackground: '#F2F2F7',      // Subtle gray tint
   },
   results: {
     background: '#FFFFFF',
-    border: '#E5E7EB',
+    border: '#D2D2D7',
   },
   scores: {
-    high: '#10B981',                 // Emerald (confidence)
-    medium: '#F59E0B',               // Amber (caution)
-    low: '#6B7280',                  // Slate gray (neutral low)
-    spark: '#EC4899',                // Electric pink (optional for highlight or flair)
+    high: '#34C759',                 // Apple green (success only)
+    medium: '#FF9500',               // Apple orange (caution only)
+    low: '#86868B',                  // Apple gray (neutral)
+    spark: '#007AFF',                // Blue (used sparingly)
   },
   authentication: {
-    verified: '#10B981',             // Trusted green
-    uncertain: '#F59E0B',            // Amber warning
-    low: '#EF4444',                  // Red alert
+    verified: '#34C759',             // Apple green
+    uncertain: '#FF9500',            // Apple orange
+    low: '#FF3B30',                  // Apple red
   },
   badge: {
-    background: '#E0F2FE',           // Soft blue for contrast
-    text: '#0284C7',                 // Blue callout (e.g., for limited offers or new scans)
+    background: '#F2F2F7',           // Light gray background
+    text: '#000000',                 // Black text for contrast
   },
 }; 

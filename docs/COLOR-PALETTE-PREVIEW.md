@@ -1,71 +1,77 @@
-# Flippi.ai Color Palette - Modern, Clean & Playfully Bold
+# Flippi.ai Color Palette - Minimal & Sophisticated
 
-## Contemporary Base with Hyperpop Accents
+## Apple-Inspired Design: Typography and Space, Not Colors
 
 ### Primary Colors
-- **Hyperpop Purple** (#7C3AED) - Primary brand color
-  - Represents: Innovation, creativity, boldness
-  - Psychology: Memorable, modern, stands out from competitors
-  - Usage: Primary buttons, headers, brand elements
+- **Pure Black** (#000000) - Primary brand color
+  - Represents: Confidence, sophistication, clarity
+  - Psychology: Lets content shine, no distractions
+  - Usage: Primary buttons, headers, all text
 
-- **Electric Pink** (#EC4899) - Strategic spark of energy
-  - Represents: Energy, excitement, confidence
-  - Psychology: Adds flair and personality without overwhelming
-  - Usage: Special CTAs like "Go", highlights, spark moments
+- **Apple Blue** (#007AFF) - Strategic accent only
+  - Represents: Primary actions, links
+  - Psychology: Familiar, trustworthy, minimal use
+  - Usage: "Go" button, key CTAs only
 
-- **Emerald Green** (#10B981) - Success/Growth color
-  - Represents: Trust, verification, positive outcomes
-  - Psychology: Confidence-building, professional
-  - Usage: Success states, positive feedback, "verified" indicators
+- **Apple Green** (#34C759) - Success only
+  - Represents: Positive outcomes, verification
+  - Psychology: Used sparingly for success states
+  - Usage: Success messages, checkmarks
 
 ### Neutral Palette
-- **Almost Black** (#111827) - Primary text (crisp and modern)
-- **Slate Gray** (#6B7280) - Secondary text
-- **Cool White** (#FAFBFC) - Background with hint of blue
-- **Pure White** (#FFFFFF) - Cards and surfaces
-- **Light Cool Gray** (#E5E7EB) - Borders
+- **Pure Black** (#000000) - Primary text (maximum contrast)
+- **Apple Gray** (#86868B) - Secondary text (subtle hierarchy)
+- **Pure White** (#FFFFFF) - Background (clean canvas)
+- **Light Gray** (#F2F2F7) - Subtle backgrounds
+- **Border Gray** (#D2D2D7) - Barely visible borders
 
-### Special Touches
-- **Lavender Haze** (#F5F3FF) - Hover states for purple elements
-- **Soft Blue Badge** (#E0F2FE bg, #0284C7 text) - For callouts and offers
+### Typography Focus
+- **Larger Fonts**: 48px headlines, 17px body text
+- **Clear Hierarchy**: Size and weight create structure
+- **System Fonts**: SF Pro Display for headers, SF Pro Text for body
+- **Generous Spacing**: Let the design breathe
 
-### Button Hierarchy - Bold & Playful
-1. **Primary Actions** (Hyperpop Purple #7C3AED)
+### Button Design - Apple Style
+1. **Primary Actions** (Pure Black #000000)
    - "Take Photo"
-   - Main brand actions
+   - Solid black with white text
+   - 12px border radius, generous padding
 
-2. **Special CTAs** (Electric Pink #EC4899)
+2. **Special CTAs** (Apple Blue #007AFF)
    - "Go" analyze button
-   - "Capture Photo" in camera
-   - High-energy moments that need attention
+   - Used very sparingly
+   - Only for the most important action
 
-3. **Secondary Actions** (Light Gray #F3F4F6)
+3. **Secondary Actions** (Light Gray #F2F2F7)
    - "Upload Photo"
    - "Scan Another Item"
-   - Supporting actions
+   - Subtle, not competing for attention
 
-4. **Tertiary Actions** (Ghost/Transparent)
+4. **Tertiary Actions** (Text only or ghost)
    - "Paste Image"
    - "Cancel"
-   - De-emphasized actions
+   - Minimal visual weight
 
-### Why This Palette Works
+### Design Principles
 
-1. **Purple Power**: Bold without being masculine, memorable brand identity
-2. **Clean Base**: Mostly neutral with strategic color placement
-3. **Pink Spark**: Adds energy and personality at key moments
-4. **Professional Foundation**: Gray/white base keeps it business-ready
-5. **Memorable**: Stands out in the sea of blue/navy apps
+1. **Less is More**: Minimal color use, maximum impact
+2. **Typography First**: Let fonts and spacing create hierarchy
+3. **Content Focus**: Nothing distracts from the user's task
+4. **Purposeful Color**: Only use color when it adds meaning
+5. **Generous Space**: More padding, bigger touch targets
 
-### Design Philosophy
-- Clean, modern interface with personality
-- Strategic use of bold colors (not overwhelming)
-- Gender-neutral while being distinctive
-- Professional enough for business, fun enough to enjoy daily
+### What Makes It Apple-Like
+- **Restraint**: No unnecessary colors or effects
+- **Clarity**: Every element has a clear purpose
+- **Sophistication**: Simple but not simplistic
+- **Accessibility**: High contrast, readable fonts
+- **Timeless**: Won't look dated in 5 years
 
-### Special Features
-- **Hover States**: Lavender haze on purple elements
-- **Score Spark**: Electric pink option for highlighting hot items
-- **Badge System**: Soft blue for special callouts
+### Implementation Notes
+- Buttons: 52px minimum height, 32px horizontal padding
+- Border radius: 12px for modern feel
+- Font weights: 400 regular, 500 medium, 700 bold
+- Line height: 1.5 for optimal readability
+- No gradients, no shadows, no unnecessary effects
 
-This palette creates a memorable brand experience while maintaining professionalism and usability for daily entrepreneurial tasks.
+This palette creates a sophisticated, distraction-free experience that lets the content and functionality speak for itself.
