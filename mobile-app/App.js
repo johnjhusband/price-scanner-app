@@ -17,6 +17,29 @@ const isMobile = windowWidth < 768;
 const isTablet = windowWidth >= 768 && windowWidth < 1024;
 const isDesktop = windowWidth >= 1024;
 
+/* BUTTON HIERARCHY GUIDE
+ * =====================
+ * 1. PRIMARY CTAs (accent/bright blue) - One per screen max
+ *    - "Go" (analyze image)
+ *    - "Capture Photo" (in camera view)
+ * 
+ * 2. BRAND ACTIONS (primary/navy) - Core functionality
+ *    - "Take Photo" (main action)
+ * 
+ * 3. SECONDARY ACTIONS (secondary/light gray) - Supporting
+ *    - "Upload Photo"
+ *    - "Scan Another Item"
+ * 
+ * 4. TERTIARY ACTIONS (ghost/transparent) - De-emphasized
+ *    - "Paste Image"
+ *    - "Cancel"
+ *    - "Exit" (custom styled)
+ * 
+ * 5. SYSTEM ACTIONS (text links or custom) - Minimal
+ *    - Legal links
+ *    - "View More/Less Details"
+ */
+
 const API_URL = Platform.OS === 'web' 
   ? '' // Same domain - nginx routes /api to backend
   : Platform.OS === 'ios'
@@ -813,9 +836,10 @@ export default function App() {
           {!image ? (
             <>
               <BrandButton
-                title="Choose from Gallery"
+                title="Upload Photo"
                 onPress={pickImage}
                 style={styles.actionButton}
+                variant="secondary"
               />
               
               {hasCamera && (
@@ -828,11 +852,22 @@ export default function App() {
               )}
               
               {Platform.OS === 'web' && (
-                <View style={[styles.dropZone, isDragOver && styles.dropZoneActive]}>
-                  <Text style={[styles.dropZoneText, { color: brandColors.textSecondary }]}>
-                    {isDragOver ? 'Drop image here' : 'Or drag and drop an image here'}
-                  </Text>
-                </View>
+                <>
+                  <BrandButton
+                    title="Paste Image"
+                    onPress={() => {
+                      // Trigger paste programmatically
+                      document.execCommand('paste');
+                    }}
+                    style={styles.actionButton}
+                    variant="ghost"
+                  />
+                  <View style={[styles.dropZone, isDragOver && styles.dropZoneActive]}>
+                    <Text style={[styles.dropZoneText, { color: brandColors.textSecondary }]}>
+                      {isDragOver ? 'Drop image here' : 'Or drag and drop an image here'}
+                    </Text>
+                  </View>
+                </>
               )}
             </>
           ) : (
@@ -1064,6 +1099,7 @@ export default function App() {
                 title="Scan Another Item"
                 onPress={resetApp}
                 style={styles.resetButton}
+                variant="secondary"
               />
             )}
             </View>
