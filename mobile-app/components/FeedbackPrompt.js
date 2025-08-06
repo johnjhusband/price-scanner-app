@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { brandColors, typography } from '../theme/brandColors';
 import { touchTargets, a11yLabels } from '../theme/accessibility';
+import { Feather } from '@expo/vector-icons';
 
 const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) => {
   const [helpedDecision, setHelpedDecision] = useState(null);
@@ -80,10 +81,17 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
           onPress={() => setHelpedDecision(true)}
           disabled={isSubmitting}
         >
-          <Text style={[
-            styles.buttonText,
-            helpedDecision === true && styles.selectedButtonText
-          ]}>👍 Yes</Text>
+          <View style={styles.buttonContent}>
+            <Feather 
+              name="thumbs-up" 
+              size={20} 
+              color={helpedDecision === true ? brandColors.accent : brandColors.textSecondary} 
+            />
+            <Text style={[
+              styles.buttonText,
+              helpedDecision === true && styles.selectedButtonText
+            ]}>Yes</Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -94,10 +102,17 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
           onPress={() => setHelpedDecision(false)}
           disabled={isSubmitting}
         >
-          <Text style={[
-            styles.buttonText,
-            helpedDecision === false && styles.selectedButtonText
-          ]}>👎 No</Text>
+          <View style={styles.buttonContent}>
+            <Feather 
+              name="thumbs-down" 
+              size={20} 
+              color={helpedDecision === false ? brandColors.accent : brandColors.textSecondary} 
+            />
+            <Text style={[
+              styles.buttonText,
+              helpedDecision === false && styles.selectedButtonText
+            ]}>No</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
@@ -186,6 +201,12 @@ const styles = StyleSheet.create({
   selectedButtonText: {
     color: brandColors.accent,
     fontWeight: typography.weights.semiBold,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
   },
   textInput: {
     backgroundColor: brandColors.background,
