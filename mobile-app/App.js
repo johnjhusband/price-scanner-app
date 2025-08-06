@@ -1206,11 +1206,11 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    padding: isMobile ? 10 : 40, // Responsive padding based on screen width
+    padding: isMobile ? 10 : 20, // Reduced padding
     paddingTop: isMobile ? 80 : 60, // More top padding on mobile to avoid user section
   },
   contentLoggedIn: {
-    paddingTop: isMobile ? 20 : 30, // Much less top padding when logged in
+    paddingTop: isMobile ? 10 : 20, // Reduced top padding when logged in
   },
   title: {
     fontSize: isMobile ? 24 : 28,
@@ -1233,15 +1233,19 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
   },
   uploadContainer: {
-    width: isMobile ? '100%' : '80%', // Responsive width based on screen size
-    maxWidth: 800, // Better max width for visual balance
+    flex: 1, // Allow container to grow
+    width: isMobile ? '100%' : '90%', // More width
+    maxWidth: 1200, // Larger max width
     alignItems: 'center',
-    marginTop: 16,
-    marginBottom: 20,
+    justifyContent: 'center',
+    marginTop: 8,
+    marginBottom: 8,
   },
   resultContainer: {
+    flex: 1,
     width: '100%',
     alignItems: 'center',
+    justifyContent: 'flex-start',
     paddingHorizontal: isMobile ? 0 : 20,
   },
   actionButton: {
@@ -1273,21 +1277,26 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   imagePreviewContainer: {
-    width: isMobile ? '100%' : '80%',
-    maxWidth: 600,
+    flex: 1, // Allow to grow
+    width: '100%',
+    maxWidth: 900, // Larger max width
+    maxHeight: '70vh', // Limit to 70% of viewport height
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 8,
-    marginBottom: 24,
+    padding: 4, // Less padding
+    marginBottom: 16, // Less margin
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 8,
     elevation: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   imagePreview: {
     width: '100%',
-    height: isMobile ? 400 : 500,
+    height: '100%',
+    maxHeight: isMobile ? '60vh' : '65vh', // Dynamic height based on viewport
     resizeMode: 'contain',
     borderRadius: 12,
     backgroundColor: '#F9FAFB',
