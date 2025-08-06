@@ -7,6 +7,7 @@ export const brandColors = {
   primary: '#000000',           // Pure black - 21:1 contrast ratio
   text: '#000000',              // Pure black - maximum readability
   textSecondary: '#3C3C43',     // Apple system gray - 10.37:1 contrast
+  aiGray: '#6E6E76',           // Official .ai brand gray
   background: '#FFFFFF',        // Pure white - clean canvas
   surface: '#F2F2F7',           // Apple surface gray - better distinction
   border: '#C7C7CC',            // Apple separator - visible to all

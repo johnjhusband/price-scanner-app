@@ -242,8 +242,8 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingHorizontal: isMobile ? 20 : 40, // Responsive horizontal padding
-    paddingTop: isMobile ? 10 : 40, // Responsive top padding
-    paddingBottom: 30,
+    paddingTop: isMobile ? 16 : 40, // Add padding on mobile
+    paddingBottom: 20,
     marginBottom: 10,
     // Subtle luxury gradient - very soft transition
     backgroundColor: brandColors.background,
@@ -252,17 +252,21 @@ const styles = StyleSheet.create({
     }),
   },
   tagline: {
-    fontSize: 28,
+    fontSize: isMobile ? 24 : 28,
     fontWeight: typography.weights.bold,
     color: brandColors.text,
-    marginTop: 30,
-    marginBottom: 15,
+    marginTop: 20,
+    marginBottom: 12,
+    lineHeight: isMobile ? 28.8 : 33.6, // 1.2 line height
   },
   subtitle: {
-    fontSize: 18,
-    color: brandColors.textSecondary,
-    marginBottom: isMobile ? 10 : 20, // Responsive margin
+    fontSize: isMobile ? 16 : 18,
+    fontWeight: typography.weights.regular,
+    color: brandColors.aiGray, // Same gray as .ai
+    marginBottom: 20,
     textAlign: 'center',
+    maxWidth: isMobile ? '100%' : '80%',
+    alignSelf: 'center',
   },
   offerBanner: {
     backgroundColor: '#000000',  // Black for primary CTA

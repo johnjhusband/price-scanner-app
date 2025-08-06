@@ -815,9 +815,12 @@ export default function App() {
       
       <View style={styles.content}>
         
-        <FlippiLogo />
+        <FlippiLogo size="large" responsive={true} />
         <Text style={[styles.title, { color: brandColors.text }]}>
           Never Over Pay
+        </Text>
+        <Text style={styles.subtitle}>
+          Know the price. Own the profit.
         </Text>
         
         <View style={[
@@ -1171,12 +1174,24 @@ const styles = StyleSheet.create({
     paddingTop: isMobile ? 80 : 60, // More top padding on mobile to avoid user section
   },
   title: {
-    fontSize: 24,
+    fontSize: isMobile ? 24 : 28,
     fontWeight: typography.weights.bold,
-    fontFamily: typography.fontFamily,
+    fontFamily: typography.bodyFont,
+    color: brandColors.text,
     marginTop: 20,
+    marginBottom: 12,
+    lineHeight: isMobile ? 28.8 : 33.6, // 1.2 line height
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: isMobile ? 16 : 18,
+    fontWeight: typography.weights.regular,
+    fontFamily: typography.bodyFont,
+    color: brandColors.aiGray, // Same gray as .ai
     marginBottom: 20,
     textAlign: 'center',
+    maxWidth: isMobile ? '100%' : '80%',
+    alignSelf: 'center',
   },
   uploadContainer: {
     width: isMobile ? '100%' : '80%', // Responsive width based on screen size
