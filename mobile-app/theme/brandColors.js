@@ -1,27 +1,27 @@
-// Flippi.ai Brand Color System - Modern & Sophisticated
-// Deep navy and steel gray with strategic color pops - current interior design trends
+// Flippi.ai Brand Color System - Modern, Clean & Playfully Bold
+// Contemporary base with hyperpop accents for memorable brand experience
 
 export const brandColors = {
-  // Core Colors - Contemporary navy and steel palette
-  primary: '#1F2937',           // Deep charcoal navy - sophisticated, modern
+  // Core Colors - Clean base with bold accents
+  primary: '#7C3AED',           // Hyperpop purple - bold, memorable, modern
   text: '#111827',              // Almost black - crisp and clean
-  textSecondary: '#6B7280',     // Steel gray - neutral contrast
+  textSecondary: '#6B7280',     // Slate gray - neutral contrast
   background: '#FAFBFC',        // Cool white with hint of blue
   surface: '#FFFFFF',           // Pure white for cards
-  border: '#E5E7EB',            // Light steel gray borders
+  border: '#E5E7EB',            // Light cool gray borders
   
-  // Accent Colors - Strategic pops of color
-  success: '#10B981',           // Emerald green - vibrant but professional
+  // Accent Colors - Playful pops of color
+  success: '#10B981',           // Emerald - confidence and trust
   error: '#EF4444',             // True red - clear communication
-  accent: '#F59E0B',            // Amber - warm pop of color for CTAs
-  accentLight: '#FCD34D',       // Light amber
+  accent: '#EC4899',            // Electric pink - energy and flair
+  accentLight: '#FBCFE8',       // Light pink
   
   // Legacy mappings for compatibility
   slateTeal: '#6B7280',         // Maps to textSecondary
-  deepTeal: '#1F2937',          // Maps to primary (navy)
+  deepTeal: '#7C3AED',          // Maps to primary (purple)
   softCream: '#FAFBFC',         // Maps to background
   offWhite: '#FFFFFF',          // Maps to surface
-  matteGold: '#F59E0B',         // Maps to accent (amber)
+  matteGold: '#EC4899',         // Maps to accent (pink)
   mutedGraphite: '#111827',     // Maps to text
   softTaupeBeige: '#E5E7EB',    // Maps to border
   
@@ -29,9 +29,9 @@ export const brandColors = {
   soil: '#111827',              // Maps to text
   forest: '#10B981',            // Maps to emerald green
   leaf: '#10B981',              // Maps to success
-  honey: '#F59E0B',             // Maps to amber accent
+  honey: '#F59E0B',             // Amber (kept for compatibility)
   sunset: '#EF4444',            // Maps to error
-  ocean: '#1F2937',             // Maps to primary
+  ocean: '#7C3AED',             // Maps to primary
   cream: '#FAFBFC',             // Maps to background
   sand: '#FAFBFC',              // Maps to background
   stone: '#6B7280',             // Maps to textSecondary
@@ -39,14 +39,14 @@ export const brandColors = {
   // Legacy color mappings (for compatibility)
   charcoalGray: '#111827',      // Maps to text
   lightGray: '#E5E7EB',         // Maps to border
-  slateBlueGray: '#1F2937',     // Maps to primary
-  actionPurple: '#1F2937',      // Maps to primary for CTA buttons
-  actionPurpleHover: '#111827', // Darker navy for hover state
+  slateBlueGray: '#7C3AED',     // Maps to primary
+  actionPurple: '#7C3AED',      // Maps to primary for CTA buttons
+  actionPurpleHover: '#6D28D9', // Darker purple for hover state
   successGreen: '#10B981',      // Maps to success
   
   // Semantic colors
   warning: '#F59E0B',           // Amber for warnings
-  info: '#3B82F6',              // Bright blue for info
+  info: '#0284C7',              // Blue for info (matches badge)
   
   // Text Colors
   primaryText: '#1A1A1A',       // Main text
@@ -54,13 +54,13 @@ export const brandColors = {
   disabledText: '#D1D5DB',      // Inactive states
   
   // Favicon Background
-  faviconBg: '#1F2937',         // Favicon background color (primary)
+  faviconBg: '#7C3AED',         // Favicon background color (primary)
   
   // Keep these for backward compatibility
-  electric: '#1F2937',          // Maps to primary
+  electric: '#EC4899',          // Maps to accent (pink)
   
   // Focus states
-  borderFocus: '#1F2937',       // Primary focus
+  borderFocus: '#7C3AED',       // Primary focus
   
   // Shadows
   shadowLight: 'rgba(0, 0, 0, 0.05)',
@@ -102,23 +102,23 @@ export const typography = {
   }
 };
 
-// Button styling constants - Modern Design
+// Button styling constants - Playfully Bold Design
 export const buttonStyles = {
   primary: {
-    backgroundColor: '#1F2937',  // Deep charcoal navy
+    backgroundColor: '#7C3AED',  // Hyperpop purple
     color: '#FFFFFF',
-    hoverBackground: '#111827',  // Darker navy
+    hoverBackground: '#6D28D9',  // Darker purple
   },
   secondary: {
-    backgroundColor: '#F3F4F6',  // Light steel gray
-    color: '#1F2937',           // Navy text
+    backgroundColor: '#F3F4F6',  // Light gray
+    color: '#111827',           // Almost black text
     hoverBackground: '#E5E7EB', // Slightly darker gray
-    borderColor: '#D1D5DB',     // Steel border
+    borderColor: '#D1D5DB',     // Gray border
   },
   accent: {
-    backgroundColor: '#F59E0B',  // Amber pop for special CTAs
+    backgroundColor: '#EC4899',  // Electric pink for special CTAs
     color: '#FFFFFF', 
-    hoverBackground: '#D97706',  // Darker amber
+    hoverBackground: '#DB2777',  // Darker pink
   },
   ghost: {
     backgroundColor: 'transparent',  // No background
@@ -136,26 +136,31 @@ export const buttonStyles = {
   fontWeight: '600',
 };
 
-// Component-specific colors - Modern & Clean
+// Component-specific colors - Modern, Clean, & Playfully Bold
 export const componentColors = {
   uploadArea: {
-    border: '#E5E7EB',
-    background: '#FFFFFF',
-    hoverBorder: '#1F2937',
-    hoverBackground: '#F9FAFB',
+    border: '#E5E7EB',               // Light cool gray (neutral base)
+    background: '#FFFFFF',           // White
+    hoverBorder: '#7C3AED',          // Hyperpop purple punch
+    hoverBackground: '#F5F3FF',      // Lavender haze (subtle contrast)
   },
   results: {
     background: '#FFFFFF',
     border: '#E5E7EB',
   },
   scores: {
-    high: '#10B981',             // Emerald for good
-    medium: '#F59E0B',           // Amber for medium
-    low: '#6B7280',              // Steel gray for low
+    high: '#10B981',                 // Emerald (confidence)
+    medium: '#F59E0B',               // Amber (caution)
+    low: '#6B7280',                  // Slate gray (neutral low)
+    spark: '#EC4899',                // Electric pink (optional for highlight or flair)
   },
   authentication: {
-    verified: '#10B981',         // Emerald checkmark
-    uncertain: '#F59E0B',        // Amber warning
-    low: '#EF4444',              // Red alert
+    verified: '#10B981',             // Trusted green
+    uncertain: '#F59E0B',            // Amber warning
+    low: '#EF4444',                  // Red alert
+  },
+  badge: {
+    background: '#E0F2FE',           // Soft blue for contrast
+    text: '#0284C7',                 // Blue callout (e.g., for limited offers or new scans)
   },
 }; 
