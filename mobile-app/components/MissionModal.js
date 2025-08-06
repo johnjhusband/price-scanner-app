@@ -1,6 +1,7 @@
 import React from 'react';
-import { Modal, View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking } from 'react-native';
+import { Modal, View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Platform } from 'react-native';
 import { brandColors, typography } from '../theme/brandColors';
+import { focusStyles, a11yLabels, ariaRoles } from '../theme/accessibility';
 
 const MissionModal = ({ visible, onClose }) => {
   return (
@@ -14,8 +15,13 @@ const MissionModal = ({ visible, onClose }) => {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <Text style={styles.title}>Our Mission</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeText}>✕</Text>
+            <TouchableOpacity 
+              onPress={onClose} 
+              style={styles.closeButton}
+              accessibilityLabel={a11yLabels.closeButton}
+              accessibilityRole="button"
+            >
+              <Text style={styles.closeText}>×</Text>
             </TouchableOpacity>
           </View>
           
@@ -107,7 +113,7 @@ const MissionModal = ({ visible, onClose }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: brandColors.offWhite,
+    backgroundColor: brandColors.background,
   },
   scrollContent: {
     padding: 20,
@@ -120,59 +126,75 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 36,
-    fontFamily: typography.fontFamily,
-    fontWeight: '600',
-    color: brandColors.deepTeal,
+    fontSize: parseInt(typography.sizes.h1),
+    fontFamily: typography.headingFont,
+    fontWeight: typography.weights.bold,
+    color: brandColors.text,
+    letterSpacing: typography.letterSpacing.tight,
   },
   closeButton: {
-    padding: 10,
+    padding: 12,
+    minWidth: 44, // WCAG touch target
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 22,
+    ...(Platform.OS === 'web' && {
+      ':focus': focusStyles,
+      cursor: 'pointer',
+    }),
   },
   closeText: {
-    fontSize: 24,
-    color: brandColors.slateTeal,
-    fontWeight: '300',
+    fontSize: 28,
+    color: brandColors.textSecondary,
+    fontWeight: typography.weights.light,
   },
   tagline: {
-    fontSize: 18,
-    fontFamily: typography.fontFamily,
-    fontWeight: '300',
+    fontSize: parseInt(typography.sizes.body),
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.light,
     fontStyle: 'italic',
-    color: brandColors.slateTeal,
+    color: brandColors.textSecondary,
     marginBottom: 30,
+    lineHeight: parseInt(typography.sizes.body) * parseFloat(typography.lineHeight.relaxed),
   },
   sectionTitle: {
-    fontSize: 24,
-    fontFamily: typography.fontFamily,
-    fontWeight: '500',
-    color: brandColors.slateTeal,
+    fontSize: parseInt(typography.sizes.h3),
+    fontFamily: typography.headingFont,
+    fontWeight: typography.weights.semiBold,
+    color: brandColors.text,
     marginTop: 30,
     marginBottom: 15,
+    letterSpacing: typography.letterSpacing.tight,
   },
   paragraph: {
-    fontSize: 16,
-    fontFamily: typography.fontFamily,
-    lineHeight: 24,
-    color: brandColors.mutedGraphite,
+    fontSize: parseInt(typography.sizes.body),
+    fontFamily: typography.bodyFont,
+    lineHeight: parseInt(typography.sizes.body) * parseFloat(typography.lineHeight.relaxed),
+    color: brandColors.text,
     marginBottom: 15,
+    letterSpacing: typography.letterSpacing.normal,
   },
   benefitList: {
     marginBottom: 20,
   },
   benefitItem: {
-    fontSize: 16,
-    fontFamily: typography.fontFamily,
-    lineHeight: 28,
-    color: brandColors.mutedGraphite,
+    fontSize: parseInt(typography.sizes.body),
+    fontFamily: typography.bodyFont,
+    lineHeight: parseInt(typography.sizes.body) * parseFloat(typography.lineHeight.loose),
+    color: brandColors.text,
     paddingLeft: 10,
   },
   missionSection: {
-    backgroundColor: brandColors.softCream,
-    padding: 20,
-    borderRadius: 8,
+    backgroundColor: brandColors.surface,
+    padding: 24,
+    borderRadius: 14, // Apple style
     marginVertical: 20,
-    borderWidth: 1,
-    borderColor: brandColors.softTaupeBeige,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   section: {
     marginVertical: 20,
@@ -181,35 +203,38 @@ const styles = StyleSheet.create({
     marginTop: 40,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: brandColors.softTaupeBeige,
+    borderTopColor: brandColors.border,
   },
   link: {
-    fontSize: 16,
-    fontFamily: typography.fontFamily,
-    fontWeight: '500',
-    color: brandColors.deepTeal,
+    fontSize: parseInt(typography.sizes.body),
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.medium,
+    color: brandColors.accent,
     textDecorationLine: 'underline',
     marginBottom: 10,
+    minHeight: 44, // WCAG touch target
+    justifyContent: 'center',
   },
   footer: {
     marginTop: 40,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: brandColors.softTaupeBeige,
+    borderTopColor: brandColors.border,
     alignItems: 'center',
   },
   footerText: {
-    fontSize: 12,
-    fontFamily: typography.fontFamily,
-    color: brandColors.slateTeal,
+    fontSize: parseInt(typography.sizes.caption),
+    fontFamily: typography.bodyFont,
+    color: brandColors.textSecondary,
     textAlign: 'center',
     marginBottom: 5,
+    lineHeight: parseInt(typography.sizes.caption) * parseFloat(typography.lineHeight.loose),
   },
   italic: {
     fontStyle: 'italic',
   },
   bold: {
-    fontWeight: '600',
+    fontWeight: typography.weights.semiBold,
   },
 });
 

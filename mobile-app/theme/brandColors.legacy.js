@@ -1,21 +1,20 @@
-// Flippi.ai Brand Color System - Apple Build
-// Minimal, ADA Compliant, Colorblind Accessible
-// WCAG AAA Compliant Color Contrasts
+// Flippi.ai Brand Color System - Minimal & Sophisticated
+// Apple-inspired design: Let typography and spacing speak, not colors
 
 export const brandColors = {
-  // Core Colors - Apple Build (WCAG AAA Compliant)
-  primary: '#000000',           // Pure black - 21:1 contrast ratio
-  text: '#000000',              // Pure black - maximum readability
-  textSecondary: '#3C3C43',     // Apple system gray - 10.37:1 contrast
+  // Core Colors - Refined Apple palette
+  primary: '#000000',           // Pure black - confident, minimal
+  text: '#000000',              // Pure black - maximum contrast
+  textSecondary: '#3C3C43',     // Apple text gray - more readable
   background: '#FFFFFF',        // Pure white - clean canvas
-  surface: '#F2F2F7',           // Apple surface gray - better distinction
-  border: '#C7C7CC',            // Apple separator - visible to all
+  surface: '#F9FAFB',           // Subtle off-white for cards
+  border: '#D1D5DB',            // Refined border gray
   
-  // Accent Colors - Colorblind Safe (Deuteranopia/Protanopia/Tritanopia tested)
-  success: '#30D158',           // Apple green - distinguishable in all color blindness types
-  error: '#FF453A',             // Apple red - higher contrast than standard red
-  accent: '#007AFF',            // Apple blue - colorblind safe
-  accentLight: '#E5F1FF',       // Light blue tint - maintains 3:1 contrast
+  // Accent Colors - Minimal and purposeful
+  success: '#34C759',           // Apple green - only for success
+  error: '#FF3B30',             // Apple red - only for errors
+  accent: '#007AFF',            // Apple blue - primary actions only
+  accentLight: '#E5F1FF',       // Very light blue tint
   
   // Legacy mappings for compatibility
   slateTeal: '#3C3C43',         // Maps to textSecondary
@@ -45,14 +44,14 @@ export const brandColors = {
   actionPurpleHover: '#0051D5', // Darker blue for hover state
   successGreen: '#34C759',      // Maps to success
   
-  // Semantic colors - High Contrast & Colorblind Safe
-  warning: '#FF9F0A',           // Apple yellow - better for colorblind users
-  info: '#5856D6',              // Apple indigo - distinct from primary blue
+  // Semantic colors
+  warning: '#FF9500',           // Apple orange for warnings
+  info: '#007AFF',              // Apple blue for info
   
-  // Text Colors - WCAG AAA Compliant
-  primaryText: '#000000',       // Main text - 21:1 contrast
-  secondaryText: '#3C3C43',     // Secondary text - 10.37:1 contrast (AAA)
-  disabledText: '#8E8E93',      // Inactive states - 4.5:1 contrast (AA)
+  // Text Colors
+  primaryText: '#000000',       // Main text
+  secondaryText: '#3C3C43',     // Secondary text - darker for readability
+  disabledText: '#A1A1AA',      // Inactive states - Apple placeholder gray
   
   // Favicon Background
   faviconBg: '#000000',         // Favicon background color (primary)
@@ -70,49 +69,36 @@ export const brandColors = {
 };
 
 export const typography = {
-  // San Francisco font stack - Apple's system font
-  fontFamily: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  // San Francisco font stack with proper fallbacks
+  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
   
-  // Display vs Text fonts for optimal readability (ADA compliant sizes)
-  headingFont: '-apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif',
-  bodyFont: '-apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, sans-serif',
-  monoFont: '"SF Mono", ui-monospace, Menlo, Monaco, "Cascadia Mono", "Segoe UI Mono", "Courier New", monospace',
+  // Display vs Text fonts for optimal readability
+  headingFont: '-apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif',
+  bodyFont: '-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif',
+  monoFont: '"SF Mono", Monaco, Consolas, "Courier New", monospace',
   
   weights: {
-    ultraLight: '100',
-    thin: '200',
     light: '300',
     regular: '400',
     medium: '500',
     semiBold: '600',
     bold: '700',
-    heavy: '800',
-    black: '900'
+    extraBold: '800'
   },
   sizes: {
     logo: 'custom',
-    // ADA Compliant sizes - minimum 14px for body text
-    h1: '48px',     // Display size
-    h2: '36px',     // Title 1
-    h3: '28px',     // Title 2
-    h4: '24px',     // Title 3
-    body: '17px',   // Body - optimal for readability
-    small: '15px',  // Callout - still ADA compliant
-    caption: '14px', // Caption 1 - minimum ADA size
-    notes: '13px'   // Caption 2 - use sparingly
+    h1: '48px',     // Bigger, bolder
+    h2: '36px',     // More hierarchy
+    h3: '28px',     // Clear distinction
+    body: '17px',   // Optimal readability
+    small: '15px',  // Still readable
+    notes: '13px'   // Minimum size
   },
   lineHeight: {
-    tight: '1.1',    // For large headings
-    normal: '1.5',   // Default - good for readability
-    relaxed: '1.6',  // For body text
-    loose: '1.8'     // For small text - improves readability
-  },
-  letterSpacing: {
-    tighter: '-0.03em',  // Display text
-    tight: '-0.02em',    // Headlines
-    normal: '0',         // Body text
-    wide: '0.02em',      // Small text
-    wider: '0.04em'      // All caps
+    tight: '1.2',
+    normal: '1.5',
+    relaxed: '1.6',
+    loose: '1.8'
   }
 };
 

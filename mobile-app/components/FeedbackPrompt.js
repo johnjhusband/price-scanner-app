@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { brandColors } from '../theme/brandColors';
+import { brandColors, typography } from '../theme/brandColors';
+import { touchTargets, a11yLabels } from '../theme/accessibility';
 
 const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) => {
   const [helpedDecision, setHelpedDecision] = useState(null);
@@ -103,7 +104,8 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
       <TextInput
         style={styles.textInput}
         placeholder="Tell us what worked or didn't (optional)"
-        placeholderTextColor="#999"
+        placeholderTextColor={brandColors.disabledText}
+        accessibilityLabel="Additional feedback text input"
         value={feedbackText}
         onChangeText={setFeedbackText}
         multiline
@@ -133,17 +135,24 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 10,
+    backgroundColor: brandColors.surface,
+    borderRadius: 14, // Apple style
     marginTop: 20,
     marginHorizontal: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   question: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: parseInt(typography.sizes.body),
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.semiBold,
     textAlign: 'center',
     marginBottom: 20,
     color: brandColors.text,
+    lineHeight: parseInt(typography.sizes.body) * parseFloat(typography.lineHeight.relaxed),
   },
   buttonRow: {
     flexDirection: 'row',
@@ -154,56 +163,76 @@ const styles = StyleSheet.create({
   optionButton: {
     paddingHorizontal: 30,
     paddingVertical: 12,
-    borderRadius: 25,
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#ddd',
-    minWidth: 100,
+    borderRadius: 14, // Apple style
+    backgroundColor: brandColors.background,
+    borderWidth: 1,
+    borderColor: brandColors.border,
+    minWidth: 120,
+    minHeight: touchTargets.minimum, // WCAG touch target
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   selectedButton: {
-    borderColor: brandColors.deepTeal,
-    backgroundColor: brandColors.offWhite,
+    borderColor: brandColors.accent,
+    backgroundColor: brandColors.accentLight,
+    borderWidth: 1.5,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: parseInt(typography.sizes.body),
+    fontFamily: typography.bodyFont,
     textAlign: 'center',
-    color: '#666',
+    color: brandColors.textSecondary,
   },
   selectedButtonText: {
-    color: brandColors.deepTeal,
-    fontWeight: '600',
+    color: brandColors.accent,
+    fontWeight: typography.weights.semiBold,
   },
   textInput: {
-    backgroundColor: '#fff',
+    backgroundColor: brandColors.background,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    minHeight: 80,
+    borderColor: brandColors.border,
+    borderRadius: 14, // Apple style
+    padding: 16,
+    fontSize: parseInt(typography.sizes.body),
+    fontFamily: typography.bodyFont,
+    minHeight: 100,
     textAlignVertical: 'top',
     marginBottom: 15,
+    color: brandColors.text,
+    lineHeight: parseInt(typography.sizes.body) * parseFloat(typography.lineHeight.relaxed),
   },
   submitButton: {
-    backgroundColor: brandColors.deepTeal,
-    paddingVertical: 14,
-    borderRadius: 25,
+    backgroundColor: brandColors.primary,
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 14, // Apple style
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: touchTargets.recommended,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   disabledButton: {
     opacity: 0.6,
   },
   submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: brandColors.background,
+    fontSize: parseInt(typography.sizes.body),
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.semiBold,
+    letterSpacing: typography.letterSpacing.wide,
   },
   successMessage: {
-    fontSize: 16,
+    fontSize: parseInt(typography.sizes.body),
+    fontFamily: typography.bodyFont,
     textAlign: 'center',
-    color: brandColors.successGreen,
-    fontWeight: '600',
+    color: brandColors.success,
+    fontWeight: typography.weights.semiBold,
     paddingVertical: 20,
+    lineHeight: parseInt(typography.sizes.body) * parseFloat(typography.lineHeight.relaxed),
   },
 });
 

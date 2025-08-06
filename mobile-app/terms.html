@@ -5,136 +5,325 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Terms of Service - Flippi.ai</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+        /* Apple Build - Minimal, ADA Compliant, Colorblind Accessible */
+        :root {
+            /* Core Colors - WCAG AAA Compliant */
+            --primary: #000000;           /* Pure black - 21:1 contrast */
+            --text: #000000;              /* Pure black - maximum readability */
+            --text-secondary: #3C3C43;     /* Apple system gray - 10.37:1 contrast */
+            --background: #FFFFFF;        /* Pure white */
+            --surface: #F2F2F7;           /* Apple surface gray */
+            --border: #C7C7CC;            /* Apple separator */
+            --accent: #007AFF;            /* Apple blue - colorblind safe */
+            --accent-hover: #0051D5;      /* Darker blue */
+            --warning: #FF9F0A;           /* Apple yellow - colorblind safe */
+            
+            /* Typography */
+            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", system-ui, "Segoe UI", Roboto, sans-serif;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
         
         body {
-            font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            font-family: var(--font-stack);
+            font-size: 17px; /* Optimal readability */
             font-weight: 400;
             line-height: 1.6;
-            color: #1E2A28; /* Muted Graphite */
+            color: var(--text);
             max-width: 800px;
             margin: 0 auto;
             padding: 20px;
-            background: #FBF8F2; /* Off-White */
+            background: var(--background);
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
+        
         .container {
-            background: #F3EFEA; /* Soft Cream */
+            background: var(--background);
             padding: 40px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(30, 42, 40, 0.1);
-            border: 1px solid #D6C6B5; /* Soft Taupe Beige */
+            border-radius: 14px; /* Apple style radius */
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
         }
+        
         h1 {
-            color: #1D5C5A; /* Deep Teal */
-            border-bottom: 3px solid #1D5C5A;
-            padding-bottom: 10px;
-            font-weight: 600;
-            font-size: 36px;
+            font-family: var(--font-display);
+            font-size: 48px;
+            font-weight: 700;
+            color: var(--text);
+            letter-spacing: -0.03em;
+            line-height: 1.1;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
         }
+        
         h2 {
-            color: #3F5954; /* Slate Teal */
-            margin-top: 30px;
+            font-family: var(--font-display);
+            font-size: 28px;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-top: 48px;
+            margin-bottom: 16px;
+        }
+        
+        h3 {
+            font-family: var(--font-display);
             font-size: 24px;
-            font-weight: 500;
+            font-weight: 600;
+            color: var(--text);
+            letter-spacing: -0.02em;
+            line-height: 1.2;
+            margin-top: 32px;
+            margin-bottom: 12px;
         }
+        
+        p, li {
+            font-size: 17px;
+            line-height: 1.6;
+            color: var(--text);
+            margin-bottom: 16px;
+        }
+        
         .update-date {
-            color: #3F5954; /* Slate Teal */
+            color: var(--text-secondary);
+            font-size: 15px;
             font-style: italic;
-            font-weight: 300;
+            margin-bottom: 32px;
         }
+        
         a {
-            color: #1D5C5A; /* Deep Teal */
+            color: var(--accent);
             text-decoration: none;
             font-weight: 500;
+            transition: color 0.2s ease;
+            /* WCAG touch target */
+            display: inline-block;
+            min-height: 24px;
+            line-height: 24px;
         }
+        
         a:hover {
+            color: var(--accent-hover);
             text-decoration: underline;
-            color: #174B49; /* Deep Teal Hover */
         }
+        
+        a:focus {
+            outline: 3px solid var(--accent);
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+        
         ul {
-            color: #1E2A28; /* Muted Graphite */
+            padding-left: 24px;
+            margin-bottom: 24px;
         }
-        strong {
-            font-weight: 600;
+        
+        li {
+            margin-bottom: 12px;
         }
-        hr {
-            border: none;
-            border-top: 1px solid #D6C6B5; /* Soft Taupe Beige */
+        
+        .important-notice {
+            background: var(--surface);
+            border-left: 4px solid var(--warning);
+            padding: 20px;
+            margin: 32px 0;
+            border-radius: 8px;
+        }
+        
+        .important-notice p {
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+        
+        .contact-info {
+            background: var(--surface);
+            padding: 24px;
+            border-radius: 14px;
+            margin-top: 48px;
+            border: 1px solid var(--border);
+        }
+        
+        /* Accessibility improvements */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation: none !important;
+                transition: none !important;
+            }
+        }
+        
+        /* High contrast mode */
+        @media (prefers-contrast: high) {
+            :root {
+                --border: #000000;
+                --surface: #F0F0F0;
+            }
+        }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --primary: #FFFFFF;
+                --text: #FFFFFF;
+                --text-secondary: #A1A1A6;
+                --background: #000000;
+                --surface: #1C1C1E;
+                --border: #38383A;
+                --accent: #0A84FF;
+                --accent-hover: #409CFF;
+                --warning: #FFD60A;
+            }
+            
+            body {
+                background: var(--background);
+            }
+            
+            .container {
+                box-shadow: 0 1px 4px rgba(255, 255, 255, 0.05);
+            }
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                font-size: 12pt;
+                line-height: 1.5;
+                color: #000;
+                background: #fff;
+            }
+            
+            .container {
+                box-shadow: none;
+                padding: 0;
+            }
+            
+            a {
+                color: #000;
+                text-decoration: underline;
+            }
+            
+            a[href]:after {
+                content: " (" attr(href) ")";
+                font-size: 90%;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Terms of Service</h1>
-        <p class="update-date">Last updated: November 2024</p>
-
-        <h2>1. Acceptance of Terms</h2>
-        <p>By accessing and using Flippi.ai, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our service.</p>
-
+        <p class="update-date">Effective Date: November 17, 2024</p>
+        
+        <p>Welcome to Flippi.ai! These Terms of Service ("Terms") govern your use of our mobile application and website (collectively, the "Service") operated by John and Tara Husband LLC, doing business as Boca Belle ("we," "us," or "our").</p>
+        
+        <p>By accessing or using Flippi.ai, you agree to be bound by these Terms. If you disagree with any part of these terms, then you may not access the Service.</p>
+        
+        <h2>1. Use of Service</h2>
+        
+        <h3>Eligibility</h3>
+        <ul>
+            <li>You must be at least 13 years old to use this Service</li>
+            <li>You must provide accurate and complete information when creating an account</li>
+            <li>You are responsible for maintaining the security of your account</li>
+        </ul>
+        
+        <h3>Acceptable Use</h3>
+        <p>You agree to use Flippi.ai only for lawful purposes and in accordance with these Terms. You agree not to:</p>
+        <ul>
+            <li>Use the Service for any fraudulent or deceptive purposes</li>
+            <li>Upload images containing inappropriate, offensive, or illegal content</li>
+            <li>Attempt to interfere with or disrupt the Service</li>
+            <li>Reverse engineer or attempt to extract the source code of the Service</li>
+            <li>Use the Service to infringe on the rights of others</li>
+        </ul>
+        
         <h2>2. Description of Service</h2>
-        <p>Flippi.ai provides AI-powered resale value estimates for items through image analysis. Our service is designed to assist resellers and thrift shoppers in making informed sourcing decisions.</p>
-
-        <h2>3. Disclaimer of Accuracy</h2>
-        <p><strong>Important:</strong> Flippi.ai provides estimates based on AI analysis. These are opinions, not guarantees. Actual resale values may vary significantly based on:</p>
+        <p>Flippi.ai provides AI-powered analysis of items to help users understand resale value and authenticity signals. The Service includes:</p>
         <ul>
-            <li>Market conditions</li>
-            <li>Item condition</li>
-            <li>Authenticity</li>
-            <li>Demand fluctuations</li>
-            <li>Selling platform</li>
+            <li>Image analysis using computer vision technology</li>
+            <li>Market value estimations based on current trends</li>
+            <li>Authenticity confidence scores (not authentication)</li>
+            <li>Platform recommendations for resale</li>
         </ul>
-        <p>Always conduct your own research before making purchasing decisions.</p>
-
-        <h2>4. User Responsibilities</h2>
-        <p>You agree to:</p>
+        
+        <div class="important-notice">
+            <p><strong>Important:</strong> Flippi.ai provides estimates and signals, not guarantees. Our authenticity scores are AI-generated confidence ratings, not professional authentication. Always use multiple sources when making buying or selling decisions.</p>
+        </div>
+        
+        <h2>3. Intellectual Property</h2>
+        
+        <h3>Our Property</h3>
+        <p>The Service and its original content, features, and functionality are and will remain the exclusive property of John and Tara Husband LLC and its licensors. The Service is protected by copyright, trademark, and other laws. Our trademarks may not be used without our prior written consent.</p>
+        
+        <h3>Your Content</h3>
+        <p>When you upload images to Flippi.ai:</p>
         <ul>
-            <li>Provide accurate information</li>
-            <li>Use the service legally and ethically</li>
-            <li>Not upload inappropriate or illegal content</li>
-            <li>Not attempt to reverse-engineer or hack the service</li>
-            <li>Not use the service for commercial competitive analysis against Flippi.ai</li>
+            <li>You retain ownership of your images</li>
+            <li>You grant us a temporary license to process and analyze the images</li>
+            <li>Images are automatically deleted after processing unless you provide feedback</li>
+            <li>If you provide feedback, you grant us a license to use the image to improve our service</li>
         </ul>
-
-        <h2>5. Intellectual Property</h2>
+        
+        <h2>4. Privacy and Data Protection</h2>
+        <p>Your use of our Service is also governed by our Privacy Policy. Please review our <a href="/privacy">Privacy Policy</a>, which also governs the Site and informs users of our data collection practices.</p>
+        
+        <h2>5. Disclaimers and Limitations</h2>
+        
+        <h3>No Professional Advice</h3>
+        <p>Flippi.ai is an informational tool only. We do not provide:</p>
         <ul>
-            <li>You retain ownership of images you upload</li>
-            <li>You grant us a temporary license to process your images for analysis</li>
-            <li>The Flippi.ai brand, logo, and service are our property</li>
+            <li>Professional authentication services</li>
+            <li>Investment or financial advice</li>
+            <li>Guarantees of item value or authenticity</li>
+            <li>Legal or tax advice</li>
         </ul>
-
-        <h2>6. Limitation of Liability</h2>
-        <p>FLIPPI.AI IS PROVIDED "AS IS" WITHOUT WARRANTIES OF ANY KIND. We are not liable for:</p>
+        
+        <h3>Accuracy Disclaimer</h3>
+        <p>While we strive for accuracy, AI can make mistakes. You should:</p>
         <ul>
-            <li>Inaccurate valuations or estimates</li>
-            <li>Financial losses from purchasing decisions</li>
-            <li>Issues with authenticity of items</li>
-            <li>Service interruptions or errors</li>
+            <li>Verify important information independently</li>
+            <li>Use professional authentication for high-value items</li>
+            <li>Understand that market values fluctuate</li>
+            <li>Not rely solely on our Service for business decisions</li>
         </ul>
-        <p>Our total liability shall not exceed $100 or the amount you've paid us in the past 12 months, whichever is less.</p>
-
+        
+        <h3>Limitation of Liability</h3>
+        <p>To the maximum extent permitted by law, John and Tara Husband LLC shall not be liable for any indirect, incidental, special, consequential, or punitive damages, or any loss of profits or revenues, whether incurred directly or indirectly, or any loss of data, use, goodwill, or other intangible losses resulting from your use of the Service.</p>
+        
+        <h2>6. Indemnification</h2>
+        <p>You agree to defend, indemnify, and hold harmless John and Tara Husband LLC and its licensees and licensors, and their employees, contractors, agents, officers and directors, from and against any and all claims, damages, obligations, losses, liabilities, costs or debt, and expenses (including but not limited to attorney's fees).</p>
+        
         <h2>7. Account Termination</h2>
-        <p>We reserve the right to suspend or terminate accounts that violate these terms or for any other reason at our discretion.</p>
-
+        <p>We may terminate or suspend your account immediately, without prior notice or liability, for any reason whatsoever, including without limitation if you breach the Terms. Upon termination, your right to use the Service will cease immediately.</p>
+        
         <h2>8. Changes to Terms</h2>
-        <p>We may modify these terms at any time. Continued use of the service after changes constitutes acceptance of the new terms.</p>
-
+        <p>We reserve the right to modify or replace these Terms at any time. If a revision is material, we will try to provide at least 30 days notice prior to any new terms taking effect.</p>
+        
         <h2>9. Governing Law</h2>
-        <p>These terms are governed by the laws of the United States. Any disputes shall be resolved in the courts of Florida.</p>
-
-        <h2>10. Contact Information</h2>
-        <p>For questions about these terms, contact us at:</p>
-        <p>
-            Email: teamflippi@gmail.com<br>
-            Website: flippi.ai
-        </p>
-
-        <hr style="margin-top: 50px;">
-        <p style="text-align: center; color: #666; font-size: 14px;">
-            Flippi™ and Flippi.ai™ are trademarks of Boca Belle. All rights reserved.
-        </p>
-        <p style="text-align: center; color: #666;">
-            <a href="/">Back to Flippi.ai</a> | <a href="/privacy">Privacy Policy</a>
-        </p>
+        <p>These Terms shall be governed and construed in accordance with the laws of Florida, United States, without regard to its conflict of law provisions. Our failure to enforce any right or provision of these Terms will not be considered a waiver of those rights.</p>
+        
+        <h2>10. Accessibility</h2>
+        <p>We are committed to making our Service accessible to everyone. If you have any difficulties accessing or using our Service, please contact us at <a href="mailto:teamflippi@gmail.com">teamflippi@gmail.com</a>.</p>
+        
+        <h2>11. Third-Party Services</h2>
+        <p>Our Service may contain links to third-party websites or services that are not owned or controlled by John and Tara Husband LLC. We have no control over, and assume no responsibility for, the content, privacy policies, or practices of any third-party websites or services.</p>
+        
+        <h2>12. Feedback and Suggestions</h2>
+        <p>We welcome your feedback! Any suggestions, comments, or feedback you provide regarding Flippi.ai shall become our sole property. We shall be free to use, copy, modify, publish, or redistribute the feedback for any purpose and in any way without any credit or compensation to you.</p>
+        
+        <div class="contact-info">
+            <h2>Contact Us</h2>
+            <p>If you have any questions about these Terms, please contact us:</p>
+            <p>
+                <strong>Email:</strong> <a href="mailto:teamflippi@gmail.com">teamflippi@gmail.com</a><br>
+                <strong>Company:</strong> John and Tara Husband LLC (DBA Boca Belle)<br>
+                <strong>Location:</strong> Boca Raton, Florida
+            </p>
+        </div>
     </div>
 </body>
 </html>
