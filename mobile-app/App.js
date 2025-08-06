@@ -896,7 +896,9 @@ export default function App() {
             </>
           ) : (
             <View style={styles.resultContainer}>
-              <Image source={{ uri: image }} style={styles.image} />
+              <View style={styles.imagePreviewContainer}>
+                <Image source={{ uri: image }} style={styles.imagePreview} />
+              </View>
               
               {!analysisResult && !isLoading && (
                 <>
@@ -1206,17 +1208,20 @@ const styles = StyleSheet.create({
   },
   uploadContainer: {
     width: isMobile ? '100%' : '80%', // Responsive width based on screen size
-    maxWidth: 1000, // Only prevent extreme stretching
+    maxWidth: 800, // Better max width for visual balance
     alignItems: 'center',
-    marginTop: 10,
+    marginTop: isAuthenticated ? 16 : 10,
+    marginBottom: 20,
   },
   resultContainer: {
     width: '100%',
     alignItems: 'center',
+    paddingHorizontal: isMobile ? 0 : 20,
   },
   actionButton: {
-    marginVertical: 5,
+    marginVertical: 8,
     width: '100%',
+    maxWidth: 400, // Prevent buttons from being too wide on desktop
   },
   dropZone: {
     width: '100%',
@@ -1240,6 +1245,26 @@ const styles = StyleSheet.create({
   },
   dragOver: {
     opacity: 0.8,
+  },
+  imagePreviewContainer: {
+    width: isMobile ? '100%' : '80%',
+    maxWidth: 600,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 8,
+    marginBottom: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  imagePreview: {
+    width: '100%',
+    height: isMobile ? 400 : 500,
+    resizeMode: 'contain',
+    borderRadius: 12,
+    backgroundColor: '#F9FAFB',
   },
   image: {
     width: '100%',
