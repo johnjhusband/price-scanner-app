@@ -1,5 +1,5 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { brandColors, typography, buttonStyles } from '../theme/brandColors';
 
 export const BrandButton = ({ 
@@ -9,7 +9,8 @@ export const BrandButton = ({
   disabled = false,
   style,
   textStyle,
-  isHighImpact = false // For CTA buttons like 'Go' or 'Scan Now'
+  isHighImpact = false, // For CTA buttons like 'Go' or 'Scan Now'
+  icon = null // Optional icon component
 }) => {
   const getButtonStyle = () => {
     if (disabled) {
@@ -50,7 +51,14 @@ export const BrandButton = ({
       disabled={disabled}
       activeOpacity={0.8}
     >
-      <Text style={getTextStyle()}>{title}</Text>
+      {icon ? (
+        <View style={styles.buttonContent}>
+          {icon}
+          <Text style={getTextStyle()}>{title}</Text>
+        </View>
+      ) : (
+        <Text style={getTextStyle()}>{title}</Text>
+      )}
     </TouchableOpacity>
   );
 };
@@ -59,12 +67,17 @@ const styles = StyleSheet.create({
   button: {
     paddingHorizontal: parseInt(buttonStyles.padding.horizontal),
     paddingVertical: parseInt(buttonStyles.padding.vertical),
-    borderRadius: 12, // Increased from 8px for more modern look
+    borderRadius: 14, // Modern Apple style
     alignItems: 'center',
     justifyContent: 'center',
     minHeight: parseInt(buttonStyles.minHeight),
     minWidth: parseInt(buttonStyles.minWidth),
-    // Removed shadows for flat design
+    // Subtle shadow for depth
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2, // Android shadow
   },
   primaryButton: {
     backgroundColor: buttonStyles.primary.backgroundColor,
@@ -106,6 +119,11 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: brandColors.disabledText,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 

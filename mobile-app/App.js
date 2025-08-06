@@ -10,6 +10,8 @@ import FeedbackPrompt from './components/FeedbackPrompt';
 import EnterScreen from './components/EnterScreen';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
+import { appleStyles } from './theme/appleStyles';
+import { CameraIcon, UploadIcon, PasteIcon } from './components/Icons';
 
 // Responsive design breakpoints
 const { width: windowWidth } = Dimensions.get('window');
@@ -807,7 +809,7 @@ export default function App() {
       <View style={styles.content}>
         
         <FlippiLogo />
-        <Text style={[styles.title, { color: brandColors.text }]}>
+        <Text style={[styles.title, { color: brandColors.text }, appleStyles.heading]}>
           Never Over Pay
         </Text>
         
@@ -821,11 +823,12 @@ export default function App() {
               style={[styles.descriptionInput, { 
                 backgroundColor: '#FFFFFF',
                 color: brandColors.text,
-                borderColor: brandColors.border || '#ddd',
-                marginBottom: 20
+                borderColor: brandColors.border,
+                marginBottom: 20,
+                ...appleStyles.shadows.small
               }]}
               placeholder="Brand, source, or serial number?"
-              placeholderTextColor={brandColors.textSecondary}
+              placeholderTextColor={brandColors.disabledText}
               value={productDescription}
               onChangeText={setProductDescription}
               multiline
@@ -840,6 +843,7 @@ export default function App() {
                 onPress={pickImage}
                 style={styles.actionButton}
                 variant="secondary"
+                icon={<UploadIcon size={20} color={brandColors.text} strokeWidth={1.5} />}
               />
               
               {hasCamera && (
@@ -848,6 +852,7 @@ export default function App() {
                   onPress={takePhoto}
                   style={styles.actionButton}
                   variant="primary"
+                  icon={<CameraIcon size={20} color={brandColors.accent} strokeWidth={1.5} />}
                 />
               )}
               
@@ -861,6 +866,7 @@ export default function App() {
                     }}
                     style={styles.actionButton}
                     variant="ghost"
+                    icon={<PasteIcon size={20} color={brandColors.textSecondary} strokeWidth={1.5} />}
                   />
                   <View style={[styles.dropZone, isDragOver && styles.dropZoneActive]}>
                     <Text style={[styles.dropZoneText, { color: brandColors.textSecondary }]}>
@@ -1180,11 +1186,12 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: brandColors.border,
     borderStyle: 'dashed',
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 20,
     padding: 20,
+    ...appleStyles.shadows.small,
   },
   dropZoneActive: {
     borderColor: '#4CAF50',
@@ -1216,14 +1223,11 @@ const styles = StyleSheet.create({
     maxWidth: isMobile ? '100%' : 800, // Full width on mobile, constrained on desktop
     padding: isMobile ? 16 : 24, // More padding for better touch targets
     paddingVertical: isMobile ? 20 : 28, // Extra vertical padding
-    borderRadius: isMobile ? 0 : 12, // No border radius on mobile for full width
+    borderRadius: isMobile ? 0 : 14, // More rounded corners
     marginBottom: isMobile ? 0 : 20, // No margin on mobile
     alignSelf: 'center',
-    elevation: isMobile ? 0 : 3, // Flat on mobile
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: isMobile ? 0 : 2 },
-    shadowOpacity: isMobile ? 0 : 0.1,
-    shadowRadius: isMobile ? 0 : 4,
+    backgroundColor: brandColors.surface,
+    ...appleStyles.shadows.medium,
   },
   resultTitle: {
     fontSize: 20,
@@ -1347,13 +1351,14 @@ const styles = StyleSheet.create({
   },
   descriptionInput: {
     width: '100%',
-    padding: 12,
+    padding: 16,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: 14,
     fontSize: 16,
     marginBottom: 15,
     minHeight: 80,
     textAlignVertical: 'top',
+    transition: 'all 0.2s ease',
   },
   goButton: {
     width: '100%',
@@ -1399,7 +1404,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 4,
     backgroundColor: 'transparent',
-    borderRadius: 4,
+    borderRadius: 8,
     marginLeft: 8,
     borderWidth: 1,
     borderColor: brandColors.border,
@@ -1463,7 +1468,7 @@ const styles = StyleSheet.create({
   viewMoreButton: {
     paddingVertical: 12,
     paddingHorizontal: 20,
-    borderRadius: 8,
+    borderRadius: 14,
     alignItems: 'center',
     marginVertical: 10,
   },
