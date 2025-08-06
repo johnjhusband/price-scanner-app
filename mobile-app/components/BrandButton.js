@@ -9,8 +9,7 @@ export const BrandButton = ({
   disabled = false,
   style,
   textStyle,
-  isHighImpact = false, // For CTA buttons like 'Go' or 'Scan Now'
-  icon = null // Optional icon component
+  isHighImpact = false // For CTA buttons like 'Go' or 'Scan Now'
 }) => {
   const getButtonStyle = () => {
     if (disabled) {
@@ -112,11 +111,6 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: brandColors.disabledText,
-  },
-  buttonContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
 
