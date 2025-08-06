@@ -845,14 +845,6 @@ export default function App() {
           
           {!image ? (
             <>
-              <BrandButton
-                title="Upload Photo"
-                onPress={pickImage}
-                style={styles.actionButton}
-                variant="secondary"
-                icon={<Feather name="upload" size={20} color={brandColors.text} />}
-              />
-              
               {hasCamera && (
                 <BrandButton
                   title="Take Photo"
@@ -862,6 +854,14 @@ export default function App() {
                   icon={<Feather name="camera" size={20} color="#FFFFFF" />}
                 />
               )}
+              
+              <BrandButton
+                title="Upload Photo"
+                onPress={pickImage}
+                style={styles.actionButton}
+                variant="outline"
+                icon={<Feather name="upload" size={20} color={brandColors.text} />}
+              />
               
               {Platform.OS === 'web' && (
                 <>
@@ -944,7 +944,7 @@ export default function App() {
                 <View style={[styles.primaryInfoSection, { backgroundColor: '#F9FAFB', borderRadius: 12, padding: 16, marginVertical: 10 }]}>
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Estimated Value:</Text>
-                    <Text style={[styles.resultValue, styles.priceValue, { color: brandColors.success, fontSize: 24 }]}>
+                    <Text style={[styles.resultValue, styles.priceValue, styles.numericalEmphasis]}>
                       {analysisResult.price_range}
                     </Text>
                   </View>
@@ -952,10 +952,7 @@ export default function App() {
                   {(analysisResult.real_score !== undefined || analysisResult.authenticity_score !== undefined) && (
                     <View style={styles.resultItem}>
                       <Text style={[styles.resultLabel, { color: brandColors.textSecondary, fontSize: 16 }]}>Real Score:</Text>
-                      <Text style={[styles.resultValue, { 
-                        fontSize: 20,
-                        color: brandColors.text
-                      }]}>
+                      <Text style={[styles.resultValue, styles.numericalEmphasis, { fontSize: 20 }]}>
                         {analysisResult.real_score || analysisResult.authenticity_score}
                       </Text>
                     </View>
@@ -1022,15 +1019,10 @@ export default function App() {
                 {analysisResult.trending_score !== undefined && (
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Sellability:</Text>
-                    <Text style={[styles.resultValue, { 
-                      color: (() => {
-                        const score = parseInt(analysisResult.trending_score);
-                        if (score >= 80) return componentColors.scores.high;
-                        if (score >= 50) return componentColors.scores.medium;
-                        return componentColors.scores.low;
-                      })()
-                    }]}>
-                      {analysisResult.trending_score}/100 {(() => {
+                    <Text style={styles.resultValue}>
+                      <Text style={styles.numericalEmphasis}>{analysisResult.trending_score}/100</Text>
+                      {' '}
+                      {(() => {
                         const score = parseInt(analysisResult.trending_score);
                         if (score >= 80) return '▲▲▲'; // Three up arrows for hot
                         if (score >= 50) return '▲▲';   // Two up arrows for warm
@@ -1045,7 +1037,7 @@ export default function App() {
                     <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
                       Buy at:
                     </Text>
-                    <Text style={[styles.suggestedPriceValue, { color: brandColors.text }]}>
+                    <Text style={[styles.suggestedPriceValue, styles.numericalEmphasis]}>
                       {analysisResult.buy_price}
                     </Text>
                   </View>
@@ -1481,5 +1473,10 @@ const styles = StyleSheet.create({
   viewMoreText: {
     fontSize: 16,
     fontWeight: typography.weights.semiBold,
+  },
+  numericalEmphasis: {
+    color: '#F59E0B', // Amber for numerical values
+    fontWeight: '600',
+    fontSize: 24,
   },
 });

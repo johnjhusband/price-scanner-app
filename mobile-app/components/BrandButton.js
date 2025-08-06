@@ -4,7 +4,7 @@ import { brandColors, typography, buttonStyles } from '../theme/brandColors';
 
 export const BrandButton = ({ 
   title, 
-  variant = 'primary', // 'primary', 'secondary', 'accent', 'ghost', 'googleSignIn'
+  variant = 'primary', // 'primary', 'secondary', 'accent', 'ghost', 'outline', 'googleSignIn'
   onPress, 
   disabled = false,
   style,
@@ -23,6 +23,8 @@ export const BrandButton = ({
       return [styles.button, styles.accentButton, style];
     } else if (variant === 'ghost') {
       return [styles.button, styles.ghostButton, style];
+    } else if (variant === 'outline') {
+      return [styles.button, styles.outlineButton, style];
     } else if (variant === 'googleSignIn') {
       return [styles.button, styles.googleSignInButton, style];
     } else {
@@ -41,6 +43,8 @@ export const BrandButton = ({
       return [styles.buttonText, styles.accentText, textStyle];
     } else if (variant === 'ghost') {
       return [styles.buttonText, styles.ghostText, textStyle];
+    } else if (variant === 'outline') {
+      return [styles.buttonText, styles.outlineText, textStyle];
     } else if (variant === 'googleSignIn') {
       return [styles.buttonText, styles.googleSignInText, textStyle];
     } else {
@@ -96,6 +100,11 @@ const styles = StyleSheet.create({
     backgroundColor: (buttonStyles.ghost && buttonStyles.ghost.backgroundColor) || 'transparent',
     borderWidth: 0,
   },
+  outlineButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: brandColors.text,
+  },
   disabledButton: {
     backgroundColor: brandColors.disabledText,
   },
@@ -121,6 +130,9 @@ const styles = StyleSheet.create({
   },
   ghostText: {
     color: (buttonStyles.ghost && buttonStyles.ghost.color) || brandColors.textSecondary,
+  },
+  outlineText: {
+    color: brandColors.text,
   },
   disabledText: {
     color: brandColors.disabledText,
