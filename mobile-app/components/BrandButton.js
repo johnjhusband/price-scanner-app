@@ -67,6 +67,8 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     backgroundColor: buttonStyles.secondary.backgroundColor,
+    borderWidth: 1,
+    borderColor: buttonStyles.secondary.borderColor || brandColors.border,
   },
   accentButton: {
     backgroundColor: buttonStyles.accent.backgroundColor,

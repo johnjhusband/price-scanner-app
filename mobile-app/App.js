@@ -205,7 +205,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
         <BrandButton 
           title="Cancel" 
           onPress={handleCloseCamera} 
-          variant="secondary"
+          variant="primary"
         />
         <BrandButton 
           title="Capture Photo" 
@@ -822,7 +822,7 @@ export default function App() {
                   title="Take Photo"
                   onPress={takePhoto}
                   style={styles.actionButton}
-                  variant="secondary"
+                  variant="primary"
                 />
               )}
               
