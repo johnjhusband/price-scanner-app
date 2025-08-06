@@ -61,9 +61,12 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
   if (isSubmitted) {
     return (
       <View style={styles.container}>
-        <Text style={styles.successMessage}>
-          ✅ Thanks for your feedback — we use every note to make the app better.
-        </Text>
+        <View style={styles.successContent}>
+          <Feather name="check-circle" size={24} color={brandColors.success} />
+          <Text style={styles.successMessage}>
+            Thanks for your feedback — we use every note to make the app better.
+          </Text>
+        </View>
       </View>
     );
   }
@@ -207,6 +210,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
+  },
+  successContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
   },
   textInput: {
     backgroundColor: brandColors.background,

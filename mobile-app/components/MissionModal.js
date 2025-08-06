@@ -2,6 +2,7 @@ import React from 'react';
 import { Modal, View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Platform } from 'react-native';
 import { brandColors, typography } from '../theme/brandColors';
 import { focusStyles, a11yLabels, ariaRoles } from '../theme/accessibility';
+import { Feather, MaterialIcons } from '@expo/vector-icons';
 
 const MissionModal = ({ visible, onClose }) => {
   return (
@@ -33,10 +34,22 @@ const MissionModal = ({ visible, onClose }) => {
           
           <Text style={styles.sectionTitle}>With every scan, Flippi helps you:</Text>
           <View style={styles.benefitList}>
-            <Text style={styles.benefitItem}>🔍 Instantly understand resale potential</Text>
-            <Text style={styles.benefitItem}>📉 Avoid costly mistakes</Text>
-            <Text style={styles.benefitItem}>♻️ Track your positive environmental impact</Text>
-            <Text style={styles.benefitItem}>📈 Make faster, better decisions—on the spot</Text>
+            <View style={styles.benefitRow}>
+              <Feather name="search" size={20} color={brandColors.accent} />
+              <Text style={styles.benefitItem}>Instantly understand resale potential</Text>
+            </View>
+            <View style={styles.benefitRow}>
+              <Feather name="trending-down" size={20} color={brandColors.accent} />
+              <Text style={styles.benefitItem}>Avoid costly mistakes</Text>
+            </View>
+            <View style={styles.benefitRow}>
+              <MaterialIcons name="eco" size={20} color={brandColors.accent} />
+              <Text style={styles.benefitItem}>Track your positive environmental impact</Text>
+            </View>
+            <View style={styles.benefitRow}>
+              <Feather name="trending-up" size={20} color={brandColors.accent} />
+              <Text style={styles.benefitItem}>Make faster, better decisions—on the spot</Text>
+            </View>
           </View>
           
           <View style={styles.missionSection}>
@@ -178,12 +191,18 @@ const styles = StyleSheet.create({
   benefitList: {
     marginBottom: 20,
   },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   benefitItem: {
     fontSize: 17,
     fontFamily: typography.bodyFont,
     lineHeight: 31,
     color: brandColors.text,
     paddingLeft: 10,
+    flex: 1,
   },
   missionSection: {
     backgroundColor: brandColors.surface,

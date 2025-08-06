@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, Image, ScrollView, 
 import FlippiLogo from './FlippiLogo';
 import MissionModal from './MissionModal';
 import { brandColors, typography } from '../theme/brandColors';
+import { Feather } from '@expo/vector-icons';
 
 // Responsive design breakpoints
 const { width: windowWidth } = Dimensions.get('window');
@@ -87,21 +88,27 @@ const EnterScreen = () => {
           {/* Value Propositions on right */}
           <View style={styles.valueProps}>
             <View style={styles.valueProp}>
-              <Text style={styles.valueIcon}>💰</Text>
+              <View style={styles.valueIcon}>
+                <Feather name="dollar-sign" size={24} color={brandColors.accent} />
+              </View>
               <View style={styles.valueTextContainer}>
                 <Text style={styles.valueTitle}>Accurate Pricing</Text>
                 <Text style={styles.valueDesc}>Know the real value</Text>
               </View>
             </View>
             <View style={styles.valueProp}>
-              <Text style={styles.valueIcon}>🔍</Text>
+              <View style={styles.valueIcon}>
+                <Feather name="search" size={24} color={brandColors.accent} />
+              </View>
               <View style={styles.valueTextContainer}>
                 <Text style={styles.valueTitle}>Authenticity Scores</Text>
                 <Text style={styles.valueDesc}>Avoid fake items</Text>
               </View>
             </View>
             <View style={styles.valueProp}>
-              <Text style={styles.valueIcon}>📈</Text>
+              <View style={styles.valueIcon}>
+                <Feather name="trending-up" size={24} color={brandColors.accent} />
+              </View>
               <View style={styles.valueTextContainer}>
                 <Text style={styles.valueTitle}>Platform Match</Text>
                 <Text style={styles.valueDesc}>Maximize your profit</Text>
@@ -359,8 +366,11 @@ const styles = StyleSheet.create({
     width: 240,
   },
   valueIcon: {
-    fontSize: 24,
     marginRight: 10,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   valueTitle: {
     fontSize: 15,
