@@ -130,7 +130,7 @@ const EnterScreen = () => {
           >
             <View style={styles.googleButtonContent}>
               {/* Google G Logo */}
-              <View style={styles.googleLogo}>
+              <View style={styles.googleLogoContainer}>
                 <Text style={styles.googleG}>G</Text>
               </View>
               <Text style={styles.googleButtonText}>Sign in with Google</Text>
@@ -415,10 +415,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF', // White background
     borderRadius: 14,
     paddingVertical: 16,
-    paddingHorizontal: 32,
+    paddingHorizontal: 24,
     minWidth: 280,
+    minHeight: 52, // Match other buttons
     borderWidth: 1,
-    borderColor: brandColors.slate, // Slate border
+    borderColor: '#DADCE0', // Google's neutral gray
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.05,
@@ -430,7 +431,8 @@ const styles = StyleSheet.create({
     }),
   },
   googleButtonHover: {
-    backgroundColor: '#F9FAFB', // Subtle gray on hover
+    backgroundColor: '#F8F9FA', // Google's hover gray
+    borderColor: '#DADCE0',
     transform: [{ scale: 1.01 }],
   },
   googleButtonContent: {
@@ -438,25 +440,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  googleLogo: {
-    width: 24,
-    height: 24,
-    marginRight: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 4,
+  googleLogoContainer: {
+    marginRight: 8,
+    width: 20,
+    height: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleG: {
+    fontSize: 18,
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
+    fontWeight: '500',
     color: '#4285F4', // Google blue
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   googleButtonText: {
-    color: '#000000', // Black text on white
-    fontSize: isMobile ? 14 : 16, // Responsive font size
-    fontWeight: typography.weights.semiBold,
-    whiteSpace: 'nowrap', // Prevent text wrapping
+    color: '#3C4043', // Google's text gray
+    fontSize: 16,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.medium,
+    letterSpacing: 0.25,
   },
   securityNote: {
     fontSize: 12,
