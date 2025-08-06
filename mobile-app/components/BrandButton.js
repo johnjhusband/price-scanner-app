@@ -9,6 +9,7 @@ export const BrandButton = ({
   disabled = false,
   style,
   textStyle,
+  icon,
   isHighImpact = false // For CTA buttons like 'Go' or 'Scan Now'
 }) => {
   const getButtonStyle = () => {
@@ -50,7 +51,10 @@ export const BrandButton = ({
       disabled={disabled}
       activeOpacity={0.8}
     >
-      <Text style={getTextStyle()}>{title}</Text>
+      <View style={styles.buttonContent}>
+        {icon && <View style={styles.iconContainer}>{icon}</View>}
+        <Text style={getTextStyle()}>{title}</Text>
+      </View>
     </TouchableOpacity>
   );
 };
@@ -111,6 +115,14 @@ const styles = StyleSheet.create({
   },
   disabledText: {
     color: brandColors.disabledText,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconContainer: {
+    marginRight: 8,
   },
 });
 

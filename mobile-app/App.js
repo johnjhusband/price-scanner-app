@@ -3,6 +3,9 @@ import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOp
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
+// Import Lucide icons
+import { Camera as CameraIcon, Upload as UploadIcon, Clipboard as PasteIcon } from 'lucide-react-native';
+
 // Import brand components and theme
 import FlippiLogo from './components/FlippiLogo';
 import BrandButton from './components/BrandButton';
@@ -11,7 +14,6 @@ import EnterScreen from './components/EnterScreen';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
 import { appleStyles } from './theme/appleStyles';
-// import { CameraIcon, UploadIcon, PasteIcon } from './components/Icons';
 
 // Responsive design breakpoints
 const { width: windowWidth } = Dimensions.get('window');
@@ -843,7 +845,7 @@ export default function App() {
                 onPress={pickImage}
                 style={styles.actionButton}
                 variant="secondary"
-                // icon={<UploadIcon size={20} color={brandColors.text} strokeWidth={1.5} />}
+                icon={<UploadIcon size={20} color={brandColors.text} strokeWidth={1.5} />}
               />
               
               {hasCamera && (
@@ -852,7 +854,7 @@ export default function App() {
                   onPress={takePhoto}
                   style={styles.actionButton}
                   variant="primary"
-                  // icon={<CameraIcon size={20} color={brandColors.accent} strokeWidth={1.5} />}
+                  icon={<CameraIcon size={20} color="#FFFFFF" strokeWidth={1.5} />}
                 />
               )}
               
@@ -866,7 +868,7 @@ export default function App() {
                     }}
                     style={styles.actionButton}
                     variant="ghost"
-                    // icon={<PasteIcon size={20} color={brandColors.textSecondary} strokeWidth={1.5} />}
+                    icon={<PasteIcon size={20} color={brandColors.textSecondary} strokeWidth={1.5} />}
                   />
                   <View style={[styles.dropZone, isDragOver && styles.dropZoneActive]}>
                     <Text style={[styles.dropZoneText, { color: brandColors.textSecondary }]}>
