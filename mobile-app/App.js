@@ -1130,6 +1130,10 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     width: '100%', // Ensure full width
+    ...(Platform.OS === 'web' ? {
+      WebkitFontSmoothing: 'antialiased',
+      MozOsxFontSmoothing: 'grayscale',
+    } : {}),
   },
   contentContainer: {
     flexGrow: 1,

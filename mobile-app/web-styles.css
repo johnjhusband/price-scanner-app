@@ -125,12 +125,14 @@ h1, .headline {
   animation: pulse 1.5s ease-in-out infinite;
 }
 
-/* Web-specific font loading */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+/* Web-specific font loading - using system fonts for better performance */
+/* Removed Google Fonts import to use native system fonts */
 
-/* Ensure Poppins font is applied on web */
+/* Ensure proper font stack and smoothing on web */
 * {
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Web-specific layout improvements */
