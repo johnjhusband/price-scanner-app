@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Chrome Debug Test</title>
+</head>
+<body>
+    <h1>Testing Chrome Compatibility</h1>
+    <div id="root"></div>
+    
+    <script>
+        console.log('Starting Chrome debug test...');
+        
+        // Test modern JS features
+        try {
+            // Test optional chaining
+            const obj = { a: { b: 1 } };
+            console.log('Optional chaining test:', obj?.a?.b);
+        } catch (e) {
+            console.error('Optional chaining not supported:', e);
+        }
+        
+        try {
+            // Test nullish coalescing
+            const value = null ?? 'default';
+            console.log('Nullish coalescing test:', value);
+        } catch (e) {
+            console.error('Nullish coalescing not supported:', e);
+        }
+        
+        // Load the actual bundle
+        const script = document.createElement('script');
+        script.src = 'https://blue.flippi.ai/_expo/static/js/web/AppEntry-5042ada7fca6cef6f75dde8859884200.js';
+        script.onerror = function(e) {
+            console.error('Script load error:', e);
+        };
+        script.onload = function() {
+            console.log('Script loaded successfully');
+        };
+        document.body.appendChild(script);
+        
+        // Monitor for errors
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.message, e.filename, e.lineno, e.colno);
+        });
+    </script>
+</body>
+</html>
