@@ -40,13 +40,24 @@ if [ "$PRIVACY_COUNT" -gt "1" ]; then
     
     echo "Removed duplicate locations. Testing nginx config..."
     
+    # Ensure sites-enabled is updated too
+    echo "Updating sites-enabled..."
+    
+    # Remove old symlink if exists
+    sudo rm -f /etc/nginx/sites-enabled/$DOMAIN
+    
+    # Create new symlink
+    sudo ln -s /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/$DOMAIN
+    
     # Test nginx config
     if sudo nginx -t; then
         sudo systemctl reload nginx
         echo "Nginx configuration fixed and reloaded!"
+        echo "Both sites-available and sites-enabled updated."
     else
         echo "ERROR: Nginx config test failed! Restoring backup..."
         sudo cp /etc/nginx/sites-available/$DOMAIN.backup.fix.$(date +%Y%m%d_%H%M%S) /etc/nginx/sites-available/$DOMAIN
+        sudo ln -s /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-enabled/$DOMAIN
         exit 1
     fi
 else
