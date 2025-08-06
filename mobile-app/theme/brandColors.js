@@ -2,28 +2,28 @@
 // Focus on clarity, trust, and ease of use
 
 export const brandColors = {
-  // Core Colors - Warmer palette with better contrast
-  primary: '#2D5F5F',           // Warmer teal - trust & sophistication
-  text: '#1A1A1A',              // Near black - high readability
-  textSecondary: '#4B5563',     // Darker gray - better contrast
-  background: '#FAF9F7',        // Warm white background (slight cream)
+  // Core Colors - Timeless luxury palette inspired by Hermès
+  primary: '#1E3A5F',           // Deep navy blue - trust & longevity
+  text: '#0F1419',              // Almost black - maximum readability
+  textSecondary: '#536471',     // Medium gray - subtle contrast
+  background: '#FAFBFC',        // Cool white with hint of blue
   surface: '#FFFFFF',           // Pure white for cards
-  border: '#D1D5DB',            // Darker gray borders for visibility
+  border: '#E1E8ED',            // Light gray borders - refined
   
   // Accent Colors - Used sparingly
-  success: '#059669',           // Darker green - WCAG AA compliant (4.97:1)
-  error: '#DC2626',             // Red - only for errors
-  accent: '#D97853',            // Warm terracotta - for special CTAs and highlights
-  accentLight: '#E8A584',       // Lighter warm accent
+  success: '#1D9A6C',           // Refined green - sophisticated
+  error: '#C13432',             // Hermès-inspired red - refined
+  accent: '#4B7BEC',            // Bright blue - for key CTAs only
+  accentLight: '#7BA7E7',       // Lighter blue accent
   
   // Legacy mappings for compatibility
-  slateTeal: '#4B5563',         // Maps to textSecondary
-  deepTeal: '#2D5F5F',          // Maps to primary
-  softCream: '#FAF9F7',         // Maps to background
+  slateTeal: '#536471',         // Maps to textSecondary
+  deepTeal: '#1E3A5F',          // Maps to primary
+  softCream: '#FAFBFC',         // Maps to background
   offWhite: '#FFFFFF',          // Maps to surface
-  matteGold: '#D97853',         // Maps to accent (for CTAs)
-  mutedGraphite: '#1A1A1A',     // Maps to text
-  softTaupeBeige: '#D1D5DB',    // Maps to border
+  matteGold: '#4B7BEC',         // Maps to accent (for CTAs)
+  mutedGraphite: '#0F1419',     // Maps to text
+  softTaupeBeige: '#E1E8ED',    // Maps to border
   
   // Additional legacy mappings
   soil: '#1A1A1A',              // Maps to text
@@ -105,20 +105,20 @@ export const typography = {
 // Button styling constants - Clean Design
 export const buttonStyles = {
   primary: {
-    backgroundColor: '#2D5F5F',  // Warmer teal
+    backgroundColor: '#1E3A5F',  // Deep navy blue
     color: '#FFFFFF',
-    hoverBackground: '#234A4A',  // Darker on hover
+    hoverBackground: '#152C48',  // Darker navy on hover
   },
   secondary: {
-    backgroundColor: '#F3F4F6',  // Light gray background for visibility
-    color: '#2D5F5F',           // Warmer teal text
-    hoverBackground: '#E5E7EB', // Darker gray on hover
-    borderColor: '#D1D5DB',     // More visible border
+    backgroundColor: '#F7F9FA',  // Very light blue-gray
+    color: '#1E3A5F',           // Navy text
+    hoverBackground: '#E1E8ED', // Light gray on hover
+    borderColor: '#CBD6E2',     // Blue-gray border
   },
   accent: {
-    backgroundColor: '#D97853',  // Warm terracotta accent
+    backgroundColor: '#4B7BEC',  // Bright blue accent
     color: '#FFFFFF', 
-    hoverBackground: '#C56642',  // Darker terracotta on hover
+    hoverBackground: '#3A66D1',  // Darker blue on hover
   },
   ghost: {
     backgroundColor: 'transparent',  // No background
