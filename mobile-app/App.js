@@ -1608,17 +1608,34 @@ export default function App() {
                 style={[styles.analysisResult, { backgroundColor: '#FFFFFF' }]}>
                 <Text style={[styles.resultTitle, { color: brandColors.text }]}>Analysis Results</Text>
                 
-                {/* Show buy price if available */}
-                {analysisResult.buy_price && (
-                  <View style={[styles.suggestedPriceContainer, { backgroundColor: '#F9FAFB' }]}>
-                    <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
-                      Buy at
-                    </Text>
-                    <Text style={[styles.suggestedPriceValue, styles.numericalEmphasis]}>
-                      {analysisResult.buy_price}
-                    </Text>
+                {/* Top price container with Buy At, Estimated Resale Value, and Item */}
+                <View style={[styles.topPriceContainer, { backgroundColor: '#F9FAFB' }]}>
+                  <View style={styles.priceRow}>
+                    {analysisResult.buy_price && (
+                      <View style={styles.priceColumn}>
+                        <Text style={styles.priceLabel}>Buy At</Text>
+                        <Text style={[styles.priceValueLarge, styles.numericalEmphasis]}>
+                          {analysisResult.buy_price}
+                        </Text>
+                      </View>
+                    )}
+                    
+                    {analysisResult.price_range && (
+                      <View style={styles.priceColumn}>
+                        <Text style={styles.priceLabel}>Estimated Resale Value</Text>
+                        <Text style={[styles.priceValueLarge, styles.numericalEmphasis]}>
+                          {analysisResult.price_range}
+                        </Text>
+                      </View>
+                    )}
                   </View>
-                )}
+                  
+                  {/* Item description in same box */}
+                  <View style={styles.itemInPriceBox}>
+                    <Text style={styles.itemLabel}>Item</Text>
+                    <Text style={styles.itemValue}>{analysisResult.item_name}</Text>
+                  </View>
+                </View>
                 
                 {/* Check if potentially dupe and show friendly warning */}
                 {(() => {
@@ -1653,20 +1670,8 @@ export default function App() {
                   return null;
                 })()}
                 
-                {/* Show item name */}
-                <View style={styles.resultItem}>
-                  <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Item</Text>
-                  <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.item_name}</Text>
-                </View>
-                
                 {/* PRIMARY INFO - Always show all data */}
                 <View style={[styles.primaryInfoSection, { backgroundColor: '#F9FAFB', borderRadius: 12, padding: 16, marginVertical: 10 }]}>
-                  <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel]}>Estimated Value</Text>
-                    <Text style={[styles.resultValue, styles.priceValue, styles.numericalEmphasis]}>
-                      {analysisResult.price_range}
-                    </Text>
-                  </View>
                   
                   {(analysisResult.real_score !== undefined || analysisResult.authenticity_score !== undefined) && (
                     <View style={styles.resultItem}>
@@ -2453,5 +2458,50 @@ const styles = StyleSheet.create({
     color: '#92400E',
     lineHeight: 20,
     flex: 1,
+  },
+  topPriceContainer: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 10,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+  },
+  priceColumn: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  priceLabel: {
+    fontSize: 16,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.regular,
+    color: brandColors.textSecondary,
+    marginBottom: 4,
+  },
+  priceValueLarge: {
+    fontSize: 24,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.bold,
+    color: brandColors.accent,
+  },
+  itemInPriceBox: {
+    borderTopWidth: 1,
+    borderTopColor: brandColors.border,
+    paddingTop: 12,
+  },
+  itemLabel: {
+    fontSize: 14,
+    fontFamily: typography.bodyFont,
+    color: brandColors.textSecondary,
+    marginBottom: 4,
+  },
+  itemValue: {
+    fontSize: 18,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.medium,
+    color: brandColors.text,
   },
 });
