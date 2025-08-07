@@ -226,7 +226,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
             left: 0,
             width: '100%',
             height: '100%',
-            backgroundColor: 'black',
+            backgroundColor: '#18181b',
             objectFit: 'cover'
           }}
           autoPlay={true}
@@ -1064,7 +1064,9 @@ export default function App() {
   return (
     <ScrollView 
       ref={scrollViewRef}
-      style={[styles.container, { backgroundColor: brandColors.background }]}
+      style={[styles.container, { 
+        backgroundColor: isAuthenticated ? '#fafafa' : brandColors.background 
+      }]}
       contentContainerStyle={styles.contentContainer}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -1109,6 +1111,11 @@ export default function App() {
               </Text>
             </>
           )}
+          {isAuthenticated && !image && !analysisResult && (
+            <Text style={[styles.welcomeText, { color: brandColors.text }]}>
+              Start your first flip 💕
+            </Text>
+          )}
         
         <View style={[
           styles.uploadContainer,
@@ -1140,7 +1147,7 @@ export default function App() {
                 <BrandButton
                   title="Take Photo"
                   onPress={takePhoto}
-                  style={styles.actionButton}
+                  style={[styles.actionButton, styles.primaryActionButton]}
                   variant="primary"
                   icon={<CameraIcon size={20} color="#FFFFFF" />}
                 />
@@ -1156,16 +1163,6 @@ export default function App() {
               
               {Platform.OS === 'web' && (
                 <>
-                  <BrandButton
-                    title="Paste Image"
-                    onPress={() => {
-                      // Trigger paste programmatically
-                      document.execCommand('paste');
-                    }}
-                    style={styles.actionButton}
-                    variant="ghost"
-                    icon={<Clipboard size={20} color={brandColors.textSecondary} />}
-                  />
                   <View style={[styles.dropZone, isDragOver && styles.dropZoneActive]}>
                     <Text style={[styles.dropZoneText, { color: brandColors.textSecondary }]}>
                       {isDragOver ? 'Drop image here' : 'Or drag and drop an image here'}
@@ -1315,31 +1312,13 @@ export default function App() {
                     
                     <View style={styles.resultItem}>
                       <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Style Tier</Text>
-                      <View style={[styles.styleTierBadge, {
-                        backgroundColor: (() => {
-                          const tier = analysisResult.style_tier.toLowerCase();
-                          if (tier === 'luxury') return '#F3F4F6'; // Light gray
-                          if (tier === 'designer') return '#F9FAFB'; // Very light gray
-                          return '#FFFFFF'; // White
-                        })(),
-                        borderColor: (() => {
-                          const tier = analysisResult.style_tier.toLowerCase();
-                          if (tier === 'luxury') return '#1F2937'; // Dark gray border
-                          if (tier === 'designer') return '#6B7280'; // Medium gray border
-                          return '#D1D5DB'; // Light gray border
-                        })()
+                      <Text style={[styles.resultValue, { 
+                        color: brandColors.text,
+                        fontWeight: typography.weights.semibold,
+                        textTransform: 'capitalize'
                       }]}>
-                        <Text style={[styles.styleTierBadgeText, {
-                          color: (() => {
-                            const tier = analysisResult.style_tier.toLowerCase();
-                            if (tier === 'luxury') return '#1F2937'; // Dark gray text
-                            if (tier === 'designer') return '#4B5563'; // Medium gray text
-                            return '#6B7280'; // Light gray text
-                          })()
-                        }]}>
-                          {analysisResult.style_tier}
-                        </Text>
-                      </View>
+                        {analysisResult.style_tier}
+                      </Text>
                     </View>
                     
                 
@@ -1430,7 +1409,7 @@ export default function App() {
                 <BrandButton
                   title="🐦 Share on X"
                   onPress={handleShareOnX}
-                  style={[styles.shareButton, { backgroundColor: '#000000' }]}
+                  style={[styles.shareButton, { backgroundColor: '#18181b' }]}
                   variant="primary"
                 />
                 <BrandButton
@@ -1549,6 +1528,22 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 400, // Prevent buttons from being too wide on desktop
   },
+  primaryActionButton: {
+    // Warmer styling for primary actions
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  welcomeText: {
+    fontSize: 18,
+    fontWeight: typography.weights.medium,
+    color: brandColors.text,
+    marginTop: 16,
+    marginBottom: 24,
+    textAlign: 'center',
+  },
   dropZone: {
     width: '100%',
     minHeight: 150,
@@ -1619,6 +1614,11 @@ const styles = StyleSheet.create({
   resultItem: {
     marginBottom: 12,
     width: '100%',
+    ...(isDesktop && {
+      width: 'auto',
+      flex: '1 1 45%',
+      minWidth: 200,
+    }),
   },
   resultLabel: {
     fontSize: 16,
@@ -1868,9 +1868,23 @@ const styles = StyleSheet.create({
   },
   primaryInfoSection: {
     marginVertical: 10,
+    ...(isDesktop && {
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      gap: 16,
+    }),
   },
   secondaryInfoSection: {
     marginTop: 10,
+    ...(isDesktop && {
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      gap: 16,
+    }),
   },
   viewMoreButton: {
     paddingVertical: 12,

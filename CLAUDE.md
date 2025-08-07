@@ -182,6 +182,31 @@ Each deployment:
 3. **Old code running**: Git pull failed - force reset
 4. **404 on legal pages**: Run post-deploy script
 
+### 7. 🚨 CRITICAL: Legal Pages SSL Issue (Frequent Problem)
+
+**Symptom**: /terms, /privacy, /mission, /contact show "Loading flippi.ai..." or React app instead of legal HTML
+
+**Root Cause**: Missing SSL files prevent nginx from loading site config:
+- `/etc/letsencrypt/options-ssl-nginx.conf`
+- `/etc/letsencrypt/ssl-dhparams.pem`
+
+**Quick Fix**: Script already in all deployment workflows:
+```bash
+cd /var/www/[domain] && bash scripts/fix-nginx-ssl-comprehensive.sh
+```
+
+**How to Diagnose**:
+1. Run `nginx -t` - will show "No such file or directory" errors
+2. Check `nginx -T | grep "location = /terms"` - if empty, config isn't loaded
+3. Legal pages return React app = nginx using default config
+
+**Why This Keeps Happening**: 
+- Let's Encrypt creates SSL certs but not always the options/dhparams files
+- Without these files, nginx silently falls back to default behavior
+- The site appears to work (React loads) but specific routes fail
+
+**Prevention**: The fix script runs automatically in deployment, but always verify legal pages work after deploy
+
 ## Communication Style
 
 - Be concise and direct

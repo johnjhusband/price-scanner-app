@@ -21,6 +21,10 @@ jobs:
             git pull origin master
             cd backend && npm install --production
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
+            
+            # Fix nginx SSL configuration comprehensively
+            cd /var/www/app.flippi.ai && bash scripts/fix-nginx-ssl-comprehensive.sh || true
+            
             # Debug: Check what directory PM2 is serving from
             echo "=== PM2 prod-frontend config ==="
             pm2 describe prod-frontend | grep -E "exec cwd|script|args" || true

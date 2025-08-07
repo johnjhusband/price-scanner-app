@@ -43,6 +43,9 @@ jobs:
               bash scripts/post-deploy-nginx.sh
             fi
             
+            # Fix nginx SSL configuration comprehensively
+            cd /var/www/green.flippi.ai && bash scripts/fix-nginx-ssl-comprehensive.sh || true
+            
             # Debug: Check what directory PM2 is serving from
             echo "=== PM2 staging-frontend config ==="
             pm2 describe staging-frontend | grep -E "exec cwd|script|args" || true

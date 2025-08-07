@@ -1,5 +1,51 @@
 # Deployment Troubleshooting Guide
 
+## 🚨 Most Common Issue: Legal Pages Not Working
+
+### Problem
+Legal pages (/terms, /privacy, /mission, /contact) show "Loading flippi.ai..." or the React app instead of the actual legal content.
+
+### Cause
+Missing SSL configuration files prevent nginx from loading the site configuration:
+- `/etc/letsencrypt/options-ssl-nginx.conf`
+- `/etc/letsencrypt/ssl-dhparams.pem`
+
+### Quick Fix
+Run the comprehensive SSL fix script (already in deployment workflows):
+```bash
+cd /var/www/[domain] && bash scripts/fix-nginx-ssl-comprehensive.sh
+```
+
+### Diagnosis Steps
+1. Check nginx configuration test:
+   ```bash
+   sudo nginx -t
+   # Look for: "No such file or directory" errors
+   ```
+
+2. Verify active configuration:
+   ```bash
+   nginx -T | grep "location = /terms"
+   # If empty, config isn't loaded
+   ```
+
+3. Test the actual response:
+   ```bash
+   curl https://[domain]/terms
+   # If you see React app HTML, nginx is using default config
+   ```
+
+### Why This Happens
+- Let's Encrypt creates SSL certificates but not always the supplementary files
+- Without these files, nginx can't load the site config
+- Nginx silently falls back to default behavior (serving everything as static files)
+- The main site works but specific routes fail
+
+### Prevention
+The fix script runs automatically in all deployments, but always verify legal pages after deploy.
+
+---
+
 ## Overview
 This guide documents common deployment issues encountered with Flippi.ai and their solutions, based on real deployment experiences. Use this when deployments fail or services don't work as expected after deployment.
 
