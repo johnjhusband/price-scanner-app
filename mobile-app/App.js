@@ -879,7 +879,6 @@ export default function App() {
             />
           )}
           
-          {console.log('[DEBUG] Current state - image:', !!image, 'analysisResult:', !!analysisResult)}
         {!image ? (
             <>
               {hasCamera && (
@@ -924,12 +923,9 @@ export default function App() {
             <View style={styles.resultContainer}>
               {image ? (
                 <View style={styles.imagePreviewContainer}>
-                  {console.log('[DEBUG] Rendering image with URI:', image)}
                   <Image 
                     source={{ uri: image }} 
                     style={styles.imagePreview}
-                    onError={(e) => console.error('Image load error:', e.nativeEvent.error)}
-                    onLoad={() => console.log('[DEBUG] Image loaded successfully')}
                   />
                 </View>
               ) : (
@@ -1257,10 +1253,9 @@ const styles = StyleSheet.create({
   resultContainer: {
     width: '100%',
     maxWidth: isMobile ? '100%' : 672, // max-w-xl
-    alignItems: 'stretch', // Don't center items
-    justifyContent: 'flex-start',
     paddingHorizontal: 16, // px-4
-    paddingTop: 4, // pt-1
+    paddingTop: 8, // pt-2
+    backgroundColor: brandColors.background, // Ensure white background
   },
   actionButton: {
     marginVertical: 8,
@@ -1292,16 +1287,12 @@ const styles = StyleSheet.create({
   },
   imagePreviewContainer: {
     width: '100%',
-    height: isMobile ? 400 : 500, // Fixed height
-    maxHeight: '70vh', // max-h-[70vh]
-    backgroundColor: '#f5f5f5', // Light gray to see container
+    backgroundColor: 'transparent', // No background
     marginBottom: 8, // mb-2
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   imagePreview: {
     width: '100%',
-    height: '100%', // Fill container
+    height: 'auto', // Natural height
     resizeMode: 'contain',
     borderRadius: 8, // rounded-md
   },
