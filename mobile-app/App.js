@@ -1278,28 +1278,25 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
   imagePreviewContainer: {
-    flex: 1, // Allow to grow
     width: '100%',
-    maxWidth: isMobile ? '100%' : 900, // Full width on mobile
-    height: isMobile ? '40vh' : '50vh', // Fixed height for consistency
-    backgroundColor: '#FFFFFF',
-    borderRadius: isMobile ? 8 : 16, // Smaller radius on mobile
-    padding: isMobile ? 0 : 8, // No padding on mobile
-    marginBottom: 16, // Less margin
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 8,
-    elevation: 4,
+    maxWidth: isMobile ? '100%' : 600, // Controlled max width
+    height: isMobile ? 250 : 300, // Fixed height like the example
+    backgroundColor: 'transparent',
+    borderRadius: 6, // Subtle rounding
+    borderWidth: 1,
+    borderColor: '#E5E7EB', // Light gray border
+    padding: 0, // No padding for maximum image size
+    marginBottom: 20,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden', // Ensure image doesn't overflow
   },
   imagePreview: {
     width: '100%',
     height: '100%',
     resizeMode: 'contain',
-    borderRadius: isMobile ? 8 : 12,
-    backgroundColor: '#F9FAFB',
+    borderRadius: 4, // Minimal rounding to match container
+    backgroundColor: 'transparent', // No background needed
   },
   image: {
     width: '100%',
