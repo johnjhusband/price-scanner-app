@@ -849,14 +849,16 @@ export default function App() {
       return;
     }
     
-    // Only support web for now
+    // Mobile implementation would go here
     if (Platform.OS !== 'web') {
+      // For now, just generate and download the image
+      // In the future, could use react-native-share to open Instagram directly
       Alert.alert(
-        'Coming Soon',
-        'Instagram Story sharing is coming soon for mobile. For now, take a screenshot and share manually.',
+        'Story Image Ready',
+        'Image will be downloaded. Open Instagram and upload to your story!',
         [{ text: 'OK' }]
       );
-      return;
+      // Continue with image generation...
     }
     
     // Check if canvas is supported
@@ -1662,17 +1664,19 @@ export default function App() {
                   style={[styles.shareButton, { backgroundColor: '#18181b' }]}
                   variant="primary"
                 />
-                <BrandButton
-                  title="📸 Share to Instagram Story"
-                  onPress={handleInstagramStoryShare}
-                  style={[styles.shareButton, { backgroundColor: '#E1306C' }]}
-                  variant="primary"
-                  disabled={isLoading}
-                />
-                {Platform.OS === 'web' && (
-                  <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
-                    Downloads story-sized image (1080x1920)
-                  </Text>
+                {Platform.OS !== 'web' && (
+                  <>
+                    <BrandButton
+                      title="📸 Share to Instagram Story"
+                      onPress={handleInstagramStoryShare}
+                      style={[styles.shareButton, { backgroundColor: '#E1306C' }]}
+                      variant="primary"
+                      disabled={isLoading}
+                    />
+                    <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
+                      Downloads story image to share
+                    </Text>
+                  </>
                 )}
                 <BrandButton
                   title="⬇️ Download Image"
