@@ -129,6 +129,7 @@
 - Professional yet friendly
 - Clear and concise
 - Reseller-savvy
+- Minimalist: No colons or ellipsis in UI labels
 
 ### Tagline
 **"Never Over Pay"** - Empowering smart reselling decisions
