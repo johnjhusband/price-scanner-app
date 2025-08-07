@@ -65,3 +65,12 @@ else
 fi
 
 echo "Nginx fix complete."
+
+# Also fix legal pages
+echo ""
+echo "Fixing legal pages configuration..."
+if [ -f /var/www/$DOMAIN/scripts/fix-nginx-legal-pages.sh ]; then
+    bash /var/www/$DOMAIN/scripts/fix-nginx-legal-pages.sh
+else
+    echo "Legal pages fix script not found"
+fi
