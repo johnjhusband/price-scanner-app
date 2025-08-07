@@ -142,7 +142,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
           disabled={isSubmitting || (!helpedDecision && !feedbackText.trim())}
         >
           <Text style={styles.submitButtonText}>
-            {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+            {isSubmitting ? 'Submitting' : 'Submit Feedback'}
           </Text>
         </TouchableOpacity>
       )}

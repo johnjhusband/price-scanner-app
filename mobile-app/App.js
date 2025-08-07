@@ -199,7 +199,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
     return (
       <View style={[styles.cameraContainer, { backgroundColor: brandColors.background }]}>
         <ActivityIndicator size="large" color={brandColors.charcoalGray} />
-        <Text style={[styles.cameraText, { color: brandColors.text }]}>Initializing camera...</Text>
+        <Text style={[styles.cameraText, { color: brandColors.text }]}>Initializing camera</Text>
       </View>
     );
   }
@@ -797,7 +797,7 @@ export default function App() {
         <FlippiLogo size="large" style={{ marginBottom: 8 }} />
         <ActivityIndicator size="large" color={brandColors.primary} />
         <Text style={{ marginTop: 20, fontSize: 16, color: brandColors.textSecondary }}>
-          Loading flippi.ai...
+          Loading flippi.ai
         </Text>
       </View>
     );
@@ -968,7 +968,7 @@ export default function App() {
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={brandColors.primary} />
                 <Text style={[styles.loadingText, { color: brandColors.text }]}>
-                  Analyzing image...
+                  Analyzing image
                 </Text>
               </View>
             )}
