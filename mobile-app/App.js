@@ -1188,7 +1188,9 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     flexGrow: 1,
-    alignItems: 'center', // Center the content column
+    alignItems: 'center', // Center the content column horizontally
+    justifyContent: 'flex-start', // Start from top, not center
+    paddingTop: 8, // Minimal top padding
     width: '100%', // Full width
   },
   environmentBanner: {
@@ -1246,12 +1248,12 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   resultContainer: {
-    flex: 1,
     width: '100%',
-    alignItems: 'center',
+    maxWidth: isMobile ? '100%' : 672, // max-w-xl
+    alignItems: 'stretch', // Don't center items
     justifyContent: 'flex-start',
-    paddingHorizontal: isMobile ? 8 : 20, // Minimal padding on mobile
-    paddingTop: isMobile ? 0 : 16, // No top padding on mobile
+    paddingHorizontal: 16, // px-4
+    paddingTop: 8, // pt-2
   },
   actionButton: {
     marginVertical: 8,
@@ -1283,12 +1285,10 @@ const styles = StyleSheet.create({
   },
   imagePreviewContainer: {
     width: '100%',
-    maxWidth: isMobile ? '100%' : 672, // max-w-xl equivalent (42rem = 672px)
-    height: 400, // Fixed height to ensure visibility
+    height: isMobile ? 300 : 400, // Responsive height
+    maxHeight: 500, // max-h-[500px]
     backgroundColor: 'transparent',
-    marginTop: 8, // mt-2
     marginBottom: 16, // mb-4
-    paddingHorizontal: 0, // px-0
     alignItems: 'center',
     justifyContent: 'center',
   },
