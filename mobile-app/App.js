@@ -17,7 +17,8 @@ import {
   BadgeCheck,
   Flame,
   Repeat,
-  Briefcase
+  Briefcase,
+  AlertTriangle
 } from 'lucide-react-native';
 
 // Import brand components and theme
@@ -1607,79 +1608,26 @@ export default function App() {
                 style={[styles.analysisResult, { backgroundColor: '#FFFFFF' }]}>
                 <Text style={[styles.resultTitle, { color: brandColors.text }]}>Analysis Results</Text>
                 
-                {/* Check if potentially fake */}
-                {(() => {
-                  const score = analysisResult.real_score || analysisResult.authenticity_score || 0;
-                  const description = productDescription?.toLowerCase() || '';
-                  const insights = analysisResult.market_insights?.toLowerCase() || '';
-                  const penalties = analysisResult.score_penalties?.toLowerCase() || '';
-                  
-                  const isPotentiallyFake = 
-                    score < 40 ||
-                    description.includes('fake') ||
-                    description.includes('replica') ||
-                    description.includes('inspired') ||
-                    description.includes('dupe') ||
-                    insights.includes('replica') ||
-                    penalties.includes('replica') ||
-                    analysisResult.platform_recommendation === 'Craft Fair' ||
-                    analysisResult.platform_recommendation === 'Personal Use';
-                  
-                  if (isPotentiallyFake) {
-                    return (
-                      <>
-                        <View style={styles.authenticityWarning}>
-                          <Text style={styles.warningIcon}>⚠️</Text>
-                          <Text style={styles.warningTitle}>Authenticity Concern</Text>
-                          <Text style={styles.warningText}>
-                            We detected signals that raise authenticity concerns. Please double-check brand markings, serial numbers, and purchase receipts before buying or selling this item.
-                          </Text>
-                          <Text style={[styles.warningText, { marginTop: 12, fontWeight: typography.weights.semiBold }]}>
-                            Always verify authenticity independently before making any transaction.
-                          </Text>
-                        </View>
-                        
-                        {/* Still show item name and condition */}
-                        <View style={styles.resultItem}>
-                          <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Item</Text>
-                          <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.item_name}</Text>
-                        </View>
-                        
-                        {analysisResult.condition && (
-                          <View style={styles.resultItem}>
-                            <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Condition</Text>
-                            <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.condition}</Text>
-                          </View>
-                        )}
-                      </>
-                    );
-                  } else {
-                    // Show normal pricing for authentic items
-                    return (
-                      <>
-                        {analysisResult.buy_price && (
-                          <View style={[styles.suggestedPriceContainer, { backgroundColor: '#F9FAFB' }]}>
-                            <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
-                              Buy at
-                            </Text>
-                            <Text style={[styles.suggestedPriceValue, styles.numericalEmphasis]}>
-                              {analysisResult.buy_price}
-                            </Text>
-                          </View>
-                        )}
-                      </>
-                    );
-                  }
-                })()}
+                {/* Show buy price if available */}
+                {analysisResult.buy_price && (
+                  <View style={[styles.suggestedPriceContainer, { backgroundColor: '#F9FAFB' }]}>
+                    <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
+                      Buy at
+                    </Text>
+                    <Text style={[styles.suggestedPriceValue, styles.numericalEmphasis]}>
+                      {analysisResult.buy_price}
+                    </Text>
+                  </View>
+                )}
                 
-                {/* Only show duplicate item/condition if not fake (since we show them above for fake items) */}
+                {/* Check if potentially dupe and show friendly warning */}
                 {(() => {
                   const score = analysisResult.real_score || analysisResult.authenticity_score || 0;
                   const description = productDescription?.toLowerCase() || '';
                   const insights = analysisResult.market_insights?.toLowerCase() || '';
                   const penalties = analysisResult.score_penalties?.toLowerCase() || '';
                   
-                  const isPotentiallyFake = 
+                  const isPotentialDupe = 
                     score < 40 ||
                     description.includes('fake') ||
                     description.includes('replica') ||
@@ -1689,45 +1637,36 @@ export default function App() {
                     penalties.includes('replica') ||
                     analysisResult.platform_recommendation === 'Craft Fair' ||
                     analysisResult.platform_recommendation === 'Personal Use';
-                    
-                  if (!isPotentiallyFake) {
+                  
+                  if (isPotentialDupe) {
                     return (
-                      <View style={styles.resultItem}>
-                        <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Item</Text>
-                        <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.item_name}</Text>
+                      <View style={styles.dupeAlert}>
+                        <View style={styles.dupeAlertContent}>
+                          <AlertTriangle size={16} color="#EAB308" strokeWidth={2} style={{ marginRight: 8 }} />
+                          <Text style={styles.dupeAlertText}>
+                            This item may be a dupe. Check brand details before buying or listing.
+                          </Text>
+                        </View>
                       </View>
                     );
                   }
                   return null;
                 })()}
                 
-                {/* PRIMARY INFO - Only show for non-fake items */}
-                {(() => {
-                  const score = analysisResult.real_score || analysisResult.authenticity_score || 0;
-                  const description = productDescription?.toLowerCase() || '';
-                  const insights = analysisResult.market_insights?.toLowerCase() || '';
-                  const penalties = analysisResult.score_penalties?.toLowerCase() || '';
-                  
-                  const isPotentiallyFake = 
-                    score < 40 ||
-                    description.includes('fake') ||
-                    description.includes('replica') ||
-                    description.includes('inspired') ||
-                    description.includes('dupe') ||
-                    insights.includes('replica') ||
-                    penalties.includes('replica') ||
-                    analysisResult.platform_recommendation === 'Craft Fair' ||
-                    analysisResult.platform_recommendation === 'Personal Use';
-                    
-                  if (!isPotentiallyFake) {
-                    return (
-                      <View style={[styles.primaryInfoSection, { backgroundColor: '#F9FAFB', borderRadius: 12, padding: 16, marginVertical: 10 }]}>
-                        <View style={styles.resultItem}>
-                          <Text style={[styles.resultLabel]}>Estimated Value</Text>
-                          <Text style={[styles.resultValue, styles.priceValue, styles.numericalEmphasis]}>
-                            {analysisResult.price_range}
-                          </Text>
-                        </View>
+                {/* Show item name */}
+                <View style={styles.resultItem}>
+                  <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Item</Text>
+                  <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.item_name}</Text>
+                </View>
+                
+                {/* PRIMARY INFO - Always show all data */}
+                <View style={[styles.primaryInfoSection, { backgroundColor: '#F9FAFB', borderRadius: 12, padding: 16, marginVertical: 10 }]}>
+                  <View style={styles.resultItem}>
+                    <Text style={[styles.resultLabel]}>Estimated Value</Text>
+                    <Text style={[styles.resultValue, styles.priceValue, styles.numericalEmphasis]}>
+                      {analysisResult.price_range}
+                    </Text>
+                  </View>
                   
                   {(analysisResult.real_score !== undefined || analysisResult.authenticity_score !== undefined) && (
                     <View style={styles.resultItem}>
@@ -1794,28 +1733,24 @@ export default function App() {
                     </View>
                   )}
                   
-                        {analysisResult.recommended_platform && (
-                          <View style={styles.resultItem}>
-                            <Text style={[styles.resultLabel]}>Best Platforms</Text>
-                            <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 18 }]}>
-                              {(() => {
-                                const platforms = [];
-                                if (analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown') {
-                                  platforms.push(analysisResult.recommended_live_platform === 'uknown' ? 'Personal Use' : analysisResult.recommended_live_platform);
-                                }
-                                if (analysisResult.recommended_platform && analysisResult.recommended_platform !== 'uknown') {
-                                  platforms.push(analysisResult.recommended_platform === 'uknown' ? 'Craft Fair' : analysisResult.recommended_platform);
-                                }
-                                return platforms.join(', ') || 'Craft Fair, Personal Use';
-                              })()}
-                            </Text>
-                          </View>
-                        )}
-                      </View>
-                    );
-                  }
-                  return null;
-                })()}
+                  {analysisResult.recommended_platform && (
+                    <View style={styles.resultItem}>
+                      <Text style={[styles.resultLabel]}>Best Platforms</Text>
+                      <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 18 }]}>
+                        {(() => {
+                          const platforms = [];
+                          if (analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown') {
+                            platforms.push(analysisResult.recommended_live_platform === 'uknown' ? 'Personal Use' : analysisResult.recommended_live_platform);
+                          }
+                          if (analysisResult.recommended_platform && analysisResult.recommended_platform !== 'uknown') {
+                            platforms.push(analysisResult.recommended_platform === 'uknown' ? 'Craft Fair' : analysisResult.recommended_platform);
+                          }
+                          return platforms.join(', ') || 'Craft Fair, Personal Use';
+                        })()}
+                      </Text>
+                    </View>
+                  )}
+                </View>
                 
                 {/* TOGGLE BUTTON */}
                 <TouchableOpacity
@@ -2499,33 +2434,24 @@ const styles = StyleSheet.create({
     marginTop: 4,
     lineHeight: 20,
   },
-  authenticityWarning: {
-    backgroundColor: '#FFF3CD',
-    borderColor: '#FFE69C',
+  dupeAlert: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
     borderWidth: 1,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 8,
+    padding: 12,
     marginVertical: 12,
     marginHorizontal: 0,
   },
-  warningIcon: {
-    fontSize: 32,
-    textAlign: 'center',
-    marginBottom: 8,
+  dupeAlertContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
-  warningTitle: {
-    fontSize: 20,
-    fontFamily: typography.headingFont,
-    fontWeight: typography.weights.semiBold,
-    color: '#664D03',
-    textAlign: 'center',
-    marginBottom: 12,
-  },
-  warningText: {
-    fontSize: 16,
+  dupeAlertText: {
+    fontSize: 14,
     fontFamily: typography.bodyFont,
-    color: '#664D03',
-    lineHeight: 24,
-    textAlign: 'center',
+    color: '#92400E',
+    lineHeight: 20,
+    flex: 1,
   },
 });
