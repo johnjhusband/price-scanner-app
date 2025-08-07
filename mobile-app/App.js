@@ -1634,10 +1634,36 @@ export default function App() {
                   
                   {(analysisResult.real_score !== undefined || analysisResult.authenticity_score !== undefined) && (
                     <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel]}>Real Score</Text>
-                      <Text style={[styles.resultValue, styles.realScoreEmphasis, { fontSize: 20 }]}>
-                        {analysisResult.real_score || analysisResult.authenticity_score}%
-                      </Text>
+                      <View style={styles.labelWithIcon}>
+                        <Text style={[styles.resultLabel]}>Real Score</Text>
+                        <TouchableOpacity
+                          onPress={() => setShowMissionModal(true)}
+                          accessibilityLabel="Learn about Real Score"
+                          accessibilityRole="button"
+                          style={styles.infoIconButton}
+                        >
+                          <Info size={16} color={brandColors.textSecondary} strokeWidth={2} />
+                        </TouchableOpacity>
+                      </View>
+                      <View>
+                        <Text style={[styles.resultValue, styles.realScoreEmphasis, { fontSize: 20 }]}>
+                          {analysisResult.real_score || analysisResult.authenticity_score}%
+                        </Text>
+                        <Text style={[styles.realScoreExplanation]}>
+                          {(() => {
+                            const score = analysisResult.real_score || analysisResult.authenticity_score;
+                            if (score >= 80) {
+                              return "Excellent clarity and brand visibility. High confidence.";
+                            } else if (score >= 60) {
+                              return "Good photo quality. Brand is visible and centered.";
+                            } else if (score >= 40) {
+                              return "Fair quality. Better lighting or angle could help.";
+                            } else {
+                              return "Low confidence. Try closer photo with better lighting.";
+                            }
+                          })()}
+                        </Text>
+                      </View>
                     </View>
                   )}
                   
@@ -2320,5 +2346,26 @@ const styles = StyleSheet.create({
     color: brandColors.textSecondary,
     fontStyle: 'italic',
     fontSize: 14,
+  },
+  labelWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  infoIconButton: {
+    marginLeft: 6,
+    padding: 4,
+    minWidth: 24,
+    minHeight: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  realScoreExplanation: {
+    fontSize: 14,
+    fontFamily: typography.bodyFont,
+    color: brandColors.textSecondary,
+    fontStyle: 'italic',
+    marginTop: 4,
+    lineHeight: 18,
   },
 });
