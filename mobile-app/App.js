@@ -3,8 +3,8 @@ import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOp
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
-// Import Expo vector icons - better compatibility with web builds
-import { MaterialIcons, Feather } from '@expo/vector-icons';
+// Import Lucide icons - our licensed icon system
+import { Camera, Upload, Clipboard, Info } from 'lucide-react-native';
 
 // Import brand components and theme
 import FlippiLogo from './components/FlippiLogo';
@@ -889,7 +889,7 @@ export default function App() {
                   onPress={takePhoto}
                   style={styles.actionButton}
                   variant="primary"
-                  icon={<Feather name="camera" size={20} color="#FFFFFF" />}
+                  icon={<Camera size={20} color="#FFFFFF" />}
                 />
               )}
               
@@ -898,7 +898,7 @@ export default function App() {
                 onPress={pickImage}
                 style={styles.actionButton}
                 variant="outline"
-                icon={<Feather name="upload" size={20} color={brandColors.text} />}
+                icon={<Upload size={20} color={brandColors.text} />}
               />
               
               {Platform.OS === 'web' && (
@@ -911,7 +911,7 @@ export default function App() {
                     }}
                     style={styles.actionButton}
                     variant="ghost"
-                    icon={<Feather name="clipboard" size={20} color={brandColors.textSecondary} />}
+                    icon={<Clipboard size={20} color={brandColors.textSecondary} />}
                   />
                   <View style={[styles.dropZone, isDragOver && styles.dropZoneActive]}>
                     <Text style={[styles.dropZoneText, { color: brandColors.textSecondary }]}>
@@ -1150,7 +1150,7 @@ export default function App() {
                         accessibilityRole="link"
                         style={styles.missionLink}
                       >
-                        <Feather name="info" size={14} color="#2E7D32" style={{ opacity: 0.8 }} />
+                        <Info size={14} color="#2E7D32" strokeWidth={2} style={{ opacity: 0.8 }} />
                       </TouchableOpacity>
                     </View>
                   </View>
