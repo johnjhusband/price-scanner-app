@@ -988,7 +988,7 @@ export default function App() {
                 {analysisResult.buy_price && (
                   <View style={[styles.suggestedPriceContainer, { backgroundColor: '#F9FAFB' }]}>
                     <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
-                      Buy at:
+                      Buy at
                     </Text>
                     <Text style={[styles.suggestedPriceValue, styles.numericalEmphasis]}>
                       {analysisResult.buy_price}
@@ -997,14 +997,14 @@ export default function App() {
                 )}
                 
                 <View style={styles.resultItem}>
-                  <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Item:</Text>
+                  <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Item</Text>
                   <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.item_name}</Text>
                 </View>
                 
                 {/* PRIMARY INFO - Always visible */}
                 <View style={[styles.primaryInfoSection, { backgroundColor: '#F9FAFB', borderRadius: 12, padding: 16, marginVertical: 10 }]}>
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel]}>Estimated Value:</Text>
+                    <Text style={[styles.resultLabel]}>Estimated Value</Text>
                     <Text style={[styles.resultValue, styles.priceValue, styles.numericalEmphasis]}>
                       {analysisResult.price_range}
                     </Text>
@@ -1012,7 +1012,7 @@ export default function App() {
                   
                   {(analysisResult.real_score !== undefined || analysisResult.authenticity_score !== undefined) && (
                     <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel]}>Real Score:</Text>
+                      <Text style={[styles.resultLabel]}>Real Score</Text>
                       <Text style={[styles.resultValue, styles.realScoreEmphasis, { fontSize: 20 }]}>
                         {analysisResult.real_score || analysisResult.authenticity_score}
                       </Text>
@@ -1021,7 +1021,7 @@ export default function App() {
                   
                   {analysisResult.recommended_platform && (
                     <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel]}>Best Platforms:</Text>
+                      <Text style={[styles.resultLabel]}>Best Platforms</Text>
                       <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 18 }]}>
                         {(() => {
                           const platforms = [];
@@ -1056,12 +1056,12 @@ export default function App() {
                 {showMoreDetails && (
                   <View style={styles.secondaryInfoSection}>
                     <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Condition:</Text>
+                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Condition</Text>
                       <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.condition}</Text>
                     </View>
                     
                     <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Style Tier:</Text>
+                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Style Tier</Text>
                       <View style={[styles.styleTierBadge, {
                         backgroundColor: (() => {
                           const tier = analysisResult.style_tier.toLowerCase();
@@ -1092,7 +1092,7 @@ export default function App() {
                 
                 {analysisResult.trending_score !== undefined && (
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Sellability:</Text>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Sellability</Text>
                     <Text style={styles.resultValue}>
                       <Text style={styles.numericalEmphasis}>{analysisResult.trending_score}/100</Text>
                       {' '}
@@ -1122,7 +1122,7 @@ export default function App() {
                 
                 {analysisResult.market_insights && (
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Market:</Text>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Market</Text>
                     <Text style={[styles.resultValue, { color: brandColors.text }]}>
                       {analysisResult.market_insights.replace(/Note:.*?Low authenticity.*?verify carefully\.?\s*/gi, '').trim()}
                     </Text>
@@ -1131,7 +1131,7 @@ export default function App() {
                 
                 {analysisResult.selling_tips && (
                   <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Selling Tips:</Text>
+                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Selling Tips</Text>
                     <Text style={[styles.resultValue, { color: brandColors.text, lineHeight: 22 }]}>
                       {analysisResult.selling_tips.replace(/Note:.*?Low authenticity.*?verify carefully\.?\s*/gi, '').trim()}
                     </Text>
