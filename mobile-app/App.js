@@ -923,7 +923,11 @@ export default function App() {
             <View style={styles.resultContainer}>
               {image ? (
                 <View style={styles.imagePreviewContainer}>
-                  <Image source={{ uri: image }} style={styles.imagePreview} />
+                  <Image 
+                    source={{ uri: image }} 
+                    style={styles.imagePreview}
+                    onError={(e) => console.error('Image load error:', e.nativeEvent.error)}
+                  />
                 </View>
               ) : (
                 <Text style={{ color: brandColors.textSecondary, marginBottom: 8 }}>No image uploaded</Text>
@@ -1285,7 +1289,7 @@ const styles = StyleSheet.create({
   },
   imagePreviewContainer: {
     width: '100%',
-    height: 'auto',
+    minHeight: 200, // Ensure minimum height
     maxHeight: '70vh', // max-h-[70vh]
     backgroundColor: 'transparent',
     marginBottom: 8, // mb-2
