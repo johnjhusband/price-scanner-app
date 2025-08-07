@@ -1145,7 +1145,14 @@ export default function App() {
                         {analysisResult.environmental_tag}
                       </Text>
                       <TouchableOpacity
-                        onPress={() => Linking.openURL('/mission')}
+                        onPress={() => {
+                          if (Platform.OS === 'web') {
+                            window.location.href = '/mission';
+                          } else {
+                            // For mobile app, use the production URL
+                            Linking.openURL('https://app.flippi.ai/mission');
+                          }
+                        }}
                         accessibilityLabel="Learn about our mission"
                         accessibilityRole="link"
                         style={styles.missionLink}
