@@ -768,6 +768,255 @@ export default function App() {
     setShowFeedback(false);
     setShowMoreDetails(false);
   };
+
+  // Generate tweet text for sharing
+  const generateTweetText = (result) => {
+    if (!result) return '';
+    
+    // Extract price from price_range (e.g., "$50-$100" -> get average)
+    const getPriceEstimate = (priceRange) => {
+      if (!priceRange) return 0;
+      const match = priceRange.match(/\$(\d+)-\$(\d+)/);
+      if (match) {
+        const low = parseInt(match[1]);
+        const high = parseInt(match[2]);
+        return Math.round((low + high) / 2);
+      }
+      // Try single price format
+      const singleMatch = priceRange.match(/\$(\d+)/);
+      if (singleMatch) {
+        return parseInt(singleMatch[1]);
+      }
+      return 0;
+    };
+
+    // Extract purchase price from description or use a placeholder
+    const getPurchasePrice = () => {
+      if (productDescription) {
+        const priceMatch = productDescription.match(/\$(\d+(?:\.\d{2})?)/);
+        if (priceMatch) {
+          return parseFloat(priceMatch[1]);
+        }
+      }
+      return null;
+    };
+
+    const brand = result.item_name?.split(' ')[0] || 'this';
+    const itemType = result.item_name?.split(' ').slice(1).join(' ') || 'item';
+    const resaleEstimate = getPriceEstimate(result.price_range);
+    const pricePaid = getPurchasePrice();
+    const refCode = user?.referralCode || ''; // TODO: Add referral code to user object
+    
+    let tweetText = `Just used @flippiAI to check ${brand} ${itemType}! `;
+    
+    if (resaleEstimate > 0) {
+      tweetText += `Worth ~$${resaleEstimate} 👀 `;
+      
+      if (pricePaid) {
+        const profit = resaleEstimate - pricePaid;
+        if (profit > 0) {
+          tweetText += `Paid $${pricePaid} = $${profit} flip 💸 `;
+        }
+      }
+    }
+    
+    tweetText += `\n\nTry it: https://flippi.ai${refCode ? `?ref=${refCode}` : ''}`;
+    
+    return tweetText;
+  };
+
+  // Handle share on X
+  const handleShareOnX = () => {
+    const tweetText = generateTweetText(analysisResult);
+    const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+    
+    if (Platform.OS === 'web') {
+      window.open(tweetUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      Linking.openURL(tweetUrl);
+    }
+  };
+
+  // Generate Instagram Story receipt image
+  const generateInstagramStoryImage = async (result) => {
+    if (!result) return;
+    
+    // Only support web for now
+    if (Platform.OS !== 'web') {
+      Alert.alert(
+        'Coming Soon',
+        'Instagram Story sharing is coming soon for mobile. For now, take a screenshot and share manually.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      // Create canvas for receipt
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const ctx = canvas.getContext('2d');
+
+      // White background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Receipt styling
+      ctx.fillStyle = '#000000';
+      ctx.textAlign = 'center';
+      
+      // Header
+      ctx.font = 'bold 72px -apple-system, system-ui, sans-serif';
+      ctx.fillText('flippi.ai', canvas.width / 2, 150);
+      
+      // Date
+      ctx.font = '36px monospace';
+      ctx.fillText(new Date().toLocaleString(), canvas.width / 2, 250);
+      
+      // Divider
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([10, 10]);
+      ctx.beginPath();
+      ctx.moveTo(100, 300);
+      ctx.lineTo(980, 300);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Item details
+      ctx.font = '48px monospace';
+      ctx.textAlign = 'left';
+      let yPos = 400;
+      
+      // Item name
+      ctx.fillText('ITEM:', 100, yPos);
+      ctx.font = 'bold 48px monospace';
+      const itemName = (result.item_name || 'Unknown Item').substring(0, 25);
+      ctx.fillText(itemName, 300, yPos);
+      yPos += 80;
+      
+      // Category
+      ctx.font = '48px monospace';
+      ctx.fillText('CATEGORY:', 100, yPos);
+      ctx.fillText(result.category || 'N/A', 400, yPos);
+      yPos += 80;
+      
+      // Condition
+      ctx.fillText('CONDITION:', 100, yPos);
+      ctx.fillText(result.condition || 'N/A', 450, yPos);
+      yPos += 80;
+      
+      // Resale value
+      ctx.fillText('RESALE VALUE:', 100, yPos);
+      ctx.font = 'bold 56px monospace';
+      ctx.fillText(result.price_range || 'N/A', 500, yPos);
+      yPos += 100;
+      
+      // Real Score if available
+      if (result.real_score !== undefined || result.authenticity_score !== undefined) {
+        ctx.font = '48px monospace';
+        ctx.fillText('REAL SCORE:', 100, yPos);
+        ctx.font = 'bold 56px monospace';
+        const score = result.real_score || result.authenticity_score;
+        ctx.fillText(`${score}%`, 450, yPos);
+        yPos += 100;
+      }
+      
+      // Purchase price and profit calculation
+      const purchasePrice = getPurchasePrice();
+      if (purchasePrice) {
+        // Another divider
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 10]);
+        ctx.beginPath();
+        ctx.moveTo(100, yPos + 20);
+        ctx.lineTo(980, yPos + 20);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        yPos += 80;
+        
+        ctx.font = '48px monospace';
+        ctx.fillText('PURCHASE PRICE:', 100, yPos);
+        ctx.fillText(`$${purchasePrice}`, 550, yPos);
+        yPos += 80;
+        
+        // Calculate profit
+        const getPriceEstimate = (priceRange) => {
+          if (!priceRange) return 0;
+          const match = priceRange.match(/\$(\d+)-\$(\d+)/);
+          if (match) {
+            const low = parseInt(match[1]);
+            const high = parseInt(match[2]);
+            return Math.round((low + high) / 2);
+          }
+          return 0;
+        };
+        
+        const resaleEstimate = getPriceEstimate(result.price_range);
+        if (resaleEstimate > 0) {
+          const profit = resaleEstimate - purchasePrice;
+          ctx.fillText('EST. PROFIT:', 100, yPos);
+          ctx.font = 'bold 64px monospace';
+          ctx.fillStyle = profit > 0 ? '#059669' : '#dc2626';
+          ctx.fillText(`$${Math.abs(profit)}`, 450, yPos);
+          ctx.fillStyle = '#000000';
+          yPos += 100;
+        }
+      }
+      
+      // Footer
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(100, 1600);
+      ctx.lineTo(980, 1600);
+      ctx.stroke();
+      
+      ctx.font = '36px -apple-system, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Powered by flippi.ai', canvas.width / 2, 1700);
+      
+      if (refCode) {
+        ctx.font = '32px monospace';
+        ctx.fillText(`flippi.ai?ref=${refCode}`, canvas.width / 2, 1750);
+      }
+      
+      ctx.font = 'italic 28px -apple-system, system-ui, sans-serif';
+      ctx.fillText('*AI can make mistakes. Check important info.', canvas.width / 2, 1850);
+      
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'flippi-receipt.png';
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        
+        Alert.alert(
+          'Receipt Downloaded!',
+          'Your Flippi receipt has been downloaded. Share it to your Instagram Story!',
+          [{ text: 'OK' }]
+        );
+      }, 'image/png');
+    } catch (error) {
+      console.error('Error generating Instagram story:', error);
+      Alert.alert(
+        'Error',
+        'Failed to generate receipt image. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  // Handle Instagram Story share
+  const handleInstagramStoryShare = () => {
+    generateInstagramStoryImage(analysisResult);
+  };
   
   const handleExit = async () => {
     if (Platform.OS === 'web') {
@@ -1177,12 +1426,26 @@ export default function App() {
             )}
             
             {analysisResult && (
-              <BrandButton
-                title="Scan Another Item"
-                onPress={resetApp}
-                style={styles.resetButton}
-                variant="secondary"
-              />
+              <View style={styles.postAnalysisActions}>
+                <BrandButton
+                  title="🐦 Share on X"
+                  onPress={handleShareOnX}
+                  style={[styles.shareButton, { backgroundColor: '#000000' }]}
+                  variant="primary"
+                />
+                <BrandButton
+                  title="📸 Share to Instagram Story"
+                  onPress={handleInstagramStoryShare}
+                  style={[styles.shareButton, { backgroundColor: '#E1306C' }]}
+                  variant="primary"
+                />
+                <BrandButton
+                  title="Scan Another Item"
+                  onPress={resetApp}
+                  style={styles.resetButton}
+                  variant="secondary"
+                />
+              </View>
             )}
             </View>
           )}
@@ -1448,6 +1711,15 @@ const styles = StyleSheet.create({
   },
   resetButton: {
     marginTop: 10,
+    width: '100%',
+  },
+  postAnalysisActions: {
+    width: '100%',
+    marginTop: 20,
+    gap: 12,
+  },
+  shareButton: {
+    marginBottom: 8,
     width: '100%',
   },
   // Camera styles
