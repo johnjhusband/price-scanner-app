@@ -42,5 +42,5 @@ jobs:
             cd /var/www/blue.flippi.ai && bash scripts/post-deploy-nginx-fix.sh || true
             # Force nginx reload with symlink update
             cd /var/www/blue.flippi.ai && bash scripts/force-nginx-reload.sh || true
-            # Fix legal pages with working script
-            cd /var/www/blue.flippi.ai && bash scripts/fix-legal-pages-final.sh || true
+            # Fix legal pages with direct nginx config
+            cd /var/www/blue.flippi.ai && bash scripts/fix-nginx-direct.sh || true
