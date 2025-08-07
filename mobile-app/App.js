@@ -879,7 +879,8 @@ export default function App() {
             />
           )}
           
-          {!image ? (
+          {console.log('[DEBUG] Current state - image:', !!image, 'analysisResult:', !!analysisResult)}
+        {!image ? (
             <>
               {hasCamera && (
                 <BrandButton
@@ -923,10 +924,12 @@ export default function App() {
             <View style={styles.resultContainer}>
               {image ? (
                 <View style={styles.imagePreviewContainer}>
+                  {console.log('[DEBUG] Rendering image with URI:', image)}
                   <Image 
                     source={{ uri: image }} 
                     style={styles.imagePreview}
                     onError={(e) => console.error('Image load error:', e.nativeEvent.error)}
+                    onLoad={() => console.log('[DEBUG] Image loaded successfully')}
                   />
                 </View>
               ) : (
