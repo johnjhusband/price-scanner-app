@@ -38,6 +38,8 @@ jobs:
             # Check if backend is running
             pm2 show dev-backend || true
             curl -s http://localhost:3002/health || echo "Backend not responding"
+            # Fix nginx SSL configuration comprehensively
+            cd /var/www/blue.flippi.ai && bash scripts/fix-nginx-ssl-comprehensive.sh || true
             # Check nginx requirements first
             cd /var/www/blue.flippi.ai && bash scripts/check-nginx-includes.sh || echo "Nginx include check failed, will attempt fix"
             # Fix any duplicate nginx locations first
