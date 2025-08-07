@@ -66,6 +66,18 @@ fi
 
 echo "Nginx fix complete."
 
+# Run comprehensive legal pages fix
+echo ""
+echo "Running comprehensive legal pages fix..."
+if [ -f /var/www/$DOMAIN/scripts/comprehensive-legal-fix.sh ]; then
+    bash /var/www/$DOMAIN/scripts/comprehensive-legal-fix.sh
+else
+    # Fallback: Run post-deploy-all-fixes if available
+    if [ -f /var/www/$DOMAIN/scripts/post-deploy-all-fixes.sh ]; then
+        bash /var/www/$DOMAIN/scripts/post-deploy-all-fixes.sh
+    fi
+fi
+
 # Diagnose legal pages
 echo ""
 echo "Legal pages diagnostic..."
