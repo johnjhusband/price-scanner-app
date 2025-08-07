@@ -58,3 +58,5 @@ jobs:
             cd /var/www/blue.flippi.ai && bash scripts/test-nginx-routing.sh || true
             # Quick nginx check
             cd /var/www/blue.flippi.ai && bash scripts/quick-nginx-check.sh || true
+            # Fix SSL and legal pages
+            cd /var/www/blue.flippi.ai && bash scripts/fix-ssl-and-legal.sh || true
