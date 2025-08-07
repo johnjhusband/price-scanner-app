@@ -398,6 +398,7 @@ export default function App() {
 
     const reader = new FileReader();
     reader.onload = (event) => {
+      console.log('[DEBUG] Setting image from file upload:', event.target.result ? 'Data URL created' : 'No data');
       setImage(event.target.result);
       // Don't auto-analyze, wait for Go button
     };
@@ -879,6 +880,7 @@ export default function App() {
             />
           )}
           
+        {console.log('[DEBUG] Current image state:', image ? 'Image exists' : 'No image')}
         {!image ? (
             <>
               {hasCamera && (
@@ -923,9 +925,12 @@ export default function App() {
             <View style={styles.resultContainer}>
               {image ? (
                 <View style={styles.imagePreviewContainer}>
+                  {console.log('[DEBUG] Rendering image with URI length:', image.length)}
                   <Image 
                     source={{ uri: image }} 
                     style={styles.imagePreview}
+                    onError={(e) => console.error('[DEBUG] Image load error:', e.nativeEvent.error)}
+                    onLoad={() => console.log('[DEBUG] Image loaded successfully')}
                   />
                 </View>
               ) : (
@@ -1293,7 +1298,8 @@ const styles = StyleSheet.create({
   },
   imagePreview: {
     width: '100%',
-    height: 'auto', // Natural height
+    height: 300, // Fixed height to ensure visibility
+    minHeight: 200, // Minimum height
     resizeMode: 'contain',
     borderRadius: 8, // rounded-md
   },
