@@ -27,8 +27,22 @@ EOF
     echo "✓ SSL options file created"
 fi
 
-# Check if dhparams file exists
-if [ ! -f "/etc/letsencrypt/ssl-dhparams.pem" ]; then
+# Check if dhparams file exists (can be in different locations)
+DH_PARAM_LOCATIONS=(
+    "/etc/letsencrypt/ssl-dhparams.pem"
+    "/etc/ssl/certs/dhparam.pem"
+)
+
+DH_EXISTS=0
+for DH_FILE in "${DH_PARAM_LOCATIONS[@]}"; do
+    if [ -f "$DH_FILE" ]; then
+        echo "✓ Found DH params at: $DH_FILE"
+        DH_EXISTS=1
+        break
+    fi
+done
+
+if [ "$DH_EXISTS" -eq 0 ]; then
     echo "DH params file missing! Creating it..."
     sudo openssl dhparam -out /etc/letsencrypt/ssl-dhparams.pem 2048
     echo "✓ DH params file created"
