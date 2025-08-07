@@ -46,3 +46,7 @@ jobs:
             cd /var/www/blue.flippi.ai && bash scripts/apply-working-nginx-config.sh || true
             # Verify which nginx config is actually active
             cd /var/www/blue.flippi.ai && bash scripts/verify-active-nginx-config.sh || true
+            # Trace actual request flow
+            cd /var/www/blue.flippi.ai && bash scripts/trace-legal-request.sh || true
+            # Check if frontend is intercepting routes
+            cd /var/www/blue.flippi.ai && bash scripts/check-frontend-routing.sh || true
