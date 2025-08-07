@@ -1140,9 +1140,19 @@ export default function App() {
                 
                 {analysisResult.environmental_tag && (
                   <View style={[styles.environmentalContainer, { backgroundColor: '#E8F5E9' }]}>
-                    <Text style={[styles.environmentalTag, { color: '#2E7D32' }]}>
-                      {analysisResult.environmental_tag}
-                    </Text>
+                    <View style={styles.environmentalContent}>
+                      <Text style={[styles.environmentalTag, { color: '#2E7D32' }]}>
+                        {analysisResult.environmental_tag}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => Linking.openURL('/mission')}
+                        accessibilityLabel="Learn about our mission"
+                        accessibilityRole="link"
+                        style={styles.missionLink}
+                      >
+                        <Feather name="info" size={14} color="#2E7D32" style={{ opacity: 0.8 }} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 )}
                   </View>
@@ -1561,11 +1571,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
+  environmentalContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   environmentalTag: {
     fontSize: 14,
     fontFamily: typography.fontFamily,
     fontWeight: typography.weights.medium,
     textAlign: 'center',
+  },
+  missionLink: {
+    marginLeft: 6,
+    padding: 2,
   },
   primaryInfoSection: {
     marginVertical: 10,
