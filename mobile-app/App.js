@@ -4,7 +4,17 @@ import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
 // Import Lucide icons - our licensed icon system
-import { Camera as CameraIcon, Upload, Clipboard, Info } from 'lucide-react-native';
+import { 
+  Camera as CameraIcon, 
+  Upload, 
+  Clipboard, 
+  Info,
+  Share2,
+  Download,
+  Heart,
+  Sparkles,
+  Package
+} from 'lucide-react-native';
 
 // Import brand components and theme
 import FlippiLogo from './components/FlippiLogo';
@@ -1037,7 +1047,7 @@ export default function App() {
         }, 100);
         
         Alert.alert(
-          'Story Image Ready! 📸',
+          'Story Image Ready!',
           'Image downloaded! To share:\n\n1. Open Instagram\n2. Create a new Story\n3. Upload the downloaded image\n4. Share with your followers!',
           [{ text: 'Got it!' }]
         );
@@ -1247,7 +1257,7 @@ export default function App() {
         }, 100);
         
         Alert.alert(
-          'Image downloaded! 🎉',
+          'Image downloaded!',
           'Ready to share on any platform!',
           [{ text: 'Awesome!' }]
         );
@@ -1364,9 +1374,12 @@ export default function App() {
             </>
           )}
           {isAuthenticated && !image && !analysisResult && (
-            <Text style={[styles.welcomeText, { color: brandColors.text }]}>
-              Start your first flip 💕
-            </Text>
+            <View style={styles.welcomeContainer}>
+              <Text style={[styles.welcomeText, { color: brandColors.text }]}>
+                Start your first flip
+              </Text>
+              <Heart size={20} color={brandColors.accent} style={{ marginLeft: 8 }} />
+            </View>
           )}
         
         <View style={[
@@ -1659,19 +1672,21 @@ export default function App() {
             {analysisResult && (
               <View style={styles.postAnalysisActions}>
                 <BrandButton
-                  title="🐦 Share on X"
+                  title="Share on X"
                   onPress={handleShareOnX}
                   style={[styles.shareButton, { backgroundColor: '#18181b' }]}
                   variant="primary"
+                  icon={<Share2 size={20} color="#FFFFFF" />}
                 />
                 {Platform.OS !== 'web' && (
                   <>
                     <BrandButton
-                      title="📸 Share to Instagram Story"
+                      title="Share to Instagram Story"
                       onPress={handleInstagramStoryShare}
                       style={[styles.shareButton, { backgroundColor: '#E1306C' }]}
                       variant="primary"
                       disabled={isLoading}
+                      icon={<CameraIcon size={20} color="#FFFFFF" />}
                     />
                     <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
                       Downloads story image to share
@@ -1679,11 +1694,12 @@ export default function App() {
                   </>
                 )}
                 <BrandButton
-                  title="⬇️ Download Image"
+                  title="Download Image"
                   onPress={handleDownloadShareImage}
                   style={[styles.shareButton, { backgroundColor: '#52525b' }]}
                   variant="primary"
                   disabled={isLoading}
+                  icon={<Download size={20} color="#FFFFFF" />}
                 />
                 {Platform.OS === 'web' && (
                   <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
@@ -1812,9 +1828,14 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: typography.weights.medium,
     color: brandColors.text,
+    textAlign: 'center',
+  },
+  welcomeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     marginTop: 16,
     marginBottom: 24,
-    textAlign: 'center',
   },
   helperText: {
     fontSize: 13,
