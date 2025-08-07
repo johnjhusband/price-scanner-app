@@ -1279,24 +1279,23 @@ const styles = StyleSheet.create({
   },
   imagePreviewContainer: {
     width: '100%',
-    maxWidth: isMobile ? '100%' : 600, // Controlled max width
-    height: isMobile ? 250 : 300, // Fixed height like the example
+    maxWidth: isMobile ? '100%' : 672, // max-w-xl equivalent (42rem = 672px)
+    height: 'auto',
+    maxHeight: 400, // max-h-[400px]
     backgroundColor: 'transparent',
-    borderRadius: 6, // Subtle rounding
-    borderWidth: 1,
-    borderColor: '#E5E7EB', // Light gray border
-    padding: 0, // No padding for maximum image size
-    marginBottom: 20,
+    marginTop: 8, // mt-2
+    marginBottom: 16, // mb-4
+    paddingHorizontal: 0, // px-0
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden', // Ensure image doesn't overflow
   },
   imagePreview: {
     width: '100%',
-    height: '100%',
+    height: 'auto',
+    maxHeight: 400, // max-h-[400px]
     resizeMode: 'contain',
-    borderRadius: 4, // Minimal rounding to match container
-    backgroundColor: 'transparent', // No background needed
+    borderRadius: 8, // rounded-md
+    backgroundColor: 'transparent',
   },
   image: {
     width: '100%',
