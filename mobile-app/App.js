@@ -1292,20 +1292,18 @@ const styles = StyleSheet.create({
   },
   imagePreviewContainer: {
     width: '100%',
-    minHeight: 200, // Ensure minimum height
+    height: isMobile ? 400 : 500, // Fixed height
     maxHeight: '70vh', // max-h-[70vh]
-    backgroundColor: 'transparent',
+    backgroundColor: '#f5f5f5', // Light gray to see container
     marginBottom: 8, // mb-2
     alignItems: 'center',
     justifyContent: 'center',
   },
   imagePreview: {
     width: '100%',
-    height: 'auto',
-    maxHeight: '70vh', // max-h-[70vh]
+    height: '100%', // Fill container
     resizeMode: 'contain',
     borderRadius: 8, // rounded-md
-    backgroundColor: 'transparent',
   },
   image: {
     width: '100%',
