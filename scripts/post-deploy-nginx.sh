@@ -57,51 +57,73 @@ fi
 # Check and fix legal pages routing
 echo ""
 echo "Checking legal pages configuration..."
-if ! grep -q "location = /terms" /etc/nginx/sites-available/$DOMAIN 2>/dev/null || ! grep -q "location = /mission" /etc/nginx/sites-available/$DOMAIN 2>/dev/null || ! grep -q "location = /contact" /etc/nginx/sites-available/$DOMAIN 2>/dev/null; then
-    echo "Legal pages routes missing! Adding them now..."
+
+# Check each legal page route individually
+MISSING_ROUTES=()
+for route in terms privacy mission contact; do
+    if ! grep -q "location = /$route" /etc/nginx/sites-available/$DOMAIN 2>/dev/null; then
+        MISSING_ROUTES+=("$route")
+    fi
+done
+
+if [ ${#MISSING_ROUTES[@]} -gt 0 ]; then
+    echo "Missing routes: ${MISSING_ROUTES[@]}"
     
     # Create a backup
     sudo cp /etc/nginx/sites-available/$DOMAIN /etc/nginx/sites-available/$DOMAIN.backup.$(date +%Y%m%d_%H%M%S)
     
-    # Add legal pages routes before the catch-all location /
-    sudo sed -i '/location \/ {/i\
-    # Legal pages - proxy to backend\
-    location = /terms {\
-        proxy_pass http://localhost:'$PORT';\
-        proxy_http_version 1.1;\
-        proxy_set_header Host $host;\
-        proxy_set_header X-Real-IP $remote_addr;\
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\
-        proxy_set_header X-Forwarded-Proto $scheme;\
-    }\
-\
-    location = /privacy {\
-        proxy_pass http://localhost:'$PORT';\
-        proxy_http_version 1.1;\
-        proxy_set_header Host $host;\
-        proxy_set_header X-Real-IP $remote_addr;\
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\
-        proxy_set_header X-Forwarded-Proto $scheme;\
-    }\
-\
-    location = /mission {\
-        proxy_pass http://localhost:'$PORT';\
-        proxy_http_version 1.1;\
-        proxy_set_header Host $host;\
-        proxy_set_header X-Real-IP $remote_addr;\
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\
-        proxy_set_header X-Forwarded-Proto $scheme;\
-    }\
-\
-    location = /contact {\
-        proxy_pass http://localhost:'$PORT';\
-        proxy_http_version 1.1;\
-        proxy_set_header Host $host;\
-        proxy_set_header X-Real-IP $remote_addr;\
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\
-        proxy_set_header X-Forwarded-Proto $scheme;\
-    }\
-' /etc/nginx/sites-available/$DOMAIN
+    # Add only missing routes before the catch-all location /
+    ROUTES_TO_ADD=""
+    for route in "${MISSING_ROUTES[@]}"; do
+        case $route in
+            terms)
+                ROUTES_TO_ADD+="    location = /terms {\n"
+                ROUTES_TO_ADD+="        proxy_pass http://localhost:$PORT;\n"
+                ROUTES_TO_ADD+="        proxy_http_version 1.1;\n"
+                ROUTES_TO_ADD+="        proxy_set_header Host \$host;\n"
+                ROUTES_TO_ADD+="        proxy_set_header X-Real-IP \$remote_addr;\n"
+                ROUTES_TO_ADD+="        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;\n"
+                ROUTES_TO_ADD+="        proxy_set_header X-Forwarded-Proto \$scheme;\n"
+                ROUTES_TO_ADD+="    }\n\n"
+                ;;
+            privacy)
+                ROUTES_TO_ADD+="    location = /privacy {\n"
+                ROUTES_TO_ADD+="        proxy_pass http://localhost:$PORT;\n"
+                ROUTES_TO_ADD+="        proxy_http_version 1.1;\n"
+                ROUTES_TO_ADD+="        proxy_set_header Host \$host;\n"
+                ROUTES_TO_ADD+="        proxy_set_header X-Real-IP \$remote_addr;\n"
+                ROUTES_TO_ADD+="        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;\n"
+                ROUTES_TO_ADD+="        proxy_set_header X-Forwarded-Proto \$scheme;\n"
+                ROUTES_TO_ADD+="    }\n\n"
+                ;;
+            mission)
+                ROUTES_TO_ADD+="    location = /mission {\n"
+                ROUTES_TO_ADD+="        proxy_pass http://localhost:$PORT;\n"
+                ROUTES_TO_ADD+="        proxy_http_version 1.1;\n"
+                ROUTES_TO_ADD+="        proxy_set_header Host \$host;\n"
+                ROUTES_TO_ADD+="        proxy_set_header X-Real-IP \$remote_addr;\n"
+                ROUTES_TO_ADD+="        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;\n"
+                ROUTES_TO_ADD+="        proxy_set_header X-Forwarded-Proto \$scheme;\n"
+                ROUTES_TO_ADD+="    }\n\n"
+                ;;
+            contact)
+                ROUTES_TO_ADD+="    location = /contact {\n"
+                ROUTES_TO_ADD+="        proxy_pass http://localhost:$PORT;\n"
+                ROUTES_TO_ADD+="        proxy_http_version 1.1;\n"
+                ROUTES_TO_ADD+="        proxy_set_header Host \$host;\n"
+                ROUTES_TO_ADD+="        proxy_set_header X-Real-IP \$remote_addr;\n"
+                ROUTES_TO_ADD+="        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;\n"
+                ROUTES_TO_ADD+="        proxy_set_header X-Forwarded-Proto \$scheme;\n"
+                ROUTES_TO_ADD+="    }\n\n"
+                ;;
+        esac
+    done
+    
+    if [ -n "$ROUTES_TO_ADD" ]; then
+        # Insert the routes
+        sudo sed -i "/location \/ {/i\\\n$ROUTES_TO_ADD" /etc/nginx/sites-available/$DOMAIN
+    fi
+    echo "Routes added."
     
     # Test and reload nginx
     if sudo nginx -t; then

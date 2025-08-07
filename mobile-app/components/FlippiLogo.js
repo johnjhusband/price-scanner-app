@@ -1,13 +1,16 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { brandColors, typography } from '../theme/brandColors';
 
-export const FlippiLogo = ({ size = 'large', style }) => {
+const { width: windowWidth } = Dimensions.get('window');
+const isMobile = windowWidth < 768;
+
+export const FlippiLogo = ({ size = 'large', style, responsive = true }) => {
   const sizeStyles = {
     small: { fontSize: 20 },
     medium: { fontSize: 24 },
-    large: { fontSize: 32 },
-    xlarge: { fontSize: 40 },
+    large: { fontSize: responsive && isMobile ? 32 : 40 },
+    xlarge: { fontSize: responsive && isMobile ? 32 : 40 },
   };
 
   return (
@@ -41,11 +44,11 @@ const styles = StyleSheet.create({
   },
   flippiText: {
     fontWeight: typography.weights.semiBold,
-    color: brandColors.mutedGraphite,  // Updated to new luxury color
+    color: brandColors.text,  // Pure black
   },
   aiText: {
     fontWeight: typography.weights.regular,
-    color: brandColors.matteGold,      // Gold accent for luxury touch
+    color: brandColors.aiGray,  // Official .ai brand gray
   },
 });
 

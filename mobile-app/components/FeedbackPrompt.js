@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
-import { brandColors } from '../theme/brandColors';
+import { brandColors, typography } from '../theme/brandColors';
+import { touchTargets, a11yLabels } from '../theme/accessibility';
+import { Feather } from '@expo/vector-icons';
 
 const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) => {
   const [helpedDecision, setHelpedDecision] = useState(null);
@@ -59,9 +61,12 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
   if (isSubmitted) {
     return (
       <View style={styles.container}>
-        <Text style={styles.successMessage}>
-          ✅ Thanks for your feedback — we use every note to make the app better.
-        </Text>
+        <View style={styles.successContent}>
+          <Feather name="check-circle" size={24} color={brandColors.success} />
+          <Text style={styles.successMessage}>
+            Thanks for your feedback — we use every note to make the app better.
+          </Text>
+        </View>
       </View>
     );
   }
@@ -79,10 +84,17 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
           onPress={() => setHelpedDecision(true)}
           disabled={isSubmitting}
         >
-          <Text style={[
-            styles.buttonText,
-            helpedDecision === true && styles.selectedButtonText
-          ]}>👍 Yes</Text>
+          <View style={styles.buttonContent}>
+            <Feather 
+              name="thumbs-up" 
+              size={20} 
+              color={helpedDecision === true ? '#000000' : brandColors.textSecondary} 
+            />
+            <Text style={[
+              styles.buttonText,
+              helpedDecision === true && styles.selectedButtonText
+            ]}>Yes</Text>
+          </View>
         </TouchableOpacity>
 
         <TouchableOpacity
@@ -93,17 +105,25 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
           onPress={() => setHelpedDecision(false)}
           disabled={isSubmitting}
         >
-          <Text style={[
-            styles.buttonText,
-            helpedDecision === false && styles.selectedButtonText
-          ]}>👎 No</Text>
+          <View style={styles.buttonContent}>
+            <Feather 
+              name="thumbs-down" 
+              size={20} 
+              color={helpedDecision === false ? '#000000' : brandColors.textSecondary} 
+            />
+            <Text style={[
+              styles.buttonText,
+              helpedDecision === false && styles.selectedButtonText
+            ]}>No</Text>
+          </View>
         </TouchableOpacity>
       </View>
 
       <TextInput
         style={styles.textInput}
         placeholder="Tell us what worked or didn't (optional)"
-        placeholderTextColor="#999"
+        placeholderTextColor={brandColors.disabledText}
+        accessibilityLabel="Additional feedback text input"
         value={feedbackText}
         onChangeText={setFeedbackText}
         multiline
@@ -122,7 +142,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
           disabled={isSubmitting || (!helpedDecision && !feedbackText.trim())}
         >
           <Text style={styles.submitButtonText}>
-            {isSubmitting ? 'Submitting...' : 'Submit Feedback'}
+            {isSubmitting ? 'Submitting' : 'Submit Feedback'}
           </Text>
         </TouchableOpacity>
       )}
@@ -133,17 +153,24 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
 const styles = StyleSheet.create({
   container: {
     padding: 20,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 10,
+    backgroundColor: brandColors.surface,
+    borderRadius: 14, // Apple style
     marginTop: 20,
     marginHorizontal: 10,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   question: {
-    fontSize: 18,
-    fontWeight: '600',
+    fontSize: 17,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.semiBold,
     textAlign: 'center',
     marginBottom: 20,
     color: brandColors.text,
+    lineHeight: 27,
   },
   buttonRow: {
     flexDirection: 'row',
@@ -154,56 +181,88 @@ const styles = StyleSheet.create({
   optionButton: {
     paddingHorizontal: 30,
     paddingVertical: 12,
-    borderRadius: 25,
-    backgroundColor: '#fff',
-    borderWidth: 2,
-    borderColor: '#ddd',
-    minWidth: 100,
+    borderRadius: 14, // Apple style
+    backgroundColor: brandColors.background,
+    borderWidth: 1,
+    borderColor: brandColors.border,
+    minWidth: 120,
+    minHeight: touchTargets.minimum, // WCAG touch target
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   selectedButton: {
-    borderColor: brandColors.deepTeal,
-    backgroundColor: brandColors.offWhite,
+    borderColor: '#000000', // Black border when selected
+    backgroundColor: '#F9FAFB', // Very light gray background
+    borderWidth: 1.5,
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 17,
+    fontFamily: typography.bodyFont,
     textAlign: 'center',
-    color: '#666',
+    color: brandColors.textSecondary,
   },
   selectedButtonText: {
-    color: brandColors.deepTeal,
-    fontWeight: '600',
+    color: '#000000', // Black text when selected
+    fontWeight: typography.weights.semiBold,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  successContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
   },
   textInput: {
-    backgroundColor: '#fff',
+    backgroundColor: brandColors.background,
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    minHeight: 80,
+    borderColor: brandColors.border,
+    borderRadius: 14, // Apple style
+    padding: 16,
+    fontSize: 17,
+    fontFamily: typography.bodyFont,
+    minHeight: 100,
     textAlignVertical: 'top',
     marginBottom: 15,
+    color: brandColors.text,
+    lineHeight: 27,
   },
   submitButton: {
-    backgroundColor: brandColors.deepTeal,
-    paddingVertical: 14,
-    borderRadius: 25,
+    backgroundColor: '#000000', // Black for primary CTAs
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 14, // Apple style
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: touchTargets.recommended,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   disabledButton: {
     opacity: 0.6,
   },
   submitButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
+    color: '#FFFFFF', // White text on black
+    fontSize: 17,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.semiBold,
+    letterSpacing: typography.letterSpacing.wide,
   },
   successMessage: {
-    fontSize: 16,
+    fontSize: 17,
+    fontFamily: typography.bodyFont,
     textAlign: 'center',
-    color: brandColors.successGreen,
-    fontWeight: '600',
+    color: brandColors.success,
+    fontWeight: typography.weights.semiBold,
     paddingVertical: 20,
+    lineHeight: 27,
   },
 });
 

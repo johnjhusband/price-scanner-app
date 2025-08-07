@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Platform, Image, ScrollView, 
 import FlippiLogo from './FlippiLogo';
 import MissionModal from './MissionModal';
 import { brandColors, typography } from '../theme/brandColors';
+import { Feather } from '@expo/vector-icons';
 
 // Responsive design breakpoints
 const { width: windowWidth } = Dimensions.get('window');
@@ -87,21 +88,27 @@ const EnterScreen = () => {
           {/* Value Propositions on right */}
           <View style={styles.valueProps}>
             <View style={styles.valueProp}>
-              <Text style={styles.valueIcon}>💰</Text>
+              <View style={styles.valueIcon}>
+                <Feather name="dollar-sign" size={24} color={brandColors.text} />
+              </View>
               <View style={styles.valueTextContainer}>
                 <Text style={styles.valueTitle}>Accurate Pricing</Text>
                 <Text style={styles.valueDesc}>Know the real value</Text>
               </View>
             </View>
             <View style={styles.valueProp}>
-              <Text style={styles.valueIcon}>🔍</Text>
+              <View style={styles.valueIcon}>
+                <Feather name="search" size={24} color={brandColors.text} />
+              </View>
               <View style={styles.valueTextContainer}>
                 <Text style={styles.valueTitle}>Authenticity Scores</Text>
                 <Text style={styles.valueDesc}>Avoid fake items</Text>
               </View>
             </View>
             <View style={styles.valueProp}>
-              <Text style={styles.valueIcon}>📈</Text>
+              <View style={styles.valueIcon}>
+                <Feather name="trending-up" size={24} color={brandColors.text} />
+              </View>
               <View style={styles.valueTextContainer}>
                 <Text style={styles.valueTitle}>Platform Match</Text>
                 <Text style={styles.valueDesc}>Maximize your profit</Text>
@@ -123,7 +130,7 @@ const EnterScreen = () => {
           >
             <View style={styles.googleButtonContent}>
               {/* Google G Logo */}
-              <View style={styles.googleLogo}>
+              <View style={styles.googleLogoContainer}>
                 <Text style={styles.googleG}>G</Text>
               </View>
               <Text style={styles.googleButtonText}>Sign in with Google</Text>
@@ -235,8 +242,8 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     paddingHorizontal: isMobile ? 20 : 40, // Responsive horizontal padding
-    paddingTop: isMobile ? 10 : 40, // Responsive top padding
-    paddingBottom: 30,
+    paddingTop: isMobile ? 16 : 40, // Add padding on mobile
+    paddingBottom: 20,
     marginBottom: 10,
     // Subtle luxury gradient - very soft transition
     backgroundColor: brandColors.background,
@@ -245,44 +252,39 @@ const styles = StyleSheet.create({
     }),
   },
   tagline: {
-    fontSize: 28,
+    fontSize: isMobile ? 24 : 28,
     fontWeight: typography.weights.bold,
-    color: brandColors.mutedGraphite,
-    marginTop: 30,
-    marginBottom: 15,
+    color: brandColors.text,
+    marginTop: 20,
+    marginBottom: 12,
+    lineHeight: isMobile ? 28.8 : 33.6, // 1.2 line height
   },
   subtitle: {
-    fontSize: 18,
-    color: brandColors.slateTeal,
-    marginBottom: isMobile ? 10 : 20, // Responsive margin
+    fontSize: isMobile ? 16 : 18,
+    fontWeight: typography.weights.regular,
+    color: brandColors.aiGray, // Same gray as .ai
+    marginBottom: 20,
     textAlign: 'center',
+    maxWidth: isMobile ? '100%' : '80%',
+    alignSelf: 'center',
   },
   offerBanner: {
-    backgroundColor: brandColors.primary,  // Use primary teal
+    backgroundColor: '#000000',  // Black for primary CTA
     paddingHorizontal: 25,
     paddingVertical: 12,
-    borderRadius: 8, // Rounded square instead of pill
-    marginBottom: 15, // Reduced from 30
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
+    borderRadius: 14, // Apple style radius
+    marginBottom: 15,
     ...(Platform.OS === 'web' && {
       transition: 'all 0.2s ease',
       cursor: 'pointer',
     }),
   },
   offerBannerHover: {
-    backgroundColor: '#134E4F', // Darker teal
-    transform: [{ scale: 1.02 }],
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
+    backgroundColor: '#111827', // Subtle darkening
+    transform: [{ scale: 1.01 }],
   },
   offerText: {
-    color: brandColors.offWhite,
+    color: '#FFFFFF', // White text on black
     fontSize: 15,
     fontWeight: typography.weights.semiBold,
   },
@@ -298,7 +300,7 @@ const styles = StyleSheet.create({
   platformTitle: {
     fontSize: 20,
     fontWeight: typography.weights.semiBold,
-    color: brandColors.deepTeal,
+    color: brandColors.text,
     textAlign: 'center',
     marginBottom: 20,
   },
@@ -313,12 +315,12 @@ const styles = StyleSheet.create({
   platformCategory: {
     fontSize: 16,
     fontWeight: typography.weights.semiBold,
-    color: brandColors.mutedGraphite,
+    color: brandColors.text,
     marginBottom: 10,
   },
   platformList: {
     fontSize: 14,
-    color: brandColors.slateTeal,
+    color: brandColors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },
@@ -343,7 +345,7 @@ const styles = StyleSheet.create({
   testimonial: {
     fontSize: 16,
     fontStyle: 'italic',
-    color: brandColors.slateTeal,
+    color: brandColors.textSecondary,
     marginTop: 15,
     textAlign: 'center',
   },
@@ -368,18 +370,21 @@ const styles = StyleSheet.create({
     width: 240,
   },
   valueIcon: {
-    fontSize: 24,
     marginRight: 10,
+    width: 24,
+    height: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   valueTitle: {
     fontSize: 15,
     fontWeight: typography.weights.semiBold,
-    color: brandColors.deepTeal,
+    color: brandColors.text,
     marginBottom: 2,
   },
   valueDesc: {
     fontSize: 12,
-    color: brandColors.slateTeal,
+    color: brandColors.textSecondary,
   },
   valueTextContainer: {
     flex: 1,
@@ -404,64 +409,64 @@ const styles = StyleSheet.create({
   logoText: {
     fontSize: 14,
     fontWeight: typography.weights.medium,
-    color: brandColors.slateTeal,
+    color: brandColors.textSecondary,
   },
   enterSection: {
     alignItems: 'center',
     width: '100%',
   },
   googleButton: {
-    backgroundColor: brandColors.deepTeal,
-    borderRadius: 8,
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    width: 'auto',
-    elevation: 2,
+    backgroundColor: '#FFFFFF', // White background
+    borderRadius: 14,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
+    minWidth: 280,
+    minHeight: 52, // Match other buttons
+    borderWidth: 1,
+    borderColor: '#DADCE0', // Google's neutral gray
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
     shadowRadius: 4,
+    elevation: 2,
     ...(Platform.OS === 'web' && {
       transition: 'all 0.2s ease',
       cursor: 'pointer',
     }),
   },
   googleButtonHover: {
-    backgroundColor: '#174B49', // Darker teal
-    transform: [{ scale: 1.02 }],
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    elevation: 4,
+    backgroundColor: '#F8F9FA', // Google's hover gray
+    borderColor: '#DADCE0',
+    transform: [{ scale: 1.01 }],
   },
   googleButtonContent: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  googleLogo: {
-    width: 24,
-    height: 24,
-    marginRight: 12,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 4,
+  googleLogoContainer: {
+    marginRight: 8,
+    width: 20,
+    height: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   googleG: {
-    color: brandColors.deepTeal,
-    fontSize: 16,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif',
+    fontWeight: '500',
+    color: '#4285F4', // Google blue
   },
   googleButtonText: {
-    color: '#FFFFFF', // White text on deep teal
-    fontSize: isMobile ? 14 : 16, // Responsive font size
-    fontWeight: typography.weights.semiBold,
-    whiteSpace: 'nowrap', // Prevent text wrapping
+    color: '#3C4043', // Google's text gray
+    fontSize: 16,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.medium,
+    letterSpacing: 0.25,
   },
   securityNote: {
     fontSize: 12,
-    color: brandColors.slateTeal,
+    color: brandColors.textSecondary,
     marginTop: 8,
     marginBottom: 20,
     textAlign: 'center',

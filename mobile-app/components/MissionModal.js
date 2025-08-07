@@ -1,6 +1,8 @@
 import React from 'react';
-import { Modal, View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking } from 'react-native';
+import { Modal, View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, Platform } from 'react-native';
 import { brandColors, typography } from '../theme/brandColors';
+import { focusStyles, a11yLabels, ariaRoles } from '../theme/accessibility';
+import { Feather, MaterialIcons } from '@expo/vector-icons';
 
 const MissionModal = ({ visible, onClose }) => {
   return (
@@ -14,8 +16,13 @@ const MissionModal = ({ visible, onClose }) => {
         <ScrollView contentContainerStyle={styles.scrollContent}>
           <View style={styles.header}>
             <Text style={styles.title}>Our Mission</Text>
-            <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-              <Text style={styles.closeText}>✕</Text>
+            <TouchableOpacity 
+              onPress={onClose} 
+              style={styles.closeButton}
+              accessibilityLabel={a11yLabels.closeButton}
+              accessibilityRole="button"
+            >
+              <Text style={styles.closeText}>×</Text>
             </TouchableOpacity>
           </View>
           
@@ -27,10 +34,22 @@ const MissionModal = ({ visible, onClose }) => {
           
           <Text style={styles.sectionTitle}>With every scan, Flippi helps you:</Text>
           <View style={styles.benefitList}>
-            <Text style={styles.benefitItem}>🔍 Instantly understand resale potential</Text>
-            <Text style={styles.benefitItem}>📉 Avoid costly mistakes</Text>
-            <Text style={styles.benefitItem}>♻️ Track your positive environmental impact</Text>
-            <Text style={styles.benefitItem}>📈 Make faster, better decisions—on the spot</Text>
+            <View style={styles.benefitRow}>
+              <Feather name="search" size={20} color={brandColors.text} />
+              <Text style={styles.benefitItem}>Instantly understand resale potential</Text>
+            </View>
+            <View style={styles.benefitRow}>
+              <Feather name="trending-down" size={20} color={brandColors.text} />
+              <Text style={styles.benefitItem}>Avoid costly mistakes</Text>
+            </View>
+            <View style={styles.benefitRow}>
+              <MaterialIcons name="eco" size={20} color={brandColors.text} />
+              <Text style={styles.benefitItem}>Track your positive environmental impact</Text>
+            </View>
+            <View style={styles.benefitRow}>
+              <Feather name="trending-up" size={20} color={brandColors.text} />
+              <Text style={styles.benefitItem}>Make faster, better decisions—on the spot</Text>
+            </View>
           </View>
           
           <View style={styles.missionSection}>
@@ -107,7 +126,7 @@ const MissionModal = ({ visible, onClose }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: brandColors.offWhite,
+    backgroundColor: brandColors.background,
   },
   scrollContent: {
     padding: 20,
@@ -120,59 +139,81 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   title: {
-    fontSize: 36,
-    fontFamily: typography.fontFamily,
-    fontWeight: '600',
-    color: brandColors.deepTeal,
+    fontSize: 48,
+    fontFamily: typography.headingFont,
+    fontWeight: typography.weights.bold,
+    color: brandColors.text,
+    letterSpacing: typography.letterSpacing.tight,
   },
   closeButton: {
-    padding: 10,
+    padding: 12,
+    minWidth: 44, // WCAG touch target
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 22,
+    ...(Platform.OS === 'web' && {
+      ':focus': focusStyles,
+      cursor: 'pointer',
+    }),
   },
   closeText: {
-    fontSize: 24,
-    color: brandColors.slateTeal,
-    fontWeight: '300',
+    fontSize: 28,
+    color: brandColors.textSecondary,
+    fontWeight: typography.weights.light,
   },
   tagline: {
-    fontSize: 18,
-    fontFamily: typography.fontFamily,
-    fontWeight: '300',
+    fontSize: 17,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.light,
     fontStyle: 'italic',
-    color: brandColors.slateTeal,
+    color: brandColors.textSecondary,
     marginBottom: 30,
+    lineHeight: 27,
   },
   sectionTitle: {
-    fontSize: 24,
-    fontFamily: typography.fontFamily,
-    fontWeight: '500',
-    color: brandColors.slateTeal,
+    fontSize: 28,
+    fontFamily: typography.headingFont,
+    fontWeight: typography.weights.semiBold,
+    color: brandColors.text,
     marginTop: 30,
     marginBottom: 15,
+    letterSpacing: typography.letterSpacing.tight,
   },
   paragraph: {
-    fontSize: 16,
-    fontFamily: typography.fontFamily,
-    lineHeight: 24,
-    color: brandColors.mutedGraphite,
+    fontSize: 17,
+    fontFamily: typography.bodyFont,
+    lineHeight: 27,
+    color: brandColors.text,
     marginBottom: 15,
+    letterSpacing: typography.letterSpacing.normal,
   },
   benefitList: {
     marginBottom: 20,
   },
+  benefitRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
   benefitItem: {
-    fontSize: 16,
-    fontFamily: typography.fontFamily,
-    lineHeight: 28,
-    color: brandColors.mutedGraphite,
+    fontSize: 17,
+    fontFamily: typography.bodyFont,
+    lineHeight: 31,
+    color: brandColors.text,
     paddingLeft: 10,
+    flex: 1,
   },
   missionSection: {
-    backgroundColor: brandColors.softCream,
-    padding: 20,
-    borderRadius: 8,
+    backgroundColor: brandColors.surface,
+    padding: 24,
+    borderRadius: 14, // Apple style
     marginVertical: 20,
-    borderWidth: 1,
-    borderColor: brandColors.softTaupeBeige,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
   section: {
     marginVertical: 20,
@@ -181,35 +222,38 @@ const styles = StyleSheet.create({
     marginTop: 40,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: brandColors.softTaupeBeige,
+    borderTopColor: brandColors.border,
   },
   link: {
-    fontSize: 16,
-    fontFamily: typography.fontFamily,
-    fontWeight: '500',
-    color: brandColors.deepTeal,
+    fontSize: 17,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.medium,
+    color: brandColors.accent,
     textDecorationLine: 'underline',
     marginBottom: 10,
+    minHeight: 44, // WCAG touch target
+    justifyContent: 'center',
   },
   footer: {
     marginTop: 40,
     paddingTop: 20,
     borderTopWidth: 1,
-    borderTopColor: brandColors.softTaupeBeige,
+    borderTopColor: brandColors.border,
     alignItems: 'center',
   },
   footerText: {
-    fontSize: 12,
-    fontFamily: typography.fontFamily,
-    color: brandColors.slateTeal,
+    fontSize: 14,
+    fontFamily: typography.bodyFont,
+    color: brandColors.textSecondary,
     textAlign: 'center',
     marginBottom: 5,
+    lineHeight: 25,
   },
   italic: {
     fontStyle: 'italic',
   },
   bold: {
-    fontWeight: '600',
+    fontWeight: typography.weights.semiBold,
   },
 });
 

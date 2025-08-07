@@ -1,14 +1,15 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, View } from 'react-native';
 import { brandColors, typography, buttonStyles } from '../theme/brandColors';
 
 export const BrandButton = ({ 
   title, 
-  variant = 'primary', // 'primary', 'secondary', 'accent'
+  variant = 'primary', // 'primary', 'secondary', 'accent', 'ghost', 'outline', 'googleSignIn'
   onPress, 
   disabled = false,
   style,
   textStyle,
+  icon,
   isHighImpact = false // For CTA buttons like 'Go' or 'Scan Now'
 }) => {
   const getButtonStyle = () => {
@@ -20,6 +21,12 @@ export const BrandButton = ({
       return [styles.button, styles.primaryButton, style];
     } else if (variant === 'accent' || isHighImpact) {
       return [styles.button, styles.accentButton, style];
+    } else if (variant === 'ghost') {
+      return [styles.button, styles.ghostButton, style];
+    } else if (variant === 'outline') {
+      return [styles.button, styles.outlineButton, style];
+    } else if (variant === 'googleSignIn') {
+      return [styles.button, styles.googleSignInButton, style];
     } else {
       return [styles.button, styles.secondaryButton, style];
     }
@@ -34,6 +41,12 @@ export const BrandButton = ({
       return [styles.buttonText, styles.primaryText, textStyle];
     } else if (variant === 'accent' || isHighImpact) {
       return [styles.buttonText, styles.accentText, textStyle];
+    } else if (variant === 'ghost') {
+      return [styles.buttonText, styles.ghostText, textStyle];
+    } else if (variant === 'outline') {
+      return [styles.buttonText, styles.outlineText, textStyle];
+    } else if (variant === 'googleSignIn') {
+      return [styles.buttonText, styles.googleSignInText, textStyle];
     } else {
       return [styles.buttonText, styles.secondaryText, textStyle];
     }
@@ -46,33 +59,59 @@ export const BrandButton = ({
       disabled={disabled}
       activeOpacity={0.8}
     >
-      <Text style={getTextStyle()}>{title}</Text>
+      <View style={styles.buttonContent}>
+        {icon && <View style={styles.iconContainer}>{icon}</View>}
+        <Text style={getTextStyle()}>{title}</Text>
+      </View>
     </TouchableOpacity>
   );
 };
 
 const styles = StyleSheet.create({
   button: {
-    paddingHorizontal: parseInt(buttonStyles.padding.horizontal),
-    paddingVertical: parseInt(buttonStyles.padding.vertical),
-    borderRadius: 12, // Increased from 8px for more modern look
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    borderRadius: 14, // Modern Apple style
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: parseInt(buttonStyles.minHeight),
-    minWidth: parseInt(buttonStyles.minWidth),
-    // Removed shadows for flat design
+    minHeight: 52,
+    minWidth: 140,
+    // Subtle shadow for depth
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2, // Android shadow
   },
   primaryButton: {
     backgroundColor: buttonStyles.primary.backgroundColor,
+    borderWidth: buttonStyles.primary.borderWidth || 0,
+    borderColor: buttonStyles.primary.borderColor || 'transparent',
   },
   secondaryButton: {
     backgroundColor: buttonStyles.secondary.backgroundColor,
+    borderWidth: 1,
+    borderColor: buttonStyles.secondary.borderColor || brandColors.border,
   },
   accentButton: {
     backgroundColor: buttonStyles.accent.backgroundColor,
   },
+  ghostButton: {
+    backgroundColor: (buttonStyles.ghost && buttonStyles.ghost.backgroundColor) || 'transparent',
+    borderWidth: 0,
+  },
+  outlineButton: {
+    backgroundColor: 'transparent',
+    borderWidth: 2,
+    borderColor: brandColors.text,
+  },
   disabledButton: {
     backgroundColor: brandColors.disabledText,
+  },
+  googleSignInButton: {
+    backgroundColor: buttonStyles.googleSignIn.backgroundColor,
+    borderWidth: buttonStyles.googleSignIn.borderWidth,
+    borderColor: buttonStyles.googleSignIn.borderColor,
   },
   buttonText: {
     fontFamily: typography.bodyFont,
@@ -89,8 +128,25 @@ const styles = StyleSheet.create({
   accentText: {
     color: buttonStyles.accent.color,
   },
+  ghostText: {
+    color: (buttonStyles.ghost && buttonStyles.ghost.color) || brandColors.textSecondary,
+  },
+  outlineText: {
+    color: brandColors.text,
+  },
   disabledText: {
     color: brandColors.disabledText,
+  },
+  googleSignInText: {
+    color: buttonStyles.googleSignIn.color,
+  },
+  buttonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  iconContainer: {
+    marginRight: 8,
   },
 });
 

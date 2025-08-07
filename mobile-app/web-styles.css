@@ -63,26 +63,27 @@ h1, .headline {
 }
 
 .brand-button-primary {
-  background: linear-gradient(90deg, #3478F6 60%, #2C68D0 100%);
-  color: #fff;
+  background: #000000; /* Black for primary CTAs */
+  color: #FFFFFF; /* White text */
   border: none;
+  font-weight: 600;
 }
 
 .brand-button-primary:hover {
-  background: linear-gradient(90deg, #2C68D0 0%, #3478F6 100%);
-  box-shadow: 0 4px 16px rgba(52,120,246,0.18);
+  background: #111827; /* Subtle darkening on hover */
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
   transform: translateY(-2px) scale(1.03);
 }
 
 .brand-button-secondary {
-  background: linear-gradient(90deg, #BFC2C4 60%, #A5A8AA 100%);
-  color: #23292C;
+  background: #000000; /* Black for secondary actions too */
+  color: #fff;
   border: none;
 }
 
 .brand-button-secondary:hover {
-  background: linear-gradient(90deg, #A5A8AA 0%, #BFC2C4 100%);
-  box-shadow: 0 4px 16px rgba(191,194,196,0.18);
+  background: #111827; /* Subtle darkening on hover */
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
   transform: translateY(-2px) scale(1.03);
 }
 
@@ -120,17 +121,19 @@ h1, .headline {
 
 .analyzing {
   font-size: 1.1rem;
-  color: #3478F6;
+  color: #000000; /* Black for analyzing state */
   font-weight: 600;
   animation: pulse 1.5s ease-in-out infinite;
 }
 
-/* Web-specific font loading */
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+/* Web-specific font loading - using system fonts for better performance */
+/* Removed Google Fonts import to use native system fonts */
 
-/* Ensure Poppins font is applied on web */
+/* Ensure proper font stack and smoothing on web */
 * {
-  font-family: 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Web-specific layout improvements */
@@ -163,7 +166,7 @@ h1, .headline {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #3478F6;
+  background: #1F2937; /* Slate for scrollbar */
   border-radius: 4px;
 }
 
@@ -174,7 +177,7 @@ h1, .headline {
 /* Web-specific focus states for accessibility */
 .brand-button:focus,
 .upload-area:focus {
-  outline: 2px solid #3478F6;
+  outline: 2px solid #000000; /* Black focus outline */
   outline-offset: 2px;
 }
 
