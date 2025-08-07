@@ -13,7 +13,11 @@ import {
   Download,
   Heart,
   Sparkles,
-  Package
+  Package,
+  BadgeCheck,
+  Flame,
+  Repeat,
+  Briefcase
 } from 'lucide-react-native';
 
 // Import brand components and theme
@@ -278,6 +282,7 @@ export default function App() {
   const [authLoading, setAuthLoading] = useState(true);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
   const [showMissionModal, setShowMissionModal] = useState(false);
+  const [flipCount, setFlipCount] = useState(0);
   
   const scrollViewRef = useRef(null);
   const resultsRef = useRef(null);
@@ -731,6 +736,8 @@ export default function App() {
             const newResult = { ...data.data };
             setAnalysisResult(newResult);
             setShowFeedback(true);
+            // Increment flip count
+            setFlipCount(prevCount => prevCount + 1);
             // Scroll to results after a brief delay
             setTimeout(() => {
               if (resultsRef.current && scrollViewRef.current) {
@@ -777,6 +784,43 @@ export default function App() {
     setImageBase64(null);
     setShowFeedback(false);
     setShowMoreDetails(false);
+  };
+
+  // Render dynamic encouragement message based on flip count
+  const renderEncouragementMessage = () => {
+    let message = '';
+    let IconComponent = null;
+    let iconColor = brandColors.accent;
+    let iconSize = 20;
+
+    if (flipCount === 0) {
+      message = 'Start your first flip';
+      IconComponent = Heart;
+      iconColor = brandColors.accent;
+    } else if (flipCount === 1) {
+      message = 'One down. What\'s next?';
+      IconComponent = Flame;
+      iconColor = '#F97316'; // orange-500
+    } else if (flipCount > 1 && flipCount < 10) {
+      message = 'You\'re on a roll. Keep flipping!';
+      IconComponent = Repeat;
+      iconColor = '#059669'; // green-600
+    } else if (flipCount >= 10) {
+      message = 'Flipping pro status unlocked. Let\'s go again.';
+      IconComponent = Briefcase;
+      iconColor = '#374151'; // gray-700
+    }
+
+    return (
+      <View style={styles.welcomeContainer}>
+        <Text style={[styles.welcomeText, { color: brandColors.text }]}>
+          {message}
+        </Text>
+        {IconComponent && (
+          <IconComponent size={iconSize} color={iconColor} style={{ marginLeft: 8 }} />
+        )}
+      </View>
+    );
   };
 
   // Generate tweet text for sharing
@@ -1373,14 +1417,7 @@ export default function App() {
               </Text>
             </>
           )}
-          {isAuthenticated && !image && !analysisResult && (
-            <View style={styles.welcomeContainer}>
-              <Text style={[styles.welcomeText, { color: brandColors.text }]}>
-                Start your first flip
-              </Text>
-              <Heart size={20} color={brandColors.accent} style={{ marginLeft: 8 }} />
-            </View>
-          )}
+          {isAuthenticated && !image && !analysisResult && renderEncouragementMessage()}
         
         <View style={[
           styles.uploadContainer,
