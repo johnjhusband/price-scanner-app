@@ -839,7 +839,15 @@ export default function App() {
 
   // Generate Instagram Story receipt image
   const generateInstagramStoryImage = async (result) => {
-    if (!result) return;
+    if (!result) {
+      console.log('[Instagram Story] No analysis result available');
+      Alert.alert(
+        'No Results Yet',
+        'Please analyze an item first before sharing to Instagram Story.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
     
     // Only support web for now
     if (Platform.OS !== 'web') {
@@ -850,13 +858,29 @@ export default function App() {
       );
       return;
     }
+    
+    // Check if canvas is supported
+    if (!document.createElement('canvas').getContext) {
+      Alert.alert(
+        'Not Supported',
+        'Your browser doesn\'t support image generation. Please try a different browser.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
 
     try {
+      console.log('[Instagram Story] Starting image generation for:', result);
+      
       // Create canvas for receipt
       const canvas = document.createElement('canvas');
       canvas.width = 1080;
       canvas.height = 1920;
       const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Failed to get canvas context');
+      }
 
       // White background
       ctx.fillStyle = '#ffffff';
@@ -988,21 +1012,34 @@ export default function App() {
       
       // Convert to blob and download
       canvas.toBlob((blob) => {
+        if (!blob) {
+          throw new Error('Failed to convert canvas to blob');
+        }
+        
+        console.log('[Instagram Story] Blob created, size:', blob.size);
+        
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = 'flippi-receipt.png';
+        a.download = `flippi-story-${Date.now()}.png`;
+        a.style.display = 'none';
         document.body.appendChild(a);
+        
+        // Force download
         a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
+        
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
         
         Alert.alert(
-          'Receipt Downloaded!',
-          'Your Flippi receipt has been downloaded. Share it to your Instagram Story!',
-          [{ text: 'OK' }]
+          'Story Image Ready! 📸',
+          'Image downloaded! To share:\n\n1. Open Instagram\n2. Create a new Story\n3. Upload the downloaded image\n4. Share with your followers!',
+          [{ text: 'Got it!' }]
         );
-      }, 'image/png');
+      }, 'image/png', 0.95);
     } catch (error) {
       console.error('Error generating Instagram story:', error);
       Alert.alert(
@@ -1015,7 +1052,10 @@ export default function App() {
 
   // Handle Instagram Story share
   const handleInstagramStoryShare = () => {
-    generateInstagramStoryImage(analysisResult);
+    setIsLoading(true);
+    generateInstagramStoryImage(analysisResult).finally(() => {
+      setIsLoading(false);
+    });
   };
   
   const handleExit = async () => {
@@ -1417,7 +1457,13 @@ export default function App() {
                   onPress={handleInstagramStoryShare}
                   style={[styles.shareButton, { backgroundColor: '#E1306C' }]}
                   variant="primary"
+                  disabled={isLoading}
                 />
+                {Platform.OS === 'web' && (
+                  <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
+                    Downloads image • Upload to Instagram manually
+                  </Text>
+                )}
                 <BrandButton
                   title="Scan Another Item"
                   onPress={resetApp}
@@ -1543,6 +1589,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 24,
     textAlign: 'center',
+  },
+  helperText: {
+    fontSize: 13,
+    color: brandColors.textSecondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   dropZone: {
     width: '100%',
