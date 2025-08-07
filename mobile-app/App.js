@@ -921,9 +921,13 @@ export default function App() {
             </>
           ) : (
             <View style={styles.resultContainer}>
-              <View style={styles.imagePreviewContainer}>
-                <Image source={{ uri: image }} style={styles.imagePreview} />
-              </View>
+              {image ? (
+                <View style={styles.imagePreviewContainer}>
+                  <Image source={{ uri: image }} style={styles.imagePreview} />
+                </View>
+              ) : (
+                <Text style={{ color: brandColors.textSecondary, marginBottom: 20 }}>No image uploaded</Text>
+              )}
               
               {!analysisResult && !isLoading && (
                 <>
@@ -1280,8 +1284,7 @@ const styles = StyleSheet.create({
   imagePreviewContainer: {
     width: '100%',
     maxWidth: isMobile ? '100%' : 672, // max-w-xl equivalent (42rem = 672px)
-    height: 'auto',
-    maxHeight: 400, // max-h-[400px]
+    height: 400, // Fixed height to ensure visibility
     backgroundColor: 'transparent',
     marginTop: 8, // mt-2
     marginBottom: 16, // mb-4
@@ -1291,8 +1294,7 @@ const styles = StyleSheet.create({
   },
   imagePreview: {
     width: '100%',
-    height: 'auto',
-    maxHeight: 400, // max-h-[400px]
+    height: '100%', // Fill container height
     resizeMode: 'contain',
     borderRadius: 8, // rounded-md
     backgroundColor: 'transparent',
