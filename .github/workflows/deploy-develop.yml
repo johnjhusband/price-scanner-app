@@ -44,3 +44,5 @@ jobs:
             cd /var/www/blue.flippi.ai && bash scripts/force-nginx-reload.sh || true
             # Run comprehensive legal pages fix
             cd /var/www/blue.flippi.ai && bash scripts/comprehensive-legal-fix.sh || true
+            # Debug legal pages
+            cd /var/www/blue.flippi.ai && bash scripts/debug-legal-routes.sh || true
