@@ -985,6 +985,17 @@ export default function App() {
                 style={[styles.analysisResult, { backgroundColor: '#FFFFFF' }]}>
                 <Text style={[styles.resultTitle, { color: brandColors.text }]}>Analysis Results</Text>
                 
+                {analysisResult.buy_price && (
+                  <View style={[styles.suggestedPriceContainer, { backgroundColor: '#F9FAFB' }]}>
+                    <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
+                      Buy at:
+                    </Text>
+                    <Text style={[styles.suggestedPriceValue, styles.numericalEmphasis]}>
+                      {analysisResult.buy_price}
+                    </Text>
+                  </View>
+                )}
+                
                 <View style={styles.resultItem}>
                   <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Item:</Text>
                   <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.item_name}</Text>
@@ -1091,17 +1102,6 @@ export default function App() {
                         if (score >= 50) return '▲▲';   // Two up arrows for warm
                         return '▲';                      // One up arrow for cool
                       })()} <Text style={styles.trendingLabel}>- {analysisResult.trending_label || 'N/A'}</Text>
-                    </Text>
-                  </View>
-                )}
-                
-                {analysisResult.buy_price && (
-                  <View style={[styles.suggestedPriceContainer, { backgroundColor: '#F9FAFB' }]}>
-                    <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
-                      Buy at:
-                    </Text>
-                    <Text style={[styles.suggestedPriceValue, styles.numericalEmphasis]}>
-                      {analysisResult.buy_price}
                     </Text>
                   </View>
                 )}
