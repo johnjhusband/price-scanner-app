@@ -3,6 +3,7 @@ import { Modal, View, Text, ScrollView, TouchableOpacity, StyleSheet, Linking, P
 import { brandColors, typography } from '../theme/brandColors';
 import { focusStyles, a11yLabels, ariaRoles } from '../theme/accessibility';
 import { Feather, MaterialIcons } from '@expo/vector-icons';
+import PageContainer from './PageContainer';
 
 const MissionModal = ({ visible, onClose }) => {
   return (
@@ -14,7 +15,8 @@ const MissionModal = ({ visible, onClose }) => {
     >
       <View style={styles.container}>
         <ScrollView contentContainerStyle={styles.scrollContent}>
-          <View style={styles.header}>
+          <PageContainer>
+            <View style={styles.header}>
             <Text style={styles.title}>Our Mission</Text>
             <TouchableOpacity 
               onPress={onClose} 
@@ -117,6 +119,7 @@ const MissionModal = ({ visible, onClose }) => {
               *ai can make mistakes. check important info.
             </Text>
           </View>
+          </PageContainer>
         </ScrollView>
       </View>
     </Modal>

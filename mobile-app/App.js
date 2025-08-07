@@ -12,6 +12,7 @@ import BrandButton from './components/BrandButton';
 import FeedbackPrompt from './components/FeedbackPrompt';
 import EnterScreen from './components/EnterScreen';
 import MissionModal from './components/MissionModal';
+import PageContainer from './components/PageContainer';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
 import { appleStyles } from './theme/appleStyles';
@@ -841,23 +842,24 @@ export default function App() {
         </View>
       )}
       
-      <View style={[styles.content, isAuthenticated && styles.contentLoggedIn]}>
-        
-        <FlippiLogo 
-          size={isAuthenticated ? "small" : "large"} 
-          responsive={true} 
-          style={isAuthenticated ? { marginBottom: 8 } : {}}
-        />
-        {!isAuthenticated && (
-          <>
-            <Text style={[styles.title, { color: brandColors.text }]}>
-              Never Over Pay
-            </Text>
-            <Text style={styles.subtitle}>
-              Know the price. Own the profit.
-            </Text>
-          </>
-        )}
+      <PageContainer>
+        <View style={[styles.content, isAuthenticated && styles.contentLoggedIn]}>
+          
+          <FlippiLogo 
+            size={isAuthenticated ? "small" : "large"} 
+            responsive={true} 
+            style={isAuthenticated ? { marginBottom: 8 } : {}}
+          />
+          {!isAuthenticated && (
+            <>
+              <Text style={[styles.title, { color: brandColors.text }]}>
+                Never Over Pay
+              </Text>
+              <Text style={styles.subtitle}>
+                Know the price. Own the profit.
+              </Text>
+            </>
+          )}
         
         <View style={[
           styles.uploadContainer,
@@ -1186,6 +1188,7 @@ export default function App() {
           )}
         </View>
       </View>
+      </PageContainer>
       
       {/* Legal Footer */}
       <View style={styles.legalFooter}>
@@ -1265,8 +1268,7 @@ const styles = StyleSheet.create({
   },
   uploadContainer: {
     flex: 1, // Allow container to grow
-    width: isMobile ? '100%' : '90%', // More width
-    maxWidth: 600, // Reasonable max width
+    width: '100%', // Full width within PageContainer
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 20,
@@ -1275,7 +1277,6 @@ const styles = StyleSheet.create({
   },
   resultContainer: {
     width: '100%',
-    maxWidth: isMobile ? '100%' : 672, // max-w-xl
     paddingHorizontal: 16, // px-4
     paddingTop: 16, // pt-4
     backgroundColor: brandColors.background, // Ensure white background
