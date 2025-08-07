@@ -1220,6 +1220,7 @@ const styles = StyleSheet.create({
   },
   contentLoggedIn: {
     paddingTop: isMobile ? 4 : 8, // pt-1 when logged in
+    flex: 0, // Don't expand when logged in
   },
   title: {
     fontSize: isMobile ? 24 : 28,
@@ -1254,7 +1255,7 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: isMobile ? '100%' : 672, // max-w-xl
     paddingHorizontal: 16, // px-4
-    paddingTop: 8, // pt-2
+    paddingTop: 16, // pt-4
     backgroundColor: brandColors.background, // Ensure white background
   },
   actionButton: {
@@ -1287,14 +1288,12 @@ const styles = StyleSheet.create({
   },
   imagePreviewContainer: {
     width: '100%',
-    minHeight: 100, // Ensure container has minimum height
     backgroundColor: 'transparent', // No background
     marginBottom: 8, // mb-2
   },
   imagePreview: {
     width: '100%',
-    height: 400, // Fixed height to ensure visibility
-    maxHeight: '70vh',
+    height: 'auto', // Natural height
     resizeMode: 'contain',
     borderRadius: 8, // rounded-md
   },
