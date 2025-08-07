@@ -1287,12 +1287,14 @@ const styles = StyleSheet.create({
   },
   imagePreviewContainer: {
     width: '100%',
+    minHeight: 100, // Ensure container has minimum height
     backgroundColor: 'transparent', // No background
     marginBottom: 8, // mb-2
   },
   imagePreview: {
     width: '100%',
-    height: 'auto', // Natural height
+    height: 400, // Fixed height to ensure visibility
+    maxHeight: '70vh',
     resizeMode: 'contain',
     borderRadius: 8, // rounded-md
   },
