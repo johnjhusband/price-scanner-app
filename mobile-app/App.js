@@ -1652,15 +1652,45 @@ export default function App() {
                         <Text style={[styles.realScoreExplanation]}>
                           {(() => {
                             const score = analysisResult.real_score || analysisResult.authenticity_score;
+                            let explanation = "";
+                            let details = "";
+                            
                             if (score >= 80) {
-                              return "Strong authenticity signals detected. Clear branding and quality markers.";
+                              explanation = "Strong authenticity signals detected. Clear branding and quality markers.";
+                              details = "Logo placement, stitching, and materials appear consistent with authentic pieces.";
                             } else if (score >= 60) {
-                              return "Good visual indicators. Brand elements appear consistent.";
+                              explanation = "Good visual indicators. Brand elements appear consistent.";
+                              details = "Most authenticity markers present, but verify interior tags and serial numbers.";
                             } else if (score >= 40) {
-                              return "Mixed signals detected. Check brand details and authentication carefully.";
+                              explanation = "Mixed signals detected. Check brand details and authentication carefully.";
+                              // Check for specific penalties mentioned
+                              if (analysisResult.score_penalties) {
+                                const penalties = analysisResult.score_penalties.toLowerCase();
+                                if (penalties.includes("colorway")) {
+                                  details = "Unusual color combination not typical for this brand. Research this specific style.";
+                                } else if (penalties.includes("logo")) {
+                                  details = "Logo density or placement differs from standard. Compare with official images.";
+                                } else if (penalties.includes("single photo")) {
+                                  details = "Limited view provided. Request photos of tags, serial numbers, and interior.";
+                                } else {
+                                  details = "Some elements don't match typical authentic patterns. Get professional authentication.";
+                                }
+                              } else {
+                                details = "Inconsistent quality markers detected. Compare carefully with authentic examples.";
+                              }
                             } else {
-                              return "Multiple red flags detected. Verify authenticity before purchasing.";
+                              explanation = "Multiple red flags detected. Verify authenticity before purchasing.";
+                              // Check market insights for specific issues
+                              if (analysisResult.market_insights && analysisResult.market_insights.toLowerCase().includes("replica")) {
+                                details = "Design elements strongly suggest replica. Proceed with extreme caution.";
+                              } else if (analysisResult.score_penalties && analysisResult.score_penalties.includes("source")) {
+                                details = "Source marketplace known for replicas. Request proof of authenticity.";
+                              } else {
+                                details = "Multiple authenticity concerns including branding, construction, or materials.";
+                              }
                             }
+                            
+                            return `${explanation} ${details}`;
                           })()}
                         </Text>
                       </View>
@@ -2366,6 +2396,6 @@ const styles = StyleSheet.create({
     color: brandColors.textSecondary,
     fontStyle: 'italic',
     marginTop: 4,
-    lineHeight: 18,
+    lineHeight: 20,
   },
 });
