@@ -44,3 +44,5 @@ jobs:
             cd /var/www/blue.flippi.ai && bash scripts/force-nginx-reload.sh || true
             # Apply the known working nginx configuration
             cd /var/www/blue.flippi.ai && bash scripts/apply-working-nginx-config.sh || true
+            # Verify which nginx config is actually active
+            cd /var/www/blue.flippi.ai && bash scripts/verify-active-nginx-config.sh || true
