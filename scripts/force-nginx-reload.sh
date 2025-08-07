@@ -60,3 +60,12 @@ else
 fi
 
 echo "Force reload complete."
+
+# Also run legal pages configuration
+echo ""
+echo "Configuring legal pages..."
+if [ -f /var/www/$DOMAIN/scripts/post-deploy-legal-pages.sh ]; then
+    bash /var/www/$DOMAIN/scripts/post-deploy-legal-pages.sh $DOMAIN || echo "Legal pages configuration failed"
+else
+    echo "Legal pages script not found, skipping..."
+fi
