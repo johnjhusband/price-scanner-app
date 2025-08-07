@@ -72,6 +72,16 @@ const MissionModal = ({ visible, onClose }) => {
           </View>
           
           <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Environmental Impact</Text>
+            <Text style={styles.paragraph}>
+              Our environmental savings are based on a weighted analysis of CO₂, water use, and material waste — modeled on EPA and textile industry benchmarks.
+            </Text>
+            <Text style={styles.paragraph}>
+              For example, reselling one leather handbag saves enough water to brew ~60 cups of coffee ☕ — and avoids the emissions of manufacturing and shipping a brand-new one.
+            </Text>
+          </View>
+          
+          <View style={styles.section}>
             <Text style={styles.sectionTitle}>Flippi's Authentication Philosophy</Text>
             <Text style={styles.paragraph}>
               Flippi uses computer vision to give you a Real Score — a percentage-based confidence rating powered by AI.

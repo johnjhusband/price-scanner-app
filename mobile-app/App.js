@@ -1566,7 +1566,7 @@ export default function App() {
                     <View style={styles.resultItem}>
                       <Text style={[styles.resultLabel]}>Real Score</Text>
                       <Text style={[styles.resultValue, styles.realScoreEmphasis, { fontSize: 20 }]}>
-                        {analysisResult.real_score || analysisResult.authenticity_score}
+                        {analysisResult.real_score || analysisResult.authenticity_score}%
                       </Text>
                     </View>
                   )}
@@ -1630,12 +1630,15 @@ export default function App() {
                     <Text style={styles.resultValue}>
                       <Text style={styles.numericalEmphasis}>{analysisResult.trending_score}/100</Text>
                       {' '}
-                      {(() => {
-                        const score = parseInt(analysisResult.trending_score);
-                        if (score >= 80) return '▲▲▲'; // Three up arrows for hot
-                        if (score >= 50) return '▲▲';   // Two up arrows for warm
-                        return '▲';                      // One up arrow for cool
-                      })()} <Text style={styles.trendingLabel}>- {analysisResult.trending_label || 'N/A'}</Text>
+                      <Text style={{ color: brandColors.accent }}>
+                        {(() => {
+                          const score = parseInt(analysisResult.trending_score);
+                          if (score >= 80) return '▲▲▲'; // Three up arrows for hot
+                          if (score >= 50) return '▲▲';   // Two up arrows for warm
+                          return '▲';                      // One up arrow for cool
+                        })()}
+                      </Text>
+                      <Text style={[styles.trendingLabel, { color: brandColors.accent }]}> - {analysisResult.trending_label || 'N/A'}</Text>
                     </Text>
                   </View>
                 )}
