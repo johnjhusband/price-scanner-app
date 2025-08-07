@@ -4,7 +4,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
 // Import Lucide icons - our licensed icon system
-import { Camera, Upload, Clipboard, Info } from 'lucide-react-native';
+import { Camera as CameraIcon, Upload, Clipboard, Info } from 'lucide-react-native';
 
 // Import brand components and theme
 import FlippiLogo from './components/FlippiLogo';
@@ -889,7 +889,7 @@ export default function App() {
                   onPress={takePhoto}
                   style={styles.actionButton}
                   variant="primary"
-                  icon={<Camera size={20} color="#FFFFFF" />}
+                  icon={<CameraIcon size={20} color="#FFFFFF" />}
                 />
               )}
               
