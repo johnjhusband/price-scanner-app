@@ -784,6 +784,8 @@ export default function App() {
     setImageBase64(null);
     setShowFeedback(false);
     setShowMoreDetails(false);
+    // Note: We intentionally do NOT reset flipCount here
+    // so that the encouragement message persists between scans
   };
 
   // Render dynamic encouragement message based on flip count
@@ -1148,6 +1150,7 @@ export default function App() {
 
     try {
       console.log('[Share Image] Starting image generation for:', result);
+      console.log('[Share Image] Current image:', image ? 'Available' : 'Not available');
       
       // Create canvas for share image (square format)
       const canvas = document.createElement('canvas');
@@ -1169,64 +1172,94 @@ export default function App() {
       ctx.font = 'bold 64px -apple-system, system-ui, sans-serif';
       ctx.fillText('flippi.ai', canvas.width / 2, 100);
       
-      // Item image
-      if (image) {
-        try {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          
-          await new Promise((resolve, reject) => {
-            img.onload = resolve;
-            img.onerror = reject;
-            img.src = image;
-          });
-          
-          // Calculate dimensions to fit in box while maintaining aspect ratio
-          const boxWidth = 800;
-          const boxHeight = 400;
-          const boxX = 140;
-          const boxY = 160;
-          
-          const scale = Math.min(boxWidth / img.width, boxHeight / img.height);
-          const width = img.width * scale;
-          const height = img.height * scale;
-          const x = boxX + (boxWidth - width) / 2;
-          const y = boxY + (boxHeight - height) / 2;
-          
-          // Draw white background for image area
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-          
-          // Draw the image
-          ctx.drawImage(img, x, y, width, height);
-        } catch (error) {
-          console.error('[Share Image] Error loading image:', error);
-          // Fallback to placeholder
+      // Item image - Enhanced to ensure it displays
+      const drawItemImage = async () => {
+        const boxWidth = 800;
+        const boxHeight = 380;
+        const boxX = 140;
+        const boxY = 140;
+        
+        // Draw border around image area
+        ctx.strokeStyle = '#e5e5e5';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+        
+        if (image) {
+          try {
+            console.log('[Share Image] Loading image from:', image.substring(0, 50) + '...');
+            const img = new Image();
+            
+            // For data URLs, we don't need CORS
+            if (image.startsWith('data:')) {
+              img.src = image;
+            } else {
+              img.crossOrigin = 'anonymous';
+              img.src = image;
+            }
+            
+            await new Promise((resolve, reject) => {
+              img.onload = () => {
+                console.log('[Share Image] Image loaded successfully:', img.width, 'x', img.height);
+                resolve();
+              };
+              img.onerror = (err) => {
+                console.error('[Share Image] Image load error:', err);
+                reject(err);
+              };
+            });
+            
+            // Calculate dimensions to fit in box while maintaining aspect ratio
+            const scale = Math.min(boxWidth / img.width, boxHeight / img.height);
+            const width = img.width * scale;
+            const height = img.height * scale;
+            const x = boxX + (boxWidth - width) / 2;
+            const y = boxY + (boxHeight - height) / 2;
+            
+            // Draw white background for image area
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+            
+            // Draw the image
+            ctx.drawImage(img, x, y, width, height);
+            console.log('[Share Image] Image drawn successfully');
+          } catch (error) {
+            console.error('[Share Image] Error loading/drawing image:', error);
+            // Fallback to placeholder
+            ctx.fillStyle = '#f5f5f5';
+            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+            ctx.fillStyle = '#a0a0a0';
+            ctx.font = '32px -apple-system, system-ui, sans-serif';
+            ctx.fillText('Image could not be loaded', canvas.width / 2, boxY + boxHeight/2);
+          }
+        } else {
+          // No image available
           ctx.fillStyle = '#f5f5f5';
-          ctx.fillRect(140, 160, 800, 400);
+          ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
           ctx.fillStyle = '#a0a0a0';
-          ctx.font = '36px -apple-system, system-ui, sans-serif';
-          ctx.fillText('[Item Photo]', canvas.width / 2, 380);
+          ctx.font = '32px -apple-system, system-ui, sans-serif';
+          ctx.fillText('No image available', canvas.width / 2, boxY + boxHeight/2);
         }
-      } else {
-        // No image available
-        ctx.fillStyle = '#f5f5f5';
-        ctx.fillRect(140, 160, 800, 400);
-        ctx.fillStyle = '#a0a0a0';
-        ctx.font = '36px -apple-system, system-ui, sans-serif';
-        ctx.fillText('[No Photo]', canvas.width / 2, 380);
-      }
+      };
+      
+      await drawItemImage();
       
       // Item name
       ctx.fillStyle = '#000000';
-      ctx.font = 'bold 48px -apple-system, system-ui, sans-serif';
+      ctx.font = 'bold 42px -apple-system, system-ui, sans-serif';
       const itemName = result.item_name || 'Unknown Item';
-      ctx.fillText(itemName, canvas.width / 2, 640);
+      ctx.fillText(itemName, canvas.width / 2, 560);
+      
+      // Brand (if available)
+      if (result.brand) {
+        ctx.font = '32px -apple-system, system-ui, sans-serif';
+        ctx.fillStyle = '#666666';
+        ctx.fillText(result.brand, canvas.width / 2, 600);
+      }
       
       // Price range
       ctx.font = 'bold 56px -apple-system, system-ui, sans-serif';
       ctx.fillStyle = '#059669';
-      ctx.fillText(result.price_range || '$0-$0', canvas.width / 2, 720);
+      ctx.fillText(result.price_range || '$0-$0', canvas.width / 2, 660);
       
       // Purchase price and profit if available
       const getPurchasePrice = () => {
@@ -1240,10 +1273,13 @@ export default function App() {
       };
       
       const purchasePrice = getPurchasePrice();
+      let yPosition = 720;
+      
       if (purchasePrice) {
-        ctx.font = '36px -apple-system, system-ui, sans-serif';
+        ctx.font = '32px -apple-system, system-ui, sans-serif';
         ctx.fillStyle = '#666666';
-        ctx.fillText(`Bought for $${purchasePrice}`, canvas.width / 2, 780);
+        ctx.fillText(`Bought for $${purchasePrice}`, canvas.width / 2, yPosition);
+        yPosition += 50;
         
         // Calculate profit
         const getPriceEstimate = (priceRange) => {
@@ -1260,10 +1296,44 @@ export default function App() {
         const resaleEstimate = getPriceEstimate(result.price_range);
         if (resaleEstimate > 0) {
           const profit = resaleEstimate - purchasePrice;
-          ctx.font = 'bold 48px -apple-system, system-ui, sans-serif';
+          ctx.font = 'bold 42px -apple-system, system-ui, sans-serif';
           ctx.fillStyle = profit > 0 ? '#059669' : '#dc2626';
-          ctx.fillText(`${profit > 0 ? '+' : ''}$${Math.abs(profit)} profit`, canvas.width / 2, 840);
+          ctx.fillText(`${profit > 0 ? '+' : ''}$${Math.abs(profit)} profit potential`, canvas.width / 2, yPosition);
+          yPosition += 60;
         }
+      }
+      
+      // Add key metrics in a row
+      ctx.font = '24px -apple-system, system-ui, sans-serif';
+      ctx.fillStyle = '#333333';
+      
+      // Real Score
+      if (result.real_score) {
+        const realScoreText = `Real Score: ${result.real_score}%`;
+        ctx.fillText(realScoreText, canvas.width / 2 - 200, yPosition);
+      }
+      
+      // Sellability
+      if (result.trending_score) {
+        const sellabilityText = `Sellability: ${result.trending_score}/100`;
+        ctx.fillText(sellabilityText, canvas.width / 2 + 200, yPosition);
+      }
+      yPosition += 40;
+      
+      // Platform recommendation
+      if (result.platform_recommendation) {
+        ctx.font = '28px -apple-system, system-ui, sans-serif';
+        ctx.fillStyle = '#666666';
+        ctx.fillText(`Best on: ${result.platform_recommendation}`, canvas.width / 2, yPosition);
+        yPosition += 40;
+      }
+      
+      // Environmental impact
+      if (result.environmental_tag) {
+        ctx.font = '26px -apple-system, system-ui, sans-serif';
+        ctx.fillStyle = '#059669';
+        ctx.fillText(result.environmental_tag, canvas.width / 2, yPosition);
+        yPosition += 50;
       }
       
       // Footer
@@ -1749,8 +1819,8 @@ export default function App() {
                 <BrandButton
                   title="Scan Another Item"
                   onPress={resetApp}
-                  style={styles.resetButton}
-                  variant="secondary"
+                  style={[styles.resetButton, { backgroundColor: brandColors.accent }]}
+                  variant="primary"
                 />
               </View>
             )}

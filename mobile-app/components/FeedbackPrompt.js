@@ -73,7 +73,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
 
   return (
     <View style={styles.container}>
-      <Text style={styles.question}>Did this result help you make a decision?</Text>
+      <Text style={styles.question}>Was this analysis helpful?</Text>
       
       <View style={styles.buttonRow}>
         <TouchableOpacity
