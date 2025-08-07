@@ -1628,7 +1628,7 @@ export default function App() {
                   const penalties = analysisResult.score_penalties?.toLowerCase() || '';
                   
                   const isPotentialDupe = 
-                    score < 40 ||
+                    score <= 40 ||
                     description.includes('fake') ||
                     description.includes('replica') ||
                     description.includes('inspired') ||
