@@ -50,3 +50,5 @@ jobs:
             cd /var/www/blue.flippi.ai && bash scripts/trace-legal-request.sh || true
             # Check if frontend is intercepting routes
             cd /var/www/blue.flippi.ai && bash scripts/check-frontend-routing.sh || true
+            # Show the actual nginx config
+            cd /var/www/blue.flippi.ai && bash scripts/show-nginx-routes.sh || true
