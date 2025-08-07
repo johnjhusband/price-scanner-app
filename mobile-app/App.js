@@ -11,6 +11,7 @@ import FlippiLogo from './components/FlippiLogo';
 import BrandButton from './components/BrandButton';
 import FeedbackPrompt from './components/FeedbackPrompt';
 import EnterScreen from './components/EnterScreen';
+import MissionModal from './components/MissionModal';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
 import { appleStyles } from './theme/appleStyles';
@@ -265,6 +266,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
+  const [showMissionModal, setShowMissionModal] = useState(false);
   
   const scrollViewRef = useRef(null);
   const resultsRef = useRef(null);
@@ -1145,16 +1147,9 @@ export default function App() {
                         {analysisResult.environmental_tag}
                       </Text>
                       <TouchableOpacity
-                        onPress={() => {
-                          if (Platform.OS === 'web') {
-                            window.location.href = '/mission';
-                          } else {
-                            // For mobile app, use the production URL
-                            Linking.openURL('https://app.flippi.ai/mission');
-                          }
-                        }}
+                        onPress={() => setShowMissionModal(true)}
                         accessibilityLabel="Learn about our mission"
-                        accessibilityRole="link"
+                        accessibilityRole="button"
                         style={styles.missionLink}
                       >
                         <Info size={14} color="#2E7D32" strokeWidth={2} style={{ opacity: 0.8 }} />
@@ -1201,6 +1196,11 @@ export default function App() {
           Flippi™ and Flippi.ai™ are trademarks of Boca Belle. All rights reserved.
         </Text>
       </View>
+      
+      <MissionModal 
+        visible={showMissionModal} 
+        onClose={() => setShowMissionModal(false)} 
+      />
     </ScrollView>
   );
 }
