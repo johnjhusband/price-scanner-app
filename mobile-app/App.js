@@ -858,7 +858,8 @@ export default function App() {
         
         <View style={[
           styles.uploadContainer,
-          isDragOver && styles.dragOver
+          isDragOver && styles.dragOver,
+          image && { marginTop: 0, marginBottom: 0, padding: 0 } // Remove spacing when image exists
         ]}>
           {/* Text input only visible when no image */}
           {!image && (
@@ -920,7 +921,7 @@ export default function App() {
               )}
             </>
           ) : (
-            <View style={styles.resultContainer}>
+            <View style={[styles.resultContainer, { paddingTop: 0 }]}>
               {image ? (
                 <View style={styles.imagePreviewContainer}>
                   <Image 
@@ -1289,7 +1290,7 @@ const styles = StyleSheet.create({
   imagePreviewContainer: {
     width: '100%',
     backgroundColor: 'transparent', // No background
-    marginBottom: 8, // mb-2
+    marginBottom: 12, // mb-3
   },
   imagePreview: {
     width: '100%',
