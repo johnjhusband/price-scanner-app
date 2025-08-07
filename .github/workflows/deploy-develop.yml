@@ -56,3 +56,5 @@ jobs:
             cd /var/www/blue.flippi.ai && bash scripts/show-nginx-routes-simple.sh || true
             # Test nginx routing behavior
             cd /var/www/blue.flippi.ai && bash scripts/test-nginx-routing.sh || true
+            # Quick nginx check
+            cd /var/www/blue.flippi.ai && bash scripts/quick-nginx-check.sh || true
