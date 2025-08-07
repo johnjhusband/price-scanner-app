@@ -858,8 +858,7 @@ export default function App() {
         
         <View style={[
           styles.uploadContainer,
-          isDragOver && styles.dragOver,
-          image && { marginTop: 0, marginBottom: 0, padding: 0 } // Remove spacing when image exists
+          isDragOver && styles.dragOver
         ]}>
           {/* Text input only visible when no image */}
           {!image && (
@@ -921,7 +920,7 @@ export default function App() {
               )}
             </>
           ) : (
-            <View style={[styles.resultContainer, { paddingTop: 0 }]}>
+            <View style={styles.resultContainer}>
               {image ? (
                 <View style={styles.imagePreviewContainer}>
                   <Image 
@@ -1216,12 +1215,11 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    padding: isMobile ? 0 : 16, // Minimal padding
-    paddingTop: isMobile ? 8 : 16, // Very minimal top padding
+    padding: isMobile ? 16 : 20, // Restore proper padding
+    paddingTop: isMobile ? 40 : 60, // Restore top padding for proper spacing
   },
   contentLoggedIn: {
-    paddingTop: isMobile ? 4 : 8, // pt-1 when logged in
-    flex: 0, // Don't expand when logged in
+    paddingTop: isMobile ? 16 : 20, // Proper spacing when logged in
   },
   title: {
     fontSize: isMobile ? 24 : 28,
@@ -1246,11 +1244,12 @@ const styles = StyleSheet.create({
   uploadContainer: {
     flex: 1, // Allow container to grow
     width: isMobile ? '100%' : '90%', // More width
-    maxWidth: 1200, // Larger max width
+    maxWidth: 600, // Reasonable max width
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 0,
-    marginBottom: 0,
+    marginTop: 20,
+    marginBottom: 20,
+    padding: 20,
   },
   resultContainer: {
     width: '100%',
