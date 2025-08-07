@@ -1653,13 +1653,13 @@ export default function App() {
                           {(() => {
                             const score = analysisResult.real_score || analysisResult.authenticity_score;
                             if (score >= 80) {
-                              return "Excellent clarity and brand visibility. High confidence.";
+                              return "Strong authenticity signals detected. Clear branding and quality markers.";
                             } else if (score >= 60) {
-                              return "Good photo quality. Brand is visible and centered.";
+                              return "Good visual indicators. Brand elements appear consistent.";
                             } else if (score >= 40) {
-                              return "Fair quality. Better lighting or angle could help.";
+                              return "Mixed signals detected. Check brand details and authentication carefully.";
                             } else {
-                              return "Low confidence. Try closer photo with better lighting.";
+                              return "Multiple red flags detected. Verify authenticity before purchasing.";
                             }
                           })()}
                         </Text>
