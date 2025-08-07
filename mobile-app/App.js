@@ -793,7 +793,7 @@ export default function App() {
   if (authLoading && Platform.OS === 'web') {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <FlippiLogo size="large" style={{ marginBottom: 20 }} />
+        <FlippiLogo size="large" style={{ marginBottom: 8 }} />
         <ActivityIndicator size="large" color={brandColors.primary} />
         <Text style={{ marginTop: 20, fontSize: 16, color: brandColors.textSecondary }}>
           Loading flippi.ai...
@@ -843,7 +843,7 @@ export default function App() {
         <FlippiLogo 
           size={isAuthenticated ? "small" : "large"} 
           responsive={true} 
-          style={isAuthenticated ? { marginBottom: 20 } : {}}
+          style={isAuthenticated ? { marginBottom: 8 } : {}}
         />
         {!isAuthenticated && (
           <>
@@ -926,7 +926,7 @@ export default function App() {
                   <Image source={{ uri: image }} style={styles.imagePreview} />
                 </View>
               ) : (
-                <Text style={{ color: brandColors.textSecondary, marginBottom: 20 }}>No image uploaded</Text>
+                <Text style={{ color: brandColors.textSecondary, marginBottom: 8 }}>No image uploaded</Text>
               )}
               
               {!analysisResult && !isLoading && (
@@ -936,8 +936,8 @@ export default function App() {
                       backgroundColor: brandColors.surface,
                       color: brandColors.text,
                       borderColor: brandColors.border || '#ddd',
-                      marginBottom: 20,
-                      marginTop: 20
+                      marginBottom: 8,
+                      marginTop: 0
                     }]}
                     placeholder="Brand, source, or serial number?"
                     placeholderTextColor={brandColors.textSecondary}
@@ -1190,7 +1190,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     alignItems: 'center', // Center the content column horizontally
     justifyContent: 'flex-start', // Start from top, not center
-    paddingTop: 8, // Minimal top padding
+    paddingTop: 0, // No top padding
     width: '100%', // Full width
   },
   environmentBanner: {
@@ -1212,11 +1212,11 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     alignItems: 'center',
-    padding: isMobile ? 10 : 20, // Reduced padding
-    paddingTop: isMobile ? 80 : 60, // More top padding on mobile to avoid user section
+    padding: isMobile ? 0 : 16, // Minimal padding
+    paddingTop: isMobile ? 8 : 16, // Very minimal top padding
   },
   contentLoggedIn: {
-    paddingTop: isMobile ? 10 : 20, // Reduced top padding when logged in
+    paddingTop: isMobile ? 4 : 8, // pt-1 when logged in
   },
   title: {
     fontSize: isMobile ? 24 : 28,
@@ -1233,7 +1233,7 @@ const styles = StyleSheet.create({
     fontWeight: typography.weights.regular,
     fontFamily: typography.bodyFont,
     color: brandColors.aiGray, // Same gray as .ai
-    marginBottom: 20,
+    marginBottom: 8,
     textAlign: 'center',
     maxWidth: isMobile ? '100%' : '80%',
     alignSelf: 'center',
@@ -1244,8 +1244,8 @@ const styles = StyleSheet.create({
     maxWidth: 1200, // Larger max width
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: 0,
+    marginBottom: 0,
   },
   resultContainer: {
     width: '100%',
@@ -1253,7 +1253,7 @@ const styles = StyleSheet.create({
     alignItems: 'stretch', // Don't center items
     justifyContent: 'flex-start',
     paddingHorizontal: 16, // px-4
-    paddingTop: 8, // pt-2
+    paddingTop: 4, // pt-1
   },
   actionButton: {
     marginVertical: 8,
@@ -1285,16 +1285,17 @@ const styles = StyleSheet.create({
   },
   imagePreviewContainer: {
     width: '100%',
-    height: isMobile ? 300 : 400, // Responsive height
-    maxHeight: 500, // max-h-[500px]
+    height: 'auto',
+    maxHeight: '70vh', // max-h-[70vh]
     backgroundColor: 'transparent',
-    marginBottom: 16, // mb-4
+    marginBottom: 8, // mb-2
     alignItems: 'center',
     justifyContent: 'center',
   },
   imagePreview: {
     width: '100%',
-    height: '100%', // Fill container height
+    height: 'auto',
+    maxHeight: '70vh', // max-h-[70vh]
     resizeMode: 'contain',
     borderRadius: 8, // rounded-md
     backgroundColor: 'transparent',
