@@ -1057,6 +1057,216 @@ export default function App() {
       setIsLoading(false);
     });
   };
+
+  // Generate universal share image (square format)
+  const generateShareImage = async (result) => {
+    if (!result) {
+      console.log('[Share Image] No analysis result available');
+      Alert.alert(
+        'No Results Yet',
+        'Please analyze an item first before downloading.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    // Only support web for now
+    if (Platform.OS !== 'web') {
+      Alert.alert(
+        'Coming Soon',
+        'Image download is coming soon for mobile. For now, take a screenshot.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    // Check if canvas is supported
+    if (!document.createElement('canvas').getContext) {
+      Alert.alert(
+        'Not Supported',
+        'Your browser doesn\'t support image generation. Please try a different browser.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      console.log('[Share Image] Starting image generation for:', result);
+      
+      // Create canvas for share image (square format)
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1080;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Failed to get canvas context');
+      }
+
+      // White background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Flippi branding
+      ctx.fillStyle = '#000000';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 64px -apple-system, system-ui, sans-serif';
+      ctx.fillText('flippi.ai', canvas.width / 2, 100);
+      
+      // Item image
+      if (image) {
+        try {
+          const img = new Image();
+          img.crossOrigin = 'anonymous';
+          
+          await new Promise((resolve, reject) => {
+            img.onload = resolve;
+            img.onerror = reject;
+            img.src = image;
+          });
+          
+          // Calculate dimensions to fit in box while maintaining aspect ratio
+          const boxWidth = 800;
+          const boxHeight = 400;
+          const boxX = 140;
+          const boxY = 160;
+          
+          const scale = Math.min(boxWidth / img.width, boxHeight / img.height);
+          const width = img.width * scale;
+          const height = img.height * scale;
+          const x = boxX + (boxWidth - width) / 2;
+          const y = boxY + (boxHeight - height) / 2;
+          
+          // Draw white background for image area
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+          
+          // Draw the image
+          ctx.drawImage(img, x, y, width, height);
+        } catch (error) {
+          console.error('[Share Image] Error loading image:', error);
+          // Fallback to placeholder
+          ctx.fillStyle = '#f5f5f5';
+          ctx.fillRect(140, 160, 800, 400);
+          ctx.fillStyle = '#a0a0a0';
+          ctx.font = '36px -apple-system, system-ui, sans-serif';
+          ctx.fillText('[Item Photo]', canvas.width / 2, 380);
+        }
+      } else {
+        // No image available
+        ctx.fillStyle = '#f5f5f5';
+        ctx.fillRect(140, 160, 800, 400);
+        ctx.fillStyle = '#a0a0a0';
+        ctx.font = '36px -apple-system, system-ui, sans-serif';
+        ctx.fillText('[No Photo]', canvas.width / 2, 380);
+      }
+      
+      // Item name
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 48px -apple-system, system-ui, sans-serif';
+      const itemName = result.item_name || 'Unknown Item';
+      ctx.fillText(itemName, canvas.width / 2, 640);
+      
+      // Price range
+      ctx.font = 'bold 56px -apple-system, system-ui, sans-serif';
+      ctx.fillStyle = '#059669';
+      ctx.fillText(result.price_range || '$0-$0', canvas.width / 2, 720);
+      
+      // Purchase price and profit if available
+      const getPurchasePrice = () => {
+        if (productDescription) {
+          const priceMatch = productDescription.match(/\$(\d+(?:\.\d{2})?)/);
+          if (priceMatch) {
+            return parseFloat(priceMatch[1]);
+          }
+        }
+        return null;
+      };
+      
+      const purchasePrice = getPurchasePrice();
+      if (purchasePrice) {
+        ctx.font = '36px -apple-system, system-ui, sans-serif';
+        ctx.fillStyle = '#666666';
+        ctx.fillText(`Bought for $${purchasePrice}`, canvas.width / 2, 780);
+        
+        // Calculate profit
+        const getPriceEstimate = (priceRange) => {
+          if (!priceRange) return 0;
+          const match = priceRange.match(/\$(\d+)-\$(\d+)/);
+          if (match) {
+            const low = parseInt(match[1]);
+            const high = parseInt(match[2]);
+            return Math.round((low + high) / 2);
+          }
+          return 0;
+        };
+        
+        const resaleEstimate = getPriceEstimate(result.price_range);
+        if (resaleEstimate > 0) {
+          const profit = resaleEstimate - purchasePrice;
+          ctx.font = 'bold 48px -apple-system, system-ui, sans-serif';
+          ctx.fillStyle = profit > 0 ? '#059669' : '#dc2626';
+          ctx.fillText(`${profit > 0 ? '+' : ''}$${Math.abs(profit)} profit`, canvas.width / 2, 840);
+        }
+      }
+      
+      // Footer
+      ctx.fillStyle = '#666666';
+      ctx.font = '28px -apple-system, system-ui, sans-serif';
+      ctx.fillText('Never Over Pay • Know the price. Own the profit.', canvas.width / 2, 960);
+      
+      if (user?.referralCode) {
+        ctx.font = '24px monospace';
+        ctx.fillText(`flippi.ai?ref=${user.referralCode}`, canvas.width / 2, 1000);
+      }
+      
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          throw new Error('Failed to convert canvas to blob');
+        }
+        
+        console.log('[Share Image] Blob created, size:', blob.size);
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `flippi-share-image-${Date.now()}.png`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        
+        // Force download
+        a.click();
+        
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+        
+        Alert.alert(
+          'Image downloaded! 🎉',
+          'Ready to share on any platform!',
+          [{ text: 'Awesome!' }]
+        );
+      }, 'image/png', 0.95);
+    } catch (error) {
+      console.error('[Share Image] Error generating image:', error);
+      Alert.alert(
+        'Download Failed',
+        'Unable to download image. Please try again or use a screenshot instead.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  // Handle universal share image download
+  const handleDownloadShareImage = () => {
+    setIsLoading(true);
+    generateShareImage(analysisResult).finally(() => {
+      setIsLoading(false);
+    });
+  };
   
   const handleExit = async () => {
     if (Platform.OS === 'web') {
@@ -1461,7 +1671,19 @@ export default function App() {
                 />
                 {Platform.OS === 'web' && (
                   <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
-                    Downloads image • Upload to Instagram manually
+                    Downloads story-sized image (1080x1920)
+                  </Text>
+                )}
+                <BrandButton
+                  title="⬇️ Download Image"
+                  onPress={handleDownloadShareImage}
+                  style={[styles.shareButton, { backgroundColor: '#52525b' }]}
+                  variant="primary"
+                  disabled={isLoading}
+                />
+                {Platform.OS === 'web' && (
+                  <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
+                    Save to share anywhere
                   </Text>
                 )}
                 <BrandButton
