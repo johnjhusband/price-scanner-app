@@ -66,14 +66,12 @@ fi
 
 echo "Nginx fix complete."
 
-# Check legal pages status
+# Diagnose legal pages
 echo ""
-echo "Checking legal pages configuration..."
-if [ -f /var/www/$DOMAIN/scripts/simple-legal-fix.sh ]; then
-    bash /var/www/$DOMAIN/scripts/simple-legal-fix.sh
-fi
-
-# Add legal routes if needed
-if [ -f /var/www/$DOMAIN/scripts/add-legal-routes-nginx.sh ]; then
-    bash /var/www/$DOMAIN/scripts/add-legal-routes-nginx.sh
+echo "Legal pages diagnostic..."
+if [ -f /var/www/$DOMAIN/scripts/diagnose-legal.sh ]; then
+    bash /var/www/$DOMAIN/scripts/diagnose-legal.sh
+else
+    echo "Backend /terms status: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/terms)"
+    echo "Backend /privacy status: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/privacy)"
 fi
