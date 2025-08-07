@@ -1,5 +1,45 @@
 # Flippi.ai Release Taxonomy
 
+## release-003 — August 8, 2025
+
+**Summary:**  
+UI/UX improvements, Real Score enhancements, and critical bug fixes for authenticity detection.
+
+### ✅ Included Changes:
+
+#### UI/UX Improvements
+- 🎨 **Issue #122:** Master UI/UX updates
+  - Enhanced share image with actual photo and more data (brand, scores, environmental impact)
+  - Changed "Scan Another Item" button to orange accent color
+  - Updated feedback prompt text to "Was this analysis helpful?"
+  - Fixed flip message persistence between scans
+  
+- 📊 **Issue #123:** Real Score explanation enhancements
+  - Added dynamic explanation text based on score percentage
+  - Added second sentence with specific details about what was detected
+  - Added info icon that opens mission modal for more context
+  - Explanations now focus on authenticity signals, not just photo quality
+
+#### Authenticity & Warnings
+- ⚠️ **Issue #125:** Friendly dupe warnings
+  - Changed from suppressing prices to showing all data with soft warning
+  - Replaced "fake/authenticity concern" language with "may be a dupe"
+  - Added subtle yellow alert with Lucide AlertTriangle icon
+  - Keeps all valuable data visible: pricing, Real Score, platforms
+
+#### Bug Fixes
+- 🐛 **Issue #126:** Fixed DHGate detection threshold
+  - Changed warning trigger from `score < 40` to `score <= 40`
+  - DHGate and other replica sources now properly trigger warnings
+  - Affects all detections that cap Real Score at exactly 40
+
+### 📝 Notes:
+- Version bumped to 2.3.0
+- Focus on being a helpful friend, not authentication police
+- All changes maintain pricing intelligence as primary goal
+
+---
+
 ## release-001 — August 3-4, 2025
 
 **Summary:**  
