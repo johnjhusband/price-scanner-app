@@ -1091,13 +1091,13 @@ export default function App() {
   // Handle Instagram Story share
   const handleInstagramStoryShare = () => {
     setIsLoading(true);
-    generateInstagramStoryImage(analysisResult).finally(() => {
+    generateInstagramStoryImage(analysisResult, imageBase64, image).finally(() => {
       setIsLoading(false);
     });
   };
 
   // Generate universal share image (square format)
-  const generateShareImage = async (result) => {
+  const generateShareImage = async (result, base64Image = null, originalImage = null) => {
     if (!result) {
       console.log('[Share Image] No analysis result available');
       Alert.alert(
@@ -1152,7 +1152,7 @@ export default function App() {
       ctx.font = 'bold 64px -apple-system, system-ui, sans-serif';
       ctx.fillText('flippi.ai', canvas.width / 2, 100);
       
-      // Item image - Fixed to use base64 data
+      // Item image - Simplified approach
       const drawItemImage = async () => {
         const boxWidth = 800;
         const boxHeight = 380;
@@ -1164,87 +1164,120 @@ export default function App() {
         ctx.lineWidth = 2;
         ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
         
-        // Use imageBase64 which is always available after analysis
-        const imageToUse = imageBase64 || image;
+        // Use passed parameters or fall back to component state
+        const imageBase64ToUse = base64Image || imageBase64;
+        const imageToUse = originalImage || image;
         
-        if (imageToUse) {
+        // Debug: Log what images we have available
+        console.log('[Share Image Debug] base64Image param:', !!base64Image);
+        console.log('[Share Image Debug] originalImage param:', !!originalImage);
+        console.log('[Share Image Debug] imageBase64ToUse available:', !!imageBase64ToUse);
+        console.log('[Share Image Debug] imageBase64ToUse length:', imageBase64ToUse?.length);
+        console.log('[Share Image Debug] imageToUse available:', !!imageToUse);
+        console.log('[Share Image Debug] imageToUse type:', imageToUse?.substring(0, 30));
+        
+        // Try different image sources
+        let imageLoaded = false;
+        
+        // Method 1: Try imageBase64 first (most reliable)
+        if (imageBase64ToUse && !imageLoaded) {
           try {
-            console.log('[Share Image] Loading image, type:', imageToUse.substring(0, 30));
+            console.log('[Share Image] Trying imageBase64ToUse...');
             const img = new Image();
             
-            // Ensure we have a data URL
-            if (imageToUse.startsWith('data:')) {
-              // Already a data URL
-              img.src = imageToUse;
-            } else if (imageToUse.startsWith('blob:')) {
-              // Convert blob URL to data URL
-              console.log('[Share Image] Converting blob URL to data URL');
-              const response = await fetch(imageToUse);
-              const blob = await response.blob();
-              const reader = new FileReader();
-              
-              const dataUrl = await new Promise((resolve, reject) => {
-                reader.onload = (e) => resolve(e.target.result);
-                reader.onerror = reject;
-                reader.readAsDataURL(blob);
-              });
-              
-              img.src = dataUrl;
-            } else {
-              // File URI or other format
-              img.crossOrigin = 'anonymous';
-              img.src = imageToUse;
-            }
-            
-            // Wait for image to load with timeout
-            await new Promise((resolve, reject) => {
-              const timeout = setTimeout(() => {
-                reject(new Error('Image load timeout'));
-              }, 5000);
-              
+            // Set up promise for load/error
+            const loadPromise = new Promise((resolve, reject) => {
               img.onload = () => {
-                clearTimeout(timeout);
-                console.log('[Share Image] Image loaded successfully:', img.width, 'x', img.height);
-                resolve();
+                console.log('[Share Image] imageBase64ToUse loaded!', img.width, 'x', img.height);
+                resolve(true);
               };
-              
-              img.onerror = (err) => {
-                clearTimeout(timeout);
-                console.error('[Share Image] Image load error:', err);
-                reject(err);
+              img.onerror = (e) => {
+                console.error('[Share Image] imageBase64ToUse failed to load:', e);
+                reject(e);
               };
             });
             
-            // Calculate dimensions to fit in box while maintaining aspect ratio
+            // Add data URL prefix if not present
+            const imageSrc = imageBase64ToUse.startsWith('data:') 
+              ? imageBase64ToUse 
+              : `data:image/jpeg;base64,${imageBase64ToUse}`;
+            
+            // Set source after handlers
+            img.src = imageSrc;
+            
+            // Wait for load
+            await loadPromise;
+            
+            // Draw the image
             const scale = Math.min(boxWidth / img.width, boxHeight / img.height);
             const width = img.width * scale;
             const height = img.height * scale;
             const x = boxX + (boxWidth - width) / 2;
             const y = boxY + (boxHeight - height) / 2;
             
-            // Draw white background for image area
             ctx.fillStyle = '#ffffff';
             ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-            
-            // Draw the image
             ctx.drawImage(img, x, y, width, height);
-            console.log('[Share Image] Image drawn successfully');
+            
+            imageLoaded = true;
+            console.log('[Share Image] Successfully drew imageBase64');
           } catch (error) {
-            console.error('[Share Image] Error loading/drawing image:', error);
-            // Fallback to placeholder
-            ctx.fillStyle = '#f5f5f5';
-            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-            ctx.fillStyle = '#a0a0a0';
-            ctx.font = '32px -apple-system, system-ui, sans-serif';
-            ctx.fillText('Image could not be loaded', canvas.width / 2, boxY + boxHeight/2);
+            console.error('[Share Image] Failed with imageBase64:', error);
           }
-        } else {
-          // No image available
+        }
+        
+        // Method 2: Try original image
+        if (image && !imageLoaded) {
+          try {
+            console.log('[Share Image] Trying original image...');
+            const img = new Image();
+            
+            // If it's a blob URL, we need to handle it differently
+            if (image.startsWith('blob:')) {
+              console.log('[Share Image] Detected blob URL, skipping for now');
+              // Skip blob URLs for now as they're problematic
+            } else {
+              const loadPromise = new Promise((resolve, reject) => {
+                img.onload = () => {
+                  console.log('[Share Image] Original image loaded!', img.width, 'x', img.height);
+                  resolve(true);
+                };
+                img.onerror = (e) => {
+                  console.error('[Share Image] Original image failed:', e);
+                  reject(e);
+                };
+              });
+              
+              img.src = image;
+              await loadPromise;
+              
+              // Draw the image
+              const scale = Math.min(boxWidth / img.width, boxHeight / img.height);
+              const width = img.width * scale;
+              const height = img.height * scale;
+              const x = boxX + (boxWidth - width) / 2;
+              const y = boxY + (boxHeight - height) / 2;
+              
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+              ctx.drawImage(img, x, y, width, height);
+              
+              imageLoaded = true;
+              console.log('[Share Image] Successfully drew original image');
+            }
+          } catch (error) {
+            console.error('[Share Image] Failed with original image:', error);
+          }
+        }
+        
+        // If nothing worked, show placeholder
+        if (!imageLoaded) {
+          console.error('[Share Image] No image could be loaded, showing placeholder');
           ctx.fillStyle = '#f5f5f5';
           ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
           ctx.fillStyle = '#a0a0a0';
           ctx.font = '32px -apple-system, system-ui, sans-serif';
-          ctx.fillText('No image available', canvas.width / 2, boxY + boxHeight/2);
+          ctx.fillText('Image could not be loaded', canvas.width / 2, boxY + boxHeight/2);
         }
       };
       
@@ -1396,7 +1429,7 @@ export default function App() {
   // Handle universal share image download
   const handleDownloadShareImage = () => {
     setIsLoading(true);
-    generateShareImage(analysisResult).finally(() => {
+    generateShareImage(analysisResult, imageBase64, image).finally(() => {
       setIsLoading(false);
     });
   };
