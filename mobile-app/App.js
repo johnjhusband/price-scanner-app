@@ -516,24 +516,25 @@ export default function App() {
     
     // Check authentication on web
     if (Platform.OS === 'web') {
-      // Check authentication
+      console.log('[Auth] Starting authentication check...');
       
       // Set a timeout for auth check to prevent infinite loading
       const authTimeout = setTimeout(() => {
-        // Auth check timeout
+        console.error('[Auth] Authentication check timed out after 5 seconds');
         setAuthLoading(false);
         setIsAuthenticated(false);
       }, 5000); // 5 second timeout
       
       // Check if token in URL (OAuth callback)
+      console.log('[Auth] Checking for token in URL...');
       AuthService.parseTokenFromUrl().then(hasToken => {
-        // Check if we have a token
+        console.log('[Auth] Token in URL:', hasToken);
         
         if (hasToken) {
           setIsAuthenticated(true);
           // Get user asynchronously
           AuthService.getUser().then(userData => {
-            // User data loaded
+            console.log('[Auth] User data loaded:', userData?.email);
             setUser(userData);
             clearTimeout(authTimeout);
             setAuthLoading(false);
@@ -544,13 +545,14 @@ export default function App() {
           });
         } else {
           // No token in URL, check existing session
+          console.log('[Auth] No token in URL, checking existing session...');
           AuthService.isAuthenticated().then(isAuth => {
-            // Check existing session
+            console.log('[Auth] Existing session found:', isAuth);
             
             if (isAuth) {
               setIsAuthenticated(true);
               AuthService.getUser().then(userData => {
-                // User data loaded from session
+                console.log('[Auth] User data loaded from session:', userData?.email);
                 setUser(userData);
                 clearTimeout(authTimeout);
                 setAuthLoading(false);
@@ -560,7 +562,7 @@ export default function App() {
                 setAuthLoading(false);
               });
             } else {
-              // No authentication found
+              console.log('[Auth] No authentication found');
               clearTimeout(authTimeout);
               setAuthLoading(false);
             }
@@ -1574,6 +1576,18 @@ export default function App() {
         <Text style={{ marginTop: 20, fontSize: 16, color: brandColors.textSecondary }}>
           Loading flippi.ai
         </Text>
+        <TouchableOpacity 
+          onPress={() => {
+            console.log('[Auth] Force clearing auth state');
+            setAuthLoading(false);
+            setIsAuthenticated(false);
+          }}
+          style={{ marginTop: 40, padding: 10 }}
+        >
+          <Text style={{ color: brandColors.textSecondary, fontSize: 12 }}>
+            Stuck? Click here to reset
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
