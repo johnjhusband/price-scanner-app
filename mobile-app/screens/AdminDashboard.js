@@ -106,9 +106,11 @@ const AdminDashboard = ({ isVisible, onClose }) => {
       const response = await fetch(`${API_URL}/api/feedback/admin/user-activity-summary`);
       const data = await response.json();
       
+      console.log('User activity response:', data);
+      
       if (data.success) {
-        setUserActivity(data.users);
-        setUserStats(data.stats);
+        setUserActivity(data.users || []);
+        setUserStats(data.stats || null);
       }
     } catch (error) {
       console.error('Error fetching user activity:', error);
@@ -461,26 +463,35 @@ const AdminDashboard = ({ isVisible, onClose }) => {
               
               <View style={styles.userListContainer}>
                 <Text style={styles.sectionTitle}>User Activity</Text>
-                {userActivity && userActivity.map(user => (
-                  <View key={user.id} style={styles.userItem}>
-                    <View style={styles.userHeader}>
-                      <Text style={styles.userEmail}>{user.email_obfuscated}</Text>
-                      {user.is_high_value === 1 && (
-                        <View style={styles.highValueBadge}>
-                          <Text style={styles.highValueText}>🏆 High Value</Text>
-                        </View>
-                      )}
+                {userActivity && userActivity.length > 0 ? (
+                  userActivity.map(user => (
+                    <View key={user.id} style={styles.userItem}>
+                      <View style={styles.userHeader}>
+                        <Text style={styles.userEmail}>{user.email_obfuscated}</Text>
+                        {user.is_high_value === 1 && (
+                          <View style={styles.highValueBadge}>
+                            <Text style={styles.highValueText}>🏆 High Value</Text>
+                          </View>
+                        )}
+                      </View>
+                      <View style={styles.userStats}>
+                        <Text style={styles.userStat}>Logins: {user.login_count}</Text>
+                        <Text style={styles.userStat}>Scans: {user.scan_count}</Text>
+                        <Text style={styles.userStat}>Feedback: {user.feedback_count}</Text>
+                      </View>
+                      <Text style={styles.userDate}>
+                        Last seen: {new Date(user.last_login).toLocaleDateString()}
+                      </Text>
                     </View>
-                    <View style={styles.userStats}>
-                      <Text style={styles.userStat}>Logins: {user.login_count}</Text>
-                      <Text style={styles.userStat}>Scans: {user.scan_count}</Text>
-                      <Text style={styles.userStat}>Feedback: {user.feedback_count}</Text>
-                    </View>
-                    <Text style={styles.userDate}>
-                      Last seen: {new Date(user.last_login).toLocaleDateString()}
+                  ))
+                ) : (
+                  <View style={styles.emptyState}>
+                    <Text style={styles.emptyStateText}>No users yet</Text>
+                    <Text style={styles.emptyStateSubtext}>
+                      Users will appear here after they log in with Google OAuth
                     </Text>
                   </View>
-                ))}
+                )}
               </View>
             </View>
           )}
@@ -823,6 +834,21 @@ const styles = StyleSheet.create({
   userDate: {
     fontSize: 12,
     color: brandColors.textSecondary,
+  },
+  emptyState: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  emptyStateText: {
+    fontSize: 18,
+    fontWeight: typography.weights.medium,
+    color: brandColors.textSecondary,
+    marginBottom: 8,
+  },
+  emptyStateSubtext: {
+    fontSize: 14,
+    color: brandColors.textSecondary,
+    textAlign: 'center',
   },
 });
 
