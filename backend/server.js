@@ -780,6 +780,9 @@ app.use('/api/payment', paymentRoutes);
 
 // Feedback route - wrap in try-catch
 const feedbackRoutes = require('./routes/feedback');
+
+// Growth automation routes
+const growthRoutes = require('./routes/growth');
 app.use('/api/feedback', (req, res, next) => {
   try {
     feedbackRoutes(req, res, next);
@@ -790,6 +793,19 @@ app.use('/api/feedback', (req, res, next) => {
       error: 'Internal server error',
       message: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// Growth automation routes
+app.use('/api/growth', (req, res, next) => {
+  try {
+    growthRoutes(req, res, next);
+  } catch (error) {
+    console.error('ERROR in growth routes:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
     });
   }
 });

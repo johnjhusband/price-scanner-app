@@ -14,6 +14,7 @@ import EnterScreen from './components/EnterScreen';
 import MissionModal from './components/MissionModal';
 import PageContainer from './components/PageContainer';
 import AdminDashboard from './screens/AdminDashboard';
+import GrowthDashboard from './screens/GrowthDashboard';
 import PricingModal from './components/PricingModal';
 import UpgradeModal from './components/UpgradeModal';
 import AuthService from './services/authService';
@@ -274,6 +275,7 @@ export default function App() {
   const [showMissionModal, setShowMissionModal] = useState(false);
   const [flipCount, setFlipCount] = useState(0);
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+  const [showGrowthDashboard, setShowGrowthDashboard] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPricingPage, setShowPricingPage] = useState(false);
   const [flipStatus, setFlipStatus] = useState(null);
@@ -1624,11 +1626,16 @@ export default function App() {
       {/* You section - Exit button only - Outside content for better positioning */}
       {Platform.OS === 'web' && user && (
         <View style={styles.userSection}>
-          {/* Show admin button for specific users */}
+          {/* Show admin buttons for specific users */}
           {(user.email === 'john@flippi.ai' || user.email === 'tarahusband@gmail.com' || user.email === 'teamflippi@gmail.com' || user.email === 'tara@edgy.co' || user.email === 'john@husband.llc') && (
-            <TouchableOpacity onPress={() => setShowAdminDashboard(true)} style={styles.adminButton}>
-              <Text style={styles.adminText}>Admin</Text>
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity onPress={() => setShowAdminDashboard(true)} style={styles.adminButton}>
+                <Text style={styles.adminText}>Admin</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowGrowthDashboard(true)} style={styles.adminButton}>
+                <Text style={styles.adminText}>Growth</Text>
+              </TouchableOpacity>
+            </>
           )}
           <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
             <Text style={styles.exitText}>Exit</Text>
@@ -2131,6 +2138,11 @@ export default function App() {
       <AdminDashboard
         isVisible={showAdminDashboard}
         onClose={() => setShowAdminDashboard(false)}
+      />
+      
+      <GrowthDashboard
+        isVisible={showGrowthDashboard}
+        onClose={() => setShowGrowthDashboard(false)}
       />
       
       <PricingModal
