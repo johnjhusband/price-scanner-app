@@ -121,7 +121,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
 
       <TextInput
         style={styles.textInput}
-        placeholder="Tell us what worked or didn't (optional)"
+        placeholder="Have an idea for Flippi? We're listening."
         placeholderTextColor={brandColors.disabledText}
         accessibilityLabel="Additional feedback text input"
         value={feedbackText}
