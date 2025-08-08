@@ -41,6 +41,30 @@ function initializeDatabase() {
     db = new Database(dbPath);
 
     // Create table if it doesn't exist
+    // Create users table
+    const createUsersTableSQL = `
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        google_id TEXT UNIQUE,
+        name TEXT,
+        first_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        login_count INTEGER DEFAULT 1,
+        scan_count INTEGER DEFAULT 0,
+        feedback_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    
+    db.exec(createUsersTableSQL);
+    
+    // Create indexes for users table
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login)`);
+    
     // Create feedback table
     const createFeedbackTableSQL = `
       CREATE TABLE IF NOT EXISTS feedback (

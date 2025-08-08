@@ -726,6 +726,16 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
         }
       );
       
+      // Update user's scan count if authenticated
+      if (userId) {
+        try {
+          const db = getDatabase();
+          db.prepare('UPDATE users SET scan_count = scan_count + 1 WHERE id = ?').run(userId);
+        } catch (userUpdateError) {
+          console.error('Error updating user scan count:', userUpdateError);
+        }
+      }
+      
       // Add flip status to response
       analysis.flip_status = updatedFlipStatus;
     } catch (trackError) {

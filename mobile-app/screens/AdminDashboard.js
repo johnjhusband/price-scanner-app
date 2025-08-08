@@ -26,6 +26,9 @@ const AdminDashboard = ({ isVisible, onClose }) => {
   const [sortOrder, setSortOrder] = useState('desc');
   const [selectedFeedback, setSelectedFeedback] = useState(null);
   const [analyzing, setAnalyzing] = useState(false);
+  const [activeTab, setActiveTab] = useState('feedback');
+  const [userActivity, setUserActivity] = useState(null);
+  const [userStats, setUserStats] = useState(null);
 
   const API_URL = Platform.OS === 'web' ? '' : 'http://localhost:3000';
 
@@ -98,9 +101,24 @@ const AdminDashboard = ({ isVisible, onClose }) => {
     }
   };
 
+  const fetchUserActivity = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/feedback/admin/user-activity-summary`);
+      const data = await response.json();
+      
+      if (data.success) {
+        setUserActivity(data.users);
+        setUserStats(data.stats);
+      }
+    } catch (error) {
+      console.error('Error fetching user activity:', error);
+    }
+  };
+
   useEffect(() => {
     if (isVisible) {
       fetchDashboardData();
+      fetchUserActivity();
     }
   }, [isVisible, selectedCategory, selectedSentiment]);
 
@@ -344,26 +362,47 @@ const AdminDashboard = ({ isVisible, onClose }) => {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Feedback Dashboard</Text>
+        <Text style={styles.title}>Admin Dashboard</Text>
         <View style={styles.headerButtons}>
-          <TouchableOpacity 
-            style={styles.analyzeButton}
-            onPress={triggerAnalysis}
-            disabled={analyzing}
-          >
-            {analyzing ? (
-              <ActivityIndicator size="small" color="#FFFFFF" />
-            ) : (
-              <>
-                <RefreshCw size={16} color="#FFFFFF" />
-                <Text style={styles.analyzeButtonText}>Analyze</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          {activeTab === 'feedback' && (
+            <TouchableOpacity 
+              style={styles.analyzeButton}
+              onPress={triggerAnalysis}
+              disabled={analyzing}
+            >
+              {analyzing ? (
+                <ActivityIndicator size="small" color="#FFFFFF" />
+              ) : (
+                <>
+                  <RefreshCw size={16} color="#FFFFFF" />
+                  <Text style={styles.analyzeButtonText}>Analyze</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <X size={24} color={brandColors.text} />
           </TouchableOpacity>
         </View>
+      </View>
+      
+      <View style={styles.tabContainer}>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'feedback' && styles.activeTab]}
+          onPress={() => setActiveTab('feedback')}
+        >
+          <Text style={[styles.tabText, activeTab === 'feedback' && styles.activeTabText]}>
+            Feedback
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity 
+          style={[styles.tab, activeTab === 'users' && styles.activeTab]}
+          onPress={() => setActiveTab('users')}
+        >
+          <Text style={[styles.tabText, activeTab === 'users' && styles.activeTabText]}>
+            User Activity
+          </Text>
+        </TouchableOpacity>
       </View>
       
       {loading ? (
@@ -372,32 +411,79 @@ const AdminDashboard = ({ isVisible, onClose }) => {
         </View>
       ) : (
         <ScrollView style={styles.content}>
-          {renderStats()}
-          
-          {categoryBreakdown.length > 0 && (
-            <View style={styles.categoryBreakdown}>
-              <Text style={styles.sectionTitle}>Category Breakdown</Text>
-              <View style={styles.categoryList}>
-                {categoryBreakdown.map(cat => (
-                  <View key={cat.category} style={styles.categoryItem}>
-                    <Text style={styles.categoryName}>
-                      {categoryLabels[cat.category] || cat.category}
+          {activeTab === 'feedback' ? (
+            <>
+              {renderStats()}
+              
+              {categoryBreakdown.length > 0 && (
+                <View style={styles.categoryBreakdown}>
+                  <Text style={styles.sectionTitle}>Category Breakdown</Text>
+                  <View style={styles.categoryList}>
+                    {categoryBreakdown.map(cat => (
+                      <View key={cat.category} style={styles.categoryItem}>
+                        <Text style={styles.categoryName}>
+                          {categoryLabels[cat.category] || cat.category}
+                        </Text>
+                        <Text style={styles.categoryCount}>{cat.count}</Text>
+                      </View>
+                    ))}
+                  </View>
+                </View>
+              )}
+              
+              {renderFilters()}
+              
+              <View style={styles.feedbackList}>
+                <Text style={styles.sectionTitle}>
+                  Feedback ({filteredData.length})
+                </Text>
+                {filteredData.map(renderFeedbackItem)}
+              </View>
+            </>
+          ) : (
+            <View style={styles.userActivityContainer}>
+              {userStats && (
+                <View style={styles.userStatsContainer}>
+                  <View style={styles.statCard}>
+                    <Text style={styles.statValue}>{userStats.total_users}</Text>
+                    <Text style={styles.statLabel}>Total Users</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <Text style={styles.statValue}>{userStats.high_value_users}</Text>
+                    <Text style={styles.statLabel}>High-Value Users</Text>
+                  </View>
+                  <View style={styles.statCard}>
+                    <Text style={styles.statValue}>{userStats.avg_scans_per_user}</Text>
+                    <Text style={styles.statLabel}>Avg Scans/User</Text>
+                  </View>
+                </View>
+              )}
+              
+              <View style={styles.userListContainer}>
+                <Text style={styles.sectionTitle}>User Activity</Text>
+                {userActivity && userActivity.map(user => (
+                  <View key={user.id} style={styles.userItem}>
+                    <View style={styles.userHeader}>
+                      <Text style={styles.userEmail}>{user.email_obfuscated}</Text>
+                      {user.is_high_value === 1 && (
+                        <View style={styles.highValueBadge}>
+                          <Text style={styles.highValueText}>🏆 High Value</Text>
+                        </View>
+                      )}
+                    </View>
+                    <View style={styles.userStats}>
+                      <Text style={styles.userStat}>Logins: {user.login_count}</Text>
+                      <Text style={styles.userStat}>Scans: {user.scan_count}</Text>
+                      <Text style={styles.userStat}>Feedback: {user.feedback_count}</Text>
+                    </View>
+                    <Text style={styles.userDate}>
+                      Last seen: {new Date(user.last_login).toLocaleDateString()}
                     </Text>
-                    <Text style={styles.categoryCount}>{cat.count}</Text>
                   </View>
                 ))}
               </View>
             </View>
           )}
-          
-          {renderFilters()}
-          
-          <View style={styles.feedbackList}>
-            <Text style={styles.sectionTitle}>
-              Feedback ({filteredData.length})
-            </Text>
-            {filteredData.map(renderFeedbackItem)}
-          </View>
         </ScrollView>
       )}
       
@@ -660,6 +746,83 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: brandColors.text,
     marginBottom: 4,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: brandColors.border,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 16,
+    alignItems: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: 'transparent',
+  },
+  activeTab: {
+    borderBottomColor: brandColors.primary,
+  },
+  tabText: {
+    fontSize: 16,
+    color: brandColors.textSecondary,
+    fontWeight: typography.weights.medium,
+  },
+  activeTabText: {
+    color: brandColors.primary,
+  },
+  userActivityContainer: {
+    flex: 1,
+  },
+  userStatsContainer: {
+    flexDirection: 'row',
+    padding: 20,
+    gap: 15,
+  },
+  userListContainer: {
+    padding: 20,
+  },
+  userItem: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: brandColors.border,
+  },
+  userHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  userEmail: {
+    fontSize: 16,
+    fontWeight: typography.weights.medium,
+    color: brandColors.text,
+  },
+  highValueBadge: {
+    backgroundColor: brandColors.accent,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  highValueText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: typography.weights.semiBold,
+  },
+  userStats: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 8,
+  },
+  userStat: {
+    fontSize: 14,
+    color: brandColors.textSecondary,
+  },
+  userDate: {
+    fontSize: 12,
+    color: brandColors.textSecondary,
   },
 });
 

@@ -67,8 +67,8 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       let user = db.prepare('SELECT * FROM users WHERE google_id = ?').get(userData.google_id);
 
       if (user) {
-        // Update last login
-        db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE google_id = ?')
+        // Update last login and increment login count
+        db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP, login_count = login_count + 1 WHERE google_id = ?')
           .run(userData.google_id);
       } else {
         // Create new user
