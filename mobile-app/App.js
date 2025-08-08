@@ -2054,7 +2054,7 @@ export default function App() {
                   onPress={handleShareOnX}
                   style={[styles.shareButton, { backgroundColor: '#18181b' }]}
                   variant="primary"
-                  icon={<Share2 size={20} color="#FFFFFF" />}
+                  icon={<Feather name="share-2" size={20} color="#FFFFFF" />}
                 />
                 {Platform.OS !== 'web' && (
                   <>
