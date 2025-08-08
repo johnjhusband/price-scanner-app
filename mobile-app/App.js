@@ -1113,6 +1113,14 @@ export default function App() {
       return;
     }
     
+    console.log('[generateShareImage] Starting with:', {
+      hasResult: !!result,
+      hasBase64Image: !!base64Image,
+      hasOriginalImage: !!originalImage,
+      hasImageBase64State: !!imageBase64,
+      hasImageState: !!image
+    });
+    
     // Only support web for now
     if (Platform.OS !== 'web') {
       Alert.alert(
@@ -1335,43 +1343,62 @@ export default function App() {
       }
       
       // Convert to blob and download
+      console.log('[Share Image] Converting canvas to blob...');
+      
       canvas.toBlob((blob) => {
-        if (!blob) {
-          throw new Error('Failed to convert canvas to blob');
+        try {
+          if (!blob) {
+            console.error('[Share Image] Blob is null');
+            throw new Error('Failed to convert canvas to blob');
+          }
+          
+          console.log('[Share Image] Blob created, size:', blob.size);
+          
+          const url = URL.createObjectURL(blob);
+          console.log('[Share Image] Object URL created:', url);
+          
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `flippi-share-image-${Date.now()}.png`;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          
+          console.log('[Share Image] Triggering download...');
+          // Force download
+          a.click();
+          
+          // Cleanup
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            console.log('[Share Image] Cleanup complete');
+          }, 100);
+          
+          Alert.alert(
+            'Image downloaded!',
+            'Ready to share on any platform!',
+            [{ text: 'Awesome!' }]
+          );
+        } catch (error) {
+          console.error('[Share Image] Error in blob callback:', error);
+          Alert.alert(
+            'Download Failed',
+            'Unable to download image. Please try again.',
+            [{ text: 'OK' }]
+          );
         }
-        
-        console.log('[Share Image] Blob created, size:', blob.size);
-        
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `flippi-share-image-${Date.now()}.png`;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        
-        // Force download
-        a.click();
-        
-        // Cleanup
-        setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 100);
-        
-        Alert.alert(
-          'Image downloaded!',
-          'Ready to share on any platform!',
-          [{ text: 'Awesome!' }]
-        );
       }, 'image/png', 0.95);
     } catch (error) {
       console.error('[Share Image] Error generating image:', error);
+      console.error('[Share Image] Error stack:', error.stack);
       Alert.alert(
         'Download Failed',
         'Unable to download image. Please try again or use a screenshot instead.',
         [{ text: 'OK' }]
       );
     }
+    
+    console.log('[Share Image] generateShareImage function completed');
   };
 
   // Handle universal share image download
