@@ -1,6 +1,6 @@
 const { getDatabase } = require('../database');
 
-const FREE_FLIP_LIMIT = 3;
+const FREE_FLIP_LIMIT = 20;
 
 /**
  * Get or create flip tracking record for a user/device
@@ -166,6 +166,49 @@ async function markAsPaid(userId, planType = 'single') {
 }
 
 /**
+ * Add flip bundle (after successful payment)
+ * For the $1 = 5 flips bundle
+ */
+async function addFlipBundle(userId, deviceFingerprint, bundleSize = 5) {
+  try {
+    const db = getDatabase();
+    
+    // Note: Since we're using a simple flip_count, we'll need to track bundles differently
+    // For MVP, we'll just reset the count to allow more scans
+    // In production, you'd want a separate table for purchased bundles
+    
+    const updateStmt = db.prepare(`
+      UPDATE flip_tracking 
+      SET flip_count = flip_count - ?
+      WHERE user_id = ? OR device_fingerprint = ?
+    `);
+    
+    const result = updateStmt.run(bundleSize, userId, deviceFingerprint);
+    
+    // Record the purchase
+    db.prepare(`
+      INSERT INTO payments (
+        user_id, amount, currency, payment_type, 
+        payment_method, status, description
+      ) VALUES (?, ?, ?, ?, ?, ?, ?)
+    `).run(
+      userId, 
+      100, // $1.00 in cents
+      'usd',
+      'flip_bundle',
+      'stripe',
+      'completed',
+      `${bundleSize} flip bundle`
+    );
+    
+    return result.changes > 0;
+  } catch (error) {
+    console.error('Error adding flip bundle:', error);
+    return false;
+  }
+}
+
+/**
  * Get flip history for a user
  */
 async function getFlipHistory(userId, deviceFingerprint, limit = 50) {
@@ -191,6 +234,7 @@ module.exports = {
   trackFlip,
   requiresPayment,
   markAsPaid,
+  addFlipBundle,
   getFlipHistory,
   FREE_FLIP_LIMIT
 };

@@ -47,7 +47,7 @@ router.post('/checkout', async (req, res) => {
     // TODO: Implement Stripe checkout
     // For now, return mock response
     const mockCheckoutUrl = payment_type === 'single' 
-      ? 'https://checkout.stripe.com/pay/mock-single-flip'
+      ? 'https://checkout.stripe.com/pay/mock-flip-bundle-5'
       : 'https://checkout.stripe.com/pay/mock-pro-subscription';
     
     res.json({
@@ -64,10 +64,10 @@ router.post('/checkout', async (req, res) => {
           price_data: {
             currency: 'usd',
             product_data: {
-              name: 'Single Flip',
-              description: 'Unlock one item analysis'
+              name: '5 Flip Bundle',
+              description: 'Get 5 additional scans'
             },
-            unit_amount: 100, // $1.00
+            unit_amount: 100, // $1.00 for 5 flips
           },
           quantity: 1,
         }

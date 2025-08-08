@@ -16,6 +16,7 @@ const UpgradeModal = ({
   isVisible, 
   onClose, 
   onSelectPayment,
+  onLearnMore,
   currentFlipCount = 3,
   isProcessing = false 
 }) => {
@@ -82,7 +83,7 @@ const UpgradeModal = ({
           isPrimary && styles.optionButtonTextPrimary
         ]}>
           {isProcessing ? 'Processing...' : 
-           isPrimary ? 'Subscribe to Flippi Pro' : 'Unlock for $1'}
+           isPrimary ? 'Subscribe to Flippi Pro' : 'Get 5 Flips for $1'}
         </Text>
       </View>
     </TouchableOpacity>
@@ -109,7 +110,7 @@ const UpgradeModal = ({
 
               <View style={styles.header}>
                 <Text style={styles.headerIcon}>👋</Text>
-                <Text style={styles.title}>You've used your 3 free flips!</Text>
+                <Text style={styles.title}>You've used your 20 free flips!</Text>
                 <Text style={styles.subtitle}>
                   To unlock full results (resale value, Real Score, and platform tips), 
                   choose one of the following:
@@ -119,9 +120,9 @@ const UpgradeModal = ({
               <View style={styles.optionsContainer}>
                 <PaymentOption
                   icon="🔓"
-                  title="Unlock This Flip"
-                  price="$1 one-time"
-                  description="Instantly see this item's value"
+                  title="Unlock 5 More Flips"
+                  price="$1 for 5 flips"
+                  description="Get 5 additional scans to find profitable items"
                   onPress={() => handlePaymentSelect('single')}
                 />
 
@@ -145,8 +146,10 @@ const UpgradeModal = ({
               <TouchableOpacity
                 style={styles.learnMoreLink}
                 onPress={() => {
+                  if (onLearnMore) {
+                    onLearnMore();
+                  }
                   onClose();
-                  // TODO: Navigate to pricing page
                 }}
                 disabled={isProcessing}
               >

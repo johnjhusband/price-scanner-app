@@ -123,11 +123,11 @@ const PricingPage = ({ navigation, onSelectPlan }) => {
             title="🎁 Free Plan"
             price="$0"
             features={[
-              "3 flips included",
+              "20 flips included",
               "Real Score, resale value, platform recs",
               "No sign-up required"
             ]}
-            limitations={["Limited to 3 total scans"]}
+            limitations={["Limited to 20 total scans"]}
             ctaText="Start flipping — free"
             ctaAction={() => handlePlanSelect('free')}
           />
@@ -135,13 +135,13 @@ const PricingPage = ({ navigation, onSelectPlan }) => {
           <PricingTier
             title="💳 Pay As You Go"
             price="$1"
-            period="/flip"
+            period="for 5 flips"
             features={[
-              "Scan and unlock full results for one item",
+              "Get 5 additional scans for just $1",
               "Great for occasional flippers or curious shoppers",
               "No subscription, no strings"
             ]}
-            ctaText="Pay $1 to unlock next flip"
+            ctaText="Get 5 flips for $1"
             ctaAction={() => handlePlanSelect('single')}
           />
 
@@ -167,8 +167,8 @@ const PricingPage = ({ navigation, onSelectPlan }) => {
           <Text style={styles.faqTitle}>FAQ</Text>
           
           <FAQItem
-            question="Can I scan more after 3 flips?"
-            answer="Yes — you can pay $1 per flip or go Pro for unlimited access."
+            question="Can I scan more after 20 flips?"
+            answer="Yes — you can pay $1 for 5 more flips or go Pro for unlimited access."
           />
           
           <FAQItem
@@ -188,7 +188,7 @@ const PricingPage = ({ navigation, onSelectPlan }) => {
           
           <FAQItem
             question="Can I switch between plans?"
-            answer="Absolutely! You can upgrade to Pro anytime, and we'll credit any single flip purchases from the current month."
+            answer="Absolutely! You can upgrade to Pro anytime, and we'll credit any flip pack purchases from the current month."
           />
         </View>
 
