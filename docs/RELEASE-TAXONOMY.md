@@ -42,6 +42,12 @@ Comprehensive feedback learning system with pattern detection, manual overrides,
   - Added admin button for authorized users
   - Current admins: john@flippi.ai, tarahusband@gmail.com, teamflippi@gmail.com, tara@edgy.co
 
+#### Backend Fixes (Issue #124)
+- 🔍 **Preserve Detailed Analysis**
+  - Fixed backend suppression of OpenAI insights when Real Score ≤ 30
+  - Now shows valuable detection details like "Vucci" instead of "Gucci"
+  - Maintains all market insights and selling tips regardless of score
+
 ### ⚠️ Known Defects:
 
 1. **🔴 CRITICAL: Share Image Not Loading** (Issue #127)
@@ -49,9 +55,9 @@ Comprehensive feedback learning system with pattern detection, manual overrides,
    - Multiple fix attempts unsuccessful
    - Affects brand sharing functionality
 
-2. **🟡 MEDIUM: Backend Analysis Suppression** (Issue #124)
-   - Detailed insights lost when Real Score ≤ 30
-   - Generic text replaces specific findings
+2. **✅ FIXED: Backend Analysis Suppression** (Issue #124)
+   - Fixed: Now preserves detailed insights for all Real Scores
+   - Previously suppressed valuable detection like "Vucci" vs "Gucci"
 
 3. **🟢 LOW: Temporary Database Storage**
    - Feedback DB uses /tmp/ directory

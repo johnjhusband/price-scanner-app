@@ -145,6 +145,74 @@ function initializeDatabase() {
     `;
     
     db.exec(createReportsSQL);
+    
+    // Create payment and flip tracking tables
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS flip_tracking (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        device_fingerprint TEXT,
+        session_id TEXT,
+        flip_count INTEGER DEFAULT 0,
+        first_flip_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_flip_at TIMESTAMP,
+        is_paid_user BOOLEAN DEFAULT FALSE,
+        subscription_type TEXT DEFAULT 'free',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id),
+        UNIQUE(device_fingerprint)
+      )
+    `);
+    
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS flip_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        device_fingerprint TEXT,
+        analysis_id TEXT,
+        item_name TEXT,
+        price_range TEXT,
+        real_score INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT UNIQUE,
+        stripe_customer_id TEXT,
+        stripe_subscription_id TEXT,
+        plan TEXT DEFAULT 'free',
+        status TEXT DEFAULT 'active',
+        current_period_start TIMESTAMP,
+        current_period_end TIMESTAMP,
+        cancel_at_period_end BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS payments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        stripe_payment_intent_id TEXT UNIQUE,
+        amount INTEGER,
+        currency TEXT DEFAULT 'usd',
+        payment_type TEXT,
+        status TEXT,
+        metadata TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    // Create indexes for payment tables
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_flip_tracking_user_id ON flip_tracking(user_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_flip_tracking_device_fingerprint ON flip_tracking(device_fingerprint)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_flip_history_user_id ON flip_history(user_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id)`);
 
     // Test the database with a simple query
     const testQuery = db.prepare('SELECT COUNT(*) as count FROM feedback').get();

@@ -1100,14 +1100,17 @@ export default function App() {
     console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
     console.log('  - image:', !!image, image?.substring(0, 50));
     
+    // Always prefer imageBase64 as it has the correct format after analysis
+    const imageToUse = imageBase64 || image;
+    
     setIsLoading(true);
-    generateInstagramStoryImage(analysisResult, imageBase64, image).finally(() => {
+    generateInstagramStoryImage(analysisResult, imageToUse).finally(() => {
       setIsLoading(false);
     });
   };
 
   // Generate universal share image (square format)
-  const generateShareImage = async (result, base64Image = null, originalImage = null) => {
+  const generateShareImage = async (result, imageSource = null) => {
     if (!result) {
       console.log('[Share Image] No analysis result available');
       Alert.alert(
@@ -1120,8 +1123,8 @@ export default function App() {
     
     console.log('[generateShareImage] Starting with:', {
       hasResult: !!result,
-      hasBase64Image: !!base64Image,
-      hasOriginalImage: !!originalImage,
+      hasImageSource: !!imageSource,
+      imageSourceType: imageSource ? (imageSource.startsWith('data:') ? 'data URL' : 'other') : 'none',
       hasImageBase64State: !!imageBase64,
       hasImageState: !!image
     });
@@ -1186,8 +1189,8 @@ export default function App() {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
         
-        // Use base64 image which should have full data URL
-        const imageSrc = base64Image || imageBase64 || originalImage || image;
+        // Use the provided image source or fall back to state
+        let imageSrc = imageSource || imageBase64 || image;
         
         if (!imageSrc) {
           console.error('[Share Image] No image source available');
@@ -1196,6 +1199,28 @@ export default function App() {
           ctx.textAlign = 'center';
           ctx.fillText('No image available', canvas.width / 2, boxY + boxHeight/2);
           return;
+        }
+        
+        // Ensure image has proper data URL format
+        if (imageSrc && !imageSrc.startsWith('data:')) {
+          // If it's just base64, add the prefix
+          if (imageSrc.match(/^[A-Za-z0-9+/]+=*$/)) {
+            imageSrc = `data:image/jpeg;base64,${imageSrc}`;
+          }
+          // Otherwise assume it's a URI that needs to be converted
+          else if (imageSrc.startsWith('file://') || imageSrc.startsWith('http')) {
+            console.warn('[Share Image] Non-data URL detected:', imageSrc.substring(0, 50));
+            // For now, show placeholder as we can't convert URIs in browser
+            ctx.fillStyle = '#f5f5f5';
+            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+            ctx.fillStyle = '#a0a0a0';
+            ctx.font = '24px -apple-system, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Image preview unavailable', canvas.width / 2, boxY + boxHeight/2 - 20);
+            ctx.font = '18px -apple-system, system-ui, sans-serif';
+            ctx.fillText('(Original image was a file URI)', canvas.width / 2, boxY + boxHeight/2 + 10);
+            return;
+          }
         }
         
         // Create image and set up handlers
@@ -1234,7 +1259,12 @@ export default function App() {
           };
           
           // Set the source to trigger load
-          console.log('[Share Image] Loading image from:', imageSrc.substring(0, 50) + '...');
+          console.log('[Share Image] Loading image from:', imageSrc.substring(0, 100) + '...');
+          console.log('[Share Image] Image format check:');
+          console.log('  - Starts with data:?', imageSrc.startsWith('data:'));
+          console.log('  - Has base64 marker?', imageSrc.includes('base64,'));
+          console.log('  - Length:', imageSrc.length);
+          
           img.src = imageSrc;
         });
       };
@@ -1413,8 +1443,11 @@ export default function App() {
     console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
     console.log('  - image:', !!image, image?.substring(0, 50));
     
+    // Always prefer imageBase64 as it has the correct format after analysis
+    const imageToUse = imageBase64 || image;
+    
     setIsLoading(true);
-    generateShareImage(analysisResult, imageBase64, image).finally(() => {
+    generateShareImage(analysisResult, imageToUse).finally(() => {
       setIsLoading(false);
     });
   };

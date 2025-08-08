@@ -8,6 +8,7 @@ const passport = require('passport');
 const { initializeDatabase } = require('./database');
 const { getEnvironmentalTagByItemName } = require('./utils/environmentalImpact');
 const { applyOverrides } = require('./services/overrideManager');
+const { getFlipStatus, trackFlip, requiresPayment } = require('./services/flipTracker');
 
 // Load .env from shared location outside git directories
 const envPath = path.join(__dirname, '../../shared/.env');
@@ -116,6 +117,24 @@ app.get('/health', (req, res) => {
 // Enhanced image analysis endpoint
 app.post('/api/scan', upload.single('image'), async (req, res) => {
   try {
+    // Check flip limit before processing
+    const userId = req.user?.id;
+    const deviceFingerprint = req.headers['x-device-fingerprint'] || req.body.device_fingerprint;
+    const sessionId = req.session?.id;
+    
+    // Get current flip status
+    const flipStatus = await getFlipStatus(userId, deviceFingerprint, sessionId);
+    
+    // Check if payment is required
+    if (!flipStatus.can_flip) {
+      return res.status(402).json({
+        error: 'Payment required',
+        message: 'You have reached your free flip limit',
+        flip_status: flipStatus,
+        payment_required: true
+      });
+    }
+    
     if (!req.file) {
       return res.status(400).json({ 
         error: 'No image provided',
@@ -693,6 +712,27 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
       // Continue without overrides if there's an error
     }
 
+    // Track the flip
+    try {
+      const updatedFlipStatus = await trackFlip(
+        userId, 
+        deviceFingerprint, 
+        sessionId,
+        {
+          analysis_id: `analysis_${Date.now()}`,
+          item_name: analysis.item_name,
+          price_range: analysis.price_range,
+          real_score: analysis.real_score
+        }
+      );
+      
+      // Add flip status to response
+      analysis.flip_status = updatedFlipStatus;
+    } catch (trackError) {
+      console.error('Error tracking flip:', trackError);
+      // Continue without tracking on error
+    }
+    
     res.json({ 
       success: true, 
       data: analysis,  // Frontend expects 'data' not 'analysis'
@@ -700,7 +740,8 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
         fileSize: req.file.size,
         processingTime: processingTime,
         version: '2.0'
-      }
+      },
+      flip_status: flipStatus // Include current flip status
     });
 
   } catch (error) {
@@ -722,6 +763,10 @@ app.use('/auth', authRoutes);
 // Admin routes
 const adminRoutes = require('./routes/admin');
 app.use('/admin', adminRoutes);
+
+// Payment routes
+const paymentRoutes = require('./routes/payment');
+app.use('/api/payment', paymentRoutes);
 
 // Feedback route - wrap in try-catch
 const feedbackRoutes = require('./routes/feedback');
