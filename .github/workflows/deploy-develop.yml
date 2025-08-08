@@ -23,6 +23,8 @@ jobs:
             git reset --hard origin/develop
             cd backend && npm install --production
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
+            # Copy web assets that Expo doesn't include
+            cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
             # Debug: Check what directory PM2 is serving from
             echo "=== PM2 dev-frontend config ==="
             pm2 describe dev-frontend | grep -E "exec cwd|script|args" || true
