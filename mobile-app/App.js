@@ -859,10 +859,10 @@ export default function App() {
   const renderEncouragementMessage = () => {
     return (
       <View style={[styles.welcomeContainer, { flexDirection: 'row', alignItems: 'center' }]}>
-        <CameraIcon 
+        <Feather 
+          name="camera"
           size={16} 
           color={brandColors.textSecondary} 
-          strokeWidth={2}
         />
         <Text style={[styles.welcomeText, { color: brandColors.textSecondary, marginLeft: 8 }]}>
           Center your item and snap when ready.
@@ -1688,7 +1688,7 @@ export default function App() {
                   onPress={takePhoto}
                   style={[styles.actionButton, styles.primaryActionButton]}
                   variant="primary"
-                  icon={<CameraIcon size={20} color="#FFFFFF" />}
+                  icon={<Feather name="camera" size={20} color="#FFFFFF" />}
                 />
               )}
               
@@ -2064,7 +2064,7 @@ export default function App() {
                       style={[styles.shareButton, { backgroundColor: '#E1306C' }]}
                       variant="primary"
                       disabled={isLoading}
-                      icon={<CameraIcon size={20} color="#FFFFFF" />}
+                      icon={<Feather name="camera" size={20} color="#FFFFFF" />}
                     />
                     <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
                       Downloads story image to share
