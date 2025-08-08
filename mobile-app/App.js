@@ -1834,7 +1834,7 @@ export default function App() {
                     return (
                       <View style={styles.dupeAlert}>
                         <View style={styles.dupeAlertContent}>
-                          <AlertTriangle size={16} color="#EAB308" strokeWidth={2} style={{ marginRight: 8 }} />
+                          <Feather name="alert-triangle" size={16} color="#EAB308" style={{ marginRight: 8 }} />
                           <Text style={styles.dupeAlertText}>
                             This item may be a dupe. Check brand details before buying or listing.
                           </Text>
@@ -1858,7 +1858,7 @@ export default function App() {
                           accessibilityRole="button"
                           style={styles.infoIconButton}
                         >
-                          <Info size={16} color={brandColors.textSecondary} strokeWidth={2} />
+                          <Feather name="info" size={16} color={brandColors.textSecondary} />
                         </TouchableOpacity>
                       </View>
                       <View>
@@ -2025,7 +2025,7 @@ export default function App() {
                         accessibilityRole="button"
                         style={styles.missionLink}
                       >
-                        <Info size={14} color="#2E7D32" strokeWidth={2} style={{ opacity: 0.8 }} />
+                        <Feather name="info" size={14} color="#2E7D32" style={{ opacity: 0.8 }} />
                       </TouchableOpacity>
                     </View>
                   </View>
