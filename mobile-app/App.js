@@ -28,6 +28,7 @@ import FeedbackPrompt from './components/FeedbackPrompt';
 import EnterScreen from './components/EnterScreen';
 import MissionModal from './components/MissionModal';
 import PageContainer from './components/PageContainer';
+import AdminDashboard from './screens/AdminDashboard';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
 import { appleStyles } from './theme/appleStyles';
@@ -284,6 +285,7 @@ export default function App() {
   const [showMoreDetails, setShowMoreDetails] = useState(false);
   const [showMissionModal, setShowMissionModal] = useState(false);
   const [flipCount, setFlipCount] = useState(0);
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   
   const scrollViewRef = useRef(null);
   const resultsRef = useRef(null);
@@ -1486,6 +1488,12 @@ export default function App() {
       {/* You section - Exit button only - Outside content for better positioning */}
       {Platform.OS === 'web' && user && (
         <View style={styles.userSection}>
+          {/* Show admin button for specific users */}
+          {(user.email === 'john@flippi.ai' || user.email === 'tarahusband@gmail.com') && (
+            <TouchableOpacity onPress={() => setShowAdminDashboard(true)} style={styles.adminButton}>
+              <Text style={styles.adminText}>Admin</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
             <Text style={styles.exitText}>Exit</Text>
           </TouchableOpacity>
@@ -1959,6 +1967,11 @@ export default function App() {
         visible={showMissionModal} 
         onClose={() => setShowMissionModal(false)} 
       />
+      
+      <AdminDashboard
+        isVisible={showAdminDashboard}
+        onClose={() => setShowAdminDashboard(false)}
+      />
     </ScrollView>
   );
 }
@@ -2334,6 +2347,18 @@ const styles = StyleSheet.create({
   exitText: {
     fontSize: 12,
     color: brandColors.text,
+    fontWeight: typography.weights.medium,
+  },
+  adminButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: brandColors.primary,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  adminText: {
+    fontSize: 12,
+    color: '#FFFFFF',
     fontWeight: typography.weights.medium,
   },
   legalFooter: {
