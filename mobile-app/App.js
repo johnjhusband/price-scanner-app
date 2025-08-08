@@ -9,7 +9,7 @@ import { Feather } from '@expo/vector-icons';
 // Import brand components and theme
 import FlippiLogo from './components/FlippiLogo';
 import BrandButton from './components/BrandButton';
-import FeedbackPrompt from './components/FeedbackPrompt';
+import FeedbackWrapper from './components/FeedbackWrapper';
 import EnterScreen from './components/EnterScreen';
 import MissionModal from './components/MissionModal';
 import PageContainer from './components/PageContainer';
@@ -2039,7 +2039,7 @@ export default function App() {
             
             
             {analysisResult && showFeedback && (
-              <FeedbackPrompt
+              <FeedbackWrapper
                 scanData={analysisResult}
                 userDescription={productDescription}
                 imageData={imageBase64}
