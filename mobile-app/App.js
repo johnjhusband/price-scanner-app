@@ -1697,7 +1697,7 @@ export default function App() {
                 onPress={pickImage}
                 style={styles.actionButton}
                 variant="outline"
-                icon={<Upload size={20} color={brandColors.text} />}
+                icon={<Feather name="upload" size={20} color={brandColors.text} />}
               />
               
               {Platform.OS === 'web' && (
@@ -2077,7 +2077,7 @@ export default function App() {
                   style={[styles.shareButton, { backgroundColor: '#52525b' }]}
                   variant="primary"
                   disabled={isLoading}
-                  icon={<Download size={20} color="#FFFFFF" />}
+                  icon={<Feather name="download" size={20} color="#FFFFFF" />}
                 />
                 {Platform.OS === 'web' && (
                   <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
