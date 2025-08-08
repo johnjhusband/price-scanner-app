@@ -3,6 +3,9 @@ const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const { getDatabase } = require('../database');
 const { analyzeUnprocessedFeedback } = require('../services/feedbackAnalyzer');
+const { getFlaggedPatterns, resolvePattern } = require('../services/patternDetector');
+const { createOverride, toggleOverride, getAllOverrides } = require('../services/overrideManager');
+const { generateWeeklyReport, getLatestReport } = require('../services/reportGenerator');
 
 // GET /api/feedback/test - Simple test endpoint
 router.get('/test', (req, res) => {
@@ -611,6 +614,121 @@ router.get('/export', (req, res) => {
       success: false,
       error: 'Failed to export feedback',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// GET /api/feedback/patterns - Get flagged patterns
+router.get('/patterns', async (req, res) => {
+  try {
+    const patterns = await getFlaggedPatterns();
+    res.json({
+      success: true,
+      patterns: patterns
+    });
+  } catch (error) {
+    console.error('Error fetching patterns:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch patterns'
+    });
+  }
+});
+
+// POST /api/feedback/patterns/:id/resolve - Resolve a pattern
+router.post('/patterns/:id/resolve', async (req, res) => {
+  try {
+    const result = await resolvePattern(req.params.id);
+    res.json(result);
+  } catch (error) {
+    console.error('Error resolving pattern:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to resolve pattern'
+    });
+  }
+});
+
+// GET /api/feedback/overrides - Get all overrides
+router.get('/overrides', async (req, res) => {
+  try {
+    const overrides = await getAllOverrides();
+    res.json({
+      success: true,
+      overrides: overrides
+    });
+  } catch (error) {
+    console.error('Error fetching overrides:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch overrides'
+    });
+  }
+});
+
+// POST /api/feedback/overrides - Create new override
+router.post('/overrides', async (req, res) => {
+  try {
+    const result = await createOverride(req.body);
+    res.json(result);
+  } catch (error) {
+    console.error('Error creating override:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create override'
+    });
+  }
+});
+
+// PUT /api/feedback/overrides/:id/toggle - Toggle override active status
+router.put('/overrides/:id/toggle', async (req, res) => {
+  try {
+    const result = await toggleOverride(req.params.id);
+    res.json(result);
+  } catch (error) {
+    console.error('Error toggling override:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to toggle override'
+    });
+  }
+});
+
+// POST /api/feedback/reports/generate - Generate weekly report
+router.post('/reports/generate', async (req, res) => {
+  try {
+    const report = await generateWeeklyReport();
+    res.json(report);
+  } catch (error) {
+    console.error('Error generating report:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to generate report'
+    });
+  }
+});
+
+// GET /api/feedback/reports/latest - Get latest report
+router.get('/reports/latest', async (req, res) => {
+  try {
+    const report = await getLatestReport();
+    if (report) {
+      res.json({
+        success: true,
+        report: report
+      });
+    } else {
+      res.json({
+        success: true,
+        report: null,
+        message: 'No reports available yet'
+      });
+    }
+  } catch (error) {
+    console.error('Error fetching report:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch report'
     });
   }
 });

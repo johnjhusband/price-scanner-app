@@ -7,6 +7,7 @@ const session = require('express-session');
 const passport = require('passport');
 const { initializeDatabase } = require('./database');
 const { getEnvironmentalTagByItemName } = require('./utils/environmentalImpact');
+const { applyOverrides } = require('./services/overrideManager');
 
 // Load .env from shared location outside git directories
 const envPath = path.join(__dirname, '../../shared/.env');
@@ -698,6 +699,14 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
     if (analysis.real_score !== undefined && typeof analysis.real_score === 'number') {
       // Round to nearest 5
       analysis.real_score = Math.round(analysis.real_score / 5) * 5;
+    }
+    
+    // Apply manual overrides
+    try {
+      analysis = await applyOverrides(analysis);
+    } catch (overrideError) {
+      console.error('Error applying overrides:', overrideError);
+      // Continue without overrides if there's an error
     }
 
     res.json({ 

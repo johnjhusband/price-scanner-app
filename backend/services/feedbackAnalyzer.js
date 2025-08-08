@@ -1,5 +1,6 @@
 const { OpenAI } = require('openai');
 const { getDatabase } = require('../database');
+const { detectPatterns } = require('./patternDetector');
 
 // Initialize OpenAI
 const openai = new OpenAI({
@@ -145,6 +146,15 @@ async function analyzeUnprocessedFeedback() {
         results.push({
           feedback_id: feedback.id,
           success: true,
+          analysis: analysisResult.analysis
+        });
+        
+        // Detect patterns in the feedback
+        await detectPatterns({
+          feedback_text: feedback.feedback_text,
+          category: analysisResult.analysis.category,
+          sentiment: analysisResult.analysis.sentiment,
+          scan_data: scanData,
           analysis: analysisResult.analysis
         });
       } else {
