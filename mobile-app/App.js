@@ -1433,7 +1433,7 @@ export default function App() {
       
       // Real Score
       if (result.real_score) {
-        const realScoreText = `Real Score: ${result.real_score}%`;
+        const realScoreText = `Real Score: ${result.real_score}`;
         ctx.fillText(realScoreText, canvas.width / 2 - 200, yPosition);
       }
       
@@ -1445,10 +1445,10 @@ export default function App() {
       yPosition += 40;
       
       // Platform recommendation
-      if (result.platform_recommendation) {
+      if (result.recommended_platform) {
         ctx.font = '28px -apple-system, system-ui, sans-serif';
         ctx.fillStyle = '#666666';
-        ctx.fillText(`Best on: ${result.platform_recommendation}`, canvas.width / 2, yPosition);
+        ctx.fillText(`Best on: ${result.recommended_platform}`, canvas.width / 2, yPosition);
         yPosition += 40;
       }
       
