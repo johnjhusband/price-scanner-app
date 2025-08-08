@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body, validationResult } = require('express-validator');
 const { getDatabase } = require('../database');
+const { analyzeUnprocessedFeedback } = require('../services/feedbackAnalyzer');
 
 // GET /api/feedback/test - Simple test endpoint
 router.get('/test', (req, res) => {
@@ -140,6 +141,11 @@ router.get('/health', (req, res) => {
 
 // Validation rules
 const feedbackValidation = [
+  body('analysis_id')
+    .notEmpty()
+    .withMessage('analysis_id is required')
+    .isString()
+    .withMessage('analysis_id must be a string'),
   body('helped_decision')
     .optional({ nullable: true })
     .isBoolean()
@@ -211,6 +217,7 @@ router.post('/', feedbackValidation, (req, res) => {
     }
 
     const {
+      analysis_id,
       helped_decision,
       feedback_text,
       user_description,
@@ -238,12 +245,13 @@ router.post('/', feedbackValidation, (req, res) => {
     try {
       stmt = db.prepare(`
         INSERT INTO feedback (
+          analysis_id,
           helped_decision,
           feedback_text,
           user_description,
           image_data,
           scan_data
-        ) VALUES (?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?)
       `);
 
     } catch (prepError) {
@@ -273,6 +281,7 @@ router.post('/', feedbackValidation, (req, res) => {
     let result;
     try {
       result = stmt.run(
+        analysis_id,
         helped_decision === null ? null : (helped_decision ? 1 : 0),  // SQLite uses 0/1 for boolean, null for undefined
         feedback_text || null,
         user_description || null,
@@ -412,6 +421,195 @@ router.get('/list', (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to retrieve feedback',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// POST /api/feedback/analyze - Trigger GPT analysis on unprocessed feedback
+router.post('/analyze', async (req, res) => {
+  try {
+    console.log('Starting feedback analysis...');
+    const result = await analyzeUnprocessedFeedback();
+    
+    res.json({
+      success: result.success,
+      message: `Analyzed ${result.processed || 0} feedback entries`,
+      details: result
+    });
+  } catch (error) {
+    console.error('Error in analyze endpoint:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to analyze feedback',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// GET /api/feedback/admin - Admin view with analyzed feedback
+router.get('/admin', (req, res) => {
+  try {
+    const db = getDatabase();
+    const limit = parseInt(req.query.limit) || 100;
+    const category = req.query.category;
+    const sentiment = req.query.sentiment;
+    
+    let query = `
+      SELECT 
+        f.id,
+        f.analysis_id,
+        f.helped_decision,
+        f.feedback_text,
+        f.user_description,
+        f.created_at,
+        fa.sentiment,
+        fa.category,
+        fa.suggestion_type,
+        fa.summary,
+        fa.analyzed_at,
+        json_extract(f.scan_data, '$.item_name') as item_name,
+        json_extract(f.scan_data, '$.price_range') as price_range,
+        json_extract(f.scan_data, '$.real_score') as real_score,
+        json_extract(f.scan_data, '$.trending_score') as trending_score
+      FROM feedback f
+      LEFT JOIN feedback_analysis fa ON f.id = fa.feedback_id
+      WHERE 1=1
+    `;
+    
+    const params = [];
+    
+    if (category) {
+      query += ' AND fa.category = ?';
+      params.push(category);
+    }
+    
+    if (sentiment) {
+      query += ' AND fa.sentiment = ?';
+      params.push(sentiment);
+    }
+    
+    query += ' ORDER BY f.created_at DESC LIMIT ?';
+    params.push(limit);
+    
+    const feedbackData = db.prepare(query).all(...params);
+    
+    // Format the data
+    const formattedData = feedbackData.map(entry => ({
+      ...entry,
+      helped_decision: entry.helped_decision === 1 ? 'Yes' : entry.helped_decision === 0 ? 'No' : 'Not answered',
+      is_analyzed: !!entry.sentiment
+    }));
+    
+    // Get summary statistics
+    const stats = db.prepare(`
+      SELECT 
+        COUNT(*) as total_feedback,
+        SUM(CASE WHEN helped_decision = 1 THEN 1 ELSE 0 END) as positive_feedback,
+        SUM(CASE WHEN helped_decision = 0 THEN 1 ELSE 0 END) as negative_feedback,
+        COUNT(DISTINCT fa.id) as analyzed_count
+      FROM feedback f
+      LEFT JOIN feedback_analysis fa ON f.id = fa.feedback_id
+    `).get();
+    
+    // Get category breakdown
+    const categoryBreakdown = db.prepare(`
+      SELECT 
+        category,
+        COUNT(*) as count
+      FROM feedback_analysis
+      WHERE category IS NOT NULL
+      GROUP BY category
+      ORDER BY count DESC
+    `).all();
+    
+    res.json({
+      success: true,
+      stats: {
+        ...stats,
+        positive_rate: stats.total_feedback > 0 
+          ? ((stats.positive_feedback / stats.total_feedback) * 100).toFixed(1) + '%'
+          : '0%'
+      },
+      category_breakdown: categoryBreakdown,
+      feedback: formattedData
+    });
+    
+  } catch (error) {
+    console.error('Error in admin endpoint:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to retrieve admin data',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
+  }
+});
+
+// GET /api/feedback/export - Export feedback data for ML training
+router.get('/export', (req, res) => {
+  try {
+    const db = getDatabase();
+    const format = req.query.format || 'json'; // json or csv
+    
+    const exportData = db.prepare(`
+      SELECT 
+        f.*,
+        fa.sentiment,
+        fa.category,
+        fa.suggestion_type,
+        fa.summary
+      FROM feedback f
+      LEFT JOIN feedback_analysis fa ON f.id = fa.feedback_id
+      ORDER BY f.created_at DESC
+    `).all();
+    
+    // Parse scan_data for each entry
+    const processedData = exportData.map(entry => ({
+      ...entry,
+      scan_data: JSON.parse(entry.scan_data),
+      image_data: undefined // Remove blob data from export
+    }));
+    
+    if (format === 'csv') {
+      // Convert to CSV format
+      const csvHeader = 'id,analysis_id,helped_decision,feedback_text,sentiment,category,suggestion_type,summary,item_name,price_range,real_score,created_at\n';
+      const csvRows = processedData.map(row => {
+        const scanData = row.scan_data;
+        return [
+          row.id,
+          row.analysis_id,
+          row.helped_decision,
+          `"${(row.feedback_text || '').replace(/"/g, '""')}"`,
+          row.sentiment || '',
+          row.category || '',
+          row.suggestion_type || '',
+          `"${(row.summary || '').replace(/"/g, '""')}"`,
+          `"${(scanData.item_name || '').replace(/"/g, '""')}"`,
+          scanData.price_range || '',
+          scanData.real_score || '',
+          row.created_at
+        ].join(',');
+      }).join('\n');
+      
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=feedback-export-${Date.now()}.csv`);
+      res.send(csvHeader + csvRows);
+    } else {
+      // JSON format
+      res.setHeader('Content-Type', 'application/json');
+      res.setHeader('Content-Disposition', `attachment; filename=feedback-export-${Date.now()}.json`);
+      res.json({
+        export_date: new Date().toISOString(),
+        total_entries: processedData.length,
+        data: processedData
+      });
+    }
+    
+  } catch (error) {
+    console.error('Error exporting feedback:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to export feedback',
       details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }

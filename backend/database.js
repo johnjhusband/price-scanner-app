@@ -45,6 +45,7 @@ function initializeDatabase() {
     const createFeedbackTableSQL = `
       CREATE TABLE IF NOT EXISTS feedback (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
+        analysis_id TEXT NOT NULL,
         helped_decision BOOLEAN,
         feedback_text TEXT,
         user_description TEXT,
@@ -56,6 +57,36 @@ function initializeDatabase() {
     `;
     
     db.exec(createFeedbackTableSQL);
+    
+    // Add analysis_id column if it doesn't exist (for existing databases)
+    try {
+      db.exec(`ALTER TABLE feedback ADD COLUMN analysis_id TEXT`);
+      console.log('Added analysis_id column to feedback table');
+    } catch (e) {
+      // Column already exists, ignore error
+    }
+    
+    // Create feedback_analysis table for GPT categorization
+    const createAnalysisTableSQL = `
+      CREATE TABLE IF NOT EXISTS feedback_analysis (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        feedback_id INTEGER NOT NULL,
+        sentiment TEXT,
+        category TEXT,
+        suggestion_type TEXT,
+        summary TEXT,
+        gpt_response JSON,
+        analyzed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (feedback_id) REFERENCES feedback(id)
+      )
+    `;
+    
+    db.exec(createAnalysisTableSQL);
+    
+    // Create index for faster lookups
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_feedback_analysis_id ON feedback(analysis_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_feedback_created_at ON feedback(created_at)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_feedback_analysis_feedback_id ON feedback_analysis(feedback_id)`);
 
     // Test the database with a simple query
     const testQuery = db.prepare('SELECT COUNT(*) as count FROM feedback').get();

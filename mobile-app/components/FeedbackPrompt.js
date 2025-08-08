@@ -31,6 +31,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          analysis_id: scanData?.analysis_id || `analysis_${Date.now()}`,
           helped_decision: helpedDecision,
           feedback_text: feedbackText.trim(),
           user_description: userDescription || '',

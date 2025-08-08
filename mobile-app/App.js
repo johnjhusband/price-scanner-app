@@ -733,8 +733,11 @@ export default function App() {
         try {
           const data = JSON.parse(responseText);
           if (data.success && data.data) {
+            // Generate unique analysis ID for tracking
+            const analysisId = `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
             // Create a new object to ensure React detects the change
-            const newResult = { ...data.data };
+            const newResult = { ...data.data, analysis_id: analysisId };
             setAnalysisResult(newResult);
             setShowFeedback(true);
             // Increment flip count
