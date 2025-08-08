@@ -1,5 +1,81 @@
 # Flippi.ai Release Taxonomy
 
+## release-004 — August 9, 2025 (READY FOR STAGING)
+
+**Summary:**  
+Comprehensive feedback learning system with pattern detection, manual overrides, admin dashboard, and remaining UI updates from Issue #122.
+
+### ✅ Included Changes:
+
+#### Feedback Learning System (Issue #128)
+- 🧠 **Pattern Detection Engine**
+  - Monitors negative feedback for recurring issues
+  - Auto-flags patterns after 10+ occurrences
+  - Tracks brand, category, and platform issues
+  - Console notifications when patterns detected
+
+- 🔧 **Manual Override System**
+  - Admin-controlled price/score adjustments
+  - Supports percentage or fixed value changes
+  - Automatically applies during analysis
+  - Tracks application count
+
+- 📊 **Weekly Summary Reports**
+  - Automated feedback analysis every Sunday
+  - Shows sentiment breakdown and common issues
+  - Identifies most affected brands
+  - Tracks active patterns and overrides
+
+- 👨‍💼 **Admin Dashboard**
+  - Full React interface for feedback management
+  - Search, filter, and sort capabilities
+  - Pattern and override management
+  - Detailed view with original analysis
+  - Access limited to authorized users
+
+#### UI/UX Improvements (Issue #122)
+- 💬 **Feedback Prompt Update**
+  - Changed to "Have an idea for Flippi? We're listening."
+  - Removed "(optional)" label
+
+- 👤 **Admin Access**
+  - Added admin button for authorized users
+  - Current admins: john@flippi.ai, tarahusband@gmail.com, teamflippi@gmail.com, tara@edgy.co
+
+### ⚠️ Known Defects:
+
+1. **🔴 CRITICAL: Share Image Not Loading** (Issue #127)
+   - Downloads occur but image is blank
+   - Multiple fix attempts unsuccessful
+   - Affects brand sharing functionality
+
+2. **🟡 MEDIUM: Backend Analysis Suppression** (Issue #124)
+   - Detailed insights lost when Real Score ≤ 30
+   - Generic text replaces specific findings
+
+3. **🟢 LOW: Temporary Database Storage**
+   - Feedback DB uses /tmp/ directory
+   - Data may be lost on server restart
+   - Need to set FEEDBACK_DB_PATH
+
+### 📝 Technical Details:
+- Version: 2.3.0
+- New database tables: 4 (pattern_detection, manual_overrides, weekly_reports, feedback_analysis)
+- New API endpoints: 9
+- Enhanced feedback table with analysis_id
+- No new external dependencies
+
+### 🚀 Deployment Notes:
+1. Run database migrations (automatic on startup)
+2. Set FEEDBACK_DB_PATH to persistent location
+3. Verify admin email access list
+4. Monitor pattern detection logs
+5. Generate initial weekly report after deployment
+
+---
+
+# Flippi.ai Release Taxonomy
+
 ## release-003 — August 8, 2025
 
 **Summary:**  
