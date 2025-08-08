@@ -1795,18 +1795,13 @@ export default function App() {
                 {analysisResult.trending_score !== undefined && (
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Sellability</Text>
-                    <Text style={styles.resultValue}>
-                      <Text style={styles.numericalEmphasis}>{analysisResult.trending_score}/100</Text>
-                      {' '}
-                      <Text style={{ color: brandColors.accent }}>
-                        {(() => {
-                          const score = parseInt(analysisResult.trending_score);
-                          if (score >= 80) return '▲▲▲'; // Three up arrows for hot
-                          if (score >= 50) return '▲▲';   // Two up arrows for warm
-                          return '▲';                      // One up arrow for cool
-                        })()}
-                      </Text>
-                      <Text style={[styles.trendingLabel, { color: brandColors.accent }]}> - {analysisResult.trending_label || 'N/A'}</Text>
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>
+                      {analysisResult.trending_score}/100 {(() => {
+                        const score = parseInt(analysisResult.trending_score);
+                        if (score >= 80) return '▲▲▲'; // Three up arrows for hot
+                        if (score >= 50) return '▲▲';   // Two up arrows for warm
+                        return '▲';                      // One up arrow for cool
+                      })()} - {analysisResult.trending_label || 'N/A'}
                     </Text>
                   </View>
                 )}
