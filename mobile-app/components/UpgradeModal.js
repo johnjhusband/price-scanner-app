@@ -9,7 +9,7 @@ import {
   TouchableWithoutFeedback,
   ActivityIndicator
 } from 'react-native';
-import { X, Unlock, Sparkles } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { brandColors } from '../theme/brandColors';
 
 const UpgradeModal = ({ 
@@ -50,7 +50,7 @@ const UpgradeModal = ({
       )}
       
       <View style={styles.optionHeader}>
-        <Text style={styles.optionIcon}>{icon}</Text>
+        <Feather name={icon} size={32} color={isPrimary ? brandColors.primary : brandColors.text} style={styles.optionIconStyle} />
         <View style={styles.optionTitleContainer}>
           <Text style={[
             styles.optionTitle,
@@ -105,11 +105,11 @@ const UpgradeModal = ({
                 onPress={onClose}
                 disabled={isProcessing}
               >
-                <X size={24} color={brandColors.textSecondary} />
+                <Feather name="x" size={24} color={brandColors.textSecondary} />
               </TouchableOpacity>
 
               <View style={styles.header}>
-                <Text style={styles.headerIcon}>👋</Text>
+                <Feather name="alert-circle" size={48} color={brandColors.primary} style={styles.headerIconStyle} />
                 <Text style={styles.title}>You've used your 20 free flips!</Text>
                 <Text style={styles.subtitle}>
                   To unlock full results (resale value, Real Score, and platform tips), 
@@ -119,7 +119,7 @@ const UpgradeModal = ({
 
               <View style={styles.optionsContainer}>
                 <PaymentOption
-                  icon="🔓"
+                  icon="unlock"
                   title="Unlock 5 More Flips"
                   price="$1 for 5 flips"
                   description="Get 5 additional scans to find profitable items"
@@ -127,7 +127,7 @@ const UpgradeModal = ({
                 />
 
                 <PaymentOption
-                  icon="✨"
+                  icon="star"
                   title="Go Pro"
                   price="$9/month unlimited flips"
                   description="Full access to resale value, Real Score, platforms, downloads"
@@ -206,8 +206,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 32,
   },
-  headerIcon: {
-    fontSize: 48,
+  headerIconStyle: {
     marginBottom: 16,
   },
   title: {
@@ -259,8 +258,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  optionIcon: {
-    fontSize: 32,
+  optionIconStyle: {
     marginRight: 12,
   },
   optionTitleContainer: {

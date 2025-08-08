@@ -8,7 +8,7 @@ import {
   Platform,
   TouchableWithoutFeedback
 } from 'react-native';
-import { X } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import PricingPage from '../screens/PricingPage';
 import { brandColors } from '../theme/brandColors';
 
@@ -30,7 +30,7 @@ const PricingModal = ({ visible, onClose, onSelectPlan }) => {
                 accessibilityLabel="Close pricing"
                 accessibilityRole="button"
               >
-                <X size={24} color={brandColors.textSecondary} />
+                <Feather name="x" size={24} color={brandColors.textSecondary} />
               </TouchableOpacity>
               
               <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>

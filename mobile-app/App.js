@@ -3,23 +3,8 @@ import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOp
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
-// Import Lucide icons - our licensed icon system
-import { 
-  Camera as CameraIcon, 
-  Upload, 
-  Clipboard, 
-  Info,
-  Share2,
-  Download,
-  Heart,
-  Sparkles,
-  Package,
-  BadgeCheck,
-  Flame,
-  Repeat,
-  Briefcase,
-  AlertTriangle
-} from 'lucide-react-native';
+// Import Feather icons per brand guide
+import { Feather } from '@expo/vector-icons';
 
 // Import brand components and theme
 import FlippiLogo from './components/FlippiLogo';

@@ -8,7 +8,7 @@ import {
   Platform,
   Linking
 } from 'react-native';
-import { Check, X } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 import { brandColors } from '../theme/brandColors';
 import PageContainer from '../components/PageContainer';
 
@@ -25,6 +25,7 @@ const PricingPage = ({ navigation, onSelectPlan }) => {
 
   const PricingTier = ({ 
     title, 
+    icon,
     price, 
     period, 
     features, 
@@ -44,7 +45,10 @@ const PricingPage = ({ navigation, onSelectPlan }) => {
         </View>
       )}
       
-      <Text style={styles.tierTitle}>{title}</Text>
+      <View style={styles.tierHeader}>
+        {icon && <Feather name={icon} size={24} color={brandColors.primary} style={styles.tierIcon} />}
+        <Text style={styles.tierTitle}>{title}</Text>
+      </View>
       <View style={styles.priceContainer}>
         <Text style={styles.price}>{price}</Text>
         {period && <Text style={styles.period}>{period}</Text>}
@@ -53,14 +57,14 @@ const PricingPage = ({ navigation, onSelectPlan }) => {
       <View style={styles.featuresContainer}>
         {features.map((feature, index) => (
           <View key={index} style={styles.featureRow}>
-            <Check size={20} color={brandColors.success} />
+            <Feather name="check" size={20} color={brandColors.success} />
             <Text style={styles.featureText}>{feature}</Text>
           </View>
         ))}
         
         {limitations && limitations.map((limitation, index) => (
           <View key={`limit-${index}`} style={styles.featureRow}>
-            <X size={20} color={brandColors.textSecondary} />
+            <Feather name="x" size={20} color={brandColors.textSecondary} />
             <Text style={[styles.featureText, styles.limitationText]}>
               {limitation}
             </Text>
@@ -120,7 +124,8 @@ const PricingPage = ({ navigation, onSelectPlan }) => {
 
         <View style={styles.pricingGrid}>
           <PricingTier
-            title="🎁 Free Plan"
+            title="Free Plan"
+            icon="gift"
             price="$0"
             features={[
               "20 flips included",
@@ -133,7 +138,8 @@ const PricingPage = ({ navigation, onSelectPlan }) => {
           />
 
           <PricingTier
-            title="💳 Pay As You Go"
+            title="Pay As You Go"
+            icon="credit-card"
             price="$1"
             period="for 5 flips"
             features={[
@@ -146,7 +152,8 @@ const PricingPage = ({ navigation, onSelectPlan }) => {
           />
 
           <PricingTier
-            title="✨ Flippi Pro"
+            title="Flippi Pro"
+            icon="star"
             price="$9"
             period="/month"
             features={[
@@ -268,11 +275,18 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
   },
+  tierHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  tierIcon: {
+    marginRight: 8,
+  },
   tierTitle: {
     fontSize: 24,
     fontWeight: 'bold',
     color: brandColors.text,
-    marginBottom: 16,
   },
   priceContainer: {
     flexDirection: 'row',

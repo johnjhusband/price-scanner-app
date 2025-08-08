@@ -12,7 +12,7 @@ import {
   Alert
 } from 'react-native';
 import { brandColors, typography } from '../theme/brandColors';
-import { Search, Filter, TrendingUp, TrendingDown, AlertCircle, ChevronDown, ChevronUp, X, RefreshCw } from 'lucide-react-native';
+import { Feather } from '@expo/vector-icons';
 
 const AdminDashboard = ({ isVisible, onClose }) => {
   const [feedbackData, setFeedbackData] = useState([]);
@@ -191,7 +191,7 @@ const AdminDashboard = ({ isVisible, onClose }) => {
             setSelectedCategory(categories[nextIndex]);
           }}
         >
-          <Filter size={16} color={brandColors.text} />
+          <Feather name="filter" size={16} color={brandColors.text} />
           <Text style={styles.filterText}>
             {selectedCategory === 'all' ? 'All Categories' : categoryLabels[selectedCategory]}
           </Text>
@@ -221,8 +221,8 @@ const AdminDashboard = ({ isVisible, onClose }) => {
           }}
         >
           {sortOrder === 'desc' ? 
-            <ChevronDown size={16} color={brandColors.text} /> : 
-            <ChevronUp size={16} color={brandColors.text} />
+            <Feather name="chevron-down" size={16} color={brandColors.text} /> : 
+            <Feather name="chevron-up" size={16} color={brandColors.text} />
           }
           <Text style={styles.filterText}>Date</Text>
         </TouchableOpacity>
@@ -232,10 +232,10 @@ const AdminDashboard = ({ isVisible, onClose }) => {
 
   const renderFeedbackItem = (item) => {
     const sentimentIcon = item.sentiment === 'positive' ? 
-      <TrendingUp size={16} color={sentimentColors.positive} /> :
+      <Feather name="trending-up" size={16} color={sentimentColors.positive} /> :
       item.sentiment === 'negative' ?
-      <TrendingDown size={16} color={sentimentColors.negative} /> :
-      <AlertCircle size={16} color={sentimentColors.neutral} />;
+      <Feather name="trending-down" size={16} color={sentimentColors.negative} /> :
+      <Feather name="alert-circle" size={16} color={sentimentColors.neutral} />;
 
     return (
       <TouchableOpacity 
@@ -296,7 +296,7 @@ const AdminDashboard = ({ isVisible, onClose }) => {
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Feedback Details</Text>
             <TouchableOpacity onPress={() => setSelectedFeedback(null)}>
-              <X size={24} color={brandColors.text} />
+              <Feather name="x" size={24} color={brandColors.text} />
             </TouchableOpacity>
           </View>
           
@@ -376,14 +376,14 @@ const AdminDashboard = ({ isVisible, onClose }) => {
                 <ActivityIndicator size="small" color="#FFFFFF" />
               ) : (
                 <>
-                  <RefreshCw size={16} color="#FFFFFF" />
+                  <Feather name="refresh-cw" size={16} color="#FFFFFF" />
                   <Text style={styles.analyzeButtonText}>Analyze</Text>
                 </>
               )}
             </TouchableOpacity>
           )}
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-            <X size={24} color={brandColors.text} />
+            <Feather name="x" size={24} color={brandColors.text} />
           </TouchableOpacity>
         </View>
       </View>
