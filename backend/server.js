@@ -521,26 +521,10 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
     
     // No hard-coded trending boosts - let OpenAI analyze based on its training
 
-    // Adjust for low real scores
-    if (realScore <= 30) {
-      // Override pricing for low confidence items
-      analysis.price_range = "$5-$50";
-      analysis.resale_average = "$25";
-      
-      // Replace market insights for uncertain items
-      analysis.market_insights = "Limited market data available.";
-      
-      // Replace selling tips with platform-safe advice
-      analysis.selling_tips = "Clean with care. Style it your way.";
-      
-      // Adjust style tier
-      analysis.style_tier = "Entry";
-      
-      // Platform-safe fallback suggestions
-      analysis.recommended_platform = "Craft Fair";
-      analysis.recommended_live_platform = "Personal Use";
-    } else if (realScore < 70 && isLuxuryBrand) {
-      // For luxury items with medium confidence (31-69), avoid authentication platforms
+    // Keep detailed analysis for all scores - don't suppress valuable insights
+    // Only adjust platforms for medium confidence luxury items
+    if (realScore < 70 && isLuxuryBrand) {
+      // For luxury items with medium confidence (<70), avoid authentication platforms
       const authPlatforms = ['The RealReal', 'Vestiaire Collective', 'Rebag', 'Fashionphile'];
       
       if (authPlatforms.includes(analysis.recommended_platform)) {
