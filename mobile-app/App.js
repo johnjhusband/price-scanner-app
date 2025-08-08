@@ -1738,23 +1738,6 @@ export default function App() {
                     </View>
                   )}
                   
-                  {analysisResult.recommended_platform && (
-                    <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel]}>Best Platforms</Text>
-                      <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 18 }]}>
-                        {(() => {
-                          const platforms = [];
-                          if (analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown') {
-                            platforms.push(analysisResult.recommended_live_platform === 'uknown' ? 'Personal Use' : analysisResult.recommended_live_platform);
-                          }
-                          if (analysisResult.recommended_platform && analysisResult.recommended_platform !== 'uknown') {
-                            platforms.push(analysisResult.recommended_platform === 'uknown' ? 'Craft Fair' : analysisResult.recommended_platform);
-                          }
-                          return platforms.join(', ') || 'Craft Fair, Personal Use';
-                        })()}
-                      </Text>
-                    </View>
-                  )}
                 </View>
                 
                 {/* TOGGLE BUTTON */}
@@ -1789,6 +1772,24 @@ export default function App() {
                         {analysisResult.style_tier}
                       </Text>
                     </View>
+                    
+                    {analysisResult.recommended_platform && (
+                      <View style={styles.resultItem}>
+                        <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Platforms</Text>
+                        <Text style={[styles.resultValue, { color: brandColors.text }]}>
+                          {(() => {
+                            const platforms = [];
+                            if (analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown') {
+                              platforms.push(analysisResult.recommended_live_platform === 'uknown' ? 'Personal Use' : analysisResult.recommended_live_platform);
+                            }
+                            if (analysisResult.recommended_platform && analysisResult.recommended_platform !== 'uknown') {
+                              platforms.push(analysisResult.recommended_platform === 'uknown' ? 'Craft Fair' : analysisResult.recommended_platform);
+                            }
+                            return platforms.join(', ') || 'Craft Fair, Personal Use';
+                          })()}
+                        </Text>
+                      </View>
+                    )}
                     
                 
                 {analysisResult.trending_score !== undefined && (
