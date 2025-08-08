@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import { brandColors, typography } from '../theme/brandColors';
 import { touchTargets, a11yLabels } from '../theme/accessibility';
 import { Feather } from '@expo/vector-icons';
+import useVoiceInput from '../hooks/useVoiceInput';
 
 const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) => {
   const [helpedDecision, setHelpedDecision] = useState(null);
   const [feedbackText, setFeedbackText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const { isSupported, isListening, error, startListening, stopListening } = useVoiceInput();
 
   const handleSubmit = async () => {
     // Validate that user has either selected Yes/No or entered text
@@ -120,18 +122,56 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
         </TouchableOpacity>
       </View>
 
-      <TextInput
-        style={styles.textInput}
-        placeholder="Have an idea for Flippi? We're listening."
-        placeholderTextColor={brandColors.disabledText}
-        accessibilityLabel="Additional feedback text input"
-        value={feedbackText}
-        onChangeText={setFeedbackText}
-        multiline
-        numberOfLines={3}
-        maxLength={500}
-        editable={!isSubmitting}
-      />
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={[styles.textInput, isSupported && styles.textInputWithMic]}
+          placeholder="Have an idea for Flippi? We're listening."
+          placeholderTextColor={brandColors.disabledText}
+          accessibilityLabel="Additional feedback text input"
+          value={feedbackText}
+          onChangeText={setFeedbackText}
+          multiline
+          numberOfLines={3}
+          maxLength={500}
+          editable={!isSubmitting}
+        />
+        {isSupported && Platform.OS === 'web' && (
+          <TouchableOpacity
+            style={[styles.micButton, isListening && styles.micButtonActive]}
+            onPress={() => {
+              if (isListening) {
+                stopListening();
+              } else {
+                startListening((transcript) => {
+                  setFeedbackText(prevText => {
+                    // Append to existing text with a space if needed
+                    const separator = prevText && !prevText.endsWith(' ') ? ' ' : '';
+                    return prevText + separator + transcript;
+                  });
+                });
+              }
+            }}
+            disabled={isSubmitting}
+            accessibilityLabel={isListening ? "Stop voice input" : "Start voice input"}
+          >
+            {isListening ? (
+              <ActivityIndicator size="small" color="#FFFFFF" />
+            ) : (
+              <Feather 
+                name={isListening ? "mic-off" : "mic"} 
+                size={20} 
+                color="#FFFFFF" 
+              />
+            )}
+          </TouchableOpacity>
+        )}
+      </View>
+      {error && (
+        <Text style={styles.errorText}>{error}</Text>
+      )}
+      {isListening && (
+        <Text style={styles.listeningText}>Listening...</Text>
+      )}
 
       {(helpedDecision !== null || feedbackText.trim()) && (
         <TouchableOpacity
@@ -218,6 +258,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 12,
   },
+  inputContainer: {
+    position: 'relative',
+    marginBottom: 15,
+  },
   textInput: {
     backgroundColor: brandColors.background,
     borderWidth: 1,
@@ -228,9 +272,46 @@ const styles = StyleSheet.create({
     fontFamily: typography.bodyFont,
     minHeight: 100,
     textAlignVertical: 'top',
-    marginBottom: 15,
     color: brandColors.text,
     lineHeight: 27,
+  },
+  textInputWithMic: {
+    paddingRight: 60, // Make room for mic button
+  },
+  micButton: {
+    position: 'absolute',
+    right: 8,
+    bottom: 8,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: brandColors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  micButtonActive: {
+    backgroundColor: brandColors.error,
+  },
+  errorText: {
+    color: brandColors.error,
+    fontSize: 14,
+    marginTop: -10,
+    marginBottom: 10,
+    paddingHorizontal: 16,
+  },
+  listeningText: {
+    color: brandColors.primary,
+    fontSize: 14,
+    marginTop: -10,
+    marginBottom: 10,
+    paddingHorizontal: 16,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   submitButton: {
     backgroundColor: '#000000', // Black for primary CTAs
