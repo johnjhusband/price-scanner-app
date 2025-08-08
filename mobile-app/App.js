@@ -29,6 +29,7 @@ import EnterScreen from './components/EnterScreen';
 import MissionModal from './components/MissionModal';
 import PageContainer from './components/PageContainer';
 import AdminDashboard from './screens/AdminDashboard';
+import PricingPage from './screens/PricingPage';
 import UpgradeModal from './components/UpgradeModal';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
@@ -289,6 +290,7 @@ export default function App() {
   const [flipCount, setFlipCount] = useState(0);
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showPricingPage, setShowPricingPage] = useState(false);
   const [flipStatus, setFlipStatus] = useState(null);
   const [deviceFingerprint, setDeviceFingerprint] = useState(null);
   
@@ -1625,7 +1627,7 @@ export default function App() {
         <View style={styles.userSection}>
           {/* Show pricing link for all users */}
           <TouchableOpacity 
-            onPress={() => Alert.alert('Pricing', 'Pricing page coming soon!')} 
+            onPress={() => setShowPricingPage(true)} 
             style={styles.pricingButton}
           >
             <Text style={styles.pricingText}>Pricing</Text>
@@ -2125,10 +2127,23 @@ export default function App() {
         onClose={() => setShowAdminDashboard(false)}
       />
       
+      {showPricingPage && (
+        <PricingPage
+          navigation={{
+            goBack: () => setShowPricingPage(false)
+          }}
+          onSelectPlan={handlePaymentSelect}
+        />
+      )}
+      
       <UpgradeModal
         isVisible={showUpgradeModal}
         onClose={() => setShowUpgradeModal(false)}
         onSelectPayment={handlePaymentSelect}
+        onLearnMore={() => {
+          setShowUpgradeModal(false);
+          setShowPricingPage(true);
+        }}
         currentFlipCount={flipStatus?.flips_used || 0}
       />
     </ScrollView>
