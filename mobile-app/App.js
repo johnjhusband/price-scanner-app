@@ -1626,7 +1626,7 @@ export default function App() {
       {Platform.OS === 'web' && user && (
         <View style={styles.userSection}>
           {/* Show admin button for specific users */}
-          {(user.email === 'john@flippi.ai' || user.email === 'tarahusband@gmail.com' || user.email === 'teamflippi@gmail.com' || user.email === 'tara@edgy.co') && (
+          {(user.email === 'john@flippi.ai' || user.email === 'tarahusband@gmail.com' || user.email === 'teamflippi@gmail.com' || user.email === 'tara@edgy.co' || user.email === 'john@husband.llc') && (
             <TouchableOpacity onPress={() => setShowAdminDashboard(true)} style={styles.adminButton}>
               <Text style={styles.adminText}>Admin</Text>
             </TouchableOpacity>
