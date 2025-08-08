@@ -1152,7 +1152,7 @@ export default function App() {
       ctx.font = 'bold 64px -apple-system, system-ui, sans-serif';
       ctx.fillText('flippi.ai', canvas.width / 2, 100);
       
-      // Item image - Enhanced to ensure it displays
+      // Item image - Fixed to use base64 data
       const drawItemImage = async () => {
         const boxWidth = 800;
         const boxHeight = 380;
@@ -1164,25 +1164,52 @@ export default function App() {
         ctx.lineWidth = 2;
         ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
         
-        if (image) {
+        // Use imageBase64 which is always available after analysis
+        const imageToUse = imageBase64 || image;
+        
+        if (imageToUse) {
           try {
-            console.log('[Share Image] Loading image from:', image.substring(0, 50) + '...');
+            console.log('[Share Image] Loading image, type:', imageToUse.substring(0, 30));
             const img = new Image();
             
-            // For data URLs, we don't need CORS
-            if (image.startsWith('data:')) {
-              img.src = image;
+            // Ensure we have a data URL
+            if (imageToUse.startsWith('data:')) {
+              // Already a data URL
+              img.src = imageToUse;
+            } else if (imageToUse.startsWith('blob:')) {
+              // Convert blob URL to data URL
+              console.log('[Share Image] Converting blob URL to data URL');
+              const response = await fetch(imageToUse);
+              const blob = await response.blob();
+              const reader = new FileReader();
+              
+              const dataUrl = await new Promise((resolve, reject) => {
+                reader.onload = (e) => resolve(e.target.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(blob);
+              });
+              
+              img.src = dataUrl;
             } else {
+              // File URI or other format
               img.crossOrigin = 'anonymous';
-              img.src = image;
+              img.src = imageToUse;
             }
             
+            // Wait for image to load with timeout
             await new Promise((resolve, reject) => {
+              const timeout = setTimeout(() => {
+                reject(new Error('Image load timeout'));
+              }, 5000);
+              
               img.onload = () => {
+                clearTimeout(timeout);
                 console.log('[Share Image] Image loaded successfully:', img.width, 'x', img.height);
                 resolve();
               };
+              
               img.onerror = (err) => {
+                clearTimeout(timeout);
                 console.error('[Share Image] Image load error:', err);
                 reject(err);
               };
