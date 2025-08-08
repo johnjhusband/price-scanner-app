@@ -60,6 +60,22 @@ function initializeDatabase() {
     
     db.exec(createUsersTableSQL);
     
+    // Add new columns to existing users table if they don't exist
+    const userColumns = ['login_count', 'scan_count', 'feedback_count', 'first_login', 'last_login', 'updated_at'];
+    userColumns.forEach(column => {
+      try {
+        if (column === 'login_count' || column === 'scan_count' || column === 'feedback_count') {
+          db.exec(`ALTER TABLE users ADD COLUMN ${column} INTEGER DEFAULT 0`);
+          console.log(`Added ${column} column to users table`);
+        } else {
+          db.exec(`ALTER TABLE users ADD COLUMN ${column} TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
+          console.log(`Added ${column} column to users table`);
+        }
+      } catch (e) {
+        // Column already exists, ignore error
+      }
+    });
+    
     // Create indexes for users table
     db.exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
     db.exec(`CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)`);
