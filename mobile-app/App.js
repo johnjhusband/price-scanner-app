@@ -1090,6 +1090,11 @@ export default function App() {
 
   // Handle Instagram Story share
   const handleInstagramStoryShare = () => {
+    console.log('[IG Story Share] Starting with:');
+    console.log('  - analysisResult:', !!analysisResult);
+    console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
+    console.log('  - image:', !!image, image?.substring(0, 50));
+    
     setIsLoading(true);
     generateInstagramStoryImage(analysisResult, imageBase64, image).finally(() => {
       setIsLoading(false);
@@ -1165,114 +1170,145 @@ export default function App() {
         ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
         
         // Use passed parameters or fall back to component state
-        const imageBase64ToUse = base64Image || imageBase64;
         const imageToUse = originalImage || image;
+        const imageBase64ToUse = base64Image || imageBase64;
         
-        // Debug: Log what images we have available
-        console.log('[Share Image Debug] base64Image param:', !!base64Image);
-        console.log('[Share Image Debug] originalImage param:', !!originalImage);
-        console.log('[Share Image Debug] imageBase64ToUse available:', !!imageBase64ToUse);
-        console.log('[Share Image Debug] imageBase64ToUse length:', imageBase64ToUse?.length);
-        console.log('[Share Image Debug] imageToUse available:', !!imageToUse);
-        console.log('[Share Image Debug] imageToUse type:', imageToUse?.substring(0, 30));
+        // Enhanced debugging
+        console.log('[Share Image Debug] ===== START DEBUG =====');
+        console.log('[Share Image Debug] originalImage param:', !!originalImage, originalImage?.substring(0, 50));
+        console.log('[Share Image Debug] image state:', !!image, image?.substring(0, 50));
+        console.log('[Share Image Debug] base64Image param:', !!base64Image, base64Image?.substring(0, 50));
+        console.log('[Share Image Debug] imageBase64 state:', !!imageBase64, imageBase64?.substring(0, 50));
+        console.log('[Share Image Debug] ===== END DEBUG =====');
         
         // Try different image sources
         let imageLoaded = false;
         
-        // Method 1: Try imageBase64 first (most reliable)
-        if (imageBase64ToUse && !imageLoaded) {
+        // Method 1: Try original image first (Option B)
+        if (imageToUse && !imageLoaded) {
           try {
-            console.log('[Share Image] Trying imageBase64ToUse...');
+            console.log('[Share Image] Method 1: Trying original image...');
             const img = new Image();
             
-            // Set up promise for load/error
+            // Allow CORS for cross-origin images
+            img.crossOrigin = 'anonymous';
+            
+            // Set up promise for load/error with timeout
             const loadPromise = new Promise((resolve, reject) => {
+              const timeout = setTimeout(() => {
+                reject(new Error('Image load timeout'));
+              }, 5000);
+              
               img.onload = () => {
-                console.log('[Share Image] imageBase64ToUse loaded!', img.width, 'x', img.height);
+                clearTimeout(timeout);
+                console.log('[Share Image] Original image loaded!', img.width, 'x', img.height);
                 resolve(true);
               };
+              
               img.onerror = (e) => {
-                console.error('[Share Image] imageBase64ToUse failed to load:', e);
-                reject(e);
+                clearTimeout(timeout);
+                console.error('[Share Image] Original image error event:', e);
+                console.error('[Share Image] Image src that failed:', img.src);
+                reject(new Error('Image load error'));
               };
             });
             
-            // Set source after handlers (already has data URL prefix)
-            img.src = imageBase64ToUse;
+            // Set source
+            console.log('[Share Image] Setting img.src to:', imageToUse.substring(0, 100));
+            img.src = imageToUse;
             
             // Wait for load
             await loadPromise;
             
+            // Clear the area first
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+            
             // Draw the image
-            const scale = Math.min(boxWidth / img.width, boxHeight / img.height);
+            const scale = Math.min(boxWidth / img.width, boxHeight / img.height) * 0.9; // 90% to ensure padding
             const width = img.width * scale;
             const height = img.height * scale;
             const x = boxX + (boxWidth - width) / 2;
             const y = boxY + (boxHeight - height) / 2;
             
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
             ctx.drawImage(img, x, y, width, height);
-            
             imageLoaded = true;
-            console.log('[Share Image] Successfully drew imageBase64');
+            console.log('[Share Image] Successfully drew original image at', x, y, width, height);
           } catch (error) {
-            console.error('[Share Image] Failed with imageBase64:', error);
+            console.error('[Share Image] Method 1 failed:', error.message);
           }
         }
         
-        // Method 2: Try original image
-        if (image && !imageLoaded) {
+        // Method 2: Try base64 if original failed
+        if (imageBase64ToUse && !imageLoaded) {
           try {
-            console.log('[Share Image] Trying original image...');
+            console.log('[Share Image] Method 2: Trying base64...');
             const img = new Image();
             
-            // If it's a blob URL, we need to handle it differently
-            if (image.startsWith('blob:')) {
-              console.log('[Share Image] Detected blob URL, skipping for now');
-              // Skip blob URLs for now as they're problematic
-            } else {
-              const loadPromise = new Promise((resolve, reject) => {
-                img.onload = () => {
-                  console.log('[Share Image] Original image loaded!', img.width, 'x', img.height);
-                  resolve(true);
-                };
-                img.onerror = (e) => {
-                  console.error('[Share Image] Original image failed:', e);
-                  reject(e);
-                };
-              });
+            // Set up promise for load/error
+            const loadPromise = new Promise((resolve, reject) => {
+              const timeout = setTimeout(() => {
+                reject(new Error('Base64 load timeout'));
+              }, 5000);
               
-              img.src = image;
-              await loadPromise;
+              img.onload = () => {
+                clearTimeout(timeout);
+                console.log('[Share Image] Base64 loaded!', img.width, 'x', img.height);
+                resolve(true);
+              };
               
-              // Draw the image
-              const scale = Math.min(boxWidth / img.width, boxHeight / img.height);
-              const width = img.width * scale;
-              const height = img.height * scale;
-              const x = boxX + (boxWidth - width) / 2;
-              const y = boxY + (boxHeight - height) / 2;
-              
-              ctx.fillStyle = '#ffffff';
-              ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-              ctx.drawImage(img, x, y, width, height);
-              
-              imageLoaded = true;
-              console.log('[Share Image] Successfully drew original image');
-            }
+              img.onerror = (e) => {
+                clearTimeout(timeout);
+                console.error('[Share Image] Base64 error:', e);
+                reject(new Error('Base64 load error'));
+              };
+            });
+            
+            // Set source
+            console.log('[Share Image] Setting base64 src, length:', imageBase64ToUse.length);
+            img.src = imageBase64ToUse;
+            
+            // Wait for load
+            await loadPromise;
+            
+            // Clear and draw
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+            
+            const scale = Math.min(boxWidth / img.width, boxHeight / img.height) * 0.9;
+            const width = img.width * scale;
+            const height = img.height * scale;
+            const x = boxX + (boxWidth - width) / 2;
+            const y = boxY + (boxHeight - height) / 2;
+            
+            ctx.drawImage(img, x, y, width, height);
+            imageLoaded = true;
+            console.log('[Share Image] Successfully drew base64 image');
           } catch (error) {
-            console.error('[Share Image] Failed with original image:', error);
+            console.error('[Share Image] Method 2 failed:', error.message);
           }
         }
         
-        // If nothing worked, show placeholder
+        // If nothing worked, show placeholder with debug info
         if (!imageLoaded) {
-          console.error('[Share Image] No image could be loaded, showing placeholder');
+          console.error('[Share Image] CRITICAL: No image could be loaded');
+          console.error('[Share Image] Available sources:');
+          console.error('  - originalImage:', !!originalImage);
+          console.error('  - image:', !!image);
+          console.error('  - base64Image:', !!base64Image);
+          console.error('  - imageBase64:', !!imageBase64);
+          
           ctx.fillStyle = '#f5f5f5';
           ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
           ctx.fillStyle = '#a0a0a0';
           ctx.font = '32px -apple-system, system-ui, sans-serif';
           ctx.fillText('Image could not be loaded', canvas.width / 2, boxY + boxHeight/2);
+          
+          // Add debug text in development
+          if (window.location.hostname.includes('blue')) {
+            ctx.font = '16px monospace';
+            ctx.fillText(`Sources: img:${!!image} b64:${!!imageBase64}`, canvas.width / 2, boxY + boxHeight/2 + 40);
+          }
         }
       };
       
@@ -1423,6 +1459,11 @@ export default function App() {
 
   // Handle universal share image download
   const handleDownloadShareImage = () => {
+    console.log('[Download Share] Starting download with:');
+    console.log('  - analysisResult:', !!analysisResult);
+    console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
+    console.log('  - image:', !!image, image?.substring(0, 50));
+    
     setIsLoading(true);
     generateShareImage(analysisResult, imageBase64, image).finally(() => {
       setIsLoading(false);
