@@ -29,7 +29,7 @@ import EnterScreen from './components/EnterScreen';
 import MissionModal from './components/MissionModal';
 import PageContainer from './components/PageContainer';
 import AdminDashboard from './screens/AdminDashboard';
-import PricingPage from './screens/PricingPage';
+import PricingModal from './components/PricingModal';
 import UpgradeModal from './components/UpgradeModal';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
@@ -1625,14 +1625,6 @@ export default function App() {
       {/* You section - Exit button only - Outside content for better positioning */}
       {Platform.OS === 'web' && user && (
         <View style={styles.userSection}>
-          {/* Show pricing link for all users */}
-          <TouchableOpacity 
-            onPress={() => setShowPricingPage(true)} 
-            style={styles.pricingButton}
-          >
-            <Text style={styles.pricingText}>Pricing</Text>
-          </TouchableOpacity>
-          
           {/* Show admin button for specific users */}
           {(user.email === 'john@flippi.ai' || user.email === 'tarahusband@gmail.com' || user.email === 'teamflippi@gmail.com' || user.email === 'tara@edgy.co') && (
             <TouchableOpacity onPress={() => setShowAdminDashboard(true)} style={styles.adminButton}>
@@ -2109,6 +2101,21 @@ export default function App() {
       
       {/* Legal Footer */}
       <View style={styles.legalFooter}>
+        <View style={styles.footerLinks}>
+          <TouchableOpacity
+            onPress={() => setShowPricingPage(true)}
+            style={styles.footerLink}
+          >
+            <Text style={styles.footerLinkText}>Pricing</Text>
+          </TouchableOpacity>
+          <Text style={styles.footerDivider}>•</Text>
+          <TouchableOpacity
+            onPress={() => setShowMissionModal(true)}
+            style={styles.footerLink}
+          >
+            <Text style={styles.footerLinkText}>Mission</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={[styles.legalText, { marginBottom: 4 }]}>
           ai makes mistakes. check important info
         </Text>
@@ -2127,14 +2134,11 @@ export default function App() {
         onClose={() => setShowAdminDashboard(false)}
       />
       
-      {showPricingPage && (
-        <PricingPage
-          navigation={{
-            goBack: () => setShowPricingPage(false)
-          }}
-          onSelectPlan={handlePaymentSelect}
-        />
-      )}
+      <PricingModal
+        visible={showPricingPage}
+        onClose={() => setShowPricingPage(false)}
+        onSelectPlan={handlePaymentSelect}
+      />
       
       <UpgradeModal
         isVisible={showUpgradeModal}
@@ -2559,22 +2563,31 @@ const styles = StyleSheet.create({
     borderTopColor: brandColors.border,
     alignItems: 'center',
   },
+  footerLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  footerLink: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  footerLinkText: {
+    fontSize: 14,
+    color: brandColors.primary,
+    fontFamily: typography.fontFamily,
+    textDecorationLine: 'underline',
+  },
+  footerDivider: {
+    fontSize: 14,
+    color: brandColors.textSecondary,
+    marginHorizontal: 8,
+  },
   legalText: {
     fontSize: 12,
     color: brandColors.textSecondary,
     fontFamily: typography.fontFamily,
     textAlign: 'center',
-  },
-  footerLinks: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  footerLink: {
-    fontSize: 14,
-    color: brandColors.textSecondary,
-    fontFamily: typography.fontFamily,
     fontWeight: typography.weights.medium,
     textDecorationLine: 'underline',
   },
