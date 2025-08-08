@@ -789,39 +789,18 @@ export default function App() {
     // so that the encouragement message persists between scans
   };
 
-  // Render dynamic encouragement message based on flip count
+  // Render static encouragement message
   const renderEncouragementMessage = () => {
-    let message = '';
-    let IconComponent = null;
-    let iconColor = brandColors.accent;
-    let iconSize = 20;
-
-    if (flipCount === 0) {
-      message = 'Start your first flip';
-      IconComponent = Heart;
-      iconColor = brandColors.accent;
-    } else if (flipCount === 1) {
-      message = 'One down. What\'s next?';
-      IconComponent = Flame;
-      iconColor = '#F97316'; // orange-500
-    } else if (flipCount > 1 && flipCount < 10) {
-      message = 'You\'re on a roll. Keep flipping!';
-      IconComponent = Repeat;
-      iconColor = '#059669'; // green-600
-    } else if (flipCount >= 10) {
-      message = 'Flipping pro status unlocked. Let\'s go again.';
-      IconComponent = Briefcase;
-      iconColor = '#374151'; // gray-700
-    }
-
     return (
-      <View style={styles.welcomeContainer}>
-        <Text style={[styles.welcomeText, { color: brandColors.text }]}>
-          {message}
+      <View style={[styles.welcomeContainer, { flexDirection: 'row', alignItems: 'center' }]}>
+        <CameraIcon 
+          size={16} 
+          color={brandColors.textSecondary} 
+          strokeWidth={2}
+        />
+        <Text style={[styles.welcomeText, { color: brandColors.textSecondary, marginLeft: 8 }]}>
+          Center your item and snap when ready.
         </Text>
-        {IconComponent && (
-          <IconComponent size={iconSize} color={iconColor} style={{ marginLeft: 8 }} />
-        )}
       </View>
     );
   };
@@ -2028,9 +2007,9 @@ const styles = StyleSheet.create({
     elevation: 3,
   },
   welcomeText: {
-    fontSize: 18,
-    fontWeight: typography.weights.medium,
-    color: brandColors.text,
+    fontSize: 14,
+    fontWeight: typography.weights.regular,
+    color: brandColors.textSecondary,
     textAlign: 'center',
   },
   welcomeContainer: {
