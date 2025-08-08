@@ -29,8 +29,10 @@ import EnterScreen from './components/EnterScreen';
 import MissionModal from './components/MissionModal';
 import PageContainer from './components/PageContainer';
 import AdminDashboard from './screens/AdminDashboard';
+import UpgradeModal from './components/UpgradeModal';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
+import { getDeviceFingerprint } from './utils/deviceFingerprint';
 import { appleStyles } from './theme/appleStyles';
 
 // Import web styles for web platform
@@ -286,6 +288,9 @@ export default function App() {
   const [showMissionModal, setShowMissionModal] = useState(false);
   const [flipCount, setFlipCount] = useState(0);
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [flipStatus, setFlipStatus] = useState(null);
+  const [deviceFingerprint, setDeviceFingerprint] = useState(null);
   
   const scrollViewRef = useRef(null);
   const resultsRef = useRef(null);
@@ -591,6 +596,37 @@ export default function App() {
     return () => removePasteListener();
   }, []);
   
+  // Initialize device fingerprint and check flip status
+  useEffect(() => {
+    const initializeFlipTracking = async () => {
+      try {
+        // Get or create device fingerprint
+        const fingerprint = await getDeviceFingerprint();
+        setDeviceFingerprint(fingerprint);
+        
+        // Check current flip status
+        const response = await fetch(`${API_URL}/api/payment/flip-status`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-device-fingerprint': fingerprint
+          },
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setFlipStatus(data.data);
+          console.log('Flip status:', data.data);
+        }
+      } catch (error) {
+        console.error('Error initializing flip tracking:', error);
+      }
+    };
+    
+    initializeFlipTracking();
+  }, [user]); // Re-check when user changes
+
   // Debug analysisResult changes
   useEffect(() => {
   }, [analysisResult]);
@@ -673,6 +709,12 @@ export default function App() {
       return;
     }
     
+    // Check flip limit
+    if (flipStatus && !flipStatus.can_flip) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    
     setIsLoading(true);
     setAnalysisResult(null);
     try {
@@ -723,14 +765,39 @@ export default function App() {
       if (productDescription.trim()) {
         formData.append('description', productDescription.trim());
       }
+      
+      // Add device fingerprint for tracking
+      if (deviceFingerprint) {
+        formData.append('device_fingerprint', deviceFingerprint);
+      }
 
       const apiResponse = await fetch(`${API_URL}/api/scan`, {
         method: 'POST',
         body: formData,
-        // Don't set Content-Type header - let browser set it with boundary
+        headers: deviceFingerprint ? {
+          'x-device-fingerprint': deviceFingerprint
+        } : {},
+        credentials: 'include'
       });
 
       const responseText = await apiResponse.text();
+      
+      // Handle payment required response
+      if (apiResponse.status === 402) {
+        try {
+          const data = JSON.parse(responseText);
+          if (data.flip_status) {
+            setFlipStatus(data.flip_status);
+          }
+          setShowUpgradeModal(true);
+          return;
+        } catch (e) {
+          // Fallback if parsing fails
+          setShowUpgradeModal(true);
+          return;
+        }
+      }
+      
       if (apiResponse.ok) {
         try {
           const data = JSON.parse(responseText);
@@ -744,6 +811,11 @@ export default function App() {
             setShowFeedback(true);
             // Increment flip count
             setFlipCount(prevCount => prevCount + 1);
+            
+            // Update flip status from response
+            if (data.flip_status) {
+              setFlipStatus(data.flip_status);
+            }
             // Scroll to results after a brief delay
             setTimeout(() => {
               if (resultsRef.current && scrollViewRef.current) {
@@ -864,6 +936,36 @@ export default function App() {
     tweetText += `\n\nTry it: https://flippi.ai${refCode ? `?ref=${refCode}` : ''}`;
     
     return tweetText;
+  };
+
+  // Handle payment selection from upgrade modal
+  const handlePaymentSelect = async (paymentType) => {
+    try {
+      const response = await fetch(`${API_URL}/api/payment/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-device-fingerprint': deviceFingerprint
+        },
+        body: JSON.stringify({ payment_type: paymentType }),
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.checkout_url) {
+          // For now, just show the mock URL
+          Alert.alert(
+            'Payment System',
+            `Stripe integration pending. Would redirect to: ${data.checkout_url}`,
+            [{ text: 'OK' }]
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      Alert.alert('Error', 'Failed to start payment process');
+    }
   };
 
   // Handle share on X
@@ -1521,6 +1623,14 @@ export default function App() {
       {/* You section - Exit button only - Outside content for better positioning */}
       {Platform.OS === 'web' && user && (
         <View style={styles.userSection}>
+          {/* Show pricing link for all users */}
+          <TouchableOpacity 
+            onPress={() => Alert.alert('Pricing', 'Pricing page coming soon!')} 
+            style={styles.pricingButton}
+          >
+            <Text style={styles.pricingText}>Pricing</Text>
+          </TouchableOpacity>
+          
           {/* Show admin button for specific users */}
           {(user.email === 'john@flippi.ai' || user.email === 'tarahusband@gmail.com' || user.email === 'teamflippi@gmail.com' || user.email === 'tara@edgy.co') && (
             <TouchableOpacity onPress={() => setShowAdminDashboard(true)} style={styles.adminButton}>
@@ -1640,13 +1750,22 @@ export default function App() {
                     multiline
                     numberOfLines={3}
                   />
-                  <BrandButton
-                    title="Go"
-                    onPress={analyzeImage}
-                    style={styles.goButton}
-                    variant="accent"
-                    isHighImpact={true}
-                  />
+                  <View>
+                    {flipStatus && !flipStatus.is_pro && (
+                      <Text style={styles.flipCountText}>
+                        {flipStatus.flips_remaining === 0 
+                          ? 'No free flips left' 
+                          : `${flipStatus.flips_remaining} free flip${flipStatus.flips_remaining === 1 ? '' : 's'} remaining`}
+                      </Text>
+                    )}
+                    <BrandButton
+                      title="Go"
+                      onPress={analyzeImage}
+                      style={styles.goButton}
+                      variant="accent"
+                      isHighImpact={true}
+                    />
+                  </View>
                 </>
               )}
             
@@ -2005,6 +2124,13 @@ export default function App() {
         isVisible={showAdminDashboard}
         onClose={() => setShowAdminDashboard(false)}
       />
+      
+      <UpgradeModal
+        isVisible={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onSelectPayment={handlePaymentSelect}
+        currentFlipCount={flipStatus?.flips_used || 0}
+      />
     </ScrollView>
   );
 }
@@ -2331,6 +2457,12 @@ const styles = StyleSheet.create({
   goButton: {
     width: '100%',
   },
+  flipCountText: {
+    textAlign: 'center',
+    color: brandColors.textSecondary,
+    fontSize: 14,
+    marginBottom: 8,
+  },
   // User section styles
   userSection: {
     position: 'absolute',
@@ -2380,6 +2512,17 @@ const styles = StyleSheet.create({
   exitText: {
     fontSize: 12,
     color: brandColors.text,
+    fontWeight: typography.weights.medium,
+  },
+  pricingButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  pricingText: {
+    fontSize: 12,
+    color: brandColors.primary,
     fontWeight: typography.weights.medium,
   },
   adminButton: {
