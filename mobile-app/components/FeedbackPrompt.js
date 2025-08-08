@@ -34,7 +34,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
           helped_decision: helpedDecision,
           feedback_text: feedbackText.trim(),
           user_description: userDescription || '',
-          image_data: imageData,
+          image_data: imageData ? imageData.replace(/^data:image\/[a-z]+;base64,/, '') : imageData,
           scan_data: scanData
         })
       });

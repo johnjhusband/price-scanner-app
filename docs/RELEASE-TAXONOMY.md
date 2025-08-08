@@ -33,11 +33,11 @@ UI/UX improvements, Real Score enhancements, and critical bug fixes for authenti
   - DHGate and other replica sources now properly trigger warnings
   - Affects all detections that cap Real Score at exactly 40
 
-- 🖼️ **Issue #127:** Fixed share image not including uploaded photo
+- 🖼️ **Issue #127:** Fixed share image not including uploaded photo ✅
   - Share image now properly displays the item photo
-  - Added support for blob URL to data URL conversion
+  - Added data URL prefix to base64 image when missing
   - Uses imageBase64 as primary source (always available after analysis)
-  - Added timeout handling and better error logging
+  - Fixed issue where imageBase64 lacked "data:image/jpeg;base64," prefix
   - Fallback placeholder only shows if image truly can't be loaded
 
 ### 📝 Notes:

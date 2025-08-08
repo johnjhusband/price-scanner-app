@@ -714,8 +714,8 @@ export default function App() {
         });
       }
       
-      // Store base64 for feedback
-      setImageBase64(base64Data);
+      // Store base64 for feedback with full data URL prefix
+      setImageBase64(`data:image/jpeg;base64,${base64Data}`);
       
       // Add description if provided
       if (productDescription.trim()) {
@@ -1197,13 +1197,8 @@ export default function App() {
               };
             });
             
-            // Add data URL prefix if not present
-            const imageSrc = imageBase64ToUse.startsWith('data:') 
-              ? imageBase64ToUse 
-              : `data:image/jpeg;base64,${imageBase64ToUse}`;
-            
-            // Set source after handlers
-            img.src = imageSrc;
+            // Set source after handlers (already has data URL prefix)
+            img.src = imageBase64ToUse;
             
             // Wait for load
             await loadPromise;
