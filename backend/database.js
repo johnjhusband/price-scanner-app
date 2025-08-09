@@ -9,6 +9,7 @@ try {
 
 const fs = require('fs');
 const path = require('path');
+const { createValuationTables } = require('./database/valuationSchema');
 
 let db;
 
@@ -253,6 +254,14 @@ function initializeDatabase() {
     db.exec(`CREATE INDEX IF NOT EXISTS idx_flip_history_user_id ON flip_history(user_id)`);
     db.exec(`CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id)`);
     db.exec(`CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id)`);
+
+    // Create valuation tables for Reddit integration
+    try {
+      createValuationTables(db);
+    } catch (error) {
+      console.error('Error creating valuation tables:', error);
+      // Continue even if valuation tables fail
+    }
 
     // Test the database with a simple query
     const testQuery = db.prepare('SELECT COUNT(*) as count FROM feedback').get();
