@@ -61,17 +61,17 @@ const createValuationTables = (db) => {
       -- Timestamps
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      last_viewed_at DATETIME,
-      
-      -- Indexes for performance
-      INDEX idx_slug (slug),
-      INDEX idx_source (source_type, source_id),
-      INDEX idx_brand (brand),
-      INDEX idx_category (category),
-      INDEX idx_confidence (confidence),
-      INDEX idx_published (published, removed)
+      last_viewed_at DATETIME
     )
   `);
+  
+  // Create indexes separately
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_valuations_slug ON valuations(slug)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_valuations_source ON valuations(source_type, source_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_valuations_brand ON valuations(brand)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_valuations_category ON valuations(category)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_valuations_confidence ON valuations(confidence)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_valuations_published ON valuations(published, removed)`);
 
   // Duplicate tracking table
   db.exec(`
@@ -103,11 +103,13 @@ const createValuationTables = (db) => {
       ip_hash TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       
-      FOREIGN KEY (valuation_id) REFERENCES valuations(id),
-      INDEX idx_valuation_events (valuation_id, event_type),
-      INDEX idx_event_date (created_at)
+      FOREIGN KEY (valuation_id) REFERENCES valuations(id)
     )
   `);
+  
+  // Create indexes for events table
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_valuation_events ON valuation_events(valuation_id, event_type)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_event_date ON valuation_events(created_at)`);
 
   // Category learning table
   db.exec(`
