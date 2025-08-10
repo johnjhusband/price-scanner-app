@@ -44,12 +44,15 @@ jobs:
             
             # Apply OAuth nginx fix IMMEDIATELY after build
             echo "=== Applying OAuth fix ==="
-            if [ -f scripts/fix-staging-oauth-verbose.sh ]; then
-              echo "Running VERBOSE nginx OAuth fix..."
-              bash scripts/fix-staging-oauth-verbose.sh
+            if [ -f scripts/fix-staging-oauth-complete.sh ]; then
+              echo "Running COMPLETE nginx OAuth fix with sudo..."
+              sudo bash scripts/fix-staging-oauth-complete.sh
+            elif [ -f scripts/fix-staging-oauth-verbose.sh ]; then
+              echo "Running VERBOSE nginx OAuth fix with sudo..."
+              sudo bash scripts/fix-staging-oauth-verbose.sh
             elif [ -f scripts/fix-staging-nginx-oauth.sh ]; then
-              echo "Running nginx OAuth fix for staging..."
-              bash scripts/fix-staging-nginx-oauth.sh
+              echo "Running nginx OAuth fix for staging with sudo..."
+              sudo bash scripts/fix-staging-nginx-oauth.sh
             else
               echo "ERROR: OAuth fix script not found!"
               ls -la scripts/
@@ -58,15 +61,15 @@ jobs:
             # Apply post-deployment nginx configuration for legal pages
             if [ -f scripts/post-deploy-nginx.sh ]; then
               echo "=== Applying nginx configuration for legal pages ==="
-              bash scripts/post-deploy-nginx.sh
+              sudo bash scripts/post-deploy-nginx.sh
             fi
             
             # Fix nginx SSL configuration comprehensively
             echo "=== Running nginx SSL fix script ==="
             cd /var/www/green.flippi.ai
             if [ -f scripts/fix-nginx-ssl-comprehensive.sh ]; then
-              echo "Script found, running..."
-              bash scripts/fix-nginx-ssl-comprehensive.sh || echo "SSL fix script had errors but continuing"
+              echo "Script found, running with sudo..."
+              sudo bash scripts/fix-nginx-ssl-comprehensive.sh || echo "SSL fix script had errors but continuing"
             else
               echo "ERROR: fix-nginx-ssl-comprehensive.sh not found!"
               ls -la scripts/
@@ -119,4 +122,5 @@ jobs:
             curl -I https://green.flippi.ai/auth/google
             
             # Clear nginx cache
-            nginx -s reload
+            sudo nginx -s reload || echo "Nginx reload failed, trying systemctl..."
+            sudo systemctl reload nginx || echo "Nginx reload failed"
