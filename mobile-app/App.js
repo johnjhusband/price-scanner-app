@@ -3,14 +3,32 @@ import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOp
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
-// Import Expo vector icons - better compatibility with web builds
-import { MaterialIcons, Feather } from '@expo/vector-icons';
+// Import Lucide icons - our licensed icon system
+import { 
+  Camera as CameraIcon, 
+  Upload, 
+  Clipboard, 
+  Info,
+  Share2,
+  Download,
+  Heart,
+  Sparkles,
+  Package,
+  BadgeCheck,
+  Flame,
+  Repeat,
+  Briefcase,
+  AlertTriangle
+} from 'lucide-react-native';
 
 // Import brand components and theme
 import FlippiLogo from './components/FlippiLogo';
 import BrandButton from './components/BrandButton';
 import FeedbackPrompt from './components/FeedbackPrompt';
 import EnterScreen from './components/EnterScreen';
+import MissionModal from './components/MissionModal';
+import PageContainer from './components/PageContainer';
+import AdminDashboard from './screens/AdminDashboard';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
 import { appleStyles } from './theme/appleStyles';
@@ -224,7 +242,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
             left: 0,
             width: '100%',
             height: '100%',
-            backgroundColor: 'black',
+            backgroundColor: '#18181b',
             objectFit: 'cover'
           }}
           autoPlay={true}
@@ -265,6 +283,9 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [showMoreDetails, setShowMoreDetails] = useState(false);
+  const [showMissionModal, setShowMissionModal] = useState(false);
+  const [flipCount, setFlipCount] = useState(0);
+  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
   
   const scrollViewRef = useRef(null);
   const resultsRef = useRef(null);
@@ -695,8 +716,8 @@ export default function App() {
         });
       }
       
-      // Store base64 for feedback
-      setImageBase64(base64Data);
+      // Store base64 for feedback with full data URL prefix
+      setImageBase64(`data:image/jpeg;base64,${base64Data}`);
       
       // Add description if provided
       if (productDescription.trim()) {
@@ -714,10 +735,15 @@ export default function App() {
         try {
           const data = JSON.parse(responseText);
           if (data.success && data.data) {
+            // Generate unique analysis ID for tracking
+            const analysisId = `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
             // Create a new object to ensure React detects the change
-            const newResult = { ...data.data };
+            const newResult = { ...data.data, analysis_id: analysisId };
             setAnalysisResult(newResult);
             setShowFeedback(true);
+            // Increment flip count
+            setFlipCount(prevCount => prevCount + 1);
             // Scroll to results after a brief delay
             setTimeout(() => {
               if (resultsRef.current && scrollViewRef.current) {
@@ -764,6 +790,633 @@ export default function App() {
     setImageBase64(null);
     setShowFeedback(false);
     setShowMoreDetails(false);
+    // Note: We intentionally do NOT reset flipCount here
+    // so that the encouragement message persists between scans
+  };
+
+  // Render static encouragement message
+  const renderEncouragementMessage = () => {
+    return (
+      <View style={[styles.welcomeContainer, { flexDirection: 'row', alignItems: 'center' }]}>
+        <CameraIcon 
+          size={16} 
+          color={brandColors.textSecondary} 
+          strokeWidth={2}
+        />
+        <Text style={[styles.welcomeText, { color: brandColors.textSecondary, marginLeft: 8 }]}>
+          Center your item and snap when ready.
+        </Text>
+      </View>
+    );
+  };
+
+  // Generate tweet text for sharing
+  const generateTweetText = (result) => {
+    if (!result) return '';
+    
+    // Extract price from price_range (e.g., "$50-$100" -> get average)
+    const getPriceEstimate = (priceRange) => {
+      if (!priceRange) return 0;
+      const match = priceRange.match(/\$(\d+)-\$(\d+)/);
+      if (match) {
+        const low = parseInt(match[1]);
+        const high = parseInt(match[2]);
+        return Math.round((low + high) / 2);
+      }
+      // Try single price format
+      const singleMatch = priceRange.match(/\$(\d+)/);
+      if (singleMatch) {
+        return parseInt(singleMatch[1]);
+      }
+      return 0;
+    };
+
+    // Extract purchase price from description or use a placeholder
+    const getPurchasePrice = () => {
+      if (productDescription) {
+        const priceMatch = productDescription.match(/\$(\d+(?:\.\d{2})?)/);
+        if (priceMatch) {
+          return parseFloat(priceMatch[1]);
+        }
+      }
+      return null;
+    };
+
+    const brand = result.item_name?.split(' ')[0] || 'this';
+    const itemType = result.item_name?.split(' ').slice(1).join(' ') || 'item';
+    const resaleEstimate = getPriceEstimate(result.price_range);
+    const pricePaid = getPurchasePrice();
+    const refCode = user?.referralCode || ''; // TODO: Add referral code to user object
+    
+    let tweetText = `Just used @flippiAI to check ${brand} ${itemType}! `;
+    
+    if (resaleEstimate > 0) {
+      tweetText += `Worth ~$${resaleEstimate} 👀 `;
+      
+      if (pricePaid) {
+        const profit = resaleEstimate - pricePaid;
+        if (profit > 0) {
+          tweetText += `Paid $${pricePaid} = $${profit} flip 💸 `;
+        }
+      }
+    }
+    
+    tweetText += `\n\nTry it: https://flippi.ai${refCode ? `?ref=${refCode}` : ''}`;
+    
+    return tweetText;
+  };
+
+  // Handle share on X
+  const handleShareOnX = () => {
+    const tweetText = generateTweetText(analysisResult);
+    const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
+    
+    if (Platform.OS === 'web') {
+      window.open(tweetUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      Linking.openURL(tweetUrl);
+    }
+  };
+
+  // Generate Instagram Story receipt image
+  const generateInstagramStoryImage = async (result) => {
+    if (!result) {
+      console.log('[Instagram Story] No analysis result available');
+      Alert.alert(
+        'No Results Yet',
+        'Please analyze an item first before sharing to Instagram Story.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    // Mobile implementation would go here
+    if (Platform.OS !== 'web') {
+      // For now, just generate and download the image
+      // In the future, could use react-native-share to open Instagram directly
+      Alert.alert(
+        'Story Image Ready',
+        'Image will be downloaded. Open Instagram and upload to your story!',
+        [{ text: 'OK' }]
+      );
+      // Continue with image generation...
+    }
+    
+    // Check if canvas is supported
+    if (!document.createElement('canvas').getContext) {
+      Alert.alert(
+        'Not Supported',
+        'Your browser doesn\'t support image generation. Please try a different browser.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      console.log('[Instagram Story] Starting image generation for:', result);
+      
+      // Create canvas for receipt
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Failed to get canvas context');
+      }
+
+      // White background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Receipt styling
+      ctx.fillStyle = '#000000';
+      ctx.textAlign = 'center';
+      
+      // Header
+      ctx.font = 'bold 72px -apple-system, system-ui, sans-serif';
+      ctx.fillText('flippi.ai', canvas.width / 2, 150);
+      
+      // Date
+      ctx.font = '36px monospace';
+      ctx.fillText(new Date().toLocaleString(), canvas.width / 2, 250);
+      
+      // Divider
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([10, 10]);
+      ctx.beginPath();
+      ctx.moveTo(100, 300);
+      ctx.lineTo(980, 300);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      
+      // Item details
+      ctx.font = '48px monospace';
+      ctx.textAlign = 'left';
+      let yPos = 400;
+      
+      // Item name
+      ctx.fillText('ITEM:', 100, yPos);
+      ctx.font = 'bold 48px monospace';
+      const itemName = (result.item_name || 'Unknown Item').substring(0, 25);
+      ctx.fillText(itemName, 300, yPos);
+      yPos += 80;
+      
+      // Category
+      ctx.font = '48px monospace';
+      ctx.fillText('CATEGORY:', 100, yPos);
+      ctx.fillText(result.category || 'N/A', 400, yPos);
+      yPos += 80;
+      
+      // Condition
+      ctx.fillText('CONDITION:', 100, yPos);
+      ctx.fillText(result.condition || 'N/A', 450, yPos);
+      yPos += 80;
+      
+      // Resale value
+      ctx.fillText('RESALE VALUE:', 100, yPos);
+      ctx.font = 'bold 56px monospace';
+      ctx.fillText(result.price_range || 'N/A', 500, yPos);
+      yPos += 100;
+      
+      // Real Score if available
+      if (result.real_score !== undefined || result.authenticity_score !== undefined) {
+        ctx.font = '48px monospace';
+        ctx.fillText('REAL SCORE:', 100, yPos);
+        ctx.font = 'bold 56px monospace';
+        const score = result.real_score || result.authenticity_score;
+        ctx.fillText(`${score}%`, 450, yPos);
+        yPos += 100;
+      }
+      
+      // Purchase price and profit calculation
+      const purchasePrice = getPurchasePrice();
+      if (purchasePrice) {
+        // Another divider
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([10, 10]);
+        ctx.beginPath();
+        ctx.moveTo(100, yPos + 20);
+        ctx.lineTo(980, yPos + 20);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        yPos += 80;
+        
+        ctx.font = '48px monospace';
+        ctx.fillText('PURCHASE PRICE:', 100, yPos);
+        ctx.fillText(`$${purchasePrice}`, 550, yPos);
+        yPos += 80;
+        
+        // Calculate profit
+        const getPriceEstimate = (priceRange) => {
+          if (!priceRange) return 0;
+          const match = priceRange.match(/\$(\d+)-\$(\d+)/);
+          if (match) {
+            const low = parseInt(match[1]);
+            const high = parseInt(match[2]);
+            return Math.round((low + high) / 2);
+          }
+          return 0;
+        };
+        
+        const resaleEstimate = getPriceEstimate(result.price_range);
+        if (resaleEstimate > 0) {
+          const profit = resaleEstimate - purchasePrice;
+          ctx.fillText('EST. PROFIT:', 100, yPos);
+          ctx.font = 'bold 64px monospace';
+          ctx.fillStyle = profit > 0 ? '#059669' : '#dc2626';
+          ctx.fillText(`$${Math.abs(profit)}`, 450, yPos);
+          ctx.fillStyle = '#000000';
+          yPos += 100;
+        }
+      }
+      
+      // Footer
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(100, 1600);
+      ctx.lineTo(980, 1600);
+      ctx.stroke();
+      
+      ctx.font = '36px -apple-system, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Powered by flippi.ai', canvas.width / 2, 1700);
+      
+      if (refCode) {
+        ctx.font = '32px monospace';
+        ctx.fillText(`flippi.ai?ref=${refCode}`, canvas.width / 2, 1750);
+      }
+      
+      ctx.font = 'italic 28px -apple-system, system-ui, sans-serif';
+      ctx.fillText('*AI can make mistakes. Check important info.', canvas.width / 2, 1850);
+      
+      // Convert to blob and download
+      canvas.toBlob((blob) => {
+        if (!blob) {
+          throw new Error('Failed to convert canvas to blob');
+        }
+        
+        console.log('[Instagram Story] Blob created, size:', blob.size);
+        
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `flippi-story-${Date.now()}.png`;
+        a.style.display = 'none';
+        document.body.appendChild(a);
+        
+        // Force download
+        a.click();
+        
+        // Cleanup
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 100);
+        
+        Alert.alert(
+          'Story Image Ready!',
+          'Image downloaded! To share:\n\n1. Open Instagram\n2. Create a new Story\n3. Upload the downloaded image\n4. Share with your followers!',
+          [{ text: 'Got it!' }]
+        );
+      }, 'image/png', 0.95);
+    } catch (error) {
+      console.error('Error generating Instagram story:', error);
+      Alert.alert(
+        'Error',
+        'Failed to generate receipt image. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  // Handle Instagram Story share
+  const handleInstagramStoryShare = () => {
+    console.log('[IG Story Share] Starting with:');
+    console.log('  - analysisResult:', !!analysisResult);
+    console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
+    console.log('  - image:', !!image, image?.substring(0, 50));
+    
+    setIsLoading(true);
+    generateInstagramStoryImage(analysisResult, imageBase64, image).finally(() => {
+      setIsLoading(false);
+    });
+  };
+
+  // Generate universal share image (square format)
+  const generateShareImage = async (result, base64Image = null, originalImage = null) => {
+    if (!result) {
+      console.log('[Share Image] No analysis result available');
+      Alert.alert(
+        'No Results Yet',
+        'Please analyze an item first before downloading.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    console.log('[generateShareImage] Starting with:', {
+      hasResult: !!result,
+      hasBase64Image: !!base64Image,
+      hasOriginalImage: !!originalImage,
+      hasImageBase64State: !!imageBase64,
+      hasImageState: !!image
+    });
+    
+    // Only support web for now
+    if (Platform.OS !== 'web') {
+      Alert.alert(
+        'Coming Soon',
+        'Image download is coming soon for mobile. For now, take a screenshot.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
+    // Check if canvas is supported
+    if (!document.createElement('canvas').getContext) {
+      Alert.alert(
+        'Not Supported',
+        'Your browser doesn\'t support image generation. Please try a different browser.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+
+    try {
+      console.log('[Share Image] Starting image generation for:', result);
+      console.log('[Share Image] Current image:', image ? 'Available' : 'Not available');
+      
+      // Create canvas for share image (square format)
+      const canvas = document.createElement('canvas');
+      canvas.width = 1080;
+      canvas.height = 1080;
+      const ctx = canvas.getContext('2d');
+      
+      if (!ctx) {
+        throw new Error('Failed to get canvas context');
+      }
+
+      // White background
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      // Flippi branding
+      ctx.fillStyle = '#000000';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 64px -apple-system, system-ui, sans-serif';
+      ctx.fillText('flippi.ai', canvas.width / 2, 100);
+      
+      // Item image - Simplified approach
+      const drawItemImage = async () => {
+        const boxWidth = 800;
+        const boxHeight = 380;
+        const boxX = 140;
+        const boxY = 140;
+        
+        // Draw border around image area
+        ctx.strokeStyle = '#e5e5e5';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
+        
+        // Clear the area first
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+        
+        // Use base64 image which should have full data URL
+        const imageSrc = base64Image || imageBase64 || originalImage || image;
+        
+        if (!imageSrc) {
+          console.error('[Share Image] No image source available');
+          ctx.fillStyle = '#a0a0a0';
+          ctx.font = '32px -apple-system, system-ui, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('No image available', canvas.width / 2, boxY + boxHeight/2);
+          return;
+        }
+        
+        // Create image and set up handlers
+        const img = new Image();
+        img.crossOrigin = 'anonymous'; // Just in case
+        
+        // Create promise to handle async loading
+        await new Promise((resolve) => {
+          img.onload = () => {
+            console.log('[Share Image] Image loaded successfully:', img.width, 'x', img.height);
+            
+            // Calculate scaling to fit within box
+            const scale = Math.min(boxWidth / img.width, boxHeight / img.height) * 0.9;
+            const width = img.width * scale;
+            const height = img.height * scale;
+            const x = boxX + (boxWidth - width) / 2;
+            const y = boxY + (boxHeight - height) / 2;
+            
+            // Draw the image
+            ctx.drawImage(img, x, y, width, height);
+            resolve();
+          };
+          
+          img.onerror = () => {
+            console.error('[Share Image] Failed to load image for share download');
+            console.error('[Share Image] Attempted source:', imageSrc.substring(0, 100));
+            
+            // Draw error placeholder
+            ctx.fillStyle = '#f5f5f5';
+            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+            ctx.fillStyle = '#a0a0a0';
+            ctx.font = '32px -apple-system, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Image could not be loaded', canvas.width / 2, boxY + boxHeight/2);
+            resolve();
+          };
+          
+          // Set the source to trigger load
+          console.log('[Share Image] Loading image from:', imageSrc.substring(0, 50) + '...');
+          img.src = imageSrc;
+        });
+      };
+      
+      await drawItemImage();
+      
+      // Reset text alignment for subsequent text
+      ctx.textAlign = 'center';
+      
+      // Item name
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 42px -apple-system, system-ui, sans-serif';
+      const itemName = result.item_name || 'Unknown Item';
+      ctx.fillText(itemName, canvas.width / 2, 560);
+      
+      // Brand (if available)
+      if (result.brand) {
+        ctx.font = '32px -apple-system, system-ui, sans-serif';
+        ctx.fillStyle = '#666666';
+        ctx.fillText(result.brand, canvas.width / 2, 600);
+      }
+      
+      // Price range
+      ctx.font = 'bold 56px -apple-system, system-ui, sans-serif';
+      ctx.fillStyle = '#059669';
+      ctx.fillText(result.price_range || '$0-$0', canvas.width / 2, 660);
+      
+      // Purchase price and profit if available
+      const getPurchasePrice = () => {
+        if (productDescription) {
+          const priceMatch = productDescription.match(/\$(\d+(?:\.\d{2})?)/);
+          if (priceMatch) {
+            return parseFloat(priceMatch[1]);
+          }
+        }
+        return null;
+      };
+      
+      const purchasePrice = getPurchasePrice();
+      let yPosition = 720;
+      
+      if (purchasePrice) {
+        ctx.font = '32px -apple-system, system-ui, sans-serif';
+        ctx.fillStyle = '#666666';
+        ctx.fillText(`Bought for $${purchasePrice}`, canvas.width / 2, yPosition);
+        yPosition += 50;
+        
+        // Calculate profit
+        const getPriceEstimate = (priceRange) => {
+          if (!priceRange) return 0;
+          const match = priceRange.match(/\$(\d+)-\$(\d+)/);
+          if (match) {
+            const low = parseInt(match[1]);
+            const high = parseInt(match[2]);
+            return Math.round((low + high) / 2);
+          }
+          return 0;
+        };
+        
+        const resaleEstimate = getPriceEstimate(result.price_range);
+        if (resaleEstimate > 0) {
+          const profit = resaleEstimate - purchasePrice;
+          ctx.font = 'bold 42px -apple-system, system-ui, sans-serif';
+          ctx.fillStyle = profit > 0 ? '#059669' : '#dc2626';
+          ctx.fillText(`${profit > 0 ? '+' : ''}$${Math.abs(profit)} profit potential`, canvas.width / 2, yPosition);
+          yPosition += 60;
+        }
+      }
+      
+      // Add key metrics in a row
+      ctx.font = '24px -apple-system, system-ui, sans-serif';
+      ctx.fillStyle = '#333333';
+      
+      // Real Score
+      if (result.real_score) {
+        const realScoreText = `Real Score: ${result.real_score}%`;
+        ctx.fillText(realScoreText, canvas.width / 2 - 200, yPosition);
+      }
+      
+      // Sellability
+      if (result.trending_score) {
+        const sellabilityText = `Sellability: ${result.trending_score}/100`;
+        ctx.fillText(sellabilityText, canvas.width / 2 + 200, yPosition);
+      }
+      yPosition += 40;
+      
+      // Platform recommendation
+      if (result.platform_recommendation) {
+        ctx.font = '28px -apple-system, system-ui, sans-serif';
+        ctx.fillStyle = '#666666';
+        ctx.fillText(`Best on: ${result.platform_recommendation}`, canvas.width / 2, yPosition);
+        yPosition += 40;
+      }
+      
+      // Environmental impact
+      if (result.environmental_tag) {
+        ctx.font = '26px -apple-system, system-ui, sans-serif';
+        ctx.fillStyle = '#059669';
+        ctx.fillText(result.environmental_tag, canvas.width / 2, yPosition);
+        yPosition += 50;
+      }
+      
+      // Footer
+      ctx.fillStyle = '#666666';
+      ctx.font = '28px -apple-system, system-ui, sans-serif';
+      ctx.fillText('Never Over Pay • Know the price. Own the profit.', canvas.width / 2, 960);
+      
+      if (user?.referralCode) {
+        ctx.font = '24px monospace';
+        ctx.fillText(`flippi.ai?ref=${user.referralCode}`, canvas.width / 2, 1000);
+      }
+      
+      // Convert to blob and download
+      console.log('[Share Image] Converting canvas to blob...');
+      
+      canvas.toBlob((blob) => {
+        try {
+          if (!blob) {
+            console.error('[Share Image] Blob is null');
+            throw new Error('Failed to convert canvas to blob');
+          }
+          
+          console.log('[Share Image] Blob created, size:', blob.size);
+          
+          const url = URL.createObjectURL(blob);
+          console.log('[Share Image] Object URL created:', url);
+          
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `flippi-share-image-${Date.now()}.png`;
+          a.style.display = 'none';
+          document.body.appendChild(a);
+          
+          console.log('[Share Image] Triggering download...');
+          // Force download
+          a.click();
+          
+          // Cleanup
+          setTimeout(() => {
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+            console.log('[Share Image] Cleanup complete');
+          }, 100);
+          
+          Alert.alert(
+            'Image downloaded!',
+            'Ready to share on any platform!',
+            [{ text: 'Awesome!' }]
+          );
+        } catch (error) {
+          console.error('[Share Image] Error in blob callback:', error);
+          Alert.alert(
+            'Download Failed',
+            'Unable to download image. Please try again.',
+            [{ text: 'OK' }]
+          );
+        }
+      }, 'image/png', 0.95);
+    } catch (error) {
+      console.error('[Share Image] Error generating image:', error);
+      console.error('[Share Image] Error stack:', error.stack);
+      Alert.alert(
+        'Download Failed',
+        'Unable to download image. Please try again or use a screenshot instead.',
+        [{ text: 'OK' }]
+      );
+    }
+    
+    console.log('[Share Image] generateShareImage function completed');
+  };
+
+  // Handle universal share image download
+  const handleDownloadShareImage = () => {
+    console.log('[Download Share] Starting download with:');
+    console.log('  - analysisResult:', !!analysisResult);
+    console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
+    console.log('  - image:', !!image, image?.substring(0, 50));
+    
+    setIsLoading(true);
+    generateShareImage(analysisResult, imageBase64, image).finally(() => {
+      setIsLoading(false);
+    });
   };
   
   const handleExit = async () => {
@@ -812,7 +1465,9 @@ export default function App() {
   return (
     <ScrollView 
       ref={scrollViewRef}
-      style={[styles.container, { backgroundColor: brandColors.background }]}
+      style={[styles.container, { 
+        backgroundColor: isAuthenticated ? '#fafafa' : brandColors.background 
+      }]}
       contentContainerStyle={styles.contentContainer}
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
@@ -833,29 +1488,37 @@ export default function App() {
       {/* You section - Exit button only - Outside content for better positioning */}
       {Platform.OS === 'web' && user && (
         <View style={styles.userSection}>
+          {/* Show admin button for specific users */}
+          {(user.email === 'john@flippi.ai' || user.email === 'tarahusband@gmail.com' || user.email === 'teamflippi@gmail.com' || user.email === 'tara@edgy.co') && (
+            <TouchableOpacity onPress={() => setShowAdminDashboard(true)} style={styles.adminButton}>
+              <Text style={styles.adminText}>Admin</Text>
+            </TouchableOpacity>
+          )}
           <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
             <Text style={styles.exitText}>Exit</Text>
           </TouchableOpacity>
         </View>
       )}
       
-      <View style={[styles.content, isAuthenticated && styles.contentLoggedIn]}>
-        
-        <FlippiLogo 
-          size={isAuthenticated ? "small" : "large"} 
-          responsive={true} 
-          style={isAuthenticated ? { marginBottom: 8 } : {}}
-        />
-        {!isAuthenticated && (
-          <>
-            <Text style={[styles.title, { color: brandColors.text }]}>
-              Never Over Pay
-            </Text>
-            <Text style={styles.subtitle}>
-              Know the price. Own the profit.
-            </Text>
-          </>
-        )}
+      <PageContainer>
+        <View style={[styles.content, isAuthenticated && styles.contentLoggedIn]}>
+          
+          <FlippiLogo 
+            size={isAuthenticated ? "small" : "large"} 
+            responsive={true} 
+            style={isAuthenticated ? { marginBottom: 8 } : {}}
+          />
+          {!isAuthenticated && (
+            <>
+              <Text style={[styles.title, { color: brandColors.text }]}>
+                Never Over Pay
+              </Text>
+              <Text style={styles.subtitle}>
+                Know the price. Own the profit.
+              </Text>
+            </>
+          )}
+          {isAuthenticated && !image && !analysisResult && renderEncouragementMessage()}
         
         <View style={[
           styles.uploadContainer,
@@ -887,9 +1550,9 @@ export default function App() {
                 <BrandButton
                   title="Take Photo"
                   onPress={takePhoto}
-                  style={styles.actionButton}
+                  style={[styles.actionButton, styles.primaryActionButton]}
                   variant="primary"
-                  icon={<Feather name="camera" size={20} color="#FFFFFF" />}
+                  icon={<CameraIcon size={20} color="#FFFFFF" />}
                 />
               )}
               
@@ -898,21 +1561,11 @@ export default function App() {
                 onPress={pickImage}
                 style={styles.actionButton}
                 variant="outline"
-                icon={<Feather name="upload" size={20} color={brandColors.text} />}
+                icon={<Upload size={20} color={brandColors.text} />}
               />
               
               {Platform.OS === 'web' && (
                 <>
-                  <BrandButton
-                    title="Paste Image"
-                    onPress={() => {
-                      // Trigger paste programmatically
-                      document.execCommand('paste');
-                    }}
-                    style={styles.actionButton}
-                    variant="ghost"
-                    icon={<Feather name="clipboard" size={20} color={brandColors.textSecondary} />}
-                  />
                   <View style={[styles.dropZone, isDragOver && styles.dropZoneActive]}>
                     <Text style={[styles.dropZoneText, { color: brandColors.textSecondary }]}>
                       {isDragOver ? 'Drop image here' : 'Or drag and drop an image here'}
@@ -985,57 +1638,136 @@ export default function App() {
                 style={[styles.analysisResult, { backgroundColor: '#FFFFFF' }]}>
                 <Text style={[styles.resultTitle, { color: brandColors.text }]}>Analysis Results</Text>
                 
-                {analysisResult.buy_price && (
-                  <View style={[styles.suggestedPriceContainer, { backgroundColor: '#F9FAFB' }]}>
-                    <Text style={[styles.suggestedPriceLabel, { color: brandColors.slateTeal }]}>
-                      Buy at
-                    </Text>
-                    <Text style={[styles.suggestedPriceValue, styles.numericalEmphasis]}>
-                      {analysisResult.buy_price}
-                    </Text>
+                {/* Top price container with Buy At, Estimated Resale Value, and Item */}
+                <View style={[styles.topPriceContainer, { backgroundColor: '#F9FAFB' }]}>
+                  <View style={styles.priceRow}>
+                    {analysisResult.buy_price && (
+                      <View style={styles.priceColumn}>
+                        <Text style={styles.priceLabel}>Buy At</Text>
+                        <Text style={[styles.priceValueLarge, styles.numericalEmphasis]}>
+                          {analysisResult.buy_price}
+                        </Text>
+                      </View>
+                    )}
+                    
+                    {analysisResult.price_range && (
+                      <View style={styles.priceColumn}>
+                        <Text style={styles.priceLabel}>Estimated Resale Value</Text>
+                        <Text style={[styles.priceValueLarge, styles.numericalEmphasis]}>
+                          {analysisResult.price_range}
+                        </Text>
+                      </View>
+                    )}
                   </View>
-                )}
-                
-                <View style={styles.resultItem}>
-                  <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Item</Text>
-                  <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.item_name}</Text>
+                  
+                  {/* Item description in same box */}
+                  <View style={styles.itemInPriceBox}>
+                    <Text style={styles.itemLabel}>Item</Text>
+                    <Text style={styles.itemValue}>{analysisResult.item_name}</Text>
+                  </View>
                 </View>
                 
-                {/* PRIMARY INFO - Always visible */}
+                {/* Check if potentially dupe and show friendly warning */}
+                {(() => {
+                  const score = analysisResult.real_score || analysisResult.authenticity_score || 0;
+                  const description = productDescription?.toLowerCase() || '';
+                  const insights = analysisResult.market_insights?.toLowerCase() || '';
+                  const penalties = analysisResult.score_penalties?.toLowerCase() || '';
+                  
+                  const isPotentialDupe = 
+                    score <= 40 ||
+                    description.includes('fake') ||
+                    description.includes('replica') ||
+                    description.includes('inspired') ||
+                    description.includes('dupe') ||
+                    insights.includes('replica') ||
+                    penalties.includes('replica') ||
+                    analysisResult.platform_recommendation === 'Craft Fair' ||
+                    analysisResult.platform_recommendation === 'Personal Use';
+                  
+                  if (isPotentialDupe) {
+                    return (
+                      <View style={styles.dupeAlert}>
+                        <View style={styles.dupeAlertContent}>
+                          <AlertTriangle size={16} color="#EAB308" strokeWidth={2} style={{ marginRight: 8 }} />
+                          <Text style={styles.dupeAlertText}>
+                            This item may be a dupe. Check brand details before buying or listing.
+                          </Text>
+                        </View>
+                      </View>
+                    );
+                  }
+                  return null;
+                })()}
+                
+                {/* PRIMARY INFO - Always show all data */}
                 <View style={[styles.primaryInfoSection, { backgroundColor: '#F9FAFB', borderRadius: 12, padding: 16, marginVertical: 10 }]}>
-                  <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel]}>Estimated Value</Text>
-                    <Text style={[styles.resultValue, styles.priceValue, styles.numericalEmphasis]}>
-                      {analysisResult.price_range}
-                    </Text>
-                  </View>
                   
                   {(analysisResult.real_score !== undefined || analysisResult.authenticity_score !== undefined) && (
                     <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel]}>Real Score</Text>
-                      <Text style={[styles.resultValue, styles.realScoreEmphasis, { fontSize: 20 }]}>
-                        {analysisResult.real_score || analysisResult.authenticity_score}
-                      </Text>
+                      <View style={styles.labelWithIcon}>
+                        <Text style={[styles.resultLabel]}>Real Score</Text>
+                        <TouchableOpacity
+                          onPress={() => setShowMissionModal(true)}
+                          accessibilityLabel="Learn about Real Score"
+                          accessibilityRole="button"
+                          style={styles.infoIconButton}
+                        >
+                          <Info size={16} color={brandColors.textSecondary} strokeWidth={2} />
+                        </TouchableOpacity>
+                      </View>
+                      <View>
+                        <Text style={[styles.resultValue, styles.realScoreEmphasis, { fontSize: 20 }]}>
+                          {analysisResult.real_score || analysisResult.authenticity_score}%
+                        </Text>
+                        <Text style={[styles.realScoreExplanation]}>
+                          {(() => {
+                            const score = analysisResult.real_score || analysisResult.authenticity_score;
+                            let explanation = "";
+                            let details = "";
+                            
+                            if (score >= 80) {
+                              explanation = "Strong authenticity signals detected. Clear branding and quality markers.";
+                              details = "Logo placement, stitching, and materials appear consistent with authentic pieces.";
+                            } else if (score >= 60) {
+                              explanation = "Good visual indicators. Brand elements appear consistent.";
+                              details = "Most authenticity markers present, but verify interior tags and serial numbers.";
+                            } else if (score >= 40) {
+                              explanation = "Mixed signals detected. Check brand details and authentication carefully.";
+                              // Check for specific penalties mentioned
+                              if (analysisResult.score_penalties) {
+                                const penalties = analysisResult.score_penalties.toLowerCase();
+                                if (penalties.includes("colorway")) {
+                                  details = "Unusual color combination not typical for this brand. Research this specific style.";
+                                } else if (penalties.includes("logo")) {
+                                  details = "Logo density or placement differs from standard. Compare with official images.";
+                                } else if (penalties.includes("single photo")) {
+                                  details = "Limited view provided. Request photos of tags, serial numbers, and interior.";
+                                } else {
+                                  details = "Some elements don't match typical authentic patterns. Get professional authentication.";
+                                }
+                              } else {
+                                details = "Inconsistent quality markers detected. Compare carefully with authentic examples.";
+                              }
+                            } else {
+                              explanation = "Multiple red flags detected. Verify authenticity before purchasing.";
+                              // Check market insights for specific issues
+                              if (analysisResult.market_insights && analysisResult.market_insights.toLowerCase().includes("replica")) {
+                                details = "Design elements strongly suggest replica. Proceed with extreme caution.";
+                              } else if (analysisResult.score_penalties && analysisResult.score_penalties.includes("source")) {
+                                details = "Source marketplace known for replicas. Request proof of authenticity.";
+                              } else {
+                                details = "Multiple authenticity concerns including branding, construction, or materials.";
+                              }
+                            }
+                            
+                            return `${explanation} ${details}`;
+                          })()}
+                        </Text>
+                      </View>
                     </View>
                   )}
                   
-                  {analysisResult.recommended_platform && (
-                    <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel]}>Best Platforms</Text>
-                      <Text style={[styles.resultValue, { color: brandColors.text, fontSize: 18 }]}>
-                        {(() => {
-                          const platforms = [];
-                          if (analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown') {
-                            platforms.push(analysisResult.recommended_live_platform === 'uknown' ? 'Personal Use' : analysisResult.recommended_live_platform);
-                          }
-                          if (analysisResult.recommended_platform && analysisResult.recommended_platform !== 'uknown') {
-                            platforms.push(analysisResult.recommended_platform === 'uknown' ? 'Craft Fair' : analysisResult.recommended_platform);
-                          }
-                          return platforms.join(', ') || 'Craft Fair, Personal Use';
-                        })()}
-                      </Text>
-                    </View>
-                  )}
                 </View>
                 
                 {/* TOGGLE BUTTON */}
@@ -1062,46 +1794,44 @@ export default function App() {
                     
                     <View style={styles.resultItem}>
                       <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Style Tier</Text>
-                      <View style={[styles.styleTierBadge, {
-                        backgroundColor: (() => {
-                          const tier = analysisResult.style_tier.toLowerCase();
-                          if (tier === 'luxury') return '#F3F4F6'; // Light gray
-                          if (tier === 'designer') return '#F9FAFB'; // Very light gray
-                          return '#FFFFFF'; // White
-                        })(),
-                        borderColor: (() => {
-                          const tier = analysisResult.style_tier.toLowerCase();
-                          if (tier === 'luxury') return '#1F2937'; // Dark gray border
-                          if (tier === 'designer') return '#6B7280'; // Medium gray border
-                          return '#D1D5DB'; // Light gray border
-                        })()
+                      <Text style={[styles.resultValue, { 
+                        color: brandColors.text,
+                        fontWeight: typography.weights.semibold,
+                        textTransform: 'capitalize'
                       }]}>
-                        <Text style={[styles.styleTierBadgeText, {
-                          color: (() => {
-                            const tier = analysisResult.style_tier.toLowerCase();
-                            if (tier === 'luxury') return '#1F2937'; // Dark gray text
-                            if (tier === 'designer') return '#4B5563'; // Medium gray text
-                            return '#6B7280'; // Light gray text
-                          })()
-                        }]}>
-                          {analysisResult.style_tier}
+                        {analysisResult.style_tier}
+                      </Text>
+                    </View>
+                    
+                    {analysisResult.recommended_platform && (
+                      <View style={styles.resultItem}>
+                        <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Platforms</Text>
+                        <Text style={[styles.resultValue, { color: brandColors.text }]}>
+                          {(() => {
+                            const platforms = [];
+                            if (analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown') {
+                              platforms.push(analysisResult.recommended_live_platform === 'uknown' ? 'Personal Use' : analysisResult.recommended_live_platform);
+                            }
+                            if (analysisResult.recommended_platform && analysisResult.recommended_platform !== 'uknown') {
+                              platforms.push(analysisResult.recommended_platform === 'uknown' ? 'Craft Fair' : analysisResult.recommended_platform);
+                            }
+                            return platforms.join(', ') || 'Craft Fair, Personal Use';
+                          })()}
                         </Text>
                       </View>
-                    </View>
+                    )}
                     
                 
                 {analysisResult.trending_score !== undefined && (
                   <View style={styles.resultItem}>
                     <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Sellability</Text>
-                    <Text style={styles.resultValue}>
-                      <Text style={styles.numericalEmphasis}>{analysisResult.trending_score}/100</Text>
-                      {' '}
-                      {(() => {
+                    <Text style={[styles.resultValue, { color: brandColors.text }]}>
+                      {analysisResult.trending_score}/100 {(() => {
                         const score = parseInt(analysisResult.trending_score);
                         if (score >= 80) return '▲▲▲'; // Three up arrows for hot
                         if (score >= 50) return '▲▲';   // Two up arrows for warm
                         return '▲';                      // One up arrow for cool
-                      })()} <Text style={styles.trendingLabel}>- {analysisResult.trending_label || 'N/A'}</Text>
+                      })()} - {analysisResult.trending_label || 'N/A'}
                     </Text>
                   </View>
                 )}
@@ -1140,9 +1870,19 @@ export default function App() {
                 
                 {analysisResult.environmental_tag && (
                   <View style={[styles.environmentalContainer, { backgroundColor: '#E8F5E9' }]}>
-                    <Text style={[styles.environmentalTag, { color: '#2E7D32' }]}>
-                      {analysisResult.environmental_tag}
-                    </Text>
+                    <View style={styles.environmentalContent}>
+                      <Text style={[styles.environmentalTag, { color: '#2E7D32' }]}>
+                        {analysisResult.environmental_tag}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => setShowMissionModal(true)}
+                        accessibilityLabel="Learn about our mission"
+                        accessibilityRole="button"
+                        style={styles.missionLink}
+                      >
+                        <Info size={14} color="#2E7D32" strokeWidth={2} style={{ opacity: 0.8 }} />
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 )}
                   </View>
@@ -1163,17 +1903,55 @@ export default function App() {
             )}
             
             {analysisResult && (
-              <BrandButton
-                title="Scan Another Item"
-                onPress={resetApp}
-                style={styles.resetButton}
-                variant="secondary"
-              />
+              <View style={styles.postAnalysisActions}>
+                <BrandButton
+                  title="Share on X"
+                  onPress={handleShareOnX}
+                  style={[styles.shareButton, { backgroundColor: '#18181b' }]}
+                  variant="primary"
+                  icon={<Share2 size={20} color="#FFFFFF" />}
+                />
+                {Platform.OS !== 'web' && (
+                  <>
+                    <BrandButton
+                      title="Share to Instagram Story"
+                      onPress={handleInstagramStoryShare}
+                      style={[styles.shareButton, { backgroundColor: '#E1306C' }]}
+                      variant="primary"
+                      disabled={isLoading}
+                      icon={<CameraIcon size={20} color="#FFFFFF" />}
+                    />
+                    <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
+                      Downloads story image to share
+                    </Text>
+                  </>
+                )}
+                <BrandButton
+                  title="Download Image"
+                  onPress={handleDownloadShareImage}
+                  style={[styles.shareButton, { backgroundColor: '#52525b' }]}
+                  variant="primary"
+                  disabled={isLoading}
+                  icon={<Download size={20} color="#FFFFFF" />}
+                />
+                {Platform.OS === 'web' && (
+                  <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
+                    Save to share anywhere
+                  </Text>
+                )}
+                <BrandButton
+                  title="Scan Another Item"
+                  onPress={resetApp}
+                  style={[styles.resetButton, { backgroundColor: brandColors.accent }]}
+                  variant="primary"
+                />
+              </View>
             )}
             </View>
           )}
         </View>
       </View>
+      </PageContainer>
       
       {/* Legal Footer */}
       <View style={styles.legalFooter}>
@@ -1184,6 +1962,16 @@ export default function App() {
           Flippi™ and Flippi.ai™ are trademarks of Boca Belle. All rights reserved.
         </Text>
       </View>
+      
+      <MissionModal 
+        visible={showMissionModal} 
+        onClose={() => setShowMissionModal(false)} 
+      />
+      
+      <AdminDashboard
+        isVisible={showAdminDashboard}
+        onClose={() => setShowAdminDashboard(false)}
+      />
     </ScrollView>
   );
 }
@@ -1248,8 +2036,7 @@ const styles = StyleSheet.create({
   },
   uploadContainer: {
     flex: 1, // Allow container to grow
-    width: isMobile ? '100%' : '90%', // More width
-    maxWidth: 600, // Reasonable max width
+    width: '100%', // Full width within PageContainer
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 20,
@@ -1258,7 +2045,6 @@ const styles = StyleSheet.create({
   },
   resultContainer: {
     width: '100%',
-    maxWidth: isMobile ? '100%' : 672, // max-w-xl
     paddingHorizontal: 16, // px-4
     paddingTop: 16, // pt-4
     backgroundColor: brandColors.background, // Ensure white background
@@ -1267,6 +2053,33 @@ const styles = StyleSheet.create({
     marginVertical: 8,
     width: '100%',
     maxWidth: 400, // Prevent buttons from being too wide on desktop
+  },
+  primaryActionButton: {
+    // Warmer styling for primary actions
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  welcomeText: {
+    fontSize: 14,
+    fontWeight: typography.weights.regular,
+    color: brandColors.textSecondary,
+    textAlign: 'center',
+  },
+  welcomeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    marginBottom: 24,
+  },
+  helperText: {
+    fontSize: 13,
+    color: brandColors.textSecondary,
+    textAlign: 'center',
+    fontStyle: 'italic',
   },
   dropZone: {
     width: '100%',
@@ -1338,6 +2151,11 @@ const styles = StyleSheet.create({
   resultItem: {
     marginBottom: 12,
     width: '100%',
+    ...(isDesktop && {
+      width: 'auto',
+      flex: '1 1 45%',
+      minWidth: 200,
+    }),
   },
   resultLabel: {
     fontSize: 16,
@@ -1432,6 +2250,15 @@ const styles = StyleSheet.create({
     marginTop: 10,
     width: '100%',
   },
+  postAnalysisActions: {
+    width: '100%',
+    marginTop: 20,
+    gap: 12,
+  },
+  shareButton: {
+    marginBottom: 8,
+    width: '100%',
+  },
   // Camera styles
   cameraContainer: {
     flex: 1,
@@ -1522,6 +2349,18 @@ const styles = StyleSheet.create({
     color: brandColors.text,
     fontWeight: typography.weights.medium,
   },
+  adminButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    backgroundColor: brandColors.primary,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  adminText: {
+    fontSize: 12,
+    color: '#FFFFFF',
+    fontWeight: typography.weights.medium,
+  },
   legalFooter: {
     paddingVertical: 20,
     paddingHorizontal: 20,
@@ -1561,17 +2400,40 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     alignItems: 'center',
   },
+  environmentalContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   environmentalTag: {
     fontSize: 14,
     fontFamily: typography.fontFamily,
     fontWeight: typography.weights.medium,
     textAlign: 'center',
   },
+  missionLink: {
+    marginLeft: 6,
+    padding: 2,
+  },
   primaryInfoSection: {
     marginVertical: 10,
+    ...(isDesktop && {
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      gap: 16,
+    }),
   },
   secondaryInfoSection: {
     marginTop: 10,
+    ...(isDesktop && {
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      gap: 16,
+    }),
   },
   viewMoreButton: {
     paddingVertical: 12,
@@ -1598,5 +2460,91 @@ const styles = StyleSheet.create({
     color: brandColors.textSecondary,
     fontStyle: 'italic',
     fontSize: 14,
+  },
+  labelWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  infoIconButton: {
+    marginLeft: 6,
+    padding: 4,
+    minWidth: 24,
+    minHeight: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  realScoreExplanation: {
+    fontSize: 14,
+    fontFamily: typography.bodyFont,
+    color: brandColors.textSecondary,
+    fontStyle: 'italic',
+    marginTop: 4,
+    lineHeight: 20,
+  },
+  dupeAlert: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+    borderWidth: 1,
+    borderRadius: 8,
+    padding: 12,
+    marginVertical: 12,
+    marginHorizontal: 0,
+  },
+  dupeAlertContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dupeAlertText: {
+    fontSize: 14,
+    fontFamily: typography.bodyFont,
+    color: '#92400E',
+    lineHeight: 20,
+    flex: 1,
+  },
+  topPriceContainer: {
+    backgroundColor: '#F9FAFB',
+    borderRadius: 12,
+    padding: 16,
+    marginVertical: 10,
+  },
+  priceRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginBottom: 16,
+  },
+  priceColumn: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  priceLabel: {
+    fontSize: 16,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.regular,
+    color: brandColors.textSecondary,
+    marginBottom: 4,
+  },
+  priceValueLarge: {
+    fontSize: 24,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.bold,
+    color: brandColors.accent,
+  },
+  itemInPriceBox: {
+    borderTopWidth: 1,
+    borderTopColor: brandColors.border,
+    paddingTop: 12,
+  },
+  itemLabel: {
+    fontSize: 14,
+    fontFamily: typography.bodyFont,
+    color: brandColors.textSecondary,
+    marginBottom: 4,
+  },
+  itemValue: {
+    fontSize: 18,
+    fontFamily: typography.bodyFont,
+    fontWeight: typography.weights.medium,
+    color: brandColors.text,
   },
 });

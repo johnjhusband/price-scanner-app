@@ -65,3 +65,25 @@ else
 fi
 
 echo "Nginx fix complete."
+
+# Run comprehensive legal pages fix
+echo ""
+echo "Running comprehensive legal pages fix..."
+if [ -f /var/www/$DOMAIN/scripts/comprehensive-legal-fix.sh ]; then
+    bash /var/www/$DOMAIN/scripts/comprehensive-legal-fix.sh
+else
+    # Fallback: Run post-deploy-all-fixes if available
+    if [ -f /var/www/$DOMAIN/scripts/post-deploy-all-fixes.sh ]; then
+        bash /var/www/$DOMAIN/scripts/post-deploy-all-fixes.sh
+    fi
+fi
+
+# Diagnose legal pages
+echo ""
+echo "Legal pages diagnostic..."
+if [ -f /var/www/$DOMAIN/scripts/diagnose-legal.sh ]; then
+    bash /var/www/$DOMAIN/scripts/diagnose-legal.sh
+else
+    echo "Backend /terms status: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/terms)"
+    echo "Backend /privacy status: $(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/privacy)"
+fi

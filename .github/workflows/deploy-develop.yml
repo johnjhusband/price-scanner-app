@@ -38,7 +38,29 @@ jobs:
             # Check if backend is running
             pm2 show dev-backend || true
             curl -s http://localhost:3002/health || echo "Backend not responding"
+            # Fix nginx SSL configuration comprehensively
+            cd /var/www/blue.flippi.ai && bash scripts/fix-nginx-ssl-comprehensive.sh || true
+            # Check nginx requirements first
+            cd /var/www/blue.flippi.ai && bash scripts/check-nginx-includes.sh || echo "Nginx include check failed, will attempt fix"
             # Fix any duplicate nginx locations first
             cd /var/www/blue.flippi.ai && bash scripts/post-deploy-nginx-fix.sh || true
             # Force nginx reload with symlink update
             cd /var/www/blue.flippi.ai && bash scripts/force-nginx-reload.sh || true
+            # Apply the known working nginx configuration
+            cd /var/www/blue.flippi.ai && bash scripts/apply-working-nginx-config.sh || true
+            # Verify which nginx config is actually active
+            cd /var/www/blue.flippi.ai && bash scripts/verify-active-nginx-config.sh || true
+            # Trace actual request flow
+            cd /var/www/blue.flippi.ai && bash scripts/trace-legal-request.sh || true
+            # Check if frontend is intercepting routes
+            cd /var/www/blue.flippi.ai && bash scripts/check-frontend-routing.sh || true
+            # Show the actual nginx config
+            cd /var/www/blue.flippi.ai && bash scripts/show-nginx-routes.sh || true
+            # Show simplified nginx routes
+            cd /var/www/blue.flippi.ai && bash scripts/show-nginx-routes-simple.sh || true
+            # Test nginx routing behavior
+            cd /var/www/blue.flippi.ai && bash scripts/test-nginx-routing.sh || true
+            # Quick nginx check
+            cd /var/www/blue.flippi.ai && bash scripts/quick-nginx-check.sh || true
+            # Fix SSL and legal pages
+            cd /var/www/blue.flippi.ai && bash scripts/fix-ssl-and-legal.sh || true

@@ -50,26 +50,44 @@ fi
 
 echo "Legal page files found. Updating nginx configuration..."
 
-# Create the legal pages configuration
+# Create the legal pages configuration to proxy to backend
 LEGAL_CONFIG=$(cat << EOF
 
-    # Legal pages - serve static files directly
+    # Legal pages - proxy to backend Express routes
     location = /terms {
-        alias $SITE_ROOT/mobile-app/terms.html;
-        default_type text/html;
-        
-        # Allow access from any origin
-        add_header Access-Control-Allow-Origin "*";
-        add_header Access-Control-Allow-Methods "GET, OPTIONS";
+        proxy_pass http://localhost:$BACKEND_PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
     
     location = /privacy {
-        alias $SITE_ROOT/mobile-app/privacy.html;
-        default_type text/html;
-        
-        # Allow access from any origin
-        add_header Access-Control-Allow-Origin "*";
-        add_header Access-Control-Allow-Methods "GET, OPTIONS";
+        proxy_pass http://localhost:$BACKEND_PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+    
+    location = /mission {
+        proxy_pass http://localhost:$BACKEND_PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+    
+    location = /contact {
+        proxy_pass http://localhost:$BACKEND_PORT;
+        proxy_http_version 1.1;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
     }
 EOF
 )

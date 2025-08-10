@@ -1,6 +1,6 @@
 {
   "name": "flippi-ai-backend",
-  "version": "2.0.0",
+  "version": "2.3.0",
   "description": "Simple price scanner API using OpenAI Vision",
   "main": "server.js",
   "scripts": {

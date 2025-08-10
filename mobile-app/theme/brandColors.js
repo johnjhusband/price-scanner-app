@@ -126,15 +126,15 @@ export const typography = {
 // Button styling constants - Final consolidated design
 export const buttonStyles = {
   primary: {
-    backgroundColor: '#000000',         // Black for all primary CTAs
+    backgroundColor: '#18181b',         // Warmer neutral-900 for primary CTAs
     color: '#FFFFFF',                  // White text
-    hoverBackground: '#111827',        // Subtle darkening on hover
+    hoverBackground: '#27272a',        // Neutral-800 on hover
     borderWidth: 0,
     borderColor: 'transparent',
   },
   secondary: {
-    backgroundColor: '#000000',        // Black for secondary actions too
-    color: '#FFFFFF',                  // White text
+    backgroundColor: '#f4f4f5',        // Light gray for secondary actions
+    color: '#18181b',                  // Dark text
     hoverBackground: '#111827',        // Subtle darkening on hover
     borderWidth: 0,
     borderColor: 'transparent',

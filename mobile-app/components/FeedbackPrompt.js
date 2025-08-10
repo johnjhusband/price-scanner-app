@@ -31,10 +31,11 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          analysis_id: scanData?.analysis_id || `analysis_${Date.now()}`,
           helped_decision: helpedDecision,
           feedback_text: feedbackText.trim(),
           user_description: userDescription || '',
-          image_data: imageData,
+          image_data: imageData ? imageData.replace(/^data:image\/[a-z]+;base64,/, '') : imageData,
           scan_data: scanData
         })
       });
@@ -73,7 +74,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
 
   return (
     <View style={styles.container}>
-      <Text style={styles.question}>Did this result help you make a decision?</Text>
+      <Text style={styles.question}>Was this analysis helpful?</Text>
       
       <View style={styles.buttonRow}>
         <TouchableOpacity
@@ -121,7 +122,7 @@ const FeedbackPrompt = ({ scanData, userDescription, imageData, onComplete }) =>
 
       <TextInput
         style={styles.textInput}
-        placeholder="Tell us what worked or didn't (optional)"
+        placeholder="Have an idea for Flippi? We're listening."
         placeholderTextColor={brandColors.disabledText}
         accessibilityLabel="Additional feedback text input"
         value={feedbackText}
