@@ -26,9 +26,20 @@ const useVoiceInput = () => {
     }
   }, []);
 
-  const startListening = (onResult) => {
+  const startListening = async (onResult) => {
     if (!isSupported || !recognitionRef.current) {
       setError('Voice input is not supported on this browser');
+      return;
+    }
+
+    // First check if we have microphone permissions
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      // Got permission, stop the stream immediately
+      stream.getTracks().forEach(track => track.stop());
+    } catch (permError) {
+      console.error('[Voice] Permission error:', permError);
+      setError('Microphone access denied. Please allow microphone access in your browser settings.');
       return;
     }
 
