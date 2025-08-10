@@ -62,7 +62,15 @@ jobs:
             fi
             
             # Fix nginx SSL configuration comprehensively
-            cd /var/www/green.flippi.ai && bash scripts/fix-nginx-ssl-comprehensive.sh || true
+            echo "=== Running nginx SSL fix script ==="
+            cd /var/www/green.flippi.ai
+            if [ -f scripts/fix-nginx-ssl-comprehensive.sh ]; then
+              echo "Script found, running..."
+              bash scripts/fix-nginx-ssl-comprehensive.sh || echo "SSL fix script had errors but continuing"
+            else
+              echo "ERROR: fix-nginx-ssl-comprehensive.sh not found!"
+              ls -la scripts/
+            fi
             
             # Debug: Check what directory PM2 is serving from
             echo "=== PM2 staging-frontend config ==="
@@ -72,8 +80,17 @@ jobs:
             echo "=== Files in dist ==="
             ls -la /var/www/green.flippi.ai/mobile-app/dist/ | head -5 || true
             
-            # Just restart, don't delete
-            pm2 restart staging-backend staging-frontend
+            # Ensure PM2 is serving the right directory
+            echo "=== Checking PM2 frontend configuration ==="
+            PM2_FRONTEND_STATUS=$(pm2 describe staging-frontend 2>&1 || echo "NOT_FOUND")
+            if [[ "$PM2_FRONTEND_STATUS" == *"NOT_FOUND"* ]]; then
+              echo "staging-frontend not found in PM2, starting it..."
+              cd /var/www/green.flippi.ai/mobile-app
+              pm2 start "npx serve -s dist -l 8081" --name staging-frontend
+            else
+              echo "staging-frontend exists, restarting..."
+              pm2 restart staging-backend staging-frontend
+            fi
             
             # Wait for services to start
             sleep 3
