@@ -1574,19 +1574,50 @@ export default function App() {
           const a = document.createElement('a');
           a.href = url;
           a.download = `flippi-share-image-${Date.now()}.png`;
+          a.style.display = 'none';
+          
+          console.log('[Share Image] Attempting download...');
           
           // Method 2: Try different click methods
-          if (document.body) {
+          try {
+            // Add to DOM
             document.body.appendChild(a);
+            console.log('[Share Image] Anchor added to DOM');
+            
+            // Click the link
             a.click();
-            document.body.removeChild(a);
-          } else {
-            // Fallback: dispatch click event
-            a.dispatchEvent(new MouseEvent('click', {
-              bubbles: true,
-              cancelable: true,
-              view: window
-            }));
+            console.log('[Share Image] Click triggered');
+            
+            // Clean up immediately
+            setTimeout(() => {
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              console.log('[Share Image] Cleanup complete');
+            }, 100);
+          } catch (clickError) {
+            console.error('[Share Image] Click method failed:', clickError);
+            
+            // Fallback: Try alternative download method
+            try {
+              // Create a new window with the image
+              const newWindow = window.open(url, '_blank');
+              if (newWindow) {
+                setTimeout(() => newWindow.close(), 1000);
+              }
+            } catch (windowError) {
+              console.error('[Share Image] Window method failed:', windowError);
+              
+              // Last resort: Copy URL to clipboard
+              if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(() => {
+                  Alert.alert(
+                    'Download Ready',
+                    'Image URL copied to clipboard. Right-click and save the image from your browser.',
+                    [{ text: 'OK' }]
+                  );
+                });
+              }
+            }
           }
           
           // Cleanup

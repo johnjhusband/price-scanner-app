@@ -77,20 +77,24 @@ const FeedbackSystem = ({ scanData, userDescription, imageData, onComplete }) =>
         
         <TouchableOpacity
           style={styles.optionButton}
-          onPress={() => setShowChat(false)}
+          onPress={() => {
+            // Don't set showChat, just render FeedbackPrompt directly
+            setShowChat(null);
+          }}
         >
           <Feather name="edit-3" size={20} color={brandColors.primary} />
           <View style={styles.optionContent}>
             <Text style={styles.optionTitle}>Classic Form</Text>
             <Text style={styles.optionDescription}>Traditional feedback form</Text>
           </View>
+          <Feather name="chevron-right" size={20} color={brandColors.textSecondary} />
         </TouchableOpacity>
       </View>
     );
   }
   
   // Show chosen feedback method
-  if (showChat) {
+  if (showChat === true) {
     return (
       <FlippiBot
         scanData={scanData}
@@ -100,16 +104,20 @@ const FeedbackSystem = ({ scanData, userDescription, imageData, onComplete }) =>
         initialSentiment="negative"
       />
     );
-  } else {
+  } else if (showChat === null) {
     return (
       <FeedbackPrompt
         scanData={scanData}
         userDescription={userDescription}
         imageData={imageData}
         onComplete={onComplete}
+        initialData={{ helped_decision: false }}
       />
     );
   }
+  
+  // Should not reach here
+  return null;
 };
 
 const styles = StyleSheet.create({
