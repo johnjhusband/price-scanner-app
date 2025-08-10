@@ -53,10 +53,6 @@ Comprehensive feedback learning system with pattern detection, manual overrides,
    - Detailed insights lost when Real Score ≤ 30
    - Generic text replaces specific findings
 
-3. **🟢 LOW: Temporary Database Storage**
-   - Feedback DB uses /tmp/ directory
-   - Data may be lost on server restart
-   - Need to set FEEDBACK_DB_PATH
 
 ### 📝 Technical Details:
 - Version: 2.3.0
@@ -67,10 +63,9 @@ Comprehensive feedback learning system with pattern detection, manual overrides,
 
 ### 🚀 Deployment Notes:
 1. Run database migrations (automatic on startup)
-2. Set FEEDBACK_DB_PATH to persistent location
-3. Verify admin email access list
-4. Monitor pattern detection logs
-5. Generate initial weekly report after deployment
+2. Verify admin email access list
+3. Monitor pattern detection logs
+4. Generate initial weekly report after deployment
 
 ---
 

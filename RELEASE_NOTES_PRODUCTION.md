@@ -38,10 +38,6 @@ This release introduces our comprehensive feedback learning system that helps Fl
    - Generic text replaces specific findings
    - Does not affect pricing accuracy
 
-3. **🟢 LOW: Temporary Database Storage**
-   - Feedback DB uses /tmp/ directory
-   - Data may be lost on server restart
-   - Will be moved to persistent storage post-deployment
 
 ## 📊 Deployment Checklist
 
