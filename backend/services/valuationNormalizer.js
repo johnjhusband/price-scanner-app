@@ -48,7 +48,7 @@ const normalizeRedditPost = async (post) => {
     source_url: post.url || post.permalink,
     source_subreddit: post.subreddit,
     source_author: post.author,
-    source_date: new Date(post.created_utc * 1000),
+    source_date: new Date(post.created_utc * 1000).toISOString(),
     
     title: cleanTitle(title),
     description: cleanText(text),
@@ -69,8 +69,8 @@ const normalizeRedditPost = async (post) => {
     recommended_platform: null,
     recommended_live_platform: null,
     
-    published: true,
-    noindex: false, // Will be set based on confidence
+    published: 1,
+    noindex: 0, // Will be set based on confidence
     
     duplicates: duplicates
   };

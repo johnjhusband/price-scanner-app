@@ -789,11 +789,13 @@ const valuationRoutes = require('./routes/valuations');
 const qrRoutes = require('./routes/qr');
 const redditValuationRoutes = require('./routes/redditValuation');
 const migrationRoutes = require('./routes/migrations');
+const adminRedditRoutes = require('./routes/adminReddit');
 
 app.use('/', valuationRoutes);
 app.use('/', qrRoutes);
 app.use('/', redditValuationRoutes);
 app.use('/', migrationRoutes);
+app.use('/', adminRedditRoutes);
 
 app.use('/api/feedback', (req, res, next) => {
   try {
