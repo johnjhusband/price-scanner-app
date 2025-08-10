@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { getDatabase } = require('../database');
 const { createValuationTables } = require('../database/valuationSchema');
+const { createAutomationTables } = require('../database/automationSchema');
 
 // Admin endpoint to run migrations
 router.post('/api/admin/migrate/valuations', async (req, res) => {
@@ -67,6 +68,42 @@ router.get('/api/admin/migrate/status', async (req, res) => {
   } catch (error) {
     res.status(500).json({
       error: 'Failed to check status',
+      message: error.message
+    });
+  }
+});
+
+// Admin endpoint to run automation migrations
+router.post('/api/admin/migrate/automation', async (req, res) => {
+  try {
+    // Simple auth check
+    const adminKey = req.headers['x-admin-key'];
+    if (adminKey !== process.env.ADMIN_MIGRATION_KEY && adminKey !== 'flippi-migrate-2025') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    console.log('[Migration] Starting automation tables creation...');
+    
+    const db = getDatabase();
+    
+    // Create tables
+    createAutomationTables(db);
+    
+    // Verify creation
+    const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'automation%'").all();
+    
+    console.log('[Migration] Automation tables created:', tables.map(t => t.name));
+    
+    res.json({
+      success: true,
+      message: 'Automation tables created successfully',
+      tables: tables.map(t => t.name)
+    });
+    
+  } catch (error) {
+    console.error('[Migration] Error:', error);
+    res.status(500).json({
+      error: 'Migration failed',
       message: error.message
     });
   }

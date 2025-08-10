@@ -118,14 +118,25 @@ router.get('/admin/automation', (req, res) => {
 
   <div class="control-panel">
     <h2>🔍 Monitored Subreddits</h2>
-    <ul>
+    <ul style="columns: 2;">
       <li>r/ThriftStoreHauls</li>
       <li>r/whatsthisworth</li>
       <li>r/vintage</li>
       <li>r/Antiques</li>
       <li>r/Flipping</li>
+      <li>r/GoodwillFinds</li>
+      <li>r/DumpsterDiving</li>
+      <li>r/yardsale</li>
+      <li>r/estatesales</li>
+      <li>r/AskCollectors</li>
     </ul>
     <p><em>Keywords: worth, value, "how much", "found this", thrift, authenticate, etc.</em></p>
+  </div>
+
+  <div class="control-panel">
+    <h2>📈 Analytics</h2>
+    <p><a href="/admin/automation/performance" style="color: #10B981; font-size: 18px;">View Performance Dashboard →</a></p>
+    <p>Detailed metrics, trends, and error tracking</p>
   </div>
 
   <script>

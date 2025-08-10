@@ -77,7 +77,36 @@ Release 005 focused on payment gateway implementation, advanced admin insights, 
 - Payment processing is not yet functional (UI only)
 - Activity heatmap and sentiment alerts pending implementation
 
+## Additional Features Added Post-Release
+
+### 5. Voice Input for Feedback (Issue #134)
+- ✅ Web Speech API integration
+- ✅ Microphone permission handling
+- ✅ Voice-to-text in feedback forms
+- ✅ Visual feedback during recording
+
+### 6. FlippiBot Conversational Feedback (Issue #135)
+- ✅ 3-turn conversation flow
+- ✅ Dynamic responses based on user input
+- ✅ Automatic submission after conversation
+- ✅ Typing indicators and animations
+
+### 7. Smart Growth Automation (Issue #136)
+- ✅ Reddit valuation pages system
+- ✅ QR code generation for valuations
+- ✅ SEO-optimized public pages
+- ✅ Admin tool for manual processing
+
+### 8. Reddit Marketing Automation (Issue #149)
+- ✅ Automatic monitoring of 5 subreddits
+- ✅ Keyword detection for valuation posts
+- ✅ Admin control panel at /admin/automation
+- ✅ Configurable run intervals
+- ✅ 24-hour statistics tracking
+- ✅ Standalone startup script
+
 ## Next Steps
 - Complete Stripe payment integration
-- Implement remaining admin dashboard features
-- Begin work on new project as mentioned by user
+- Start automated marketing tomorrow
+- Monitor automation performance
+- Track conversion metrics

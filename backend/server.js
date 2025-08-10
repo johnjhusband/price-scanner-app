@@ -792,6 +792,7 @@ const migrationRoutes = require('./routes/migrations');
 const adminRedditRoutes = require('./routes/adminReddit');
 const automationRoutes = require('./routes/automation');
 const automationAdminRoutes = require('./routes/automationAdmin');
+const automationDashboardRoutes = require('./routes/automationDashboard');
 
 app.use('/', valuationRoutes);
 app.use('/', qrRoutes);
@@ -800,6 +801,7 @@ app.use('/', migrationRoutes);
 app.use('/', adminRedditRoutes);
 app.use('/', automationRoutes);
 app.use('/', automationAdminRoutes);
+app.use('/', automationDashboardRoutes);
 
 app.use('/api/feedback', (req, res, next) => {
   try {
