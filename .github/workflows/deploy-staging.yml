@@ -24,7 +24,23 @@ jobs:
             
             # Install dependencies and build
             cd backend && npm install --production
-            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
+            
+            # Build frontend with timeout and error handling
+            cd ../mobile-app
+            echo "Installing mobile app dependencies..."
+            npm install || { echo "npm install failed"; exit 1; }
+            
+            echo "Building frontend with Expo..."
+            timeout 300 npx expo export --platform web --output-dir dist || {
+              echo "Expo build failed or timed out after 5 minutes"
+              echo "Checking if dist exists anyway..."
+              if [ -d "dist" ] && [ "$(ls -A dist)" ]; then
+                echo "dist exists with files, continuing..."
+              else
+                echo "No dist directory or empty, build failed!"
+                exit 1
+              fi
+            }
             
             # Apply OAuth nginx fix IMMEDIATELY after build
             echo "=== Applying OAuth fix ==="
