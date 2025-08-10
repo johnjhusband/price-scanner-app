@@ -788,10 +788,12 @@ const growthRoutes = require('./routes/growth');
 const valuationRoutes = require('./routes/valuations');
 const qrRoutes = require('./routes/qr');
 const redditValuationRoutes = require('./routes/redditValuation');
+const migrationRoutes = require('./routes/migrations');
 
 app.use('/', valuationRoutes);
 app.use('/', qrRoutes);
 app.use('/', redditValuationRoutes);
+app.use('/', migrationRoutes);
 
 app.use('/api/feedback', (req, res, next) => {
   try {
