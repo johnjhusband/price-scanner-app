@@ -18,7 +18,9 @@ jobs:
             # Reset any local changes to avoid merge conflicts
             git reset --hard HEAD
             git clean -fd
-            git pull origin staging
+            # Handle divergent branches by force resetting to remote
+            git fetch origin
+            git reset --hard origin/staging
             
             # Install dependencies and build
             cd backend && npm install --production
