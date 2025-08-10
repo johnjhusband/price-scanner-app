@@ -1202,6 +1202,54 @@ export default function App() {
     });
   };
 
+  // Helper function to generate valuation slug
+  const generateValuationSlug = (result) => {
+    const brand = (result.brand || '').toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const item = (result.item_name || 'item').toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 30);
+    const timestamp = Date.now().toString(36);
+    return `${brand}-${item}-${timestamp}`.replace(/--+/g, '-').replace(/^-|-$/g, '');
+  };
+
+  // Helper function to draw QR placeholder
+  const drawQRPlaceholder = (ctx, x, y, size) => {
+    const moduleSize = size / 25;
+    ctx.fillStyle = '#000000';
+    
+    // Draw finder patterns (corner squares)
+    const drawFinderPattern = (px, py) => {
+      // Outer square
+      ctx.fillRect(px, py, 7 * moduleSize, 7 * moduleSize);
+      // Inner white square
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(px + moduleSize, py + moduleSize, 5 * moduleSize, 5 * moduleSize);
+      // Center black square
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(px + 2 * moduleSize, py + 2 * moduleSize, 3 * moduleSize, 3 * moduleSize);
+    };
+    
+    // Three corner patterns
+    drawFinderPattern(x, y);
+    drawFinderPattern(x + size - 7 * moduleSize, y);
+    drawFinderPattern(x, y + size - 7 * moduleSize);
+    
+    // Timing patterns
+    for (let i = 8; i < 17; i++) {
+      if (i % 2 === 0) {
+        ctx.fillRect(x + i * moduleSize, y + 6 * moduleSize, moduleSize, moduleSize);
+        ctx.fillRect(x + 6 * moduleSize, y + i * moduleSize, moduleSize, moduleSize);
+      }
+    }
+    
+    // Data area (simplified pattern)
+    for (let row = 8; row < 17; row++) {
+      for (let col = 8; col < 17; col++) {
+        if ((row + col) % 3 === 0) {
+          ctx.fillRect(x + col * moduleSize, y + row * moduleSize, moduleSize, moduleSize);
+        }
+      }
+    }
+  };
+
   // Generate universal share image (square format)
   const generateShareImage = async (result, imageSource = null) => {
     if (!result) {
@@ -1460,9 +1508,45 @@ export default function App() {
         yPosition += 50;
       }
       
+      // Add QR Code for Reddit valuation page
+      try {
+        // Generate a slug for this item
+        const itemSlug = generateValuationSlug(result);
+        const qrUrl = `https://flippi.ai/value/${itemSlug}`;
+        
+        // QR Code positioning
+        const qrSize = 120;
+        const qrX = canvas.width - qrSize - 40; // Right side
+        const qrY = canvas.height - qrSize - 100; // Above footer
+        
+        // White background for QR
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
+        
+        // Draw border
+        ctx.strokeStyle = '#E5E5E5';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
+        
+        // For now, draw placeholder QR pattern
+        // In production, this would fetch from backend
+        drawQRPlaceholder(ctx, qrX, qrY, qrSize);
+        
+        // QR Label
+        ctx.fillStyle = '#666666';
+        ctx.font = '14px -apple-system, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Scan for details', qrX + qrSize/2, qrY + qrSize + 20);
+        
+      } catch (qrError) {
+        console.error('[Share Image] QR generation error:', qrError);
+        // Continue without QR if it fails
+      }
+      
       // Footer
       ctx.fillStyle = '#666666';
       ctx.font = '28px -apple-system, system-ui, sans-serif';
+      ctx.textAlign = 'center';
       ctx.fillText('Never Over Pay • Know the price. Own the profit.', canvas.width / 2, 960);
       
       if (user?.referralCode) {
