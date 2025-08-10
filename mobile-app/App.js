@@ -9,7 +9,7 @@ import { Feather } from '@expo/vector-icons';
 // Import brand components and theme
 import FlippiLogo from './components/FlippiLogo';
 import BrandButton from './components/BrandButton';
-import FeedbackWrapper from './components/FeedbackWrapper';
+import FeedbackSystem from './components/FeedbackSystem';
 import EnterScreen from './components/EnterScreen';
 import MissionModal from './components/MissionModal';
 import PageContainer from './components/PageContainer';
@@ -1482,38 +1482,63 @@ export default function App() {
           
           console.log('[Share Image] Blob created, size:', blob.size);
           
+          // Try multiple download methods for better browser compatibility
           const url = URL.createObjectURL(blob);
           console.log('[Share Image] Object URL created:', url);
           
+          // Method 1: Create and click anchor
           const a = document.createElement('a');
           a.href = url;
           a.download = `flippi-share-image-${Date.now()}.png`;
-          a.style.display = 'none';
-          document.body.appendChild(a);
           
-          console.log('[Share Image] Triggering download...');
-          // Force download
-          a.click();
+          // Method 2: Try different click methods
+          if (document.body) {
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+          } else {
+            // Fallback: dispatch click event
+            a.dispatchEvent(new MouseEvent('click', {
+              bubbles: true,
+              cancelable: true,
+              view: window
+            }));
+          }
           
           // Cleanup
           setTimeout(() => {
-            document.body.removeChild(a);
             URL.revokeObjectURL(url);
             console.log('[Share Image] Cleanup complete');
           }, 100);
           
           Alert.alert(
             'Image downloaded!',
-            'Ready to share on any platform!',
-            [{ text: 'Awesome!' }]
-          );
-        } catch (error) {
-          console.error('[Share Image] Error in blob callback:', error);
-          Alert.alert(
-            'Download Failed',
-            'Unable to download image. Please try again.',
+            'Check your Downloads folder',
             [{ text: 'OK' }]
           );
+        } catch (error) {
+          console.error('[Share Image] Download error:', error);
+          
+          // Fallback: Open image in new tab
+          try {
+            const dataUrl = canvas.toDataURL('image/png');
+            const newTab = window.open();
+            if (newTab) {
+              newTab.document.write(`<img src="${dataUrl}" alt="Flippi Share Image" />`);
+              Alert.alert(
+                'Image opened in new tab',
+                'Right-click to save the image',
+                [{ text: 'OK' }]
+              );
+            }
+          } catch (fallbackError) {
+            console.error('[Share Image] Fallback error:', fallbackError);
+            Alert.alert(
+              'Download not supported',
+              'Please take a screenshot instead',
+              [{ text: 'OK' }]
+            );
+          }
         }
       }, 'image/png', 0.95);
     } catch (error) {
@@ -2046,7 +2071,7 @@ export default function App() {
             
             
             {analysisResult && showFeedback && (
-              <FeedbackWrapper
+              <FeedbackSystem
                 scanData={analysisResult}
                 userDescription={productDescription}
                 imageData={imageBase64}
