@@ -33,7 +33,9 @@ const WORTH_KEYWORDS = [
   'flea market',
   'authenticate',
   'real or fake',
-  'legit check'
+  'legit check',
+  'trending bag',
+  'bag'
 ];
 
 // Fetch posts from Reddit
