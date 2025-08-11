@@ -94,6 +94,12 @@ jobs:
             pm2 show prod-backend || true
             curl -s http://localhost:3000/health || echo "Backend not responding"
             
+            # Check nginx logs before proceeding
+            echo "=== Checking Nginx Logs ==="
+            if [ -f scripts/check-nginx-logs.sh ]; then
+              bash scripts/check-nginx-logs.sh
+            fi
+            
             # Clear nginx cache
             sudo rm -rf /var/cache/nginx/*
             sudo nginx -s reload
