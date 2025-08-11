@@ -4,18 +4,18 @@ const { generateSlug } = require('../database/valuationSchema');
 
 // Reddit JSON API (no auth required)
 const SUBREDDITS = [
-  // Primary targets
-  'ThriftStoreHauls',
-  'whatsthisworth',
-  'vintage',
-  'Antiques',
-  'Flipping',
-  // Additional sources
-  'GoodwillFinds',
-  'DumpsterDiving',
-  'yardsale',
-  'estatesales',
-  'AskCollectors'
+  // MVP: Focus on r/ThriftStoreHauls only
+  'ThriftStoreHauls'
+  // Future expansion:
+  // 'whatsthisworth',
+  // 'vintage',
+  // 'Antiques',
+  // 'Flipping',
+  // 'GoodwillFinds',
+  // 'DumpsterDiving',
+  // 'yardsale',
+  // 'estatesales',
+  // 'AskCollectors'
 ];
 
 // Keywords that indicate valuation questions
@@ -79,17 +79,21 @@ async function fetchRedditPosts(subreddit, limit = 25) {
   }
 }
 
-// Check if post is relevant for valuation
+// Check if post is relevant for processing
 function isRelevantPost(post) {
-  const text = `${post.title} ${post.selftext || ''}`.toLowerCase();
+  // MVP: Process ALL posts from r/ThriftStoreHauls with images
   
   // Must have an image
   if (!post.url || (!post.url.includes('i.redd.it') && !post.url.includes('imgur'))) {
     return false;
   }
   
-  // Check for worth keywords
-  return WORTH_KEYWORDS.some(keyword => text.includes(keyword));
+  // MVP: Accept all posts with images (no keyword filtering)
+  return true;
+  
+  // Future: Re-enable keyword filtering if needed
+  // const text = `${post.title} ${post.selftext || ''}`.toLowerCase();
+  // return WORTH_KEYWORDS.some(keyword => text.includes(keyword));
 }
 
 // Check if we've already processed this post
@@ -123,7 +127,7 @@ async function processSubreddit(subreddit, retries = 3) {
   
   const relevantPosts = posts.filter(isRelevantPost);
   
-  console.log(`[Reddit] Found ${relevantPosts.length} relevant posts out of ${posts.length}`);
+  console.log(`[Reddit] Found ${relevantPosts.length} posts with images out of ${posts.length} total`);
   
   let processed = 0;
   let skipped = 0;

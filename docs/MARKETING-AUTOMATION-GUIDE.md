@@ -2,14 +2,16 @@
 
 ## Overview
 
-The Flippi.ai marketing automation system monitors Reddit for valuation questions and automatically creates SEO-optimized valuation pages. This drives organic traffic without requiring manual intervention.
+The Flippi.ai marketing automation system monitors Reddit for thrift store finds and automatically creates SEO-optimized blog/valuation pages. This drives organic traffic without requiring manual intervention.
+
+**MVP Focus**: Currently processing ALL posts from r/ThriftStoreHauls with images to test the end-to-end automation flow.
 
 ## Components
 
 ### 1. Reddit Monitor (`backend/growth/redditAutomation.js`)
-- Monitors 5 subreddits for "what's this worth?" posts
-- Filters for posts with images and valuation keywords
-- Processes posts through the valuation service
+- **MVP**: Monitors r/ThriftStoreHauls only
+- Processes ALL posts with images (no keyword filtering)
+- Creates blog entries with valuations when possible
 - Respects rate limits (2 seconds between posts)
 
 ### 2. Automation Control (`/admin/automation`)
