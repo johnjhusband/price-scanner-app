@@ -83,8 +83,24 @@ async function fetchRedditPosts(subreddit, limit = 25) {
 function isRelevantPost(post) {
   // MVP: Process ALL posts from r/ThriftStoreHauls with images
   
-  // Must have an image
-  if (!post.url || (!post.url.includes('i.redd.it') && !post.url.includes('imgur'))) {
+  // Check for various image types
+  const hasDirectImage = post.url && (
+    post.url.includes('i.redd.it') || 
+    post.url.includes('imgur') ||
+    post.url.includes('.jpg') ||
+    post.url.includes('.jpeg') ||
+    post.url.includes('.png') ||
+    post.url.includes('.gif')
+  );
+  
+  // Check for Reddit galleries
+  const hasGallery = post.url && post.url.includes('/gallery/');
+  
+  // Check for image in media metadata (for galleries)
+  const hasMediaMetadata = post.media_metadata && Object.keys(post.media_metadata).length > 0;
+  
+  // Must have some form of image
+  if (!hasDirectImage && !hasGallery && !hasMediaMetadata) {
     return false;
   }
   
