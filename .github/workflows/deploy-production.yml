@@ -73,7 +73,16 @@ jobs:
             cd /var/www/app.flippi.ai && bash scripts/post-deploy-nginx.sh || true
             
             # Ensure nginx is properly configured
-            sudo nginx -t && sudo nginx -s reload || sudo systemctl restart nginx
+            echo "=== Testing and restarting nginx ==="
+            if sudo nginx -t; then
+              echo "Nginx config valid, doing full restart..."
+              sudo systemctl restart nginx
+              sleep 3
+              echo "Nginx restarted"
+            else
+              echo "ERROR: Nginx config invalid!"
+              sudo nginx -t
+            fi
             
             # Post-deployment verification
             echo "=== Post-Deployment Verification ==="
