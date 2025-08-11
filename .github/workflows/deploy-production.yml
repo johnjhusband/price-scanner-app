@@ -40,7 +40,15 @@ jobs:
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
             
             # Fix nginx SSL configuration comprehensively
-            cd /var/www/app.flippi.ai && bash scripts/fix-nginx-ssl-comprehensive.sh || true
+            echo "=== Running nginx SSL fix script ==="
+            cd /var/www/app.flippi.ai
+            if [ -f scripts/fix-nginx-ssl-comprehensive.sh ]; then
+              echo "Script found, running with sudo..."
+              sudo bash scripts/fix-nginx-ssl-comprehensive.sh || echo "SSL fix script had errors but continuing"
+            else
+              echo "ERROR: fix-nginx-ssl-comprehensive.sh not found!"
+              ls -la scripts/
+            fi
             
             # Debug: Check what directory PM2 is serving from
             echo "=== PM2 prod-frontend config ==="
