@@ -64,6 +64,9 @@ jobs:
             # Run post-deploy nginx fixes
             cd /var/www/app.flippi.ai && bash scripts/post-deploy-nginx.sh || true
             
+            # Ensure nginx is properly configured
+            sudo nginx -t && sudo nginx -s reload || sudo systemctl restart nginx
+            
             # Post-deployment verification
             echo "=== Post-Deployment Verification ==="
             echo "Git commit: $(git rev-parse HEAD)"
