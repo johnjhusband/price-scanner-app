@@ -16,6 +16,17 @@ server {
     server_name app.flippi.ai;
     client_max_body_size 50M;
 
+    # Handle web-styles.css redirect to the actual generated file
+    location = /web-styles.css {
+        # Try to find the actual generated CSS file
+        try_files /_expo/static/css/web-styles-*.css @fallback_css;
+    }
+    
+    location @fallback_css {
+        # Fallback to empty CSS if not found to prevent 404
+        return 204;
+    }
+
     # Serve static files directly from dist directory
     location / {
         root /var/www/app.flippi.ai/mobile-app/dist;
