@@ -15,6 +15,8 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/app.flippi.ai
+            # Fix git ownership issue
+            git config --global --add safe.directory /var/www/app.flippi.ai
             # Reset any local changes to avoid merge conflicts
             git reset --hard HEAD
             git clean -fd
