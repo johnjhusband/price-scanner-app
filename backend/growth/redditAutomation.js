@@ -35,7 +35,15 @@ const WORTH_KEYWORDS = [
   'real or fake',
   'legit check',
   'trending bag',
-  'bag'
+  'bag',
+  'duffel',
+  'tumi',
+  'carry on',
+  'luggage',
+  'suitcase',
+  'backpack',
+  'purse',
+  'handbag'
 ];
 
 // Fetch posts from Reddit
