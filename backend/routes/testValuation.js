@@ -29,9 +29,8 @@ router.get('/api/test/create-hello-kitty', (req, res) => {
           category TEXT,
           image_url TEXT,
           image_thumbnail TEXT,
-          min_value REAL,
-          max_value REAL,
-          estimated_value REAL,
+          value_low INTEGER,
+          value_high INTEGER,
           confidence REAL,
           created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
           updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -45,8 +44,8 @@ router.get('/api/test/create-hello-kitty', (req, res) => {
         slug, source_type, source_id, source_url, source_subreddit,
         source_author, source_date, title, description, brand,
         model, category, image_url, image_thumbnail,
-        min_value, max_value, estimated_value, confidence
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        value_low, value_high, confidence
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       'hello-kitty-thrifted-shirt-vintage-find',
       'reddit',
@@ -64,7 +63,6 @@ router.get('/api/test/create-hello-kitty', (req, res) => {
       'https://preview.redd.it/786jvdd4lfif1.jpeg?width=320&crop=smart&auto=webp&s=554ec205b5e900ba0390dc48e8b55dba2a86ed62',
       15,
       35,
-      25,
       0.75
     );
     
@@ -100,7 +98,7 @@ router.get('/value/:slug', async (req, res) => {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>${valuation.title} - Worth $${valuation.min_value}-$${valuation.max_value} | Flippi.ai</title>
+    <title>${valuation.title} - Worth $${valuation.value_low}-$${valuation.value_high} | Flippi.ai</title>
     <meta name="description" content="${valuation.description.substring(0, 155)}...">
     
     <style>
@@ -200,7 +198,7 @@ router.get('/value/:slug', async (req, res) => {
             <div class="details">
                 <div class="value-box">
                     <h2>Estimated Value</h2>
-                    <div class="value-range">$${valuation.min_value} - $${valuation.max_value}</div>
+                    <div class="value-range">$${valuation.value_low} - $${valuation.value_high}</div>
                 </div>
                 
                 <p><strong>Brand:</strong> ${valuation.brand}</p>
