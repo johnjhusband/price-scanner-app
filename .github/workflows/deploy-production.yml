@@ -19,6 +19,19 @@ jobs:
             git reset --hard HEAD
             git clean -fd
             git pull origin master
+            
+            # Export build metadata for version endpoint
+            export BUILD_VERSION="release-004"
+            export COMMIT_SHA=$(git rev-parse --short HEAD)
+            export BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            
+            # Write build metadata to .env file
+            echo "" >> backend/.env
+            echo "# Build metadata" >> backend/.env
+            echo "BUILD_VERSION=$BUILD_VERSION" >> backend/.env
+            echo "COMMIT_SHA=$COMMIT_SHA" >> backend/.env
+            echo "BUILD_TIME=$BUILD_TIME" >> backend/.env
+            
             cd backend && npm install --production
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
             
@@ -39,5 +52,23 @@ jobs:
             # Check if backend is running
             pm2 show prod-backend || true
             curl -s http://localhost:3000/health || echo "Backend not responding"
+            
             # Clear nginx cache
-            nginx -s reload
+            sudo rm -rf /var/cache/nginx/*
+            sudo nginx -s reload
+            
+            # Post-deployment verification
+            echo "=== Post-Deployment Verification ==="
+            echo "Git commit: $(git rev-parse HEAD)"
+            echo "Build version: $BUILD_VERSION"
+            echo "Build time: $BUILD_TIME"
+            
+            # Check version endpoint
+            sleep 5  # Give services time to fully start
+            echo "Version endpoint check:"
+            curl -s http://localhost:3000/api/version | jq . || echo "Version endpoint not responding"
+            
+            # Run nginx cache clear script if available
+            if [ -f scripts/clear-nginx-cache.sh ]; then
+              bash scripts/clear-nginx-cache.sh prod
+            fi
