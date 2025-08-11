@@ -46,31 +46,65 @@ const WORTH_KEYWORDS = [
   'handbag'
 ];
 
-// Fetch posts from Reddit
+// Fetch posts from Reddit RSS feed
 async function fetchRedditPosts(subreddit, limit = 25) {
   try {
     const fetch = (await import('node-fetch')).default;
-    const url = `https://www.reddit.com/r/${subreddit}/new.json?limit=${limit}&raw_json=1`;
+    const Parser = require('rss-parser');
+    const parser = new Parser({
+      customFields: {
+        item: [
+          ['media:thumbnail', 'thumbnail'],
+          ['media:content', 'mediaContent']
+        ]
+      }
+    });
     
-    console.log(`[Reddit] Fetching from r/${subreddit}...`);
+    // Use RSS feed instead of JSON API
+    const url = `https://www.reddit.com/r/${subreddit}/new.rss?limit=${limit}`;
+    
+    console.log(`[Reddit] Fetching RSS feed from r/${subreddit}...`);
     
     const response = await fetch(url, {
       headers: {
         'User-Agent': 'FlippiBot/1.0 (+https://flippi.ai)',
-        'Accept': 'application/json',
-        'Accept-Language': 'en-US,en;q=0.9'
+        'Accept': 'application/rss+xml, application/xml, text/xml'
       }
     });
     
     if (!response.ok) {
-      throw new Error(`Reddit API error: ${response.status}`);
+      throw new Error(`Reddit RSS error: ${response.status}`);
     }
     
-    const data = await response.json();
-    return data.data.children.map(child => child.data);
+    const rssText = await response.text();
+    const feed = await parser.parseString(rssText);
+    
+    // Convert RSS items to Reddit post format
+    return feed.items.map(item => {
+      // Extract Reddit ID from guid
+      const matches = item.guid.match(/t3_([a-z0-9]+)/);
+      const id = matches ? matches[1] : item.guid;
+      
+      // Parse HTML content to extract image URLs
+      const imageMatch = item.content?.match(/<img[^>]+src="([^"]+)"/);
+      const imageUrl = imageMatch ? imageMatch[1].replace(/&amp;/g, '&') : null;
+      
+      return {
+        id: id,
+        title: item.title,
+        url: imageUrl || item.link,
+        permalink: item.link,
+        author: item.creator || item.author || 'unknown',
+        created_utc: new Date(item.pubDate).getTime() / 1000,
+        subreddit: subreddit,
+        selftext: item.contentSnippet || '',
+        // RSS doesn't provide media_metadata, but we can use the image URL
+        thumbnail: item.thumbnail?.$.url || null
+      };
+    }).slice(0, limit);
     
   } catch (error) {
-    console.error(`[Reddit] Error fetching r/${subreddit}:`, error.message);
+    console.error(`[Reddit] Error fetching RSS for r/${subreddit}:`, error.message);
     return [];
   }
 }
