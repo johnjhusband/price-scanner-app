@@ -816,6 +816,46 @@ process.on('unhandledRejection', (reason, promise) => {
 // Legal pages are now served by setupLegalPages middleware at the top of the file
 // This ensures they're served before any other routes or middleware intercept them
 
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(), 
+    version: '2.0',
+    features: {
+      imageAnalysis: true,
+      cameraSupport: true,
+      pasteSupport: true,
+      dragDropSupport: true,
+      enhancedAI: true,
+      feedbackLearning: true,
+      patternDetection: true,
+      adminDashboard: true
+    }
+  });
+});
+
+// Version endpoint for deployment verification
+app.get('/api/version', (req, res) => {
+  const buildVersion = process.env.BUILD_VERSION || 'release-004';
+  const commitSha = process.env.COMMIT_SHA || 'unknown';
+  const buildTime = process.env.BUILD_TIME || new Date().toISOString();
+  
+  res.json({
+    version: buildVersion,
+    commit: commitSha,
+    buildTime: buildTime,
+    release: 'release-004',
+    features: {
+      feedbackLearning: true,
+      patternDetection: true,
+      adminDashboard: true,
+      userActivity: true,
+      redditValuation: true
+    }
+  });
+});
+
 // Start server
 const PORT = process.env.PORT || 3000;
 const server = app.listen(PORT, () => {
