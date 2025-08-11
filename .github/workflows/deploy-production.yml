@@ -37,7 +37,32 @@ jobs:
             echo "BUILD_TIME=$BUILD_TIME" >> backend/.env
             
             cd backend && npm install --production
-            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
+            
+            # Build frontend with better error handling
+            cd ../mobile-app 
+            echo "=== Building frontend ==="
+            npm install
+            
+            # Remove old dist to ensure clean build
+            rm -rf dist
+            
+            # Build with timeout and verification
+            timeout 300 npx expo export --platform web --output-dir dist || {
+              echo "ERROR: Expo build failed!"
+              exit 1
+            }
+            
+            # Verify build output
+            if [ ! -f "dist/index.html" ]; then
+              echo "ERROR: dist/index.html not found after build!"
+              ls -la dist/ || echo "dist directory missing!"
+              exit 1
+            fi
+            
+            echo "Frontend build completed successfully"
+            echo "Checking build output:"
+            ls -la dist/ | head -5
+            grep -E "(script|link)" dist/index.html | head -5 || echo "WARNING: No scripts found in index.html!"
             
             # Fix nginx SSL configuration comprehensively
             echo "=== Running nginx SSL fix script ==="
@@ -76,9 +101,19 @@ jobs:
             echo "=== Testing and restarting nginx ==="
             if sudo nginx -t; then
               echo "Nginx config valid, doing full restart..."
-              sudo systemctl restart nginx
+              sudo systemctl stop nginx
+              sleep 2
+              sudo systemctl start nginx
               sleep 3
               echo "Nginx restarted"
+              
+              # Verify nginx is actually serving the site config
+              echo "=== Verifying nginx is loading site config ==="
+              sudo nginx -T 2>/dev/null | grep -A 2 "server_name app.flippi.ai" || echo "WARNING: Site config may not be loaded!"
+              
+              # Test that index.html is being served
+              echo "=== Testing frontend serving ==="
+              curl -s http://localhost:80/ | grep -E "(script|Loading)" | head -5
             else
               echo "ERROR: Nginx config invalid!"
               sudo nginx -t
