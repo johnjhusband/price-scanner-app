@@ -387,5 +387,6 @@ module.exports = {
   runRedditAutomation,
   startAutomation,
   processSubreddit,
-  fetchRedditPosts
+  fetchRedditPosts,
+  processRedditPost
 };

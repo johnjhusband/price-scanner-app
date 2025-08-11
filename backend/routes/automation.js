@@ -1,7 +1,8 @@
 const express = require('express');
 const router = express.Router();
-const { runRedditAutomation, startAutomation } = require('../growth/redditAutomation');
+const { runRedditAutomation, startAutomation, fetchRedditPosts, processRedditPost } = require('../growth/redditAutomation');
 const { getDatabase } = require('../database');
+const { generateSlug } = require('../database/valuationSchema');
 
 // Track automation state
 let automationInterval = null;
@@ -171,6 +172,136 @@ router.post('/api/automation/run', async (req, res) => {
   } catch (error) {
     console.error('[Automation] Manual run error:', error);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// Get available posts for manual selection
+router.get('/api/automation/posts/available', async (req, res) => {
+  try {
+    const subreddit = req.query.subreddit || 'ThriftStoreHauls';
+    const limit = parseInt(req.query.limit) || 20;
+    
+    console.log(`[Automation] Fetching posts from r/${subreddit} for manual selection`);
+    
+    // Fetch posts from Reddit RSS
+    const posts = await fetchRedditPosts(subreddit, limit);
+    
+    // Get already processed posts
+    const db = getDatabase();
+    const processedIds = db.prepare(`
+      SELECT source_id FROM valuations 
+      WHERE source_type = 'reddit' 
+      AND source_subreddit = ?
+    `).all(subreddit).map(row => row.source_id);
+    
+    // Mark which posts are already processed
+    const postsWithStatus = posts.map(post => ({
+      ...post,
+      isProcessed: processedIds.includes(post.id),
+      image_url: post.url, // RSS feed uses url for image
+      permalink: post.permalink || `https://reddit.com/r/${subreddit}/comments/${post.id}/`
+    }));
+    
+    // Filter to show only posts with images
+    const postsWithImages = postsWithStatus.filter(post => 
+      post.image_url && (
+        post.image_url.includes('i.redd.it') || 
+        post.image_url.includes('imgur') ||
+        post.image_url.includes('.jpg') ||
+        post.image_url.includes('.jpeg') ||
+        post.image_url.includes('.png')
+      )
+    );
+    
+    res.json({
+      success: true,
+      posts: postsWithImages,
+      total: postsWithImages.length,
+      subreddit
+    });
+    
+  } catch (error) {
+    console.error('[Automation] Error fetching available posts:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message,
+      posts: [] 
+    });
+  }
+});
+
+// Create blog post from specific Reddit post
+router.post('/api/automation/create-blog/:postId', async (req, res) => {
+  try {
+    // Simple auth check
+    const adminKey = req.headers['x-admin-key'];
+    if (adminKey !== process.env.ADMIN_AUTOMATION_KEY && adminKey !== 'flippi-automate-2025') {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+    
+    const { postId } = req.params;
+    const db = getDatabase();
+    
+    // Check if already processed
+    const existing = db.prepare(`
+      SELECT slug FROM valuations 
+      WHERE source_id = ? AND source_type = 'reddit'
+    `).get(postId);
+    
+    if (existing) {
+      const port = process.env.PORT || 3000;
+      const domain = port === '3002' ? 'blue.flippi.ai' : 
+                     port === '3001' ? 'green.flippi.ai' : 'app.flippi.ai';
+      
+      return res.json({
+        success: true,
+        message: 'Post already processed',
+        slug: existing.slug,
+        url: `https://${domain}/value/${existing.slug}`
+      });
+    }
+    
+    // Fetch the specific post
+    const subreddit = req.body.subreddit || 'ThriftStoreHauls';
+    const posts = await fetchRedditPosts(subreddit, 50);
+    const post = posts.find(p => p.id === postId);
+    
+    if (!post) {
+      return res.status(404).json({
+        success: false,
+        message: 'Post not found'
+      });
+    }
+    
+    // Process the post to create valuation
+    console.log(`[Automation] Manually processing post: ${post.title}`);
+    const valuation = await processRedditPost(post);
+    
+    if (valuation && valuation.id) {
+      const port = process.env.PORT || 3000;
+      const domain = port === '3002' ? 'blue.flippi.ai' : 
+                     port === '3001' ? 'green.flippi.ai' : 'app.flippi.ai';
+      
+      res.json({
+        success: true,
+        message: 'Blog post created successfully',
+        valuationId: valuation.id,
+        slug: valuation.slug,
+        url: `https://${domain}/value/${valuation.slug}`
+      });
+    } else {
+      res.status(500).json({
+        success: false,
+        message: 'Failed to create valuation'
+      });
+    }
+    
+  } catch (error) {
+    console.error('[Automation] Error creating blog post:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: error.message 
+    });
   }
 });
 
