@@ -182,7 +182,7 @@ router.get('/growth/questions', async (req, res) => {
 
   <div class="container">
     <div class="nav-link">
-      <a href="/admin/automation">← Back to Automation Control</a>
+      <a href="/growth">← Back to Growth Dashboard</a>
     </div>
     
     <div id="message"></div>
@@ -263,12 +263,12 @@ router.get('/growth/questions', async (req, res) => {
         '<div class="post-content">' +
           '<div class="post-title">' + escapeHtml(post.title) + '</div>' +
           '<div class="post-meta">' +
-            'by u/' + post.author + ' • ' + new Date(post.created_utc * 1000).toLocaleDateString() +
+            'by u/' + post.author + ' • ' + (post.created_utc ? new Date(post.created_utc * 1000).toLocaleDateString() : 'Date unknown') +
             ' ' + statusBadge +
           '</div>' +
           (post.selftext ? '<p style="font-size: 14px; color: #666; margin: 10px 0;">' + escapeHtml(post.selftext.substring(0, 150)) + '...</p>' : '') +
           '<div class="post-actions">' +
-            '<button class="btn btn-primary" onclick="createBlogPost(\'' + post.id + '\')" ' +
+            '<button class="btn btn-primary" onclick="createBlogPost(' + "'" + post.id.replace(/'/g, "\\'") + "'" + ')" ' +
               (isProcessing || post.isProcessed ? 'disabled' : '') + '>' +
               (isProcessing ? 'Creating...' : (post.isProcessed ? 'Already Created' : 'Create Blog Post')) +
             '</button>' +
