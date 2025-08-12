@@ -255,7 +255,7 @@ router.get('/growth/questions', async (req, res) => {
         : '<span class="status-badge status-new">New</span>';
       
       const imageHtml = post.image_url
-        ? '<img src="' + post.image_url + '" alt="' + escapeHtml(post.title) + '" class="post-image" onerror="this.parentElement.innerHTML=\\'<div class=\\"no-image\\">No Image</div>\\'">'
+        ? '<img src="' + post.image_url + '" alt="' + escapeHtml(post.title) + '" class="post-image" onerror="this.style.display=\'none\'; this.parentElement.innerHTML=\'<div class=\\\'no-image\\\'>No Image</div>\'">'
         : '<div class="no-image">No Image Available</div>';
       
       return '<div class="post-card" id="post-' + post.id + '">' +
