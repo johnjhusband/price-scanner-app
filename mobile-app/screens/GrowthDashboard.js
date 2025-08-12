@@ -7,7 +7,8 @@ import {
   StyleSheet,
   ActivityIndicator,
   Platform,
-  RefreshControl
+  RefreshControl,
+  Linking
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { brandColors, typography } from '../theme/brandColors';
@@ -129,7 +130,13 @@ const GrowthDashboard = ({ isVisible, onClose }) => {
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'questions' && styles.activeTab]}
-          onPress={() => setActiveTab('questions')}
+          onPress={() => {
+            if (Platform.OS === 'web') {
+              window.location.href = '/growth/questions';
+            } else {
+              Linking.openURL(`${API_URL}/growth/questions`);
+            }
+          }}
         >
           <Text style={[styles.tabText, activeTab === 'questions' && styles.activeTabText]}>
             Questions
