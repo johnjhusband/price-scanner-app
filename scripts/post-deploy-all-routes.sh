@@ -26,4 +26,7 @@ bash scripts/add-value-routes-nginx.sh $DOMAIN $PORT
 # Add admin routes
 bash scripts/add-admin-routes-nginx.sh $DOMAIN $PORT
 
+# Add growth routes
+bash scripts/ensure-growth-routes.sh
+
 echo "=== All routes added ==="
