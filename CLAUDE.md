@@ -226,17 +226,15 @@ Example: "Error handling is in backend/server.js:261"
 
 ## Project Documentation References
 
-For project-specific information, refer to the appropriate documentation:
+For a complete list of all documentation with clickable links, see:
+- **Documentation Index**: `/docs/DOCUMENTATION-INDEX.md` - Complete linked index of all docs
 
+Key documentation includes:
 - **Brand Guidelines**: `/docs/BRAND-GUIDE.md` - UI/UX standards, colors, accessibility
 - **Technical Guide**: `/docs/TECHNICAL-GUIDE.md` - Architecture, API, infrastructure, auth details
 - **Development Guide**: `/docs/DEVELOPMENT-GUIDE.md` - Setup, coding standards, workflows
 - **Operations Manual**: `/docs/OPERATIONS-MANUAL.md` - Monitoring, troubleshooting, maintenance
 - **DevOps Checklist**: `/docs/DEVOPS-RELEASE-CHECKLIST.md` - Comprehensive deployment procedures
-- **Deployment Troubleshooting**: `/docs/DEPLOYMENT-TROUBLESHOOTING.md` - Common deployment issues and fixes
-- **Ownership Transfer**: `/docs/OWNERSHIP-TRANSFER.md` - Transfer procedures and checklist
-- **Launch Readiness**: `/docs/LAUNCH-READINESS-SUMMARY.md` - Current launch status
-- **Known Issues**: `/docs/BUG-LEGAL-PAGES.md` - Current bugs and workarounds
 
 ## Key Quick Facts
 
