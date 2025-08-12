@@ -794,6 +794,7 @@ const automationRoutes = require('./routes/automation');
 const automationAdminRoutes = require('./routes/automationAdmin');
 const automationDashboardRoutes = require('./routes/automationDashboard');
 const valuationPagesRoutes = require('./routes/valuationPages');
+const growthAdminRoutes = require('./routes/growthAdmin');
 const testValuationRoutes = require('./routes/testValuation');
 
 app.use('/', valuationRoutes);
@@ -805,6 +806,7 @@ app.use('/', automationRoutes);
 app.use('/', automationAdminRoutes);
 app.use('/', automationDashboardRoutes);
 app.use('/', valuationPagesRoutes);
+app.use('/', growthAdminRoutes);
 app.use('/', testValuationRoutes);
 
 app.use('/api/feedback', (req, res, next) => {
