@@ -182,7 +182,7 @@ router.get('/growth/questions', async (req, res) => {
 
   <div class="container">
     <div class="nav-link">
-      <a href="/growth">← Back to Growth Dashboard</a>
+      <a href="/">← Back to Dashboard</a>
     </div>
     
     <div id="message"></div>
