@@ -81,9 +81,10 @@ async function fetchRedditPosts(subreddit, limit = 25) {
     
     // Convert RSS items to Reddit post format
     return feed.items.map(item => {
-      // Extract Reddit ID from guid
-      const matches = item.guid.match(/t3_([a-z0-9]+)/);
-      const id = matches ? matches[1] : item.guid;
+      // Extract Reddit ID from id field (format: t3_xxxxx)
+      const idField = item.id || item.guid || '';
+      const matches = idField.match(/t3_([a-z0-9]+)/);
+      const id = matches ? matches[1] : idField;
       
       // Parse HTML content to extract image URLs
       const imageMatch = item.content?.match(/<img[^>]+src="([^"]+)"/);
