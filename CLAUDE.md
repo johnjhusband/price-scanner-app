@@ -245,3 +245,16 @@ For project-specific information, refer to the appropriate documentation:
 - **Deployment**: GitHub Actions auto-deploy on push
 - **Environments**: develop→blue, staging→green, master→app
 - **Current State**: OAuth implemented, launch preparation in progress
+- **Reddit Integration**: Uses RSS feeds (not JSON API) to bypass rate limits
+- **Blog System**: Creates valuations at /value/{slug} with SEO optimization
+- **Growth Platform**: Two parallel systems - valuations (working) and content_generated (unused)
+
+## Rolling Timeline
+
+### 2025-08-12
+- Fixed Reddit RSS parsing bug (was checking item.guid instead of item.id)
+- Created manual blog post selection interface at /growth/questions
+- Discovered Reddit RSS feeds work fine - no IP blocking issue
+- [devops] Fixed nginx routing for /admin and /growth paths
+- [devops] Multiple restarts of PM2 dev-backend process
+- Moved from /admin/questions to /growth/questions per user request
