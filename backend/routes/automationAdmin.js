@@ -518,7 +518,7 @@ router.get('/admin/questions', async (req, res) => {
         }
         
         if (!data.posts || data.posts.length === 0) {
-          container.innerHTML = '<div class="loading">No posts found. Try a different subreddit.</div>';
+          container.innerHTML = '<div class="loading">No posts found. Reddit may be blocking server access.<br><br>Note: Reddit blocks many cloud server IPs. The automation runs on a schedule but manual selection may be limited.</div>';
           return;
         }
         
