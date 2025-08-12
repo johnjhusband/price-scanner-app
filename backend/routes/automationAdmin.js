@@ -542,29 +542,24 @@ router.get('/admin/questions', async (req, res) => {
         ? '<img src="' + post.image_url + '" alt="' + escapeHtml(post.title) + '" class="post-image" onerror="this.parentElement.innerHTML=\\'<div class=\\"no-image\\">No Image</div>\\'">'
         : '<div class="no-image">No Image Available</div>';
       
-      return `
-        <div class="post-card" id="post-${post.id}">
-          ${imageHtml}
-          <div class="post-content">
-            <div class="post-title">${escapeHtml(post.title)}</div>
-            <div class="post-meta">
-              by u/${post.author} • ${new Date(post.created_utc * 1000).toLocaleDateString()}
-              ${statusBadge}
-            </div>
-            ${post.selftext ? '<p style="font-size: 14px; color: #666; margin: 10px 0;">' + escapeHtml(post.selftext.substring(0, 150)) + '...</p>' : ''}
-            <div class="post-actions">
-              <button 
-                class="btn btn-primary" 
-                onclick="createBlogPost('${post.id}')"
-                ${isProcessing || post.isProcessed ? 'disabled' : ''}
-              >
-                ${isProcessing ? 'Creating...' : (post.isProcessed ? 'Already Created' : 'Create Blog Post')}
-              </button>
-              <a href="${post.permalink}" target="_blank" class="btn btn-secondary">View on Reddit</a>
-            </div>
-          </div>
-        </div>
-      `;
+      return '<div class="post-card" id="post-' + post.id + '">' +
+        imageHtml +
+        '<div class="post-content">' +
+          '<div class="post-title">' + escapeHtml(post.title) + '</div>' +
+          '<div class="post-meta">' +
+            'by u/' + post.author + ' • ' + new Date(post.created_utc * 1000).toLocaleDateString() +
+            ' ' + statusBadge +
+          '</div>' +
+          (post.selftext ? '<p style="font-size: 14px; color: #666; margin: 10px 0;">' + escapeHtml(post.selftext.substring(0, 150)) + '...</p>' : '') +
+          '<div class="post-actions">' +
+            '<button class="btn btn-primary" onclick="createBlogPost(\'' + post.id + '\')" ' +
+              (isProcessing || post.isProcessed ? 'disabled' : '') + '>' +
+              (isProcessing ? 'Creating...' : (post.isProcessed ? 'Already Created' : 'Create Blog Post')) +
+            '</button>' +
+            '<a href="' + post.permalink + '" target="_blank" class="btn btn-secondary">View on Reddit</a>' +
+          '</div>' +
+        '</div>' +
+      '</div>';
     }
     
     async function createBlogPost(postId) {
