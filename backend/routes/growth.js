@@ -122,14 +122,13 @@ router.get('/content', async (req, res) => {
   try {
     const db = getDatabase();
     const limit = parseInt(req.query.limit) || 20;
-    const published = req.query.published === 'true';
-    
     let query = 'SELECT * FROM content_generated';
     const params = [];
     
-    if (published !== undefined) {
+    if (req.query.published !== undefined) {
+      const published = req.query.published === 'true';
       query += ' WHERE published = ?';
-      params.push(published);
+      params.push(published ? 1 : 0);  // SQLite stores booleans as 0/1
     }
     
     query += ' ORDER BY created_at DESC LIMIT ?';
