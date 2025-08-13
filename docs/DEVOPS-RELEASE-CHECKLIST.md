@@ -208,7 +208,15 @@ For risky changes to blue environment:
    - [ ] No error logs in PM2
    - [ ] All features working correctly
 
-2. **Backup current production**
+2. **CRITICAL: Verify deployment workflow**
+   ```bash
+   # Ensure production workflow handles divergent branches properly
+   # Must use: git fetch + git reset --hard (NOT git pull)
+   grep -A5 "git fetch" .github/workflows/deploy-production.yml
+   # If not found, update workflow BEFORE deployment
+   ```
+
+3. **Backup current production**
    ```bash
    ssh root@157.245.142.145
    cd /var/www/app.flippi.ai
@@ -332,7 +340,7 @@ systemctl restart nginx
 
 ### Git Troubleshooting
 ```bash
-# Fix diverged branches
+# Fix diverged branches (COMMON ISSUE)
 git fetch origin
 git reset --hard origin/[branch]
 
@@ -343,6 +351,20 @@ git reset --hard HEAD
 # View deployment history
 git log --oneline -10
 ```
+
+### Common Deployment Issues (Release-001 Lessons)
+1. **Workflow File Restrictions**
+   - Cannot modify .github/workflows/ via OAuth API
+   - Must edit workflow files directly in repository
+
+2. **Git Pull Failures**
+   - Never use `git pull` in deployment scripts
+   - Always use `git fetch` + `git reset --hard origin/[branch]`
+   - Prevents "divergent branches" errors
+
+3. **Nginx Duplicate Locations**
+   - Check for duplicate location blocks before deployment
+   - Run nginx -t to verify configuration
 
 ## Environment Variable Reference
 

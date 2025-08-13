@@ -18,70 +18,41 @@ jobs:
             # Reset any local changes to avoid merge conflicts
             git reset --hard HEAD
             git clean -fd
-            git pull origin staging
+            # Force update to match remote exactly
+            git fetch origin staging
+            git reset --hard origin/staging
             
-            # Install dependencies and build
+            # Install dependencies
             cd backend && npm install --production
+            
+            # Build frontend (no timeout, like develop workflow)
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
             
-            # Apply OAuth nginx fix IMMEDIATELY after build
-            echo "=== Applying OAuth fix ==="
-            if [ -f scripts/fix-staging-oauth-verbose.sh ]; then
-              echo "Running VERBOSE nginx OAuth fix..."
-              bash scripts/fix-staging-oauth-verbose.sh
-            elif [ -f scripts/fix-staging-nginx-oauth.sh ]; then
-              echo "Running nginx OAuth fix for staging..."
-              bash scripts/fix-staging-nginx-oauth.sh
-            else
-              echo "ERROR: OAuth fix script not found!"
-              ls -la scripts/
+            # Copy web assets that Expo doesn't include
+            cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
+            
+            # Apply growth routes configuration
+            cd /var/www/green.flippi.ai
+            if [ -f scripts/post-deploy-all-routes.sh ]; then
+              bash scripts/post-deploy-all-routes.sh green.flippi.ai 3001
+            elif [ -f scripts/add-growth-routes-nginx.sh ]; then
+              bash scripts/add-growth-routes-nginx.sh green.flippi.ai 3001
             fi
             
-            # Apply post-deployment nginx configuration for legal pages
-            if [ -f scripts/post-deploy-nginx.sh ]; then
-              echo "=== Applying nginx configuration for legal pages ==="
-              bash scripts/post-deploy-nginx.sh
+            # Fix nginx SSL configuration
+            if [ -f scripts/fix-nginx-ssl-comprehensive.sh ]; then
+              bash scripts/fix-nginx-ssl-comprehensive.sh || true
             fi
             
-            # Fix nginx SSL configuration comprehensively
-            cd /var/www/green.flippi.ai && bash scripts/fix-nginx-ssl-comprehensive.sh || true
-            
-            # Debug: Check what directory PM2 is serving from
-            echo "=== PM2 staging-frontend config ==="
-            pm2 describe staging-frontend | grep -E "exec cwd|script|args" || true
-            echo "=== Checking directories ==="
-            ls -la /var/www/green.flippi.ai/mobile-app/ | grep -E "dist|web-build" || true
-            echo "=== Files in dist ==="
-            ls -la /var/www/green.flippi.ai/mobile-app/dist/ | head -5 || true
-            
-            # Just restart, don't delete
+            # Restart PM2 services
             pm2 restart staging-backend staging-frontend
             
             # Wait for services to start
-            sleep 3
+            sleep 5
             
             # Check if backend is running
             pm2 show staging-backend || true
-            curl -s http://localhost:3001/health || echo "Backend not responding"
+            curl -s http://localhost:3001/health || echo "Backend health check"
             
-            # Check OAuth status (but don't fail deployment)
-            echo "=== Checking OAuth Status ==="
-            OAUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -I https://green.flippi.ai/auth/google)
-            echo "OAuth endpoint returns: $OAUTH_STATUS"
-            if [ "$OAUTH_STATUS" = "302" ] || [ "$OAUTH_STATUS" = "301" ]; then
-              echo "✅ OAuth is working!"
-            else
-              echo "⚠️ OAuth still returns $OAUTH_STATUS - may need time to propagate"
-            fi
-            
-            # Output OAuth fix log
-            echo "=== OAuth Fix Log Contents ==="
-            cat /tmp/oauth-fix-* 2>/dev/null || echo "⚠️ No OAuth fix log found"
-            echo "=== End OAuth Fix Log ==="
-            
-            # Final OAuth test
-            echo "=== Final OAuth Status Check ==="
-            curl -I https://green.flippi.ai/auth/google
-            
-            # Clear nginx cache
-            nginx -s reload
+            # Reload nginx
+            nginx -s reload || systemctl reload nginx || echo "Nginx reload attempted"

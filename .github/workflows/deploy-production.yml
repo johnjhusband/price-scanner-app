@@ -15,13 +15,17 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/app.flippi.ai
+            # Fix git ownership issue
+            git config --global --add safe.directory /var/www/app.flippi.ai
             # Reset any local changes to avoid merge conflicts
             git reset --hard HEAD
             git clean -fd
-            git pull origin master
+            # Force update to match remote exactly
+            git fetch origin master
+            git reset --hard origin/master
             
             # Export build metadata for version endpoint
-            export BUILD_VERSION="release-004"
+            export BUILD_VERSION="release-005"
             export COMMIT_SHA=$(git rev-parse --short HEAD)
             export BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
             
@@ -33,19 +37,11 @@ jobs:
             echo "BUILD_TIME=$BUILD_TIME" >> backend/.env
             
             cd backend && npm install --production
+            
+            # Build frontend (no timeout, like staging workflow)
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
             
-            # Fix nginx SSL configuration comprehensively
-            cd /var/www/app.flippi.ai && bash scripts/fix-nginx-ssl-comprehensive.sh || true
-            
-            # Debug: Check what directory PM2 is serving from
-            echo "=== PM2 prod-frontend config ==="
-            pm2 describe prod-frontend | grep -E "exec cwd|script|args" || true
-            echo "=== Checking directories ==="
-            ls -la /var/www/app.flippi.ai/mobile-app/ | grep -E "dist|web-build" || true
-            echo "=== Files in dist ==="
-            ls -la /var/www/app.flippi.ai/mobile-app/dist/ | head -5 || true
-            # Just restart, don't delete
+            # Restart PM2 services
             pm2 restart prod-backend prod-frontend
             # Wait for services to start
             sleep 3
@@ -56,6 +52,12 @@ jobs:
             # Clear nginx cache
             sudo rm -rf /var/cache/nginx/*
             sudo nginx -s reload
+            
+            # Run post-deploy fixes for growth routes
+            echo "=== Ensuring growth routes are configured ==="
+            if [ -f scripts/fix-growth-routes.sh ]; then
+              sudo bash scripts/fix-growth-routes.sh
+            fi
             
             # Post-deployment verification
             echo "=== Post-Deployment Verification ==="

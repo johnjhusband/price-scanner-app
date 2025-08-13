@@ -3,11 +3,17 @@
 ## Overview
 This document captures key lessons learned from the release-001 deployment and subsequent deployments, including workflow limitations, git strategies, and deployment best practices.
 
+## Release-001 Overview
+- **Release**: release-001 (62 commits)
+- **Date**: August 4, 2025
+- **Features**: Environmental tagging, authenticity scoring, Mission modal, OAuth improvements
+
 ## Key Lessons
 
 ### 1. GitHub OAuth App Workflow Restrictions
 **Issue**: OAuth Apps cannot modify workflow files (.github/workflows/*)
 **Impact**: Deployment workflow updates fail when included in commits
+**Root Cause**: Security restriction - OAuth Apps cannot modify workflow files
 **Solution**: 
 - Never include workflow files in commits via OAuth
 - Update workflows manually through GitHub UI
@@ -24,7 +30,13 @@ git reset --hard origin/master
 # Instead of git pull
 ```
 
-### 3. Test Branch Deployment Strategy
+### 3. Nginx Duplicate Location Blocks
+**Problem**: Nginx configuration had duplicate `/privacy` location blocks
+**Impact**: Nginx reload failed during deployment
+**Root Cause**: Multiple deployment scripts adding same location blocks
+**Solution**: Added deduplication logic in post-deploy scripts
+
+### 4. Test Branch Deployment Strategy
 **Use Case**: Testing risky changes in blue environment without affecting develop
 **Process**:
 1. Create feature branch: `git checkout -b test/feature-name`
@@ -38,7 +50,7 @@ git reset --hard origin/master
    git push origin develop --force
    ```
 
-### 4. Cherry-Pick Deployment Strategy
+### 5. Cherry-Pick Deployment Strategy
 **Use Case**: Deploying specific features without all develop changes
 **Process**:
 1. Identify commits to deploy: `git log --oneline develop`
@@ -47,7 +59,7 @@ git reset --hard origin/master
 4. Handle conflicts carefully
 5. Force push to target branch
 
-### 5. Force Push Considerations
+### 6. Force Push Considerations
 **When Appropriate**:
 - Test branch deployments to blue
 - Emergency rollbacks
@@ -57,14 +69,14 @@ git reset --hard origin/master
 - Shared branches with active development
 - Production without team coordination
 
-### 6. Deployment Pipeline Validation
+### 7. Deployment Pipeline Validation
 **Always Verify**:
 - GitHub Actions completed successfully
 - Git log on server matches expected commit
 - PM2 processes restarted
 - Health endpoint responds correctly
 
-### 7. Manual Intervention Dangers
+### 8. Manual Intervention Dangers
 **Issue**: Manual fixes on server mask deployment problems
 **Impact**: Future deployments may fail unexpectedly
 **Solution**: Always fix deployment issues in the workflow/repository
