@@ -3,34 +3,23 @@ import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOp
 import * as ImagePicker from 'expo-image-picker';
 import { Camera } from 'expo-camera';
 
-// Import Lucide icons - our licensed icon system
-import { 
-  Camera as CameraIcon, 
-  Upload, 
-  Clipboard, 
-  Info,
-  Share2,
-  Download,
-  Heart,
-  Sparkles,
-  Package,
-  BadgeCheck,
-  Flame,
-  Repeat,
-  Briefcase,
-  AlertTriangle
-} from 'lucide-react-native';
+// Import Feather icons per brand guide
+import { Feather } from '@expo/vector-icons';
 
 // Import brand components and theme
 import FlippiLogo from './components/FlippiLogo';
 import BrandButton from './components/BrandButton';
-import FeedbackPrompt from './components/FeedbackPrompt';
+import FeedbackSystem from './components/FeedbackSystem';
 import EnterScreen from './components/EnterScreen';
 import MissionModal from './components/MissionModal';
 import PageContainer from './components/PageContainer';
 import AdminDashboard from './screens/AdminDashboard';
+import GrowthDashboard from './screens/GrowthDashboard';
+import PricingModal from './components/PricingModal';
+import UpgradeModal from './components/UpgradeModal';
 import AuthService from './services/authService';
 import { brandColors, typography, componentColors } from './theme/brandColors';
+import { getDeviceFingerprint } from './utils/deviceFingerprint';
 import { appleStyles } from './theme/appleStyles';
 
 // Import web styles for web platform
@@ -286,6 +275,11 @@ export default function App() {
   const [showMissionModal, setShowMissionModal] = useState(false);
   const [flipCount, setFlipCount] = useState(0);
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+  const [showGrowthDashboard, setShowGrowthDashboard] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [showPricingPage, setShowPricingPage] = useState(false);
+  const [flipStatus, setFlipStatus] = useState(null);
+  const [deviceFingerprint, setDeviceFingerprint] = useState(null);
   
   const scrollViewRef = useRef(null);
   const resultsRef = useRef(null);
@@ -524,24 +518,25 @@ export default function App() {
     
     // Check authentication on web
     if (Platform.OS === 'web') {
-      // Check authentication
+      console.log('[Auth] Starting authentication check...');
       
       // Set a timeout for auth check to prevent infinite loading
       const authTimeout = setTimeout(() => {
-        // Auth check timeout
+        console.error('[Auth] Authentication check timed out after 5 seconds');
         setAuthLoading(false);
         setIsAuthenticated(false);
       }, 5000); // 5 second timeout
       
       // Check if token in URL (OAuth callback)
+      console.log('[Auth] Checking for token in URL...');
       AuthService.parseTokenFromUrl().then(hasToken => {
-        // Check if we have a token
+        console.log('[Auth] Token in URL:', hasToken);
         
         if (hasToken) {
           setIsAuthenticated(true);
           // Get user asynchronously
           AuthService.getUser().then(userData => {
-            // User data loaded
+            console.log('[Auth] User data loaded:', userData?.email);
             setUser(userData);
             clearTimeout(authTimeout);
             setAuthLoading(false);
@@ -552,13 +547,14 @@ export default function App() {
           });
         } else {
           // No token in URL, check existing session
+          console.log('[Auth] No token in URL, checking existing session...');
           AuthService.isAuthenticated().then(isAuth => {
-            // Check existing session
+            console.log('[Auth] Existing session found:', isAuth);
             
             if (isAuth) {
               setIsAuthenticated(true);
               AuthService.getUser().then(userData => {
-                // User data loaded from session
+                console.log('[Auth] User data loaded from session:', userData?.email);
                 setUser(userData);
                 clearTimeout(authTimeout);
                 setAuthLoading(false);
@@ -568,7 +564,7 @@ export default function App() {
                 setAuthLoading(false);
               });
             } else {
-              // No authentication found
+              console.log('[Auth] No authentication found');
               clearTimeout(authTimeout);
               setAuthLoading(false);
             }
@@ -591,6 +587,37 @@ export default function App() {
     return () => removePasteListener();
   }, []);
   
+  // Initialize device fingerprint and check flip status
+  useEffect(() => {
+    const initializeFlipTracking = async () => {
+      try {
+        // Get or create device fingerprint
+        const fingerprint = await getDeviceFingerprint();
+        setDeviceFingerprint(fingerprint);
+        
+        // Check current flip status
+        const response = await fetch(`${API_URL}/api/payment/flip-status`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'x-device-fingerprint': fingerprint
+          },
+          credentials: 'include'
+        });
+        
+        if (response.ok) {
+          const data = await response.json();
+          setFlipStatus(data.data);
+          console.log('Flip status:', data.data);
+        }
+      } catch (error) {
+        console.error('Error initializing flip tracking:', error);
+      }
+    };
+    
+    initializeFlipTracking();
+  }, [user]); // Re-check when user changes
+
   // Debug analysisResult changes
   useEffect(() => {
   }, [analysisResult]);
@@ -673,6 +700,12 @@ export default function App() {
       return;
     }
     
+    // Check flip limit
+    if (flipStatus && !flipStatus.can_flip) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    
     setIsLoading(true);
     setAnalysisResult(null);
     try {
@@ -723,14 +756,39 @@ export default function App() {
       if (productDescription.trim()) {
         formData.append('description', productDescription.trim());
       }
+      
+      // Add device fingerprint for tracking
+      if (deviceFingerprint) {
+        formData.append('device_fingerprint', deviceFingerprint);
+      }
 
       const apiResponse = await fetch(`${API_URL}/api/scan`, {
         method: 'POST',
         body: formData,
-        // Don't set Content-Type header - let browser set it with boundary
+        headers: deviceFingerprint ? {
+          'x-device-fingerprint': deviceFingerprint
+        } : {},
+        credentials: 'include'
       });
 
       const responseText = await apiResponse.text();
+      
+      // Handle payment required response
+      if (apiResponse.status === 402) {
+        try {
+          const data = JSON.parse(responseText);
+          if (data.flip_status) {
+            setFlipStatus(data.flip_status);
+          }
+          setShowUpgradeModal(true);
+          return;
+        } catch (e) {
+          // Fallback if parsing fails
+          setShowUpgradeModal(true);
+          return;
+        }
+      }
+      
       if (apiResponse.ok) {
         try {
           const data = JSON.parse(responseText);
@@ -744,6 +802,11 @@ export default function App() {
             setShowFeedback(true);
             // Increment flip count
             setFlipCount(prevCount => prevCount + 1);
+            
+            // Update flip status from response
+            if (data.flip_status) {
+              setFlipStatus(data.flip_status);
+            }
             // Scroll to results after a brief delay
             setTimeout(() => {
               if (resultsRef.current && scrollViewRef.current) {
@@ -798,10 +861,10 @@ export default function App() {
   const renderEncouragementMessage = () => {
     return (
       <View style={[styles.welcomeContainer, { flexDirection: 'row', alignItems: 'center' }]}>
-        <CameraIcon 
+        <Feather 
+          name="camera"
           size={16} 
           color={brandColors.textSecondary} 
-          strokeWidth={2}
         />
         <Text style={[styles.welcomeText, { color: brandColors.textSecondary, marginLeft: 8 }]}>
           Center your item and snap when ready.
@@ -864,6 +927,36 @@ export default function App() {
     tweetText += `\n\nTry it: https://flippi.ai${refCode ? `?ref=${refCode}` : ''}`;
     
     return tweetText;
+  };
+
+  // Handle payment selection from upgrade modal
+  const handlePaymentSelect = async (paymentType) => {
+    try {
+      const response = await fetch(`${API_URL}/api/payment/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-device-fingerprint': deviceFingerprint
+        },
+        body: JSON.stringify({ payment_type: paymentType }),
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        if (data.checkout_url) {
+          // For now, just show the mock URL
+          Alert.alert(
+            'Payment System',
+            `Stripe integration pending. Would redirect to: ${data.checkout_url}`,
+            [{ text: 'OK' }]
+          );
+        }
+      }
+    } catch (error) {
+      console.error('Payment error:', error);
+      Alert.alert('Error', 'Failed to start payment process');
+    }
   };
 
   // Handle share on X
@@ -1100,14 +1193,65 @@ export default function App() {
     console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
     console.log('  - image:', !!image, image?.substring(0, 50));
     
+    // Always prefer imageBase64 as it has the correct format after analysis
+    const imageToUse = imageBase64 || image;
+    
     setIsLoading(true);
-    generateInstagramStoryImage(analysisResult, imageBase64, image).finally(() => {
+    generateInstagramStoryImage(analysisResult, imageToUse).finally(() => {
       setIsLoading(false);
     });
   };
 
+  // Helper function to generate valuation slug
+  const generateValuationSlug = (result) => {
+    const brand = (result.brand || '').toLowerCase().replace(/[^a-z0-9]/g, '-');
+    const item = (result.item_name || 'item').toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 30);
+    const timestamp = Date.now().toString(36);
+    return `${brand}-${item}-${timestamp}`.replace(/--+/g, '-').replace(/^-|-$/g, '');
+  };
+
+  // Helper function to draw QR placeholder
+  const drawQRPlaceholder = (ctx, x, y, size) => {
+    const moduleSize = size / 25;
+    ctx.fillStyle = '#000000';
+    
+    // Draw finder patterns (corner squares)
+    const drawFinderPattern = (px, py) => {
+      // Outer square
+      ctx.fillRect(px, py, 7 * moduleSize, 7 * moduleSize);
+      // Inner white square
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fillRect(px + moduleSize, py + moduleSize, 5 * moduleSize, 5 * moduleSize);
+      // Center black square
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(px + 2 * moduleSize, py + 2 * moduleSize, 3 * moduleSize, 3 * moduleSize);
+    };
+    
+    // Three corner patterns
+    drawFinderPattern(x, y);
+    drawFinderPattern(x + size - 7 * moduleSize, y);
+    drawFinderPattern(x, y + size - 7 * moduleSize);
+    
+    // Timing patterns
+    for (let i = 8; i < 17; i++) {
+      if (i % 2 === 0) {
+        ctx.fillRect(x + i * moduleSize, y + 6 * moduleSize, moduleSize, moduleSize);
+        ctx.fillRect(x + 6 * moduleSize, y + i * moduleSize, moduleSize, moduleSize);
+      }
+    }
+    
+    // Data area (simplified pattern)
+    for (let row = 8; row < 17; row++) {
+      for (let col = 8; col < 17; col++) {
+        if ((row + col) % 3 === 0) {
+          ctx.fillRect(x + col * moduleSize, y + row * moduleSize, moduleSize, moduleSize);
+        }
+      }
+    }
+  };
+
   // Generate universal share image (square format)
-  const generateShareImage = async (result, base64Image = null, originalImage = null) => {
+  const generateShareImage = async (result, imageSource = null) => {
     if (!result) {
       console.log('[Share Image] No analysis result available');
       Alert.alert(
@@ -1120,8 +1264,8 @@ export default function App() {
     
     console.log('[generateShareImage] Starting with:', {
       hasResult: !!result,
-      hasBase64Image: !!base64Image,
-      hasOriginalImage: !!originalImage,
+      hasImageSource: !!imageSource,
+      imageSourceType: imageSource ? (imageSource.startsWith('data:') ? 'data URL' : 'other') : 'none',
       hasImageBase64State: !!imageBase64,
       hasImageState: !!image
     });
@@ -1186,8 +1330,8 @@ export default function App() {
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
         
-        // Use base64 image which should have full data URL
-        const imageSrc = base64Image || imageBase64 || originalImage || image;
+        // Use the provided image source or fall back to state
+        let imageSrc = imageSource || imageBase64 || image;
         
         if (!imageSrc) {
           console.error('[Share Image] No image source available');
@@ -1198,13 +1342,68 @@ export default function App() {
           return;
         }
         
+        // Ensure image has proper data URL format
+        if (imageSrc && !imageSrc.startsWith('data:')) {
+          // If it's just base64, add the prefix
+          if (imageSrc.match(/^[A-Za-z0-9+/]+=*$/)) {
+            console.log('[Share Image] Adding data URL prefix to base64 string');
+            imageSrc = `data:image/jpeg;base64,${imageSrc}`;
+          }
+          // Check if it starts with /9j/ which is JPEG base64 signature
+          else if (imageSrc.startsWith('/9j/')) {
+            console.log('[Share Image] Detected JPEG base64 without prefix, adding it');
+            imageSrc = `data:image/jpeg;base64,${imageSrc}`;
+          }
+          // Check if it starts with iVBOR which is PNG base64 signature
+          else if (imageSrc.startsWith('iVBOR')) {
+            console.log('[Share Image] Detected PNG base64 without prefix, adding it');
+            imageSrc = `data:image/png;base64,${imageSrc}`;
+          }
+          // Otherwise assume it's a URI that needs to be converted
+          else if (imageSrc.startsWith('file://') || imageSrc.startsWith('http')) {
+            console.warn('[Share Image] Non-data URL detected:', imageSrc.substring(0, 50));
+            // For now, show placeholder as we can't convert URIs in browser
+            ctx.fillStyle = '#f5f5f5';
+            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+            ctx.fillStyle = '#a0a0a0';
+            ctx.font = '24px -apple-system, system-ui, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('Image preview unavailable', canvas.width / 2, boxY + boxHeight/2 - 20);
+            ctx.font = '18px -apple-system, system-ui, sans-serif';
+            ctx.fillText('(Original image was a file URI)', canvas.width / 2, boxY + boxHeight/2 + 10);
+            return;
+          }
+        }
+        
         // Create image and set up handlers
         const img = new Image();
         img.crossOrigin = 'anonymous'; // Just in case
         
-        // Create promise to handle async loading
+        // Create promise to handle async loading with timeout
         await new Promise((resolve) => {
+          let imageLoaded = false;
+          
+          // Set a timeout to prevent hanging
+          const timeout = setTimeout(() => {
+            if (!imageLoaded) {
+              console.error('[Share Image] Image load timeout after 5 seconds');
+              
+              // Draw timeout placeholder
+              ctx.fillStyle = '#f5f5f5';
+              ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+              ctx.fillStyle = '#a0a0a0';
+              ctx.font = '28px -apple-system, system-ui, sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText('Image load timeout', canvas.width / 2, boxY + boxHeight/2 - 15);
+              ctx.font = '20px -apple-system, system-ui, sans-serif';
+              ctx.fillText('Continuing without image', canvas.width / 2, boxY + boxHeight/2 + 15);
+              resolve();
+            }
+          }, 5000);
+          
           img.onload = () => {
+            imageLoaded = true;
+            clearTimeout(timeout);
             console.log('[Share Image] Image loaded successfully:', img.width, 'x', img.height);
             
             // Calculate scaling to fit within box
@@ -1220,6 +1419,8 @@ export default function App() {
           };
           
           img.onerror = () => {
+            imageLoaded = true;
+            clearTimeout(timeout);
             console.error('[Share Image] Failed to load image for share download');
             console.error('[Share Image] Attempted source:', imageSrc.substring(0, 100));
             
@@ -1234,7 +1435,12 @@ export default function App() {
           };
           
           // Set the source to trigger load
-          console.log('[Share Image] Loading image from:', imageSrc.substring(0, 50) + '...');
+          console.log('[Share Image] Loading image from:', imageSrc.substring(0, 100) + '...');
+          console.log('[Share Image] Image format check:');
+          console.log('  - Starts with data:?', imageSrc.startsWith('data:'));
+          console.log('  - Has base64 marker?', imageSrc.includes('base64,'));
+          console.log('  - Length:', imageSrc.length);
+          
           img.src = imageSrc;
         });
       };
@@ -1310,7 +1516,7 @@ export default function App() {
       
       // Real Score
       if (result.real_score) {
-        const realScoreText = `Real Score: ${result.real_score}%`;
+        const realScoreText = `Real Score: ${result.real_score}`;
         ctx.fillText(realScoreText, canvas.width / 2 - 200, yPosition);
       }
       
@@ -1322,10 +1528,10 @@ export default function App() {
       yPosition += 40;
       
       // Platform recommendation
-      if (result.platform_recommendation) {
+      if (result.recommended_platform) {
         ctx.font = '28px -apple-system, system-ui, sans-serif';
         ctx.fillStyle = '#666666';
-        ctx.fillText(`Best on: ${result.platform_recommendation}`, canvas.width / 2, yPosition);
+        ctx.fillText(`Best on: ${result.recommended_platform}`, canvas.width / 2, yPosition);
         yPosition += 40;
       }
       
@@ -1337,9 +1543,45 @@ export default function App() {
         yPosition += 50;
       }
       
+      // Add QR Code for Reddit valuation page
+      try {
+        // Generate a slug for this item
+        const itemSlug = generateValuationSlug(result);
+        const qrUrl = `https://flippi.ai/value/${itemSlug}`;
+        
+        // QR Code positioning
+        const qrSize = 120;
+        const qrX = canvas.width - qrSize - 40; // Right side
+        const qrY = canvas.height - qrSize - 100; // Above footer
+        
+        // White background for QR
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
+        
+        // Draw border
+        ctx.strokeStyle = '#E5E5E5';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
+        
+        // For now, draw placeholder QR pattern
+        // In production, this would fetch from backend
+        drawQRPlaceholder(ctx, qrX, qrY, qrSize);
+        
+        // QR Label
+        ctx.fillStyle = '#666666';
+        ctx.font = '14px -apple-system, system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Scan for details', qrX + qrSize/2, qrY + qrSize + 20);
+        
+      } catch (qrError) {
+        console.error('[Share Image] QR generation error:', qrError);
+        // Continue without QR if it fails
+      }
+      
       // Footer
       ctx.fillStyle = '#666666';
       ctx.font = '28px -apple-system, system-ui, sans-serif';
+      ctx.textAlign = 'center';
       ctx.fillText('Never Over Pay • Know the price. Own the profit.', canvas.width / 2, 960);
       
       if (user?.referralCode) {
@@ -1359,38 +1601,94 @@ export default function App() {
           
           console.log('[Share Image] Blob created, size:', blob.size);
           
+          // Try multiple download methods for better browser compatibility
           const url = URL.createObjectURL(blob);
           console.log('[Share Image] Object URL created:', url);
           
+          // Method 1: Create and click anchor
           const a = document.createElement('a');
           a.href = url;
           a.download = `flippi-share-image-${Date.now()}.png`;
           a.style.display = 'none';
-          document.body.appendChild(a);
           
-          console.log('[Share Image] Triggering download...');
-          // Force download
-          a.click();
+          console.log('[Share Image] Attempting download...');
+          
+          // Method 2: Try different click methods
+          try {
+            // Add to DOM
+            document.body.appendChild(a);
+            console.log('[Share Image] Anchor added to DOM');
+            
+            // Click the link
+            a.click();
+            console.log('[Share Image] Click triggered');
+            
+            // Clean up immediately
+            setTimeout(() => {
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              console.log('[Share Image] Cleanup complete');
+            }, 100);
+          } catch (clickError) {
+            console.error('[Share Image] Click method failed:', clickError);
+            
+            // Fallback: Try alternative download method
+            try {
+              // Create a new window with the image
+              const newWindow = window.open(url, '_blank');
+              if (newWindow) {
+                setTimeout(() => newWindow.close(), 1000);
+              }
+            } catch (windowError) {
+              console.error('[Share Image] Window method failed:', windowError);
+              
+              // Last resort: Copy URL to clipboard
+              if (navigator.clipboard) {
+                navigator.clipboard.writeText(url).then(() => {
+                  Alert.alert(
+                    'Download Ready',
+                    'Image URL copied to clipboard. Right-click and save the image from your browser.',
+                    [{ text: 'OK' }]
+                  );
+                });
+              }
+            }
+          }
           
           // Cleanup
           setTimeout(() => {
-            document.body.removeChild(a);
             URL.revokeObjectURL(url);
             console.log('[Share Image] Cleanup complete');
           }, 100);
           
           Alert.alert(
             'Image downloaded!',
-            'Ready to share on any platform!',
-            [{ text: 'Awesome!' }]
-          );
-        } catch (error) {
-          console.error('[Share Image] Error in blob callback:', error);
-          Alert.alert(
-            'Download Failed',
-            'Unable to download image. Please try again.',
+            'Check your Downloads folder',
             [{ text: 'OK' }]
           );
+        } catch (error) {
+          console.error('[Share Image] Download error:', error);
+          
+          // Fallback: Open image in new tab
+          try {
+            const dataUrl = canvas.toDataURL('image/png');
+            const newTab = window.open();
+            if (newTab) {
+              newTab.document.write(`<img src="${dataUrl}" alt="Flippi Share Image" />`);
+              Alert.alert(
+                'Image opened in new tab',
+                'Right-click to save the image',
+                [{ text: 'OK' }]
+              );
+            }
+          } catch (fallbackError) {
+            console.error('[Share Image] Fallback error:', fallbackError);
+            Alert.alert(
+              'Download not supported',
+              'Please take a screenshot instead',
+              [{ text: 'OK' }]
+            );
+          }
         }
       }, 'image/png', 0.95);
     } catch (error) {
@@ -1413,8 +1711,35 @@ export default function App() {
     console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
     console.log('  - image:', !!image, image?.substring(0, 50));
     
+    // Debug: Check if images have proper format
+    if (imageBase64) {
+      console.log('[Download Share] imageBase64 format check:');
+      console.log('  - Starts with data:?', imageBase64.startsWith('data:'));
+      console.log('  - Has base64 marker?', imageBase64.includes('base64,'));
+      console.log('  - Length:', imageBase64.length);
+    }
+    
+    if (image) {
+      console.log('[Download Share] image format check:');
+      console.log('  - Starts with data:?', image.startsWith('data:'));
+      console.log('  - Has base64 marker?', image.includes('base64,'));
+      console.log('  - Length:', image.length);
+    }
+    
+    // Always prefer imageBase64 as it has the correct format after analysis
+    const imageToUse = imageBase64 || image;
+    
+    if (!imageToUse) {
+      Alert.alert(
+        'No Image Available',
+        'Please analyze an image first before downloading.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
     setIsLoading(true);
-    generateShareImage(analysisResult, imageBase64, image).finally(() => {
+    generateShareImage(analysisResult, imageToUse).finally(() => {
       setIsLoading(false);
     });
   };
@@ -1452,6 +1777,18 @@ export default function App() {
         <Text style={{ marginTop: 20, fontSize: 16, color: brandColors.textSecondary }}>
           Loading flippi.ai
         </Text>
+        <TouchableOpacity 
+          onPress={() => {
+            console.log('[Auth] Force clearing auth state');
+            setAuthLoading(false);
+            setIsAuthenticated(false);
+          }}
+          style={{ marginTop: 40, padding: 10 }}
+        >
+          <Text style={{ color: brandColors.textSecondary, fontSize: 12 }}>
+            Stuck? Click here to reset
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -1488,11 +1825,16 @@ export default function App() {
       {/* You section - Exit button only - Outside content for better positioning */}
       {Platform.OS === 'web' && user && (
         <View style={styles.userSection}>
-          {/* Show admin button for specific users */}
-          {(user.email === 'john@flippi.ai' || user.email === 'tarahusband@gmail.com' || user.email === 'teamflippi@gmail.com' || user.email === 'tara@edgy.co') && (
-            <TouchableOpacity onPress={() => setShowAdminDashboard(true)} style={styles.adminButton}>
-              <Text style={styles.adminText}>Admin</Text>
-            </TouchableOpacity>
+          {/* Show admin buttons for specific users */}
+          {(user.email === 'john@flippi.ai' || user.email === 'tarahusband@gmail.com' || user.email === 'teamflippi@gmail.com' || user.email === 'tara@edgy.co' || user.email === 'john@husband.llc') && (
+            <>
+              <TouchableOpacity onPress={() => setShowAdminDashboard(true)} style={styles.adminButton}>
+                <Text style={styles.adminText}>Admin</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setShowGrowthDashboard(true)} style={styles.adminButton}>
+                <Text style={styles.adminText}>Growth</Text>
+              </TouchableOpacity>
+            </>
           )}
           <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
             <Text style={styles.exitText}>Exit</Text>
@@ -1552,7 +1894,7 @@ export default function App() {
                   onPress={takePhoto}
                   style={[styles.actionButton, styles.primaryActionButton]}
                   variant="primary"
-                  icon={<CameraIcon size={20} color="#FFFFFF" />}
+                  icon={<Feather name="camera" size={20} color="#FFFFFF" />}
                 />
               )}
               
@@ -1561,7 +1903,7 @@ export default function App() {
                 onPress={pickImage}
                 style={styles.actionButton}
                 variant="outline"
-                icon={<Upload size={20} color={brandColors.text} />}
+                icon={<Feather name="upload" size={20} color={brandColors.text} />}
               />
               
               {Platform.OS === 'web' && (
@@ -1607,13 +1949,22 @@ export default function App() {
                     multiline
                     numberOfLines={3}
                   />
-                  <BrandButton
-                    title="Go"
-                    onPress={analyzeImage}
-                    style={styles.goButton}
-                    variant="accent"
-                    isHighImpact={true}
-                  />
+                  <View>
+                    {flipStatus && !flipStatus.is_pro && (
+                      <Text style={styles.flipCountText}>
+                        {flipStatus.flips_remaining === 0 
+                          ? 'No free flips left' 
+                          : `${flipStatus.flips_remaining} free flip${flipStatus.flips_remaining === 1 ? '' : 's'} remaining`}
+                      </Text>
+                    )}
+                    <BrandButton
+                      title="Go"
+                      onPress={analyzeImage}
+                      style={styles.goButton}
+                      variant="accent"
+                      isHighImpact={true}
+                    />
+                  </View>
                 </>
               )}
             
@@ -1689,7 +2040,7 @@ export default function App() {
                     return (
                       <View style={styles.dupeAlert}>
                         <View style={styles.dupeAlertContent}>
-                          <AlertTriangle size={16} color="#EAB308" strokeWidth={2} style={{ marginRight: 8 }} />
+                          <Feather name="alert-triangle" size={16} color="#EAB308" style={{ marginRight: 8 }} />
                           <Text style={styles.dupeAlertText}>
                             This item may be a dupe. Check brand details before buying or listing.
                           </Text>
@@ -1713,7 +2064,7 @@ export default function App() {
                           accessibilityRole="button"
                           style={styles.infoIconButton}
                         >
-                          <Info size={16} color={brandColors.textSecondary} strokeWidth={2} />
+                          <Feather name="info" size={16} color={brandColors.textSecondary} />
                         </TouchableOpacity>
                       </View>
                       <View>
@@ -1880,7 +2231,7 @@ export default function App() {
                         accessibilityRole="button"
                         style={styles.missionLink}
                       >
-                        <Info size={14} color="#2E7D32" strokeWidth={2} style={{ opacity: 0.8 }} />
+                        <Feather name="info" size={14} color="#2E7D32" style={{ opacity: 0.8 }} />
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -1894,7 +2245,7 @@ export default function App() {
             
             
             {analysisResult && showFeedback && (
-              <FeedbackPrompt
+              <FeedbackSystem
                 scanData={analysisResult}
                 userDescription={productDescription}
                 imageData={imageBase64}
@@ -1909,7 +2260,7 @@ export default function App() {
                   onPress={handleShareOnX}
                   style={[styles.shareButton, { backgroundColor: '#18181b' }]}
                   variant="primary"
-                  icon={<Share2 size={20} color="#FFFFFF" />}
+                  icon={<Feather name="share-2" size={20} color="#FFFFFF" />}
                 />
                 {Platform.OS !== 'web' && (
                   <>
@@ -1919,7 +2270,7 @@ export default function App() {
                       style={[styles.shareButton, { backgroundColor: '#E1306C' }]}
                       variant="primary"
                       disabled={isLoading}
-                      icon={<CameraIcon size={20} color="#FFFFFF" />}
+                      icon={<Feather name="camera" size={20} color="#FFFFFF" />}
                     />
                     <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
                       Downloads story image to share
@@ -1932,7 +2283,7 @@ export default function App() {
                   style={[styles.shareButton, { backgroundColor: '#52525b' }]}
                   variant="primary"
                   disabled={isLoading}
-                  icon={<Download size={20} color="#FFFFFF" />}
+                  icon={<Feather name="download" size={20} color="#FFFFFF" />}
                 />
                 {Platform.OS === 'web' && (
                   <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
@@ -1955,6 +2306,21 @@ export default function App() {
       
       {/* Legal Footer */}
       <View style={styles.legalFooter}>
+        <View style={styles.footerLinks}>
+          <TouchableOpacity
+            onPress={() => setShowPricingPage(true)}
+            style={styles.footerLink}
+          >
+            <Text style={styles.footerLinkText}>Pricing</Text>
+          </TouchableOpacity>
+          <Text style={styles.footerDivider}>•</Text>
+          <TouchableOpacity
+            onPress={() => setShowMissionModal(true)}
+            style={styles.footerLink}
+          >
+            <Text style={styles.footerLinkText}>Mission</Text>
+          </TouchableOpacity>
+        </View>
         <Text style={[styles.legalText, { marginBottom: 4 }]}>
           ai makes mistakes. check important info
         </Text>
@@ -1971,6 +2337,28 @@ export default function App() {
       <AdminDashboard
         isVisible={showAdminDashboard}
         onClose={() => setShowAdminDashboard(false)}
+      />
+      
+      <GrowthDashboard
+        isVisible={showGrowthDashboard}
+        onClose={() => setShowGrowthDashboard(false)}
+      />
+      
+      <PricingModal
+        visible={showPricingPage}
+        onClose={() => setShowPricingPage(false)}
+        onSelectPlan={handlePaymentSelect}
+      />
+      
+      <UpgradeModal
+        isVisible={showUpgradeModal}
+        onClose={() => setShowUpgradeModal(false)}
+        onSelectPayment={handlePaymentSelect}
+        onLearnMore={() => {
+          setShowUpgradeModal(false);
+          setShowPricingPage(true);
+        }}
+        currentFlipCount={flipStatus?.flips_used || 0}
       />
     </ScrollView>
   );
@@ -2298,6 +2686,12 @@ const styles = StyleSheet.create({
   goButton: {
     width: '100%',
   },
+  flipCountText: {
+    textAlign: 'center',
+    color: brandColors.textSecondary,
+    fontSize: 14,
+    marginBottom: 8,
+  },
   // User section styles
   userSection: {
     position: 'absolute',
@@ -2349,6 +2743,17 @@ const styles = StyleSheet.create({
     color: brandColors.text,
     fontWeight: typography.weights.medium,
   },
+  pricingButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  pricingText: {
+    fontSize: 12,
+    color: brandColors.primary,
+    fontWeight: typography.weights.medium,
+  },
   adminButton: {
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -2368,22 +2773,31 @@ const styles = StyleSheet.create({
     borderTopColor: brandColors.border,
     alignItems: 'center',
   },
+  footerLinks: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  footerLink: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+  },
+  footerLinkText: {
+    fontSize: 14,
+    color: brandColors.primary,
+    fontFamily: typography.fontFamily,
+    textDecorationLine: 'underline',
+  },
+  footerDivider: {
+    fontSize: 14,
+    color: brandColors.textSecondary,
+    marginHorizontal: 8,
+  },
   legalText: {
     fontSize: 12,
     color: brandColors.textSecondary,
     fontFamily: typography.fontFamily,
     textAlign: 'center',
-  },
-  footerLinks: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 8,
-  },
-  footerLink: {
-    fontSize: 14,
-    color: brandColors.textSecondary,
-    fontFamily: typography.fontFamily,
     fontWeight: typography.weights.medium,
     textDecorationLine: 'underline',
   },

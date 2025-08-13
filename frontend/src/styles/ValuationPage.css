@@ -1,0 +1,148 @@
+.valuation-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+  background-color: #f8f9fa;
+  min-height: 100vh;
+}
+
+.valuation-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.valuation-header h1 {
+  font-size: 2.5rem;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.valuation-meta {
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.valuation-content {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.valuation-image img {
+  width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.valuation-details {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.valuation-value {
+  background: #10B981;
+  color: white;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.valuation-value h2 {
+  margin: 0 0 10px 0;
+  font-size: 1.2rem;
+}
+
+.value-range {
+  font-size: 2rem;
+  font-weight: bold;
+}
+
+.valuation-brand,
+.valuation-confidence {
+  font-size: 1.1rem;
+  color: #555;
+}
+
+.valuation-description {
+  line-height: 1.6;
+  color: #444;
+}
+
+.valuation-cta {
+  background: #f3f4f6;
+  padding: 20px;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.cta-button {
+  display: inline-block;
+  background: #10B981;
+  color: white;
+  padding: 12px 30px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: bold;
+  margin: 10px 0;
+  transition: background 0.3s;
+}
+
+.cta-button:hover {
+  background: #059669;
+}
+
+.valuation-share {
+  text-align: center;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 8px;
+}
+
+.qr-code {
+  margin: 15px 0;
+}
+
+.share-url {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+.valuation-footer {
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e5e7eb;
+  text-align: center;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+.valuation-footer a {
+  color: #10B981;
+  text-decoration: none;
+}
+
+.disclaimer {
+  margin-top: 10px;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .valuation-content {
+    grid-template-columns: 1fr;
+  }
+  
+  .valuation-header h1 {
+    font-size: 1.8rem;
+  }
+}

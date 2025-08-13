@@ -1,5 +1,62 @@
 # Flippi.ai Release Taxonomy
 
+## release-005 — August 9, 2025 (IN DEVELOPMENT)
+
+**Summary:**  
+Payment system foundation with Stripe integration preparation, flip tracking, and share image fixes.
+
+### ✅ Included Changes:
+
+#### Payment System Foundation
+- 💳 **Issue #128:** Payment system architecture
+  - Database tables for payments, subscriptions, and flip tracking
+  - Backend routes with Stripe webhook handlers (ready for keys)
+  - Flip tracking service with 3 free flips limit
+  - Device fingerprinting for anonymous users
+
+- 📄 **Issue #129:** Pricing page component
+  - Three-tier pricing display (Free, $1/flip, $9/month)
+  - Responsive design for mobile/desktop
+  - FAQ section with expandable items
+
+- 🚧 **Issue #130:** Upgrade modal
+  - Appears after 3 free flips
+  - Payment option selection
+  - Stripe checkout integration ready
+
+- 💾 **Issue #131:** Flip tracking implementation
+  - Track flips by user ID or device fingerprint
+  - Enforce free tier limits
+  - Store flip history
+  - Support for subscription status
+
+#### Bug Fixes
+- 🖼️ **Issue #127:** Share image fix
+  - Improved image format handling
+  - Data URL validation and conversion
+  - Better error messages for unsupported formats
+
+#### Documentation
+- 📚 **Issue #132:** Feedback system documentation
+- 📋 Comprehensive staging test checklist
+- 🔧 Updated DevOps checklist with payment/feedback notes
+
+### 🚀 Next Steps:
+1. Add Stripe API keys to environment
+2. Test payment flows in staging
+3. Implement subscription management UI
+4. Add payment status to user profile
+5. Create payment success/cancel pages
+
+### 📝 Technical Details:
+- 4 new database tables (flip_tracking, flip_history, subscriptions, payments)
+- 5 new API endpoints for payments and tracking
+- 3 new UI components
+- Device fingerprinting utility
+- No external dependencies added (Stripe SDK to be added)
+
+---
+
 ## release-004 — August 10, 2025 (READY FOR PRODUCTION)
 
 **Summary:**  
@@ -42,6 +99,12 @@ Comprehensive feedback learning system with pattern detection, manual overrides,
   - Added admin button for authorized users
   - Current admins: john@flippi.ai, tarahusband@gmail.com, teamflippi@gmail.com, tara@edgy.co
 
+#### Backend Fixes (Issue #124)
+- 🔍 **Preserve Detailed Analysis**
+  - Fixed backend suppression of OpenAI insights when Real Score ≤ 30
+  - Now shows valuable detection details like "Vucci" instead of "Gucci"
+  - Maintains all market insights and selling tips regardless of score
+
 ### ⚠️ Known Defects:
 
 1. **🔴 CRITICAL: Share Image Not Loading** (Issue #127)
@@ -49,9 +112,9 @@ Comprehensive feedback learning system with pattern detection, manual overrides,
    - Multiple fix attempts unsuccessful
    - Affects brand sharing functionality
 
-2. **🟡 MEDIUM: Backend Analysis Suppression** (Issue #124)
-   - Detailed insights lost when Real Score ≤ 30
-   - Generic text replaces specific findings
+2. **✅ FIXED: Backend Analysis Suppression** (Issue #124)
+   - Fixed: Now preserves detailed insights for all Real Scores
+   - Previously suppressed valuable detection like "Vucci" vs "Gucci"
 
 
 ### 📝 Technical Details:

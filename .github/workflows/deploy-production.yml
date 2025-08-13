@@ -25,7 +25,7 @@ jobs:
             git reset --hard origin/master
             
             # Export build metadata for version endpoint
-            export BUILD_VERSION="release-004"
+            export BUILD_VERSION="release-005"
             export COMMIT_SHA=$(git rev-parse --short HEAD)
             export BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
             
@@ -94,48 +94,14 @@ jobs:
             pm2 show prod-backend || true
             curl -s http://localhost:3000/health || echo "Backend not responding"
             
-            # Check nginx logs before proceeding
-            echo "=== Checking Nginx Logs ==="
-            if [ -f scripts/check-nginx-logs.sh ]; then
-              bash scripts/check-nginx-logs.sh
-            fi
-            
             # Clear nginx cache
             sudo rm -rf /var/cache/nginx/*
             sudo nginx -s reload
             
-            # Run emergency nginx fix first
-            echo "=== Running emergency nginx configuration fix ==="
-            cd /var/www/app.flippi.ai
-            if [ -f scripts/emergency-fix-production-nginx.sh ]; then
-              sudo bash scripts/emergency-fix-production-nginx.sh
-            else
-              echo "WARNING: Emergency nginx fix script not found"
-            fi
-            
-            # Run post-deploy nginx fixes
-            bash scripts/post-deploy-nginx.sh || true
-            
-            # Ensure nginx is properly configured
-            echo "=== Testing and restarting nginx ==="
-            if sudo nginx -t; then
-              echo "Nginx config valid, doing full restart..."
-              sudo systemctl stop nginx
-              sleep 2
-              sudo systemctl start nginx
-              sleep 3
-              echo "Nginx restarted"
-              
-              # Verify nginx is actually serving the site config
-              echo "=== Verifying nginx is loading site config ==="
-              sudo nginx -T 2>/dev/null | grep -A 2 "server_name app.flippi.ai" || echo "WARNING: Site config may not be loaded!"
-              
-              # Test that index.html is being served
-              echo "=== Testing frontend serving ==="
-              curl -s http://localhost:80/ | grep -E "(script|Loading)" | head -5
-            else
-              echo "ERROR: Nginx config invalid!"
-              sudo nginx -t
+            # Run post-deploy fixes for growth routes
+            echo "=== Ensuring growth routes are configured ==="
+            if [ -f scripts/fix-growth-routes.sh ]; then
+              sudo bash scripts/fix-growth-routes.sh
             fi
             
             # Post-deployment verification

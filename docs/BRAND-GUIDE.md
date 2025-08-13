@@ -115,6 +115,39 @@
 - **Border**: Soft Taupe Beige (#D6C6B5)
 - **Focus**: Deep Teal (#1D5C5A)
 
+## 🎨 Icons
+
+### Icon Library
+- **Library**: Feather icons from `@expo/vector-icons`
+- **Style**: Outline icons only (no filled variants)
+- **Weight**: Regular (2px stroke)
+
+### Icon Sizes
+- **Small**: 16px (inline text)
+- **Default**: 20px (buttons, UI elements)
+- **Medium**: 24px (primary actions)
+- **Large**: 32px (feature highlights)
+
+### Icon Colors
+- **Primary**: Muted Graphite (#1E2A28)
+- **On Primary Background**: White (#FFFFFF)
+- **Accent**: Deep Teal (#1D5C5A)
+- **Disabled**: #A0A0A0
+
+### Icon Usage Rules
+1. **Consistency**: Use Feather icons exclusively - no mixing with other icon libraries
+2. **No Emojis**: Never use emojis in the UI - always use proper icons
+3. **Meaningful**: Icons should enhance understanding, not decorate
+4. **Accessible**: Always pair icons with labels or aria-labels
+5. **Alignment**: Center icons vertically with text
+
+### Common Icons
+- **Navigation**: arrow-left, x, menu
+- **Actions**: camera, upload, download, share-2
+- **Status**: check, alert-circle, info
+- **Commerce**: dollar-sign, shopping-bag, tag
+- **User**: user, log-in (enter), log-out (exit)
+
 ## 🌟 Brand Voice & Vibe
 
 ### Terminology

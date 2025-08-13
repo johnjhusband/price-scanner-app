@@ -50,6 +50,35 @@ The app uses automated deployment via GitHub Actions:
 - `staging` branch → green.flippi.ai
 - `master` branch → app.flippi.ai
 
+#### Deployment Rules (Personal Guardrails)
+
+1. **NEVER merge to staging outside planned promotion sequence**
+   - Blue → Green only when Blue is verified stable
+   - Green → Prod only after QA passes in Green
+
+2. **NO adding features to staging mid-cycle**
+   - Only approved bug fixes from release notes
+   - All new features go to develop first
+
+3. **If process is broken, IMMEDIATELY rollback**
+   ```bash
+   git checkout staging
+   git reset --hard <last-stable-commit>
+   git push origin staging --force
+   ```
+
+4. **Release discipline checklist**:
+   - [ ] Is this commit part of the current release?
+   - [ ] Has it been tested in blue environment?
+   - [ ] Are all known issues documented?
+   - [ ] Is the release taxonomy updated?
+
+5. **Rollback triggers**:
+   - Environment becomes non-functional
+   - Untested code appears in staging
+   - Release contains unapproved features
+   - Critical bugs not in release notes
+
 ## Documentation
 
 For detailed documentation, see the `/documentation` folder:

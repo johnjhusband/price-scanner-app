@@ -54,6 +54,9 @@ For risky changes to blue environment:
 - [ ] Error responses return proper status codes
 - [ ] Health endpoint returns correct version
 - [ ] No sensitive data in responses
+- [ ] Database migrations run successfully
+- [ ] Feedback system endpoints responding
+- [ ] Payment endpoints configured (if applicable)
 
 ### Security
 - [ ] Environment variables properly set
@@ -370,6 +373,10 @@ git log --oneline -10
 PORT=3002
 NODE_ENV=development
 OPENAI_API_KEY=sk-...
+FEEDBACK_DB_PATH=/var/www/blue.flippi.ai/data/feedback.db
+# Payment (when ready)
+# STRIPE_SECRET_KEY=sk_test_...
+# STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 ### Staging (.env)
@@ -377,6 +384,10 @@ OPENAI_API_KEY=sk-...
 PORT=3001
 NODE_ENV=staging
 OPENAI_API_KEY=sk-...
+FEEDBACK_DB_PATH=/var/www/green.flippi.ai/data/feedback.db
+# Payment (when ready)
+# STRIPE_SECRET_KEY=sk_test_...
+# STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 ### Production (.env)
@@ -384,6 +395,10 @@ OPENAI_API_KEY=sk-...
 PORT=3000
 NODE_ENV=production
 OPENAI_API_KEY=sk-...
+FEEDBACK_DB_PATH=/var/www/app.flippi.ai/data/feedback.db
+# Payment (when ready)
+# STRIPE_SECRET_KEY=sk_live_...
+# STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 ## Success Metrics
@@ -435,5 +450,18 @@ free -m
 3. **Document any issues** - Update this checklist with new findings
 4. **Backup before major changes** - Use git tags
 5. **Communicate deployment status** - Keep team informed
+
+### Feedback System Setup (New Deployments)
+1. **Set FEEDBACK_DB_PATH** to a persistent directory (not /tmp)
+2. **Create data directory** with write permissions: `mkdir -p /var/www/[environment]/data`
+3. **Database will auto-create** on first run with all necessary tables
+4. **Test feedback submission** after deployment to verify database connectivity
+5. **Generate initial weekly report** to verify reporting functionality
+
+### Payment System Setup (Future)
+1. **Configure Stripe keys** in environment variables
+2. **Set up webhook endpoints** in Stripe dashboard
+3. **Test payment flows** in test mode before enabling
+4. **Monitor first transactions** closely
 
 Remember: A successful deployment is one where users don't notice anything changed except improvements!

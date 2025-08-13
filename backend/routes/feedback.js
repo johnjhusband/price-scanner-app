@@ -302,6 +302,16 @@ router.post('/', feedbackValidation, (req, res) => {
       });
     }
 
+    // Update user's feedback count if authenticated
+    if (req.user?.id) {
+      try {
+        const userDb = getDatabase();
+        userDb.prepare('UPDATE users SET feedback_count = feedback_count + 1 WHERE id = ?').run(req.user.id);
+      } catch (userUpdateError) {
+        console.error('Error updating user feedback count:', userUpdateError);
+      }
+    }
+
     res.json({
       success: true,
       message: 'Feedback received'
@@ -729,6 +739,66 @@ router.get('/reports/latest', async (req, res) => {
     res.status(500).json({
       success: false,
       error: 'Failed to fetch report'
+    });
+  }
+});
+
+// GET /admin/user-activity-summary - Get user activity stats for admin dashboard
+router.get('/admin/user-activity-summary', (req, res) => {
+  try {
+    const db = getDatabase();
+    
+    // Get user activity data with obfuscated emails
+    const users = db.prepare(`
+      SELECT 
+        id,
+        CASE 
+          WHEN LENGTH(email) > 3 THEN 
+            SUBSTR(email, 1, 1) || '***@' || SUBSTR(email, INSTR(email, '@') + 1)
+          ELSE email
+        END as email_obfuscated,
+        name,
+        login_count,
+        scan_count,
+        feedback_count,
+        first_login,
+        last_login,
+        CASE 
+          WHEN scan_count > 100 OR feedback_count > 20 OR login_count > 15 THEN 1
+          ELSE 0
+        END as is_high_value
+      FROM users
+      ORDER BY last_login DESC
+      LIMIT 100
+    `).all();
+    
+    // Get summary statistics
+    const stats = db.prepare(`
+      SELECT 
+        COUNT(*) as total_users,
+        SUM(CASE WHEN login_count > 1 THEN 1 ELSE 0 END) as returning_users,
+        SUM(CASE WHEN scan_count > 100 OR feedback_count > 20 OR login_count > 15 THEN 1 ELSE 0 END) as high_value_users,
+        AVG(scan_count) as avg_scans_per_user,
+        AVG(feedback_count) as avg_feedback_per_user,
+        MAX(scan_count) as max_scans,
+        MAX(feedback_count) as max_feedback
+      FROM users
+    `).get();
+    
+    res.json({
+      success: true,
+      stats: {
+        ...stats,
+        avg_scans_per_user: Math.round(stats.avg_scans_per_user || 0),
+        avg_feedback_per_user: Math.round(stats.avg_feedback_per_user || 0)
+      },
+      users: users
+    });
+  } catch (error) {
+    console.error('Error fetching user activity:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch user activity data'
     });
   }
 });

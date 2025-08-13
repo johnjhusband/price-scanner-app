@@ -9,6 +9,7 @@ try {
 
 const fs = require('fs');
 const path = require('path');
+const { createValuationTables } = require('./database/valuationSchema');
 
 let db;
 
@@ -41,6 +42,46 @@ function initializeDatabase() {
     db = new Database(dbPath);
 
     // Create table if it doesn't exist
+    // Create users table
+    const createUsersTableSQL = `
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        google_id TEXT UNIQUE,
+        name TEXT,
+        first_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_login TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        login_count INTEGER DEFAULT 1,
+        scan_count INTEGER DEFAULT 0,
+        feedback_count INTEGER DEFAULT 0,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `;
+    
+    db.exec(createUsersTableSQL);
+    
+    // Add new columns to existing users table if they don't exist
+    const userColumns = ['login_count', 'scan_count', 'feedback_count', 'first_login', 'last_login', 'updated_at'];
+    userColumns.forEach(column => {
+      try {
+        if (column === 'login_count' || column === 'scan_count' || column === 'feedback_count') {
+          db.exec(`ALTER TABLE users ADD COLUMN ${column} INTEGER DEFAULT 0`);
+          console.log(`Added ${column} column to users table`);
+        } else {
+          db.exec(`ALTER TABLE users ADD COLUMN ${column} TIMESTAMP DEFAULT CURRENT_TIMESTAMP`);
+          console.log(`Added ${column} column to users table`);
+        }
+      } catch (e) {
+        // Column already exists, ignore error
+      }
+    });
+    
+    // Create indexes for users table
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_users_email ON users(email)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_users_last_login ON users(last_login)`);
+    
     // Create feedback table
     const createFeedbackTableSQL = `
       CREATE TABLE IF NOT EXISTS feedback (
@@ -145,6 +186,82 @@ function initializeDatabase() {
     `;
     
     db.exec(createReportsSQL);
+    
+    // Create payment and flip tracking tables
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS flip_tracking (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        device_fingerprint TEXT,
+        session_id TEXT,
+        flip_count INTEGER DEFAULT 0,
+        first_flip_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        last_flip_at TIMESTAMP,
+        is_paid_user BOOLEAN DEFAULT FALSE,
+        subscription_type TEXT DEFAULT 'free',
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        UNIQUE(user_id),
+        UNIQUE(device_fingerprint)
+      )
+    `);
+    
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS flip_history (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        device_fingerprint TEXT,
+        analysis_id TEXT,
+        item_name TEXT,
+        price_range TEXT,
+        real_score INTEGER,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS subscriptions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT UNIQUE,
+        stripe_customer_id TEXT,
+        stripe_subscription_id TEXT,
+        plan TEXT DEFAULT 'free',
+        status TEXT DEFAULT 'active',
+        current_period_start TIMESTAMP,
+        current_period_end TIMESTAMP,
+        cancel_at_period_end BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS payments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT,
+        stripe_payment_intent_id TEXT UNIQUE,
+        amount INTEGER,
+        currency TEXT DEFAULT 'usd',
+        payment_type TEXT,
+        status TEXT,
+        metadata TEXT,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    
+    // Create indexes for payment tables
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_flip_tracking_user_id ON flip_tracking(user_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_flip_tracking_device_fingerprint ON flip_tracking(device_fingerprint)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_flip_history_user_id ON flip_history(user_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_subscriptions_user_id ON subscriptions(user_id)`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id)`);
+
+    // Create valuation tables for Reddit integration
+    try {
+      createValuationTables(db);
+    } catch (error) {
+      console.error('Error creating valuation tables:', error);
+      // Continue even if valuation tables fail
+    }
 
     // Test the database with a simple query
     const testQuery = db.prepare('SELECT COUNT(*) as count FROM feedback').get();
