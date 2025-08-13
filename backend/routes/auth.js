@@ -163,7 +163,9 @@ router.get('/google/callback',
     let frontendUrl;
     const host = req.get('host');
     
-    if (host && host.includes('green.flippi.ai')) {
+    if (host && host.includes('app.flippi.ai')) {
+      frontendUrl = 'https://app.flippi.ai';
+    } else if (host && host.includes('green.flippi.ai')) {
       frontendUrl = 'https://green.flippi.ai';
     } else if (host && host.includes('blue.flippi.ai')) {
       frontendUrl = 'https://blue.flippi.ai';
