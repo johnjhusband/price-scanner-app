@@ -1307,19 +1307,13 @@ export default function App() {
       // White background
       ctx.fillStyle = '#ffffff';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Flippi branding
-      ctx.fillStyle = '#000000';
-      ctx.textAlign = 'center';
-      ctx.font = 'bold 64px -apple-system, system-ui, sans-serif';
-      ctx.fillText('flippi.ai', canvas.width / 2, 100);
       
-      // Item image - Simplified approach
+      // Item image - 75% of height for Whatnot
       const drawItemImage = async () => {
-        const boxWidth = 800;
-        const boxHeight = 380;
-        const boxX = 140;
-        const boxY = 140;
+        const boxWidth = 1080;
+        const boxHeight = 810; // 75% of 1080
+        const boxX = 0;
+        const boxY = 0;
         
         // Draw border around image area
         ctx.strokeStyle = '#e5e5e5';
@@ -1450,97 +1444,52 @@ export default function App() {
       // Reset text alignment for subsequent text
       ctx.textAlign = 'center';
       
-      // Item name
+      // Title (moved 0.5 inch lower = ~48px at 96dpi)
       ctx.fillStyle = '#000000';
-      ctx.font = 'bold 42px -apple-system, system-ui, sans-serif';
+      ctx.font = 'bold 36px -apple-system, system-ui, sans-serif';
       const itemName = result.item_name || 'Unknown Item';
-      ctx.fillText(itemName, canvas.width / 2, 560);
+      ctx.fillText(itemName, canvas.width / 2, 858); // 810 + 48
       
       // Brand (if available)
       if (result.brand) {
-        ctx.font = '32px -apple-system, system-ui, sans-serif';
-        ctx.fillStyle = '#666666';
-        ctx.fillText(result.brand, canvas.width / 2, 600);
-      }
-      
-      // Price range
-      ctx.font = 'bold 56px -apple-system, system-ui, sans-serif';
-      ctx.fillStyle = '#059669';
-      ctx.fillText(result.price_range || '$0-$0', canvas.width / 2, 660);
-      
-      // Purchase price and profit if available
-      const getPurchasePrice = () => {
-        if (productDescription) {
-          const priceMatch = productDescription.match(/\$(\d+(?:\.\d{2})?)/);
-          if (priceMatch) {
-            return parseFloat(priceMatch[1]);
-          }
-        }
-        return null;
-      };
-      
-      const purchasePrice = getPurchasePrice();
-      let yPosition = 720;
-      
-      if (purchasePrice) {
-        ctx.font = '32px -apple-system, system-ui, sans-serif';
-        ctx.fillStyle = '#666666';
-        ctx.fillText(`Bought for $${purchasePrice}`, canvas.width / 2, yPosition);
-        yPosition += 50;
-        
-        // Calculate profit
-        const getPriceEstimate = (priceRange) => {
-          if (!priceRange) return 0;
-          const match = priceRange.match(/\$(\d+)-\$(\d+)/);
-          if (match) {
-            const low = parseInt(match[1]);
-            const high = parseInt(match[2]);
-            return Math.round((low + high) / 2);
-          }
-          return 0;
-        };
-        
-        const resaleEstimate = getPriceEstimate(result.price_range);
-        if (resaleEstimate > 0) {
-          const profit = resaleEstimate - purchasePrice;
-          ctx.font = 'bold 42px -apple-system, system-ui, sans-serif';
-          ctx.fillStyle = profit > 0 ? '#059669' : '#dc2626';
-          ctx.fillText(`${profit > 0 ? '+' : ''}$${Math.abs(profit)} profit potential`, canvas.width / 2, yPosition);
-          yPosition += 60;
-        }
-      }
-      
-      // Add key metrics in a row
-      ctx.font = '24px -apple-system, system-ui, sans-serif';
-      ctx.fillStyle = '#333333';
-      
-      // Real Score
-      if (result.real_score) {
-        const realScoreText = `Real Score: ${result.real_score}`;
-        ctx.fillText(realScoreText, canvas.width / 2 - 200, yPosition);
-      }
-      
-      // Sellability
-      if (result.trending_score) {
-        const sellabilityText = `Sellability: ${result.trending_score}/100`;
-        ctx.fillText(sellabilityText, canvas.width / 2 + 200, yPosition);
-      }
-      yPosition += 40;
-      
-      // Platform recommendation
-      if (result.recommended_platform) {
         ctx.font = '28px -apple-system, system-ui, sans-serif';
         ctx.fillStyle = '#666666';
-        ctx.fillText(`Best on: ${result.recommended_platform}`, canvas.width / 2, yPosition);
-        yPosition += 40;
+        ctx.fillText(result.brand, canvas.width / 2, 888);
       }
       
-      // Environmental impact
+      // Market Comps with green price band
+      ctx.fillStyle = '#059669';
+      ctx.fillRect(0, 910, canvas.width, 60);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 42px -apple-system, system-ui, sans-serif';
+      ctx.fillText(result.price_range || '$0-$0', canvas.width / 2, 950);
+      
+      // Sellability + Authenticity row
+      let yPosition = 990;
+      ctx.font = '24px -apple-system, system-ui, sans-serif';
+      
+      // Sellability with icon
+      ctx.fillStyle = '#333333';
+      const sellabilityText = `🔥 Sellability: ${result.trending_score || 0}/100`;
+      ctx.fillText(sellabilityText, canvas.width / 2 - 200, yPosition);
+      
+      // Authenticity with icon  
+      const realScoreText = `✓ Authenticity: ${result.real_score || 'Unknown'}`;
+      ctx.fillText(realScoreText, canvas.width / 2 + 200, yPosition);
+      
+      // Market Info
+      yPosition += 35;
+      ctx.font = '20px -apple-system, system-ui, sans-serif';
+      ctx.fillStyle = '#666666';
+      if (result.recommended_platform) {
+        ctx.fillText(`Best Platform: ${result.recommended_platform}`, canvas.width / 2, yPosition);
+      }
+      
+      // Eco Info
+      yPosition += 30;
       if (result.environmental_tag) {
-        ctx.font = '26px -apple-system, system-ui, sans-serif';
         ctx.fillStyle = '#059669';
         ctx.fillText(result.environmental_tag, canvas.width / 2, yPosition);
-        yPosition += 50;
       }
       
       // Add QR Code for Reddit valuation page
@@ -1578,16 +1527,11 @@ export default function App() {
         // Continue without QR if it fails
       }
       
-      // Footer
-      ctx.fillStyle = '#666666';
-      ctx.font = '28px -apple-system, system-ui, sans-serif';
+      // CTA - Bottom of image
+      ctx.fillStyle = '#000000';
+      ctx.font = 'bold 28px -apple-system, system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('Never Over Pay • Know the price. Own the profit.', canvas.width / 2, 960);
-      
-      if (user?.referralCode) {
-        ctx.font = '24px monospace';
-        ctx.fillText(`flippi.ai?ref=${user.referralCode}`, canvas.width / 2, 1000);
-      }
+      ctx.fillText('Get 20 free images at flippi.ai', canvas.width / 2, 1050);
       
       // Convert to blob and download
       console.log('[Share Image] Converting canvas to blob...');
