@@ -64,6 +64,19 @@ jobs:
               sudo bash scripts/post-deploy-nginx.sh
             fi
             
+            # Apply growth and other routes
+            echo "=== Applying all route configurations ==="
+            if [ -f scripts/post-deploy-all-routes.sh ]; then
+              echo "Running post-deploy-all-routes.sh..."
+              sudo bash scripts/post-deploy-all-routes.sh green.flippi.ai 3001
+            elif [ -f scripts/ensure-growth-routes.sh ]; then
+              echo "Running ensure-growth-routes.sh..."
+              sudo bash scripts/ensure-growth-routes.sh
+            elif [ -f scripts/add-growth-routes-nginx.sh ]; then
+              echo "Running add-growth-routes-nginx.sh..."
+              sudo bash scripts/add-growth-routes-nginx.sh green.flippi.ai 3001
+            fi
+            
             # Fix nginx SSL configuration comprehensively
             echo "=== Running nginx SSL fix script ==="
             cd /var/www/green.flippi.ai
