@@ -38,55 +38,10 @@ jobs:
             
             cd backend && npm install --production
             
-            # Build frontend with better error handling
-            cd ../mobile-app 
-            echo "=== Building frontend ==="
+            # Build frontend (no timeout, like staging workflow)
+            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
             
-            # Force clean install to fix corrupted packages
-            rm -rf node_modules package-lock.json
-            npm cache clean --force
-            npm install
-            
-            # Remove old dist to ensure clean build
-            rm -rf dist
-            
-            # Build with timeout and verification
-            timeout 300 npx expo export --platform web --output-dir dist || {
-              echo "ERROR: Expo build failed!"
-              exit 1
-            }
-            
-            # Verify build output
-            if [ ! -f "dist/index.html" ]; then
-              echo "ERROR: dist/index.html not found after build!"
-              ls -la dist/ || echo "dist directory missing!"
-              exit 1
-            fi
-            
-            echo "Frontend build completed successfully"
-            echo "Checking build output:"
-            ls -la dist/ | head -5
-            grep -E "(script|link)" dist/index.html | head -5 || echo "WARNING: No scripts found in index.html!"
-            
-            # Fix nginx SSL configuration comprehensively
-            echo "=== Running nginx SSL fix script ==="
-            cd /var/www/app.flippi.ai
-            if [ -f scripts/fix-nginx-ssl-comprehensive.sh ]; then
-              echo "Script found, running with sudo..."
-              sudo bash scripts/fix-nginx-ssl-comprehensive.sh || echo "SSL fix script had errors but continuing"
-            else
-              echo "ERROR: fix-nginx-ssl-comprehensive.sh not found!"
-              ls -la scripts/
-            fi
-            
-            # Debug: Check what directory PM2 is serving from
-            echo "=== PM2 prod-frontend config ==="
-            pm2 describe prod-frontend | grep -E "exec cwd|script|args" || true
-            echo "=== Checking directories ==="
-            ls -la /var/www/app.flippi.ai/mobile-app/ | grep -E "dist|web-build" || true
-            echo "=== Files in dist ==="
-            ls -la /var/www/app.flippi.ai/mobile-app/dist/ | head -5 || true
-            # Just restart, don't delete
+            # Restart PM2 services
             pm2 restart prod-backend prod-frontend
             # Wait for services to start
             sleep 3
