@@ -1346,7 +1346,18 @@ export default function App() {
         if (imageSrc && !imageSrc.startsWith('data:')) {
           // If it's just base64, add the prefix
           if (imageSrc.match(/^[A-Za-z0-9+/]+=*$/)) {
+            console.log('[Share Image] Adding data URL prefix to base64 string');
             imageSrc = `data:image/jpeg;base64,${imageSrc}`;
+          }
+          // Check if it starts with /9j/ which is JPEG base64 signature
+          else if (imageSrc.startsWith('/9j/')) {
+            console.log('[Share Image] Detected JPEG base64 without prefix, adding it');
+            imageSrc = `data:image/jpeg;base64,${imageSrc}`;
+          }
+          // Check if it starts with iVBOR which is PNG base64 signature
+          else if (imageSrc.startsWith('iVBOR')) {
+            console.log('[Share Image] Detected PNG base64 without prefix, adding it');
+            imageSrc = `data:image/png;base64,${imageSrc}`;
           }
           // Otherwise assume it's a URI that needs to be converted
           else if (imageSrc.startsWith('file://') || imageSrc.startsWith('http')) {
@@ -1368,9 +1379,31 @@ export default function App() {
         const img = new Image();
         img.crossOrigin = 'anonymous'; // Just in case
         
-        // Create promise to handle async loading
+        // Create promise to handle async loading with timeout
         await new Promise((resolve) => {
+          let imageLoaded = false;
+          
+          // Set a timeout to prevent hanging
+          const timeout = setTimeout(() => {
+            if (!imageLoaded) {
+              console.error('[Share Image] Image load timeout after 5 seconds');
+              
+              // Draw timeout placeholder
+              ctx.fillStyle = '#f5f5f5';
+              ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
+              ctx.fillStyle = '#a0a0a0';
+              ctx.font = '28px -apple-system, system-ui, sans-serif';
+              ctx.textAlign = 'center';
+              ctx.fillText('Image load timeout', canvas.width / 2, boxY + boxHeight/2 - 15);
+              ctx.font = '20px -apple-system, system-ui, sans-serif';
+              ctx.fillText('Continuing without image', canvas.width / 2, boxY + boxHeight/2 + 15);
+              resolve();
+            }
+          }, 5000);
+          
           img.onload = () => {
+            imageLoaded = true;
+            clearTimeout(timeout);
             console.log('[Share Image] Image loaded successfully:', img.width, 'x', img.height);
             
             // Calculate scaling to fit within box
@@ -1386,6 +1419,8 @@ export default function App() {
           };
           
           img.onerror = () => {
+            imageLoaded = true;
+            clearTimeout(timeout);
             console.error('[Share Image] Failed to load image for share download');
             console.error('[Share Image] Attempted source:', imageSrc.substring(0, 100));
             
@@ -1676,8 +1711,32 @@ export default function App() {
     console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
     console.log('  - image:', !!image, image?.substring(0, 50));
     
+    // Debug: Check if images have proper format
+    if (imageBase64) {
+      console.log('[Download Share] imageBase64 format check:');
+      console.log('  - Starts with data:?', imageBase64.startsWith('data:'));
+      console.log('  - Has base64 marker?', imageBase64.includes('base64,'));
+      console.log('  - Length:', imageBase64.length);
+    }
+    
+    if (image) {
+      console.log('[Download Share] image format check:');
+      console.log('  - Starts with data:?', image.startsWith('data:'));
+      console.log('  - Has base64 marker?', image.includes('base64,'));
+      console.log('  - Length:', image.length);
+    }
+    
     // Always prefer imageBase64 as it has the correct format after analysis
     const imageToUse = imageBase64 || image;
+    
+    if (!imageToUse) {
+      Alert.alert(
+        'No Image Available',
+        'Please analyze an image first before downloading.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
     
     setIsLoading(true);
     generateShareImage(analysisResult, imageToUse).finally(() => {
