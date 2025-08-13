@@ -5,16 +5,41 @@
 CURRENT_DIR=$(pwd)
 if [[ "$CURRENT_DIR" == *"app.flippi.ai"* ]]; then
     DOMAIN="app.flippi.ai"
+    PORT="3000"
 elif [[ "$CURRENT_DIR" == *"green.flippi.ai"* ]]; then
     DOMAIN="green.flippi.ai"
+    PORT="3001"
 elif [[ "$CURRENT_DIR" == *"blue.flippi.ai"* ]]; then
     DOMAIN="blue.flippi.ai"
+    PORT="3002"
 else
     echo "Unknown environment, exiting"
     exit 0
 fi
 
 echo "Fixing nginx configuration for $DOMAIN..."
+
+# Add growth routes if missing
+if ! grep -q "location /growth" /etc/nginx/sites-available/$DOMAIN; then
+    echo "Adding growth routes..."
+    # Find line number of "location / {" and insert before it
+    LINE_NUM=$(grep -n "location / {" /etc/nginx/sites-available/$DOMAIN | head -1 | cut -d: -f1)
+    if [ -n "$LINE_NUM" ]; then
+        sed -i "${LINE_NUM}i\\
+\\
+    # Growth routes\\
+    location /growth {\\
+        proxy_pass http://localhost:${PORT};\\
+        proxy_http_version 1.1;\\
+        proxy_set_header Host \$host;\\
+        proxy_set_header X-Real-IP \$remote_addr;\\
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;\\
+        proxy_set_header X-Forwarded-Proto \$scheme;\\
+    }\\
+" /etc/nginx/sites-available/$DOMAIN
+        echo "Growth routes added"
+    fi
+fi
 
 # Check if there are duplicate location blocks
 PRIVACY_COUNT=$(grep -c "location = /privacy" /etc/nginx/sites-available/$DOMAIN 2>/dev/null || echo "0")

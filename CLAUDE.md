@@ -226,17 +226,15 @@ Example: "Error handling is in backend/server.js:261"
 
 ## Project Documentation References
 
-For project-specific information, refer to the appropriate documentation:
+For a complete list of all documentation with clickable links, see:
+- **Documentation Index**: `/docs/DOCUMENTATION-INDEX.md` - Complete linked index of all docs
 
+Key documentation includes:
 - **Brand Guidelines**: `/docs/BRAND-GUIDE.md` - UI/UX standards, colors, accessibility
 - **Technical Guide**: `/docs/TECHNICAL-GUIDE.md` - Architecture, API, infrastructure, auth details
 - **Development Guide**: `/docs/DEVELOPMENT-GUIDE.md` - Setup, coding standards, workflows
 - **Operations Manual**: `/docs/OPERATIONS-MANUAL.md` - Monitoring, troubleshooting, maintenance
 - **DevOps Checklist**: `/docs/DEVOPS-RELEASE-CHECKLIST.md` - Comprehensive deployment procedures
-- **Deployment Troubleshooting**: `/docs/DEPLOYMENT-TROUBLESHOOTING.md` - Common deployment issues and fixes
-- **Ownership Transfer**: `/docs/OWNERSHIP-TRANSFER.md` - Transfer procedures and checklist
-- **Launch Readiness**: `/docs/LAUNCH-READINESS-SUMMARY.md` - Current launch status
-- **Known Issues**: `/docs/BUG-LEGAL-PAGES.md` - Current bugs and workarounds
 
 ## Key Quick Facts
 
@@ -245,3 +243,16 @@ For project-specific information, refer to the appropriate documentation:
 - **Deployment**: GitHub Actions auto-deploy on push
 - **Environments**: develop→blue, staging→green, master→app
 - **Current State**: OAuth implemented, launch preparation in progress
+- **Reddit Integration**: Uses RSS feeds (not JSON API) to bypass rate limits
+- **Blog System**: Creates valuations at /value/{slug} with SEO optimization
+- **Growth Platform**: Two parallel systems - valuations (working) and content_generated (unused)
+
+## Rolling Timeline
+
+### 2025-08-12
+- Fixed Reddit RSS parsing bug (was checking item.guid instead of item.id)
+- Created manual blog post selection interface at /growth/questions
+- Discovered Reddit RSS feeds work fine - no IP blocking issue
+- [devops] Fixed nginx routing for /admin and /growth paths
+- [devops] Multiple restarts of PM2 dev-backend process
+- Moved from /admin/questions to /growth/questions per user request

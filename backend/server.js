@@ -8,6 +8,7 @@ const passport = require('passport');
 const { initializeDatabase } = require('./database');
 const { getEnvironmentalTagByItemName } = require('./utils/environmentalImpact');
 const { applyOverrides } = require('./services/overrideManager');
+const { getFlipStatus, trackFlip, requiresPayment } = require('./services/flipTracker');
 
 // Load .env from shared location outside git directories
 const envPath = path.join(__dirname, '../../shared/.env');
@@ -116,6 +117,24 @@ app.get('/health', (req, res) => {
 // Enhanced image analysis endpoint
 app.post('/api/scan', upload.single('image'), async (req, res) => {
   try {
+    // Check flip limit before processing
+    const userId = req.user?.id;
+    const deviceFingerprint = req.headers['x-device-fingerprint'] || req.body.device_fingerprint;
+    const sessionId = req.session?.id;
+    
+    // Get current flip status
+    const flipStatus = await getFlipStatus(userId, deviceFingerprint, sessionId);
+    
+    // Check if payment is required
+    if (!flipStatus.can_flip) {
+      return res.status(402).json({
+        error: 'Payment required',
+        message: 'You have reached your free flip limit',
+        flip_status: flipStatus,
+        payment_required: true
+      });
+    }
+    
     if (!req.file) {
       return res.status(400).json({ 
         error: 'No image provided',
@@ -521,26 +540,10 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
     
     // No hard-coded trending boosts - let OpenAI analyze based on its training
 
-    // Adjust for low real scores
-    if (realScore <= 30) {
-      // Override pricing for low confidence items
-      analysis.price_range = "$5-$50";
-      analysis.resale_average = "$25";
-      
-      // Replace market insights for uncertain items
-      analysis.market_insights = "Limited market data available.";
-      
-      // Replace selling tips with platform-safe advice
-      analysis.selling_tips = "Clean with care. Style it your way.";
-      
-      // Adjust style tier
-      analysis.style_tier = "Entry";
-      
-      // Platform-safe fallback suggestions
-      analysis.recommended_platform = "Craft Fair";
-      analysis.recommended_live_platform = "Personal Use";
-    } else if (realScore < 70 && isLuxuryBrand) {
-      // For luxury items with medium confidence (31-69), avoid authentication platforms
+    // Keep detailed analysis for all scores - don't suppress valuable insights
+    // Only adjust platforms for medium confidence luxury items
+    if (realScore < 70 && isLuxuryBrand) {
+      // For luxury items with medium confidence (<70), avoid authentication platforms
       const authPlatforms = ['The RealReal', 'Vestiaire Collective', 'Rebag', 'Fashionphile'];
       
       if (authPlatforms.includes(analysis.recommended_platform)) {
@@ -709,6 +712,37 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
       // Continue without overrides if there's an error
     }
 
+    // Track the flip
+    try {
+      const updatedFlipStatus = await trackFlip(
+        userId, 
+        deviceFingerprint, 
+        sessionId,
+        {
+          analysis_id: `analysis_${Date.now()}`,
+          item_name: analysis.item_name,
+          price_range: analysis.price_range,
+          real_score: analysis.real_score
+        }
+      );
+      
+      // Update user's scan count if authenticated
+      if (userId) {
+        try {
+          const db = getDatabase();
+          db.prepare('UPDATE users SET scan_count = scan_count + 1 WHERE id = ?').run(userId);
+        } catch (userUpdateError) {
+          console.error('Error updating user scan count:', userUpdateError);
+        }
+      }
+      
+      // Add flip status to response
+      analysis.flip_status = updatedFlipStatus;
+    } catch (trackError) {
+      console.error('Error tracking flip:', trackError);
+      // Continue without tracking on error
+    }
+    
     res.json({ 
       success: true, 
       data: analysis,  // Frontend expects 'data' not 'analysis'
@@ -716,7 +750,8 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
         fileSize: req.file.size,
         processingTime: processingTime,
         version: '2.0'
-      }
+      },
+      flip_status: flipStatus // Include current flip status
     });
 
   } catch (error) {
@@ -739,8 +774,41 @@ app.use('/auth', authRoutes);
 const adminRoutes = require('./routes/admin');
 app.use('/admin', adminRoutes);
 
+// Payment routes
+const paymentRoutes = require('./routes/payment');
+app.use('/api/payment', paymentRoutes);
+
 // Feedback route - wrap in try-catch
 const feedbackRoutes = require('./routes/feedback');
+
+// Growth automation routes
+const growthRoutes = require('./routes/growth');
+
+// Reddit valuation routes
+const valuationRoutes = require('./routes/valuations');
+const qrRoutes = require('./routes/qr');
+const redditValuationRoutes = require('./routes/redditValuation');
+const migrationRoutes = require('./routes/migrations');
+const adminRedditRoutes = require('./routes/adminReddit');
+const automationRoutes = require('./routes/automation');
+const automationAdminRoutes = require('./routes/automationAdmin');
+const automationDashboardRoutes = require('./routes/automationDashboard');
+const valuationPagesRoutes = require('./routes/valuationPages');
+const growthAdminRoutes = require('./routes/growthAdmin');
+const testValuationRoutes = require('./routes/testValuation');
+
+app.use('/', valuationRoutes);
+app.use('/', qrRoutes);
+app.use('/', redditValuationRoutes);
+app.use('/', migrationRoutes);
+app.use('/', adminRedditRoutes);
+app.use('/', automationRoutes);
+app.use('/', automationAdminRoutes);
+app.use('/', automationDashboardRoutes);
+app.use('/', valuationPagesRoutes);
+app.use('/', growthAdminRoutes);
+app.use('/', testValuationRoutes);
+
 app.use('/api/feedback', (req, res, next) => {
   try {
     feedbackRoutes(req, res, next);
@@ -751,6 +819,19 @@ app.use('/api/feedback', (req, res, next) => {
       error: 'Internal server error',
       message: error.message,
       stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
+  }
+});
+
+// Growth automation routes
+app.use('/api/growth', (req, res, next) => {
+  try {
+    growthRoutes(req, res, next);
+  } catch (error) {
+    console.error('ERROR in growth routes:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
     });
   }
 });
@@ -815,6 +896,46 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Legal pages are now served by setupLegalPages middleware at the top of the file
 // This ensures they're served before any other routes or middleware intercept them
+
+// Health check endpoint
+app.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    timestamp: new Date().toISOString(), 
+    version: '2.0',
+    features: {
+      imageAnalysis: true,
+      cameraSupport: true,
+      pasteSupport: true,
+      dragDropSupport: true,
+      enhancedAI: true,
+      feedbackLearning: true,
+      patternDetection: true,
+      adminDashboard: true
+    }
+  });
+});
+
+// Version endpoint for deployment verification
+app.get('/api/version', (req, res) => {
+  const buildVersion = process.env.BUILD_VERSION || 'release-004';
+  const commitSha = process.env.COMMIT_SHA || 'unknown';
+  const buildTime = process.env.BUILD_TIME || new Date().toISOString();
+  
+  res.json({
+    version: buildVersion,
+    commit: commitSha,
+    buildTime: buildTime,
+    release: 'release-004',
+    features: {
+      feedbackLearning: true,
+      patternDetection: true,
+      adminDashboard: true,
+      userActivity: true,
+      redditValuation: true
+    }
+  });
+});
 
 // Start server
 const PORT = process.env.PORT || 3000;

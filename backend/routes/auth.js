@@ -67,17 +67,39 @@ if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
       let user = db.prepare('SELECT * FROM users WHERE google_id = ?').get(userData.google_id);
 
       if (user) {
-        // Update last login
-        db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE google_id = ?')
-          .run(userData.google_id);
+        // Update last login and increment login count
+        try {
+          db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP, login_count = login_count + 1 WHERE google_id = ?')
+            .run(userData.google_id);
+        } catch (updateError) {
+          // If new columns don't exist, just update last_login
+          console.log('Falling back to simple update:', updateError.message);
+          try {
+            db.prepare('UPDATE users SET last_login = CURRENT_TIMESTAMP WHERE google_id = ?')
+              .run(userData.google_id);
+          } catch (e) {
+            console.error('Failed to update last_login:', e);
+          }
+        }
       } else {
         // Create new user
-        const result = db.prepare(`
-          INSERT INTO users (google_id, email, name, picture_url)
-          VALUES (?, ?, ?, ?)
-        `).run(userData.google_id, userData.email, userData.name, userData.picture_url);
-        
-        user = { id: result.lastInsertRowid, ...userData };
+        try {
+          const result = db.prepare(`
+            INSERT INTO users (google_id, email, name, picture_url, login_count, scan_count, feedback_count)
+            VALUES (?, ?, ?, ?, 1, 0, 0)
+          `).run(userData.google_id, userData.email, userData.name, userData.picture_url);
+          
+          user = { id: result.lastInsertRowid, ...userData };
+        } catch (insertError) {
+          // If new columns don't exist, insert without them
+          console.log('Falling back to simple insert:', insertError.message);
+          const result = db.prepare(`
+            INSERT INTO users (google_id, email, name, picture_url)
+            VALUES (?, ?, ?, ?)
+          `).run(userData.google_id, userData.email, userData.name, userData.picture_url);
+          
+          user = { id: result.lastInsertRowid, ...userData };
+        }
       }
 
       return done(null, user);
