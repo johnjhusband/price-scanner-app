@@ -22,6 +22,16 @@ import { brandColors, typography, componentColors } from './theme/brandColors';
 import { getDeviceFingerprint } from './utils/deviceFingerprint';
 import { appleStyles } from './theme/appleStyles';
 
+// Conditionally import QRCode for web only
+let QRCode;
+if (Platform.OS === 'web') {
+  try {
+    QRCode = require('qrcode');
+  } catch (e) {
+    console.log('QRCode library not available');
+  }
+}
+
 // Import web styles for web platform
 if (Platform.OS === 'web') {
   require('./web-styles.css');
@@ -1500,8 +1510,8 @@ export default function App() {
         
         // QR Code positioning
         const qrSize = 120;
-        const qrX = canvas.width - qrSize - 40; // Right side
-        const qrY = canvas.height - qrSize - 100; // Above footer
+        const qrX = 40; // Left side
+        const qrY = canvas.height - qrSize - 40; // Bottom left
         
         // White background for QR
         ctx.fillStyle = '#FFFFFF';
@@ -1512,15 +1522,41 @@ export default function App() {
         ctx.lineWidth = 1;
         ctx.strokeRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
         
-        // For now, draw placeholder QR pattern
-        // In production, this would fetch from backend
-        drawQRPlaceholder(ctx, qrX, qrY, qrSize);
+        // Try to use QRCode library if available, otherwise use placeholder
+        if (QRCode && QRCode.toDataURL) {
+          const qrDataUrl = await QRCode.toDataURL(qrUrl, {
+            width: qrSize,
+            margin: 1,
+            color: {
+              dark: '#000000',
+              light: '#FFFFFF'
+            }
+          });
+          
+          // Draw QR code
+          const qrImg = new Image();
+          await new Promise((resolve) => {
+            qrImg.onload = () => {
+              ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+              resolve();
+            };
+            qrImg.onerror = () => {
+              // Fallback to placeholder if image fails
+              drawQRPlaceholder(ctx, qrX, qrY, qrSize);
+              resolve();
+            };
+            qrImg.src = qrDataUrl;
+          });
+        } else {
+          // Fallback to placeholder
+          drawQRPlaceholder(ctx, qrX, qrY, qrSize);
+        }
         
         // QR Label
         ctx.fillStyle = '#666666';
-        ctx.font = '14px -apple-system, system-ui, sans-serif';
+        ctx.font = '12px -apple-system, system-ui, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('Scan for details', qrX + qrSize/2, qrY + qrSize + 20);
+        ctx.fillText('Scan for details', qrX + qrSize/2, qrY + qrSize + 15);
         
       } catch (qrError) {
         console.error('[Share Image] QR generation error:', qrError);
@@ -1549,15 +1585,17 @@ export default function App() {
           const url = URL.createObjectURL(blob);
           console.log('[Share Image] Object URL created:', url);
           
-          // Method 1: Create and click anchor
+          // Create and click anchor for download
           const a = document.createElement('a');
           a.href = url;
-          a.download = `flippi-share-image-${Date.now()}.png`;
+          const timestamp = new Date().toISOString().split('T')[0];
+          const itemName = (result.item_name || 'item').toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 30);
+          a.download = `flippi-${itemName}-${timestamp}.png`;
           a.style.display = 'none';
           
           console.log('[Share Image] Attempting download...');
           
-          // Method 2: Try different click methods
+          // Try different click methods
           try {
             // Add to DOM
             document.body.appendChild(a);
