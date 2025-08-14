@@ -1693,6 +1693,16 @@ export default function App() {
     console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
     console.log('  - image:', !!image, image?.substring(0, 50));
     
+    // Check if we have analysis results
+    if (!analysisResult) {
+      Alert.alert(
+        'No Results Available',
+        'Please analyze an item first before downloading.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    
     // Debug: Check if images have proper format
     if (imageBase64) {
       console.log('[Download Share] imageBase64 format check:');
@@ -1714,7 +1724,7 @@ export default function App() {
     if (!imageToUse) {
       Alert.alert(
         'No Image Available',
-        'Please analyze an image first before downloading.',
+        'Please upload or capture an image first.',
         [{ text: 'OK' }]
       );
       return;
