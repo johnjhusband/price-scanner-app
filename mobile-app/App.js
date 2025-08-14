@@ -22,15 +22,7 @@ import { brandColors, typography, componentColors } from './theme/brandColors';
 import { getDeviceFingerprint } from './utils/deviceFingerprint';
 import { appleStyles } from './theme/appleStyles';
 
-// Conditionally import QRCode for web only
-let QRCode;
-if (Platform.OS === 'web') {
-  try {
-    QRCode = require('qrcode');
-  } catch (e) {
-    console.log('QRCode library not available');
-  }
-}
+// QRCode will be imported dynamically when needed
 
 // Import web styles for web platform
 if (Platform.OS === 'web') {
@@ -1522,32 +1514,43 @@ export default function App() {
         ctx.lineWidth = 1;
         ctx.strokeRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
         
-        // Try to use QRCode library if available, otherwise use placeholder
-        if (QRCode && QRCode.toDataURL) {
-          const qrDataUrl = await QRCode.toDataURL(qrUrl, {
-            width: qrSize,
-            margin: 1,
-            color: {
-              dark: '#000000',
-              light: '#FFFFFF'
+        // Try to dynamically import QRCode library for web
+        let qrDrawn = false;
+        if (Platform.OS === 'web') {
+          try {
+            const QRCode = await import('qrcode');
+            if (QRCode && QRCode.default && QRCode.default.toDataURL) {
+              const qrDataUrl = await QRCode.default.toDataURL(qrUrl, {
+                width: qrSize,
+                margin: 1,
+                color: {
+                  dark: '#000000',
+                  light: '#FFFFFF'
+                }
+              });
+              
+              // Draw QR code
+              const qrImg = new Image();
+              await new Promise((resolve) => {
+                qrImg.onload = () => {
+                  ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
+                  resolve();
+                };
+                qrImg.onerror = () => {
+                  // Fallback to placeholder if image fails
+                  drawQRPlaceholder(ctx, qrX, qrY, qrSize);
+                  resolve();
+                };
+                qrImg.src = qrDataUrl;
+              });
+              qrDrawn = true;
             }
-          });
-          
-          // Draw QR code
-          const qrImg = new Image();
-          await new Promise((resolve) => {
-            qrImg.onload = () => {
-              ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-              resolve();
-            };
-            qrImg.onerror = () => {
-              // Fallback to placeholder if image fails
-              drawQRPlaceholder(ctx, qrX, qrY, qrSize);
-              resolve();
-            };
-            qrImg.src = qrDataUrl;
-          });
-        } else {
+          } catch (e) {
+            console.log('QRCode library not available:', e.message);
+          }
+        }
+        
+        if (!qrDrawn) {
           // Fallback to placeholder
           drawQRPlaceholder(ctx, qrX, qrY, qrSize);
         }
