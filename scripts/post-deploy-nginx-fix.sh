@@ -91,10 +91,12 @@ fi
 
 echo "Nginx fix complete."
 
-# Run comprehensive legal pages fix
+# Run comprehensive route fix (includes growth, admin, and legal pages)
 echo ""
-echo "Running comprehensive legal pages fix..."
-if [ -f /var/www/$DOMAIN/scripts/comprehensive-legal-fix.sh ]; then
+echo "Running comprehensive route fix..."
+if [ -f /var/www/$DOMAIN/scripts/fix-all-routes-comprehensive.sh ]; then
+    bash /var/www/$DOMAIN/scripts/fix-all-routes-comprehensive.sh
+elif [ -f /var/www/$DOMAIN/scripts/comprehensive-legal-fix.sh ]; then
     bash /var/www/$DOMAIN/scripts/comprehensive-legal-fix.sh
 else
     # Fallback: Run post-deploy-all-fixes if available
