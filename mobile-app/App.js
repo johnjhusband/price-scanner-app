@@ -26,7 +26,11 @@ import { appleStyles } from './theme/appleStyles';
 
 // Import web styles for web platform
 if (Platform.OS === 'web') {
-  require('./web-styles.css');
+  try {
+    require('./web-styles.css');
+  } catch (e) {
+    console.warn('Failed to load web styles:', e);
+  }
 }
 
 // Responsive design breakpoints
@@ -1518,7 +1522,8 @@ export default function App() {
         let qrDrawn = false;
         if (Platform.OS === 'web') {
           try {
-            const QRCode = await import('qrcode');
+            // Check if qrcode module exists before importing
+            const QRCode = await import('qrcode').catch(() => null);
             if (QRCode && QRCode.default && QRCode.default.toDataURL) {
               const qrDataUrl = await QRCode.default.toDataURL(qrUrl, {
                 width: qrSize,
