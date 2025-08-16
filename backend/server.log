@@ -1,0 +1,10 @@
+
+> flippi-ai-backend@2.3.0 start
+> node server.js
+
+Valuation tables created successfully
+Google OAuth credentials not configured. OAuth will not work.
+[Reddit Monitor] Database initialized
+[Migration] Starting automation tables creation...
+Automation tracking tables created successfully
+[Migration] Automation tables created: [ 'automation_runs', 'automation_errors' ]
