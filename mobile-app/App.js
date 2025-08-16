@@ -1450,29 +1450,29 @@ export default function App() {
       // Reset text alignment for subsequent text
       ctx.textAlign = 'center';
       
-      // Title (moved 0.5 inch lower = ~48px at 96dpi)
+      // Title (moved 0.5 inch lower = ~48px at 96dpi, then another 0.5 inch for Whatnot)
       ctx.fillStyle = '#000000';
       ctx.font = 'bold 36px -apple-system, system-ui, sans-serif';
       const itemName = result.item_name || 'Unknown Item';
-      ctx.fillText(itemName, canvas.width / 2, 858); // 810 + 48
+      ctx.fillText(itemName, canvas.width / 2, 906); // 810 + 48 + 48 (moved additional 0.5" for Whatnot)
       
       // Brand (if available)
       if (result.brand) {
         ctx.font = '28px -apple-system, system-ui, sans-serif';
         ctx.fillStyle = '#666666';
-        ctx.fillText(result.brand, canvas.width / 2, 888);
+        ctx.fillText(result.brand, canvas.width / 2, 936); // Adjusted for title move
       }
       
-      // Market Comps with green price band
+      // Market Comps with green price band (condensed for space)
       ctx.fillStyle = '#059669';
-      ctx.fillRect(0, 910, canvas.width, 60);
+      ctx.fillRect(0, 950, canvas.width, 45); // Reduced height from 60 to 45
       ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 42px -apple-system, system-ui, sans-serif';
-      ctx.fillText(result.price_range || '$0-$0', canvas.width / 2, 950);
+      ctx.font = 'bold 36px -apple-system, system-ui, sans-serif'; // Reduced from 42px
+      ctx.fillText(result.price_range || '$0-$0', canvas.width / 2, 980);
       
-      // Sellability + Authenticity row
-      let yPosition = 990;
-      ctx.font = '24px -apple-system, system-ui, sans-serif';
+      // Sellability + Authenticity row (condensed)
+      let yPosition = 1005; // Moved up from 990
+      ctx.font = '20px -apple-system, system-ui, sans-serif'; // Reduced from 24px
       
       // Sellability with icon
       ctx.fillStyle = '#333333';
@@ -1483,21 +1483,24 @@ export default function App() {
       const realScoreText = `✓ Authenticity: ${result.real_score || 'Unknown'}`;
       ctx.fillText(realScoreText, canvas.width / 2 + 200, yPosition);
       
-      // Market Info
-      yPosition += 35;
-      ctx.font = '20px -apple-system, system-ui, sans-serif';
+      // Market Info (condensed)
+      yPosition += 25; // Reduced from 35
+      ctx.font = '18px -apple-system, system-ui, sans-serif'; // Reduced from 20px
       ctx.fillStyle = '#666666';
       if (result.recommended_platform) {
         ctx.fillText(`Best Platform: ${result.recommended_platform}`, canvas.width / 2, yPosition);
       }
       
-      // Eco Info
-      yPosition += 30;
+      // Eco Info (condensed)
+      yPosition += 20; // Reduced from 30
       if (result.environmental_tag) {
         ctx.fillStyle = '#059669';
+        ctx.font = '16px -apple-system, system-ui, sans-serif';
         ctx.fillText(result.environmental_tag, canvas.width / 2, yPosition);
       }
       
+      // QR Code removed for Whatnot layout - need space for larger image
+      /*
       // Add QR Code for Reddit valuation page
       try {
         // Generate a slug for this item
@@ -1570,12 +1573,13 @@ export default function App() {
         console.error('[Share Image] QR generation error:', qrError);
         // Continue without QR if it fails
       }
+      */
       
-      // CTA - Bottom of image
-      ctx.fillStyle = '#000000';
-      ctx.font = 'bold 28px -apple-system, system-ui, sans-serif';
+      // CTA - Bottom of image (prominent)
+      ctx.fillStyle = '#3478F6'; // Brand blue color
+      ctx.font = 'bold 24px -apple-system, system-ui, sans-serif';
       ctx.textAlign = 'center';
-      ctx.fillText('Get 20 free images at flippi.ai', canvas.width / 2, 1050);
+      ctx.fillText('Get 20 free images at flippi.ai', canvas.width / 2, 1060);
       
       // Convert to blob and download
       console.log('[Share Image] Converting canvas to blob...');
