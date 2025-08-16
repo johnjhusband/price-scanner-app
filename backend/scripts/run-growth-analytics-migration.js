@@ -4,12 +4,12 @@
  * This script creates the necessary tables for comprehensive analytics tracking
  */
 
-const sqlite3 = require('sqlite3').verbose();
+const Database = require('better-sqlite3');
 const fs = require('fs');
 const path = require('path');
 
-// Database path
-const dbPath = path.join(__dirname, '..', 'flippi.db');
+// Database path - use the same path as the main app
+const dbPath = process.env.FEEDBACK_DB_PATH || path.join(__dirname, '..', 'flippi.db');
 const migrationPath = path.join(__dirname, '..', 'migrations', 'add-growth-analytics-tables.sql');
 
 console.log('Running growth analytics migration...');
@@ -19,79 +19,69 @@ console.log('Migration:', migrationPath);
 // Read migration SQL
 const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
 
-// Connect to database
-const db = new sqlite3.Database(dbPath, (err) => {
-    if (err) {
-        console.error('Error opening database:', err);
-        process.exit(1);
-    }
+try {
+    // Connect to database
+    const db = new Database(dbPath);
     console.log('Connected to database');
-});
 
-// Run migration
-db.exec(migrationSQL, (err) => {
-    if (err) {
+    // Run migration
+    try {
+        db.exec(migrationSQL);
+        console.log('Migration completed successfully!');
+        
+        // Verify tables were created
+        const tables = db.prepare("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'growth_%'").all();
+        console.log('\nCreated tables:');
+        tables.forEach(table => console.log(' -', table.name));
+        
+        // Check content_generated columns
+        const columns = db.prepare("PRAGMA table_info(content_generated)").all();
+        const columnNames = columns.map(col => col.name);
+        
+        // Add missing columns to content_generated if needed
+        const updates = [];
+        if (!columnNames.includes('tracking_code')) {
+            updates.push("ALTER TABLE content_generated ADD COLUMN tracking_code TEXT");
+        }
+        if (!columnNames.includes('short_url')) {
+            updates.push("ALTER TABLE content_generated ADD COLUMN short_url TEXT");
+        }
+        if (!columnNames.includes('platform_tags')) {
+            updates.push("ALTER TABLE content_generated ADD COLUMN platform_tags TEXT"); // JSON array
+        }
+        
+        if (updates.length > 0) {
+            console.log('\nAdding columns to content_generated:');
+            updates.forEach(update => {
+                try {
+                    db.exec(update);
+                    console.log(' -', update);
+                } catch (err) {
+                    if (!err.message.includes('duplicate column')) {
+                        console.error('Error adding column:', err.message);
+                    }
+                }
+            });
+        }
+        
+        // Show summary
+        const eventCount = db.prepare("SELECT COUNT(*) as count FROM growth_analytics_events").get();
+        const metricsCount = db.prepare("SELECT COUNT(*) as count FROM growth_content_metrics").get();
+        
+        console.log('\nMigration summary:');
+        console.log(' - Analytics events:', eventCount.count);
+        console.log(' - Content metrics:', metricsCount.count);
+        
+        db.close();
+        console.log('\nMigration complete!');
+        
+    } catch (err) {
         console.error('Migration failed:', err);
         db.close();
         process.exit(1);
     }
     
-    console.log('Migration completed successfully!');
-    
-    // Verify tables were created
-    db.all("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'growth_%'", (err, tables) => {
-        if (err) {
-            console.error('Error verifying tables:', err);
-        } else {
-            console.log('\nCreated tables:');
-            tables.forEach(table => console.log(' -', table.name));
-        }
-        
-        // Add missing columns to content_generated if needed
-        db.all("PRAGMA table_info(content_generated)", (err, columns) => {
-            if (err) {
-                console.error('Error checking content_generated columns:', err);
-                db.close();
-                return;
-            }
-            
-            const columnNames = columns.map(col => col.name);
-            const updates = [];
-            
-            // Check for tracking-related columns
-            if (!columnNames.includes('tracking_code')) {
-                updates.push("ALTER TABLE content_generated ADD COLUMN tracking_code TEXT");
-            }
-            if (!columnNames.includes('short_url')) {
-                updates.push("ALTER TABLE content_generated ADD COLUMN short_url TEXT");
-            }
-            if (!columnNames.includes('platform_tags')) {
-                updates.push("ALTER TABLE content_generated ADD COLUMN platform_tags TEXT"); // JSON array
-            }
-            
-            if (updates.length > 0) {
-                console.log('\nAdding columns to content_generated:');
-                updates.forEach(update => {
-                    db.run(update, (err) => {
-                        if (err) {
-                            console.error('Error adding column:', err);
-                        } else {
-                            console.log(' -', update);
-                        }
-                    });
-                });
-            }
-            
-            setTimeout(() => {
-                db.close(() => {
-                    console.log('\nMigration complete!');
-                });
-            }, 1000);
-        });
-    });
-});
-
-// Handle errors
-db.on('error', (err) => {
-    console.error('Database error:', err);
-});
+} catch (err) {
+    console.error('Database connection failed:', err);
+    process.exit(1);
+}

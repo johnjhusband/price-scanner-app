@@ -3,7 +3,7 @@
  * Handles tracking of content views, clicks, shares, and conversions
  */
 
-const db = require('../database');
+const { getDatabase } = require('../database');
 const crypto = require('crypto');
 
 class GrowthAnalyticsService {
@@ -33,14 +33,15 @@ class GrowthAnalyticsService {
         // Generate session ID if not provided
         const session = sessionId || this.generateSessionId();
 
-        return new Promise((resolve, reject) => {
-            const query = `
+        try {
+            const db = getDatabase();
+            const stmt = db.prepare(`
                 INSERT INTO growth_analytics_events 
                 (content_id, event_type, event_source, event_data, user_agent, ip_address, referrer, session_id)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            `;
+            `);
 
-            db.run(query, [
+            const result = stmt.run(
                 contentId,
                 eventType,
                 eventSource,
@@ -49,19 +50,17 @@ class GrowthAnalyticsService {
                 ipAddress,
                 referrer,
                 session
-            ], function(err) {
-                if (err) {
-                    console.error('Error tracking event:', err);
-                    reject(err);
-                } else {
-                    // Also update daily metrics
-                    GrowthAnalyticsService.updateDailyMetrics(contentId, eventType, eventSource)
-                        .catch(err => console.error('Error updating daily metrics:', err));
-                    
-                    resolve(this.lastID);
-                }
-            });
-        });
+            );
+
+            // Also update daily metrics
+            this.updateDailyMetrics(contentId, eventType, eventSource)
+                .catch(err => console.error('Error updating daily metrics:', err));
+            
+            return result.lastInsertRowid;
+        } catch (error) {
+            console.error('Error tracking event:', error);
+            throw error;
+        }
     }
 
     /**
@@ -130,8 +129,9 @@ class GrowthAnalyticsService {
     static async updateDailyMetrics(contentId, eventType, platform) {
         const today = new Date().toISOString().split('T')[0];
         
-        return new Promise((resolve, reject) => {
-            const query = `
+        try {
+            const db = getDatabase();
+            const stmt = db.prepare(`
                 INSERT INTO growth_daily_metrics (date, content_id, platform, views, clicks, shares, conversions)
                 VALUES (?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(date, content_id, platform) DO UPDATE SET
@@ -139,22 +139,22 @@ class GrowthAnalyticsService {
                     clicks = clicks + ?,
                     shares = shares + ?,
                     conversions = conversions + ?
-            `;
+            `);
 
             const isView = eventType === 'view' ? 1 : 0;
             const isClick = eventType === 'click' ? 1 : 0;
             const isShare = eventType === 'share' ? 1 : 0;
             const isConversion = eventType === 'conversion' ? 1 : 0;
 
-            db.run(query, [
+            stmt.run(
                 today, contentId, platform,
                 isView, isClick, isShare, isConversion,
                 isView, isClick, isShare, isConversion
-            ], (err) => {
-                if (err) reject(err);
-                else resolve();
-            });
-        });
+            );
+        } catch (error) {
+            console.error('Error updating daily metrics:', error);
+            throw error;
+        }
     }
 
     /**
@@ -163,8 +163,9 @@ class GrowthAnalyticsService {
      * @returns {Promise<Object>} Metrics object
      */
     static async getContentMetrics(contentId) {
-        return new Promise((resolve, reject) => {
-            const query = `
+        try {
+            const db = getDatabase();
+            const stmt = db.prepare(`
                 SELECT 
                     m.*,
                     c.title,
@@ -173,34 +174,37 @@ class GrowthAnalyticsService {
                 FROM growth_content_metrics m
                 LEFT JOIN content_generated c ON m.content_id = c.id
                 WHERE m.content_id = ?
-            `;
+            `);
 
-            db.get(query, [contentId], (err, row) => {
-                if (err) reject(err);
-                else if (!row) {
-                    // Return default metrics if none exist
-                    resolve({
-                        content_id: contentId,
-                        total_views: 0,
-                        unique_views: 0,
-                        total_clicks: 0,
-                        total_shares: 0,
-                        total_conversions: 0,
-                        platform_breakdown: {}
-                    });
-                } else {
-                    // Parse JSON fields
-                    if (row.platform_breakdown) {
-                        try {
-                            row.platform_breakdown = JSON.parse(row.platform_breakdown);
-                        } catch (e) {
-                            row.platform_breakdown = {};
-                        }
-                    }
-                    resolve(row);
+            const row = stmt.get(contentId);
+            
+            if (!row) {
+                // Return default metrics if none exist
+                return {
+                    content_id: contentId,
+                    total_views: 0,
+                    unique_views: 0,
+                    total_clicks: 0,
+                    total_shares: 0,
+                    total_conversions: 0,
+                    platform_breakdown: {}
+                };
+            }
+
+            // Parse JSON fields
+            if (row.platform_breakdown) {
+                try {
+                    row.platform_breakdown = JSON.parse(row.platform_breakdown);
+                } catch (e) {
+                    row.platform_breakdown = {};
                 }
-            });
-        });
+            }
+            
+            return row;
+        } catch (error) {
+            console.error('Error getting content metrics:', error);
+            throw error;
+        }
     }
 
     /**
@@ -211,7 +215,8 @@ class GrowthAnalyticsService {
      * @returns {Promise<Array>} Daily metrics
      */
     static async getAnalyticsForDateRange(startDate, endDate, contentId = null) {
-        return new Promise((resolve, reject) => {
+        try {
+            const db = getDatabase();
             let query = `
                 SELECT 
                     date,
@@ -237,11 +242,12 @@ class GrowthAnalyticsService {
 
             query += ' GROUP BY date, content_id, platform ORDER BY date DESC';
 
-            db.all(query, params, (err, rows) => {
-                if (err) reject(err);
-                else resolve(rows);
-            });
-        });
+            const stmt = db.prepare(query);
+            return stmt.all(...params);
+        } catch (error) {
+            console.error('Error getting analytics range:', error);
+            throw error;
+        }
     }
 
     /**
@@ -251,8 +257,9 @@ class GrowthAnalyticsService {
      * @returns {Promise<Object>} Platform metrics
      */
     static async getPlatformBreakdown(startDate, endDate) {
-        return new Promise((resolve, reject) => {
-            const query = `
+        try {
+            const db = getDatabase();
+            const stmt = db.prepare(`
                 SELECT 
                     platform,
                     SUM(views) as total_views,
@@ -264,29 +271,30 @@ class GrowthAnalyticsService {
                 WHERE date >= ? AND date <= ?
                 GROUP BY platform
                 ORDER BY total_views DESC
-            `;
+            `);
 
-            db.all(query, [
+            const rows = stmt.all(
                 startDate.toISOString().split('T')[0],
                 endDate.toISOString().split('T')[0]
-            ], (err, rows) => {
-                if (err) reject(err);
-                else {
-                    // Convert to object for easier access
-                    const breakdown = {};
-                    rows.forEach(row => {
-                        breakdown[row.platform] = {
-                            views: row.total_views,
-                            clicks: row.total_clicks,
-                            shares: row.total_shares,
-                            conversions: row.total_conversions,
-                            contentCount: row.content_count
-                        };
-                    });
-                    resolve(breakdown);
-                }
+            );
+
+            // Convert to object for easier access
+            const breakdown = {};
+            rows.forEach(row => {
+                breakdown[row.platform] = {
+                    views: row.total_views,
+                    clicks: row.total_clicks,
+                    shares: row.total_shares,
+                    conversions: row.total_conversions,
+                    contentCount: row.content_count
+                };
             });
-        });
+            
+            return breakdown;
+        } catch (error) {
+            console.error('Error getting platform breakdown:', error);
+            throw error;
+        }
     }
 
     /**
@@ -321,8 +329,9 @@ class GrowthAnalyticsService {
             metric = 'total_views';
         }
 
-        return new Promise((resolve, reject) => {
-            const query = `
+        try {
+            const db = getDatabase();
+            const stmt = db.prepare(`
                 SELECT 
                     m.*,
                     c.title,
@@ -332,25 +341,26 @@ class GrowthAnalyticsService {
                 JOIN content_generated c ON m.content_id = c.id
                 ORDER BY m.${metric} DESC
                 LIMIT ?
-            `;
+            `);
 
-            db.all(query, [limit], (err, rows) => {
-                if (err) reject(err);
-                else {
-                    // Parse JSON fields
-                    rows.forEach(row => {
-                        if (row.platform_breakdown) {
-                            try {
-                                row.platform_breakdown = JSON.parse(row.platform_breakdown);
-                            } catch (e) {
-                                row.platform_breakdown = {};
-                            }
-                        }
-                    });
-                    resolve(rows);
+            const rows = stmt.all(limit);
+            
+            // Parse JSON fields
+            rows.forEach(row => {
+                if (row.platform_breakdown) {
+                    try {
+                        row.platform_breakdown = JSON.parse(row.platform_breakdown);
+                    } catch (e) {
+                        row.platform_breakdown = {};
+                    }
                 }
             });
-        });
+            
+            return rows;
+        } catch (error) {
+            console.error('Error getting top content:', error);
+            throw error;
+        }
     }
 }
 

@@ -836,6 +836,10 @@ app.use('/api/growth', (req, res, next) => {
   }
 });
 
+// Growth analytics routes
+const growthAnalyticsRoutes = require('./routes/growthAnalytics');
+app.use('/api/growth/analytics', growthAnalyticsRoutes);
+
 // Error handling middleware from v2.0 - ENHANCED
 app.use((error, req, res, next) => {
   console.error('\n=== EXPRESS ERROR HANDLER ===');
