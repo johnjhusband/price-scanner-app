@@ -5,6 +5,29 @@
 Valuation tables created successfully
 Google OAuth credentials not configured. OAuth will not work.
 [Reddit Monitor] Database initialized
-[Migration] Starting automation tables creation...
-Automation tracking tables created successfully
-[Migration] Automation tables created: [ 'automation_runs', 'automation_errors' ]
+Error getting content metrics: SqliteError: no such table: growth_content_metrics
+    at Database.prepare (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at GrowthAnalyticsService.getContentMetrics (/Users/flippi/Documents/FlippiGitHub/backend/services/growthAnalytics.js:168:29)
+    at /Users/flippi/Documents/FlippiGitHub/backend/routes/growthAnalytics.js:151:54
+    at Layer.handle [as handle_request] (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/index.js:284:15
+    at param (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/index.js:365:14)
+    at param (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/index.js:376:14) {
+  code: 'SQLITE_ERROR'
+}
+Metrics retrieval error: SqliteError: no such table: growth_content_metrics
+    at Database.prepare (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/better-sqlite3/lib/methods/wrappers.js:5:21)
+    at GrowthAnalyticsService.getContentMetrics (/Users/flippi/Documents/FlippiGitHub/backend/services/growthAnalytics.js:168:29)
+    at /Users/flippi/Documents/FlippiGitHub/backend/routes/growthAnalytics.js:151:54
+    at Layer.handle [as handle_request] (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/layer.js:95:5)
+    at next (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/route.js:149:13)
+    at Route.dispatch (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/route.js:119:3)
+    at Layer.handle [as handle_request] (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/layer.js:95:5)
+    at /Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/index.js:284:15
+    at param (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/index.js:365:14)
+    at param (/Users/flippi/Documents/FlippiGitHub/backend/node_modules/express/lib/router/index.js:376:14) {
+  code: 'SQLITE_ERROR'
+}

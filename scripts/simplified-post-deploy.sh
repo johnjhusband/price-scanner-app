@@ -25,12 +25,19 @@ if [ -f scripts/fix-nginx-ssl-comprehensive.sh ]; then
     bash scripts/fix-nginx-ssl-comprehensive.sh || true
 fi
 
-# Step 3: Reload nginx
+# Step 3: Run database migrations
+if [ -f scripts/post-deploy-migrations.sh ]; then
+    echo ""
+    echo "Running database migrations..."
+    bash scripts/post-deploy-migrations.sh || echo "Migration script completed"
+fi
+
+# Step 4: Reload nginx
 echo ""
 echo "Reloading nginx..."
 nginx -s reload || systemctl reload nginx || echo "Nginx reload attempted"
 
-# Step 4: Verify the fix worked
+# Step 5: Verify the fix worked
 echo ""
 echo "Verifying routes..."
 sleep 2
