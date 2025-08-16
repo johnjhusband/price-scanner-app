@@ -32,12 +32,19 @@ if [ -f scripts/post-deploy-migrations.sh ]; then
     bash scripts/post-deploy-migrations.sh || echo "Migration script completed"
 fi
 
-# Step 4: Reload nginx
+# Step 4: Fix nginx static file serving
+if [ -f scripts/post-deploy-nginx-static.sh ]; then
+    echo ""
+    echo "Fixing nginx static file serving..."
+    bash scripts/post-deploy-nginx-static.sh $DOMAIN $PORT || echo "Nginx static fix attempted"
+fi
+
+# Step 5: Reload nginx
 echo ""
 echo "Reloading nginx..."
 nginx -s reload || systemctl reload nginx || echo "Nginx reload attempted"
 
-# Step 5: Verify the fix worked
+# Step 6: Verify the fix worked
 echo ""
 echo "Verifying routes..."
 sleep 2
