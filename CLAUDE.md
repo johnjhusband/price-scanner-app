@@ -116,6 +116,46 @@ When making changes, test:
 - [ ] "Scan Another Item" flow
 - [ ] All three environments
 
+### 5. Small-Chunk & Checkpoint QA Process
+
+To reduce interruptions and maintain progress during development:
+
+#### Workflow Requirements
+1. **Break tasks into small deliverables**
+   - Each chunk should be completable in 10-15 minutes
+   - Example: "Create DB schema" → "Add API endpoint" → "Integrate UI"
+   
+2. **Avoid long-running operations**
+   - Limit code outputs to essential sections
+   - Avoid multiple simultaneous tool calls
+   - Split complex operations into steps
+
+3. **Frequent save state**
+   - Commit and push after each functional milestone
+   - Use descriptive commit messages for each checkpoint
+   - Format: `git tag qa-checkpoint-{feature}-{step}`
+
+4. **Checkpoint before proceeding**
+   - After each step, provide brief summary of work done
+   - Wait for user confirmation before next step
+   - Use TodoWrite to track checkpoint progress
+
+5. **One file/feature at a time**
+   - Make atomic commits for each change
+   - Avoid bundling unrelated changes
+
+#### QA Checkpoint Template
+```
+### Checkpoint: [Feature/Step Name]
+**Status**: ✅ Complete / 🔄 In Progress / ❌ Blocked
+**Changes Made**:
+- [List specific changes]
+**Testing Done**:
+- [List tests performed]
+**Next Step**: [What comes next]
+**Commit**: [Commit hash if applicable]
+```
+
 ### 5. Deployment Debugging Protocol
 
 When code changes are not reflected after deployment:
