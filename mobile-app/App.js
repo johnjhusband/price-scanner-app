@@ -920,12 +920,12 @@ export default function App() {
     let tweetText = `Just used @flippiAI to check ${brand} ${itemType}! `;
     
     if (resaleEstimate > 0) {
-      tweetText += `Worth ~$${resaleEstimate} 👀 `;
+      tweetText += `Worth ~$${resaleEstimate} `;
       
       if (pricePaid) {
         const profit = resaleEstimate - pricePaid;
         if (profit > 0) {
-          tweetText += `Paid $${pricePaid} = $${profit} flip 💸 `;
+          tweetText += `Paid $${pricePaid} = $${profit} flip `;
         }
       }
     }
@@ -1476,11 +1476,11 @@ export default function App() {
       
       // Sellability with icon
       ctx.fillStyle = '#333333';
-      const sellabilityText = `🔥 Sellability: ${result.trending_score || 0}/100`;
+      const sellabilityText = `Sellability: ${result.trending_score || 0}/100`;
       ctx.fillText(sellabilityText, canvas.width / 2 - 200, yPosition);
       
       // Authenticity with icon  
-      const realScoreText = `✓ Authenticity: ${result.real_score || 'Unknown'}`;
+      const realScoreText = `Authenticity: ${result.real_score || 'Unknown'}`;
       ctx.fillText(realScoreText, canvas.width / 2 + 200, yPosition);
       
       // Market Info (condensed)
