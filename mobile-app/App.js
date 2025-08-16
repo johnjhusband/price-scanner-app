@@ -1,2968 +1,1289 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Linking, Dimensions } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
+// EMERGENCY SIMPLIFIED APP.JS - REMOVING ALL POTENTIAL ISSUES
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  StyleSheet,
+  Text,
+  View,
+  TextInput,
+  TouchableOpacity,
+  Image,
+  ScrollView,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+  Alert,
+  SafeAreaView,
+  StatusBar,
+  Animated,
+  Dimensions,
+  Modal,
+  Linking,
+  Share,
+  Clipboard
+} from 'react-native';
 import { Camera } from 'expo-camera';
-
-// Import Feather icons per brand guide
+import * as ImagePicker from 'expo-image-picker';
 import { Feather } from '@expo/vector-icons';
-
-// Import brand components and theme
-import FlippiLogo from './components/FlippiLogo';
-import BrandButton from './components/BrandButton';
-import FeedbackSystem from './components/FeedbackSystem';
-import EnterScreen from './components/EnterScreen';
-import MissionModal from './components/MissionModal';
-import PageContainer from './components/PageContainer';
-import AdminDashboard from './screens/AdminDashboard';
-import GrowthDashboard from './screens/GrowthDashboard';
-import PricingModal from './components/PricingModal';
-import UpgradeModal from './components/UpgradeModal';
-import AuthService from './services/authService';
-import { brandColors, typography, componentColors } from './theme/brandColors';
-import { getDeviceFingerprint } from './utils/deviceFingerprint';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import FlippiBot from './components/FlippiBot';
+import ShareModal from './components/ShareModal';
+import { brandColors } from './theme/brandColors';
 import { appleStyles } from './theme/appleStyles';
-
-// QRCode will be imported dynamically when needed
 
 // Import web styles for web platform
 if (Platform.OS === 'web') {
-  try {
-    require('./web-styles.css');
-  } catch (e) {
-    console.warn('Failed to load web styles:', e);
-  }
+  require('./web-styles.css');
 }
 
-// Responsive design breakpoints
-const { width: windowWidth } = Dimensions.get('window');
-const isMobile = windowWidth < 768;
-const isTablet = windowWidth >= 768 && windowWidth < 1024;
-const isDesktop = windowWidth >= 1024;
-
-/* BUTTON HIERARCHY GUIDE
- * =====================
- * 1. PRIMARY CTAs (accent/bright blue) - One per screen max
- *    - "Go" (analyze image)
- *    - "Capture Photo" (in camera view)
- * 
- * 2. BRAND ACTIONS (primary/navy) - Core functionality
- *    - "Take Photo" (main action)
- * 
- * 3. SECONDARY ACTIONS (secondary/light gray) - Supporting
- *    - "Upload Photo"
- *    - "Scan Another Item"
- * 
- * 4. TERTIARY ACTIONS (ghost/transparent) - De-emphasized
- *    - "Paste Image"
- *    - "Cancel"
- *    - "Exit" (custom styled)
- * 
- * 5. SYSTEM ACTIONS (text links or custom) - Minimal
- *    - Legal links
- *    - "View More/Less Details"
- */
-
-const API_URL = Platform.OS === 'web' 
-  ? '' // Same domain - nginx routes /api to backend
-  : Platform.OS === 'ios'
-    ? 'http://localhost:3000' // iOS simulator
-    : 'http://10.0.2.2:3000'; // Android emulator
-
-// Web Camera Component for mobile browsers
-const WebCameraView = ({ onCapture, onCancel }) => {
-  const [hasPermission, setHasPermission] = useState(null);
-  const [isReady, setIsReady] = useState(false);
-  const [stream, setStream] = useState(null);
-  const videoRef = useRef(null);
-  const canvasRef = useRef(null);
-  const streamRef = useRef(null);
-
-  // First effect: Get camera permissions
-  useEffect(() => {
-    if (hasPermission === null) {
-      requestCameraPermission();
-    }
-  }, [hasPermission]);
-
-  // Second effect: Attach stream to video element when both are ready
-  useEffect(() => {
-    if (hasPermission === true && stream && videoRef.current) {
-      attachStreamToVideo();
-    }
-  }, [hasPermission, stream]);
-  
-  // Cleanup effect
-  useEffect(() => {
-    return () => {
-      if (streamRef.current) {
-        streamRef.current.getTracks().forEach(track => track.stop());
-      }
-    };
-  }, []);
-
-  const requestCameraPermission = async () => {
-    try {
-      // Check if getUserMedia is supported
-      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-        setHasPermission(false);
-        Alert.alert('Camera Error', 'Camera access is not supported in this browser.');
-        return;
-      }
-
-      // Check if we're on HTTPS (required for camera access)
-      if (window.location.protocol !== 'https:' && window.location.hostname !== 'localhost') {
-        setHasPermission(false);
-        Alert.alert('Security Error', 'Camera access requires HTTPS connection.');
-        return;
-      }
-
-      // Request camera permission
-      const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: { 
-          facingMode: { ideal: 'environment' },
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        }
-      });
-      streamRef.current = mediaStream;
-      setStream(mediaStream);
-      setHasPermission(true);
-    } catch (err) {
-      console.error('Camera permission error:', err);
-      setHasPermission(false);
-      
-      // Provide specific error messages
-      let errorMessage = 'Unable to access camera.';
-      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-        errorMessage = 'Camera permission was denied. Please allow camera access and reload the page.';
-      } else if (err.name === 'NotFoundError') {
-        errorMessage = 'No camera found on this device.';
-      } else if (err.name === 'NotReadableError') {
-        errorMessage = 'Camera is already in use by another application.';
-      } else if (err.name === 'OverconstrainedError') {
-        errorMessage = 'Camera does not support the requested settings.';
-      } else if (err.name === 'SecurityError') {
-        errorMessage = 'Camera access is not allowed due to security restrictions. Please use HTTPS.';
-      }
-      
-      Alert.alert('Camera Error', errorMessage);
-    }
-  };
-
-  const attachStreamToVideo = () => {
-    if (!videoRef.current || !stream) {
-      console.error('Missing video ref or stream');
-      return;
-    }
-    videoRef.current.srcObject = stream;
-    
-    // Add multiple event listeners for better compatibility
-    videoRef.current.onloadedmetadata = () => {
-      videoRef.current.play().then(() => {
-        setIsReady(true);
-      }).catch(err => {
-        console.error('Error playing video:', err);
-        // Try to set ready anyway
-        setIsReady(true);
-      });
-    };
-    
-    // Fallback for some browsers
-    videoRef.current.oncanplay = () => {
-      if (!isReady) {
-        setIsReady(true);
-      }
-    };
-    
-    // Force a play attempt after a short delay
-    setTimeout(() => {
-      if (videoRef.current && !isReady) {
-        videoRef.current.play().catch(() => {});
-        setIsReady(true);
-      }
-    }, 1000);
-  };
-
-  const capturePhoto = () => {
-    if (!videoRef.current || !canvasRef.current) return;
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0);
-    
-    const imageData = canvas.toDataURL('image/jpeg', 0.7);
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-    }
-    onCapture(imageData);
-  };
-
-  const handleCloseCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-    }
-    onCancel();
-  };
-
-  if (hasPermission === null) {
-    return (
-      <View style={[styles.cameraContainer, { backgroundColor: brandColors.background }]}>
-        <ActivityIndicator size="large" color={brandColors.charcoalGray} />
-        <Text style={[styles.cameraText, { color: brandColors.text }]}>Initializing camera</Text>
-      </View>
-    );
-  }
-
-  if (hasPermission === false) {
-    return (
-      <View style={[styles.cameraContainer, { backgroundColor: brandColors.background }]}>
-        <Text style={[styles.cameraText, { color: brandColors.error }]}>Camera permission not granted</Text>
-        <BrandButton title="Close" onPress={handleCloseCamera} />
-      </View>
-    );
-  }
-
-  return (
-    <View style={[styles.cameraContainer, { backgroundColor: brandColors.background }]}>
-      <View style={{ width: '100%', maxWidth: 600, height: 400, position: 'relative' }}>
-        <video
-          ref={videoRef}
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: '#18181b',
-            objectFit: 'cover'
-          }}
-          autoPlay={true}
-          playsInline={true}
-          muted={true}
-        />
-      </View>
-      <canvas ref={canvasRef} style={{ display: 'none' }} />
-      <View style={styles.cameraButtonContainer}>
-        <BrandButton 
-          title="Cancel" 
-          onPress={handleCloseCamera} 
-          variant="ghost"
-        />
-        <BrandButton 
-          title="Capture Photo" 
-          onPress={capturePhoto} 
-          disabled={!isReady}
-          variant="accent"
-        />
-      </View>
-    </View>
-  );
-};
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
 export default function App() {
-  // Build version for cache busting
-  const [image, setImage] = useState(null);
+  const [imageUri, setImageUri] = useState(null);
+  const [description, setDescription] = useState('');
   const [analysisResult, setAnalysisResult] = useState(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [hasPermission, setHasPermission] = useState(null);
+  const [cameraType, setCameraType] = useState(Camera.Constants.Type.back);
   const [showCamera, setShowCamera] = useState(false);
-  const [hasCamera, setHasCamera] = useState(true);
-  const [isDragOver, setIsDragOver] = useState(false);
-  const [productDescription, setProductDescription] = useState('');
-  const [imageBase64, setImageBase64] = useState(null);
-  const [showFeedback, setShowFeedback] = useState(false);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [showMoreDetails, setShowMoreDetails] = useState(false);
-  const [showMissionModal, setShowMissionModal] = useState(false);
-  const [flipCount, setFlipCount] = useState(0);
-  const [showAdminDashboard, setShowAdminDashboard] = useState(false);
+  const [analysisHistory, setAnalysisHistory] = useState([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [selectedHistoryItem, setSelectedHistoryItem] = useState(null);
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [feedbackDecision, setFeedbackDecision] = useState(null);
+  const [currentAnalysisId, setCurrentAnalysisId] = useState(null);
+  const [scansRemaining, setScansRemaining] = useState(null);
+  const [scanCount, setScanCount] = useState(0);
+  const [isPremiumUser, setIsPremiumUser] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
+  const [generatedShareImage, setGeneratedShareImage] = useState(null);
+  const [pricePaid, setPricePaid] = useState('');
   const [showGrowthDashboard, setShowGrowthDashboard] = useState(false);
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [showPricingPage, setShowPricingPage] = useState(false);
-  const [flipStatus, setFlipStatus] = useState(null);
-  const [deviceFingerprint, setDeviceFingerprint] = useState(null);
   
-  const scrollViewRef = useRef(null);
-  const resultsRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const canvasRef = useRef(null);
+  const dragCounter = useRef(0);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(screenHeight)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
-  // Check if camera is available (v2.0 feature)
-  const checkCameraAvailability = async () => {
-    if (Platform.OS === 'web') {
-      // Check if browser supports camera and we're on HTTPS
-      const isSecure = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
-      const hasMediaDevices = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-      setHasCamera(isSecure && hasMediaDevices);
-    } else {
-      // Mobile platforms - check camera permissions
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      setHasCamera(status === 'granted');
-    }
-  };
-
-  // Helper function to check if a file is an image
-  const isImageFile = (file) => {
-    const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
-    
-    // Check MIME type
-    if (file.type && imageTypes.includes(file.type.toLowerCase())) {
-      return true;
-    }
-    
-    // Check file extension as fallback
-    const validExtensions = ['.jpg', '.jpeg', '.png', '.gif', '.webp', '.heic', '.heif'];
-    const fileName = file.name.toLowerCase();
-    return validExtensions.some(ext => fileName.endsWith(ext));
-  };
-
-  // Enhanced error handling
-  const showError = (message) => {
-    if (Platform.OS === 'web') {
-      // Web-specific error display
-      Alert.alert('Error', message);
-    } else {
-      Alert.alert('Error', message);
-    }
-  };
-
-  // Check camera availability on web
-  const checkWebCameraSupport = () => {
-    if (Platform.OS === 'web') {
-      const isHttps = window.location.protocol === 'https:' || window.location.hostname === 'localhost';
-      const hasGetUserMedia = !!(navigator.mediaDevices && navigator.mediaDevices.getUserMedia);
-      
-      if (!isHttps) {
-        return { supported: false, reason: 'Camera requires HTTPS connection' };
-      }
-      if (!hasGetUserMedia) {
-        return { supported: false, reason: 'Camera not supported in this browser' };
-      }
-      return { supported: true };
-    }
-    return { supported: true };
-  };
-
-  // Enhanced mobile camera check
-  const requestCameraPermission = async () => {
-    try {
-      const { status } = await Camera.requestCameraPermissionsAsync();
-      return status === 'granted';
-    } catch (error) {
-      console.error('Camera permission error:', error);
-      setHasCamera(false);
-    }
-  };
-
-  // Enhanced paste handler for Mac compatibility
-  const handlePaste = (event) => {
-    event.preventDefault(); // Important for Mac
-    
-    // Try multiple ways to access clipboard data for better compatibility
-    const clipboardData = event.clipboardData || window.clipboardData;
-    if (!clipboardData) {
-      return;
-    }
-
-    // Check items first (modern browsers)
-    if (clipboardData.items) {
-      const items = Array.from(clipboardData.items);
-      for (let item of items) {
-        if (item.type.indexOf('image') !== -1 || item.kind === 'file') {
-          const file = item.getAsFile();
-          if (file) {
-            processImageFile(file);
-            return;
-          }
-        }
-      }
-    }
-
-    // Fallback to files (older browsers)
-    if (clipboardData.files && clipboardData.files.length > 0) {
-      const file = clipboardData.files[0];
-      if (isImageFile(file)) {
-        processImageFile(file);
-      }
-    }
-  };
-
-  // Setup paste listener with Mac-specific options
-  const setupPasteListener = () => {
-    if (Platform.OS === 'web') {
-      // Use capture phase and non-passive for better Mac compatibility
-      document.addEventListener('paste', handlePaste, { capture: true, passive: false });
-    }
-  };
-
-  const removePasteListener = () => {
-    if (Platform.OS === 'web') {
-      document.removeEventListener('paste', handlePaste, { capture: true });
-    }
-  };
-
-  // Process image file from drag/drop or paste (v2.0 feature)
-  const processImageFile = (file) => {
-    if (!isImageFile(file)) {
-      Alert.alert('Error', 'Please select an image file (JPEG, PNG, GIF, WEBP, HEIC, or HEIF)');
-      return;
-    }
-
-    // Check file size
-    if (file.size > 10 * 1024 * 1024) {
-      Alert.alert('Error', 'Image file is too large. Please select an image under 10MB.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      console.log('[DEBUG] Setting image from file upload:', event.target.result ? 'Data URL created' : 'No data');
-      setImage(event.target.result);
-      // Don't auto-analyze, wait for Go button
-    };
-    reader.onerror = (error) => {
-      console.error('FileReader error:', error);
-      Alert.alert('Error', 'Failed to read file');
-    };
-    reader.readAsDataURL(file);
-  };
-
-  // Enhanced drag and drop handlers for Mac
-  const handleDragOver = (e) => {
-    if (Platform.OS === 'web') {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // Set the drop effect for better visual feedback on Mac
-      if (e.dataTransfer) {
-        e.dataTransfer.dropEffect = 'copy';
-      }
-      
-      setIsDragOver(true);
-    }
-  };
-
-  const handleDragLeave = (e) => {
-    if (Platform.OS === 'web') {
-      e.preventDefault();
-      e.stopPropagation();
-      
-      // Check if we're actually leaving the drop zone
-      const rect = e.currentTarget.getBoundingClientRect();
-      const x = e.clientX;
-      const y = e.clientY;
-      
-      if (x <= rect.left || x >= rect.right || y <= rect.top || y >= rect.bottom) {
-        setIsDragOver(false);
-      }
-    }
-  };
-
-  const handleDrop = (e) => {
-    if (Platform.OS === 'web') {
-      e.preventDefault();
-      e.stopPropagation();
-      setIsDragOver(false);
-      const dataTransfer = e.dataTransfer;
-      if (!dataTransfer) return;
-
-      // Try items first (modern approach, better for Mac)
-      if (dataTransfer.items && dataTransfer.items.length > 0) {
-        const items = Array.from(dataTransfer.items);
-        for (let item of items) {
-          if (item.kind === 'file') {
-            const file = item.getAsFile();
-            if (file && isImageFile(file)) {
-              processImageFile(file);
-              return;
-            }
-          }
-        }
-      }
-
-      // Fallback to files
-      if (dataTransfer.files && dataTransfer.files.length > 0) {
-        const file = dataTransfer.files[0];
-        if (isImageFile(file)) {
-          processImageFile(file);
-        }
-      }
-    }
-  };
-
-  // Prevent default drag behavior on the entire document for Mac
+  // Load history and user status on mount
   useEffect(() => {
-    if (Platform.OS === 'web') {
-      const preventDragDefault = (e) => {
-        if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
-          e.preventDefault();
-        }
-      };
-
-      document.addEventListener('dragover', preventDragDefault);
-      document.addEventListener('drop', preventDragDefault);
-
-      return () => {
-        document.removeEventListener('dragover', preventDragDefault);
-        document.removeEventListener('drop', preventDragDefault);
-      };
-    }
+    loadHistory();
+    checkUserStatus();
+    checkPremiumStatus();
   }, []);
 
-  // Initialize v2.0 features
+  // Animation for results
   useEffect(() => {
-    checkCameraAvailability();
-    setupPasteListener();
-    
-    // Set document title on web
-    if (Platform.OS === 'web') {
-      document.title = 'Flippi.ai™ - Never Over Pay';
-    }
-    
-    // Check authentication on web
-    if (Platform.OS === 'web') {
-      console.log('[Auth] Starting authentication check...');
-      
-      // Set a timeout for auth check to prevent infinite loading
-      const authTimeout = setTimeout(() => {
-        console.error('[Auth] Authentication check timed out after 5 seconds');
-        setAuthLoading(false);
-        setIsAuthenticated(false);
-      }, 5000); // 5 second timeout
-      
-      // Check if token in URL (OAuth callback)
-      console.log('[Auth] Checking for token in URL...');
-      AuthService.parseTokenFromUrl().then(hasToken => {
-        console.log('[Auth] Token in URL:', hasToken);
-        
-        if (hasToken) {
-          setIsAuthenticated(true);
-          // Get user asynchronously
-          AuthService.getUser().then(userData => {
-            console.log('[Auth] User data loaded:', userData?.email);
-            setUser(userData);
-            clearTimeout(authTimeout);
-            setAuthLoading(false);
-          }).catch(error => {
-            console.error('Error getting user data:', error);
-            clearTimeout(authTimeout);
-            setAuthLoading(false);
-          });
-        } else {
-          // No token in URL, check existing session
-          console.log('[Auth] No token in URL, checking existing session...');
-          AuthService.isAuthenticated().then(isAuth => {
-            console.log('[Auth] Existing session found:', isAuth);
-            
-            if (isAuth) {
-              setIsAuthenticated(true);
-              AuthService.getUser().then(userData => {
-                console.log('[Auth] User data loaded from session:', userData?.email);
-                setUser(userData);
-                clearTimeout(authTimeout);
-                setAuthLoading(false);
-              }).catch(error => {
-                console.error('Error getting user from session:', error);
-                clearTimeout(authTimeout);
-                setAuthLoading(false);
-              });
-            } else {
-              console.log('[Auth] No authentication found');
-              clearTimeout(authTimeout);
-              setAuthLoading(false);
-            }
-          }).catch(error => {
-            console.error('Error checking auth status:', error);
-            clearTimeout(authTimeout);
-            setAuthLoading(false);
-          });
-        }
-      }).catch(error => {
-        console.error('Error during authentication:', error);
-        clearTimeout(authTimeout);
-        setAuthLoading(false);
-      });
+    if (analysisResult) {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          friction: 8,
+          tension: 40,
+          useNativeDriver: true,
+        }),
+      ]).start();
     } else {
-      // Mobile platforms - for now, no auth required
-      setAuthLoading(false);
+      fadeAnim.setValue(0);
+      scaleAnim.setValue(0.8);
     }
-    
-    return () => removePasteListener();
-  }, []);
-  
-  // Initialize device fingerprint and check flip status
-  useEffect(() => {
-    const initializeFlipTracking = async () => {
-      try {
-        // Get or create device fingerprint
-        const fingerprint = await getDeviceFingerprint();
-        setDeviceFingerprint(fingerprint);
-        
-        // Check current flip status
-        const response = await fetch(`${API_URL}/api/payment/flip-status`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            'x-device-fingerprint': fingerprint
-          },
-          credentials: 'include'
-        });
-        
-        if (response.ok) {
-          const data = await response.json();
-          setFlipStatus(data.data);
-          console.log('Flip status:', data.data);
-        }
-      } catch (error) {
-        console.error('Error initializing flip tracking:', error);
-      }
-    };
-    
-    initializeFlipTracking();
-  }, [user]); // Re-check when user changes
-
-  // Debug analysisResult changes
-  useEffect(() => {
   }, [analysisResult]);
 
-  const pickImage = async () => {
-    if (Platform.OS === 'web') {
-      // Web file picker - no camera capture attribute (fixed from blue)
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      // Don't set capture attribute - let user choose between camera and gallery
+  const loadHistory = async () => {
+    try {
+      const stored = await AsyncStorage.getItem('analysisHistory');
+      if (stored) {
+        setAnalysisHistory(JSON.parse(stored));
+      }
+    } catch (error) {
+      console.error('Error loading history:', error);
+    }
+  };
+
+  const checkUserStatus = async () => {
+    try {
+      const response = await fetch(`${getApiUrl()}/api/user/status`, {
+        credentials: 'include'
+      });
+      const data = await response.json();
       
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          processImageFile(file);
-        }
+      if (data.scansRemaining !== undefined) {
+        setScansRemaining(data.scansRemaining);
+        setScanCount(data.scanCount || 0);
+      }
+    } catch (error) {
+      console.error('Error checking user status:', error);
+    }
+  };
+
+  const checkPremiumStatus = async () => {
+    try {
+      const response = await fetch(`${getApiUrl()}/api/user/premium-status`, {
+        credentials: 'include'
+      });
+      const data = await response.json();
+      setIsPremiumUser(data.isPremium || false);
+    } catch (error) {
+      console.error('Error checking premium status:', error);
+    }
+  };
+
+  const saveToHistory = async (result, imageUri, description) => {
+    try {
+      const newItem = {
+        id: Date.now().toString(),
+        result,
+        imageUri,
+        description,
+        timestamp: new Date().toISOString(),
       };
       
-      // Trigger file picker
-      input.click();
-    } else {
-      // Mobile file picker
-      let result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: false,
-        aspect: [4, 3],
-        quality: 0.7,
-        base64: true,
-      });
+      const updatedHistory = [newItem, ...analysisHistory].slice(0, 50);
+      setAnalysisHistory(updatedHistory);
+      await AsyncStorage.setItem('analysisHistory', JSON.stringify(updatedHistory));
+    } catch (error) {
+      console.error('Error saving to history:', error);
+    }
+  };
 
-      if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
-        // Check file size for mobile
-        if (asset.fileSize && asset.fileSize > 10 * 1024 * 1024) {
-          Alert.alert('Error', 'Image file is too large. Please select an image under 10MB.');
-          return;
-        }
-        setImage(asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri);
-        // Don't auto-analyze, wait for Go button
+  const clearHistory = async () => {
+    try {
+      await AsyncStorage.removeItem('analysisHistory');
+      setAnalysisHistory([]);
+      Alert.alert('Success', 'History cleared');
+    } catch (error) {
+      console.error('Error clearing history:', error);
+    }
+  };
+
+  const getApiUrl = () => {
+    if (Platform.OS === 'web') {
+      return '';
+    }
+    return 'http://localhost:3000';
+  };
+
+  const pickImage = async () => {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      quality: 0.8,
+      base64: true,
+    });
+
+    if (!result.canceled && result.assets[0]) {
+      setImageUri(result.assets[0].uri);
+      if (result.assets[0].base64) {
+        setImageUri(`data:image/jpeg;base64,${result.assets[0].base64}`);
       }
     }
   };
 
-  const takePhoto = async () => {
+  const openCamera = async () => {
     if (Platform.OS === 'web') {
       setShowCamera(true);
+      return;
+    }
+
+    const { status } = await Camera.requestCameraPermissionsAsync();
+    setHasPermission(status === 'granted');
+    
+    if (status === 'granted') {
+      setShowCamera(true);
     } else {
-      // Mobile camera
-      const hasPermission = await requestCameraPermission();
-      if (!hasPermission) {
-        Alert.alert('Permission Denied', 'Camera permission is required to take photos.');
-        return;
-      }
-
-      let result = await ImagePicker.launchCameraAsync({
-        allowsEditing: false,
-        aspect: [4, 3],
-        quality: 0.7,
-        base64: true,
-      });
-
-      if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
-        setImage(asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri);
-        // Don't auto-analyze, wait for Go button
-      }
+      Alert.alert('Permission Denied', 'Camera permission is required to take photos.');
     }
   };
 
-  const handleWebCameraCapture = (imageData) => {
-    setShowCamera(false);
-    setImage(imageData);
-    // Don't auto-analyze, wait for Go button
+  const takePicture = async () => {
+    if (cameraRef.current) {
+      const photo = await cameraRef.current.takePictureAsync({ base64: true });
+      setImageUri(`data:image/jpeg;base64,${photo.base64}`);
+      setShowCamera(false);
+    }
   };
 
   const analyzeImage = async () => {
-    if (!image) {
+    if (!imageUri) {
       Alert.alert('Error', 'Please select an image first');
       return;
     }
-    
-    // Check flip limit
-    if (flipStatus && !flipStatus.can_flip) {
-      setShowUpgradeModal(true);
+
+    if (scansRemaining !== null && scansRemaining <= 0 && !isPremiumUser) {
+      Alert.alert(
+        'Scan Limit Reached',
+        'You\'ve used all your free scans for today. Upgrade to Premium for unlimited scans!',
+        [
+          { text: 'Maybe Later', style: 'cancel' },
+          { text: 'Upgrade Now', onPress: () => Linking.openURL(`${getApiUrl()}/pricing`) }
+        ]
+      );
       return;
     }
-    
-    setIsLoading(true);
+
+    setLoading(true);
     setAnalysisResult(null);
+
     try {
       const formData = new FormData();
       
-      let base64Data;
-      
       if (Platform.OS === 'web') {
-        // Convert base64 to blob for web
-        const response = await fetch(image);
+        const response = await fetch(imageUri);
         const blob = await response.blob();
         formData.append('image', blob, 'image.jpg');
-        
-        // Also convert to base64 for feedback storage
-        const reader = new FileReader();
-        base64Data = await new Promise((resolve) => {
-          reader.onloadend = () => {
-            const base64 = reader.result.split(',')[1]; // Remove data:image/jpeg;base64, prefix
-            resolve(base64);
-          };
-          reader.readAsDataURL(blob);
-        });
       } else {
-        // Mobile
         formData.append('image', {
-          uri: image,
+          uri: imageUri,
           type: 'image/jpeg',
           name: 'photo.jpg',
         });
-        
-        // Convert to base64 for feedback storage
-        const response = await fetch(image);
-        const blob = await response.blob();
-        const reader = new FileReader();
-        base64Data = await new Promise((resolve) => {
-          reader.onloadend = () => {
-            const base64 = reader.result.split(',')[1];
-            resolve(base64);
-          };
-          reader.readAsDataURL(blob);
-        });
       }
       
-      // Store base64 for feedback with full data URL prefix
-      setImageBase64(`data:image/jpeg;base64,${base64Data}`);
-      
-      // Add description if provided
-      if (productDescription.trim()) {
-        formData.append('description', productDescription.trim());
-      }
-      
-      // Add device fingerprint for tracking
-      if (deviceFingerprint) {
-        formData.append('device_fingerprint', deviceFingerprint);
-      }
+      formData.append('description', description);
 
-      const apiResponse = await fetch(`${API_URL}/api/scan`, {
+      const response = await fetch(`${getApiUrl()}/api/analyze`, {
         method: 'POST',
         body: formData,
-        headers: deviceFingerprint ? {
-          'x-device-fingerprint': deviceFingerprint
-        } : {},
         credentials: 'include'
       });
 
-      const responseText = await apiResponse.text();
+      const result = await response.json();
       
-      // Handle payment required response
-      if (apiResponse.status === 402) {
-        try {
-          const data = JSON.parse(responseText);
-          if (data.flip_status) {
-            setFlipStatus(data.flip_status);
-          }
-          setShowUpgradeModal(true);
-          return;
-        } catch (e) {
-          // Fallback if parsing fails
-          setShowUpgradeModal(true);
-          return;
-        }
-      }
-      
-      if (apiResponse.ok) {
-        try {
-          const data = JSON.parse(responseText);
-          if (data.success && data.data) {
-            // Generate unique analysis ID for tracking
-            const analysisId = `analysis_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-            
-            // Create a new object to ensure React detects the change
-            const newResult = { ...data.data, analysis_id: analysisId };
-            setAnalysisResult(newResult);
-            setShowFeedback(true);
-            // Increment flip count
-            setFlipCount(prevCount => prevCount + 1);
-            
-            // Update flip status from response
-            if (data.flip_status) {
-              setFlipStatus(data.flip_status);
-            }
-            // Scroll to results after a brief delay
-            setTimeout(() => {
-              if (resultsRef.current && scrollViewRef.current) {
-                if (Platform.OS === 'web') {
-                  // For web, use scrollIntoView
-                  resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                } else {
-                  // For mobile, use ScrollView's scrollTo
-                  resultsRef.current.measureLayout(
-                    scrollViewRef.current.getInnerViewNode(),
-                    (x, y) => {
-                      scrollViewRef.current.scrollTo({ y: y - 20, animated: true });
-                    }
-                  );
-                }
-              }
-            }, 300);
-          } else {
-            throw new Error(data.error || 'Invalid response format');
-          }
-        } catch (parseError) {
-          console.error('Parse error:', parseError);
-          throw new Error('Failed to parse server response');
-        }
+      if (result.error) {
+        Alert.alert('Error', result.error);
       } else {
-        throw new Error(`Server error: ${apiResponse.status} - ${responseText}`);
-      }
-    } catch (error) {
-      console.error('Analysis error:', error);
-      Alert.alert(
-        'Analysis Failed',
-        error.message || 'Unable to analyze image. Please try again.'
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resetApp = () => {
-    setImage(null);
-    setAnalysisResult(null);
-    setIsLoading(false);
-    setProductDescription('');
-    setImageBase64(null);
-    setShowFeedback(false);
-    setShowMoreDetails(false);
-    // Note: We intentionally do NOT reset flipCount here
-    // so that the encouragement message persists between scans
-  };
-
-  // Render static encouragement message
-  const renderEncouragementMessage = () => {
-    return (
-      <View style={[styles.welcomeContainer, { flexDirection: 'row', alignItems: 'center' }]}>
-        <Feather 
-          name="camera"
-          size={16} 
-          color={brandColors.textSecondary} 
-        />
-        <Text style={[styles.welcomeText, { color: brandColors.textSecondary, marginLeft: 8 }]}>
-          Center your item and snap when ready.
-        </Text>
-      </View>
-    );
-  };
-
-  // Generate tweet text for sharing
-  const generateTweetText = (result) => {
-    if (!result) return '';
-    
-    // Extract price from price_range (e.g., "$50-$100" -> get average)
-    const getPriceEstimate = (priceRange) => {
-      if (!priceRange) return 0;
-      const match = priceRange.match(/\$(\d+)-\$(\d+)/);
-      if (match) {
-        const low = parseInt(match[1]);
-        const high = parseInt(match[2]);
-        return Math.round((low + high) / 2);
-      }
-      // Try single price format
-      const singleMatch = priceRange.match(/\$(\d+)/);
-      if (singleMatch) {
-        return parseInt(singleMatch[1]);
-      }
-      return 0;
-    };
-
-    // Extract purchase price from description or use a placeholder
-    const getPurchasePrice = () => {
-      if (productDescription) {
-        const priceMatch = productDescription.match(/\$(\d+(?:\.\d{2})?)/);
-        if (priceMatch) {
-          return parseFloat(priceMatch[1]);
+        setAnalysisResult(result);
+        setCurrentAnalysisId(result.analysisId);
+        await saveToHistory(result, imageUri, description);
+        
+        if (result.scansRemaining !== undefined) {
+          setScansRemaining(result.scansRemaining);
         }
-      }
-      return null;
-    };
 
-    const brand = result.item_name?.split(' ')[0] || 'this';
-    const itemType = result.item_name?.split(' ').slice(1).join(' ') || 'item';
-    const resaleEstimate = getPriceEstimate(result.price_range);
-    const pricePaid = getPurchasePrice();
-    const refCode = user?.referralCode || ''; // TODO: Add referral code to user object
-    
-    let tweetText = `Just used @flippiAI to check ${brand} ${itemType}! `;
-    
-    if (resaleEstimate > 0) {
-      tweetText += `Worth ~$${resaleEstimate} `;
-      
-      if (pricePaid) {
-        const profit = resaleEstimate - pricePaid;
-        if (profit > 0) {
-          tweetText += `Paid $${pricePaid} = $${profit} flip `;
-        }
-      }
-    }
-    
-    tweetText += `\n\nTry it: https://flippi.ai${refCode ? `?ref=${refCode}` : ''}`;
-    
-    return tweetText;
-  };
-
-  // Handle payment selection from upgrade modal
-  const handlePaymentSelect = async (paymentType) => {
-    try {
-      const response = await fetch(`${API_URL}/api/payment/checkout`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-device-fingerprint': deviceFingerprint
-        },
-        body: JSON.stringify({ payment_type: paymentType }),
-        credentials: 'include'
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        if (data.checkout_url) {
-          // For now, just show the mock URL
-          Alert.alert(
-            'Payment System',
-            `Stripe integration pending. Would redirect to: ${data.checkout_url}`,
-            [{ text: 'OK' }]
-          );
-        }
-      }
-    } catch (error) {
-      console.error('Payment error:', error);
-      Alert.alert('Error', 'Failed to start payment process');
-    }
-  };
-
-  // Handle share on X
-  const handleShareOnX = () => {
-    const tweetText = generateTweetText(analysisResult);
-    const tweetUrl = `https://x.com/intent/tweet?text=${encodeURIComponent(tweetText)}`;
-    
-    if (Platform.OS === 'web') {
-      window.open(tweetUrl, '_blank', 'noopener,noreferrer');
-    } else {
-      Linking.openURL(tweetUrl);
-    }
-  };
-
-  // Generate Instagram Story receipt image
-  const generateInstagramStoryImage = async (result) => {
-    if (!result) {
-      console.log('[Instagram Story] No analysis result available');
-      Alert.alert(
-        'No Results Yet',
-        'Please analyze an item first before sharing to Instagram Story.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-    
-    // Mobile implementation would go here
-    if (Platform.OS !== 'web') {
-      // For now, just generate and download the image
-      // In the future, could use react-native-share to open Instagram directly
-      Alert.alert(
-        'Story Image Ready',
-        'Image will be downloaded. Open Instagram and upload to your story!',
-        [{ text: 'OK' }]
-      );
-      // Continue with image generation...
-    }
-    
-    // Check if canvas is supported
-    if (!document.createElement('canvas').getContext) {
-      Alert.alert(
-        'Not Supported',
-        'Your browser doesn\'t support image generation. Please try a different browser.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    try {
-      console.log('[Instagram Story] Starting image generation for:', result);
-      
-      // Create canvas for receipt
-      const canvas = document.createElement('canvas');
-      canvas.width = 1080;
-      canvas.height = 1920;
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) {
-        throw new Error('Failed to get canvas context');
-      }
-
-      // White background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Receipt styling
-      ctx.fillStyle = '#000000';
-      ctx.textAlign = 'center';
-      
-      // Header
-      ctx.font = 'bold 72px -apple-system, system-ui, sans-serif';
-      ctx.fillText('flippi.ai', canvas.width / 2, 150);
-      
-      // Date
-      ctx.font = '36px monospace';
-      ctx.fillText(new Date().toLocaleString(), canvas.width / 2, 250);
-      
-      // Divider
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 2;
-      ctx.setLineDash([10, 10]);
-      ctx.beginPath();
-      ctx.moveTo(100, 300);
-      ctx.lineTo(980, 300);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      
-      // Item details
-      ctx.font = '48px monospace';
-      ctx.textAlign = 'left';
-      let yPos = 400;
-      
-      // Item name
-      ctx.fillText('ITEM:', 100, yPos);
-      ctx.font = 'bold 48px monospace';
-      const itemName = (result.item_name || 'Unknown Item').substring(0, 25);
-      ctx.fillText(itemName, 300, yPos);
-      yPos += 80;
-      
-      // Category
-      ctx.font = '48px monospace';
-      ctx.fillText('CATEGORY:', 100, yPos);
-      ctx.fillText(result.category || 'N/A', 400, yPos);
-      yPos += 80;
-      
-      // Condition
-      ctx.fillText('CONDITION:', 100, yPos);
-      ctx.fillText(result.condition || 'N/A', 450, yPos);
-      yPos += 80;
-      
-      // Resale value
-      ctx.fillText('RESALE VALUE:', 100, yPos);
-      ctx.font = 'bold 56px monospace';
-      ctx.fillText(result.price_range || 'N/A', 500, yPos);
-      yPos += 100;
-      
-      // Real Score if available
-      if (result.real_score !== undefined || result.authenticity_score !== undefined) {
-        ctx.font = '48px monospace';
-        ctx.fillText('REAL SCORE:', 100, yPos);
-        ctx.font = 'bold 56px monospace';
-        const score = result.real_score || result.authenticity_score;
-        ctx.fillText(`${score}%`, 450, yPos);
-        yPos += 100;
-      }
-      
-      // Purchase price and profit calculation
-      const purchasePrice = getPurchasePrice();
-      if (purchasePrice) {
-        // Another divider
-        ctx.strokeStyle = '#000000';
-        ctx.lineWidth = 2;
-        ctx.setLineDash([10, 10]);
-        ctx.beginPath();
-        ctx.moveTo(100, yPos + 20);
-        ctx.lineTo(980, yPos + 20);
-        ctx.stroke();
-        ctx.setLineDash([]);
-        yPos += 80;
-        
-        ctx.font = '48px monospace';
-        ctx.fillText('PURCHASE PRICE:', 100, yPos);
-        ctx.fillText(`$${purchasePrice}`, 550, yPos);
-        yPos += 80;
-        
-        // Calculate profit
-        const getPriceEstimate = (priceRange) => {
-          if (!priceRange) return 0;
-          const match = priceRange.match(/\$(\d+)-\$(\d+)/);
-          if (match) {
-            const low = parseInt(match[1]);
-            const high = parseInt(match[2]);
-            return Math.round((low + high) / 2);
-          }
-          return 0;
-        };
-        
-        const resaleEstimate = getPriceEstimate(result.price_range);
-        if (resaleEstimate > 0) {
-          const profit = resaleEstimate - purchasePrice;
-          ctx.fillText('EST. PROFIT:', 100, yPos);
-          ctx.font = 'bold 64px monospace';
-          ctx.fillStyle = profit > 0 ? '#059669' : '#dc2626';
-          ctx.fillText(`$${Math.abs(profit)}`, 450, yPos);
-          ctx.fillStyle = '#000000';
-          yPos += 100;
-        }
-      }
-      
-      // Footer
-      ctx.strokeStyle = '#000000';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(100, 1600);
-      ctx.lineTo(980, 1600);
-      ctx.stroke();
-      
-      ctx.font = '36px -apple-system, system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Powered by flippi.ai', canvas.width / 2, 1700);
-      
-      if (refCode) {
-        ctx.font = '32px monospace';
-        ctx.fillText(`flippi.ai?ref=${refCode}`, canvas.width / 2, 1750);
-      }
-      
-      ctx.font = 'italic 28px -apple-system, system-ui, sans-serif';
-      ctx.fillText('*AI can make mistakes. Check important info.', canvas.width / 2, 1850);
-      
-      // Convert to blob and download
-      canvas.toBlob((blob) => {
-        if (!blob) {
-          throw new Error('Failed to convert canvas to blob');
-        }
-        
-        console.log('[Instagram Story] Blob created, size:', blob.size);
-        
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `flippi-story-${Date.now()}.png`;
-        a.style.display = 'none';
-        document.body.appendChild(a);
-        
-        // Force download
-        a.click();
-        
-        // Cleanup
         setTimeout(() => {
-          document.body.removeChild(a);
-          URL.revokeObjectURL(url);
-        }, 100);
-        
-        Alert.alert(
-          'Story Image Ready!',
-          'Image downloaded! To share:\n\n1. Open Instagram\n2. Create a new Story\n3. Upload the downloaded image\n4. Share with your followers!',
-          [{ text: 'Got it!' }]
-        );
-      }, 'image/png', 0.95);
+          if (result.helped_decision !== undefined) {
+            setFeedbackDecision(result.helped_decision);
+          }
+          setShowFeedbackModal(true);
+        }, 3000);
+      }
     } catch (error) {
-      console.error('Error generating Instagram story:', error);
-      Alert.alert(
-        'Error',
-        'Failed to generate receipt image. Please try again.',
-        [{ text: 'OK' }]
-      );
+      Alert.alert('Error', 'Failed to analyze image. Please try again.');
+      console.error(error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle Instagram Story share
-  const handleInstagramStoryShare = () => {
-    console.log('[IG Story Share] Starting with:');
-    console.log('  - analysisResult:', !!analysisResult);
-    console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
-    console.log('  - image:', !!image, image?.substring(0, 50));
-    
-    // Always prefer imageBase64 as it has the correct format after analysis
-    const imageToUse = imageBase64 || image;
-    
-    setIsLoading(true);
-    generateInstagramStoryImage(analysisResult, imageToUse).finally(() => {
-      setIsLoading(false);
-    });
+  const resetAnalysis = () => {
+    setImageUri(null);
+    setDescription('');
+    setAnalysisResult(null);
+    setPricePaid('');
+    setGeneratedShareImage(null);
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 0.8,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+    ]).start();
   };
 
-  // Helper function to generate valuation slug
-  const generateValuationSlug = (result) => {
-    const brand = (result.brand || '').toLowerCase().replace(/[^a-z0-9]/g, '-');
-    const item = (result.item_name || 'item').toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 30);
-    const timestamp = Date.now().toString(36);
-    return `${brand}-${item}-${timestamp}`.replace(/--+/g, '-').replace(/^-|-$/g, '');
-  };
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current = 0;
 
-  // Helper function to draw QR placeholder
-  const drawQRPlaceholder = (ctx, x, y, size) => {
-    const moduleSize = size / 25;
-    ctx.fillStyle = '#000000';
-    
-    // Draw finder patterns (corner squares)
-    const drawFinderPattern = (px, py) => {
-      // Outer square
-      ctx.fillRect(px, py, 7 * moduleSize, 7 * moduleSize);
-      // Inner white square
-      ctx.fillStyle = '#FFFFFF';
-      ctx.fillRect(px + moduleSize, py + moduleSize, 5 * moduleSize, 5 * moduleSize);
-      // Center black square
-      ctx.fillStyle = '#000000';
-      ctx.fillRect(px + 2 * moduleSize, py + 2 * moduleSize, 3 * moduleSize, 3 * moduleSize);
-    };
-    
-    // Three corner patterns
-    drawFinderPattern(x, y);
-    drawFinderPattern(x + size - 7 * moduleSize, y);
-    drawFinderPattern(x, y + size - 7 * moduleSize);
-    
-    // Timing patterns
-    for (let i = 8; i < 17; i++) {
-      if (i % 2 === 0) {
-        ctx.fillRect(x + i * moduleSize, y + 6 * moduleSize, moduleSize, moduleSize);
-        ctx.fillRect(x + 6 * moduleSize, y + i * moduleSize, moduleSize, moduleSize);
-      }
-    }
-    
-    // Data area (simplified pattern)
-    for (let row = 8; row < 17; row++) {
-      for (let col = 8; col < 17; col++) {
-        if ((row + col) % 3 === 0) {
-          ctx.fillRect(x + col * moduleSize, y + row * moduleSize, moduleSize, moduleSize);
-        }
-      }
-    }
-  };
-
-  // Generate universal share image (square format)
-  const generateShareImage = async (result, imageSource = null) => {
-    if (!result) {
-      console.log('[Share Image] No analysis result available');
-      Alert.alert(
-        'No Results Yet',
-        'Please analyze an item first before downloading.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-    
-    console.log('[generateShareImage] Starting with:', {
-      hasResult: !!result,
-      hasImageSource: !!imageSource,
-      imageSourceType: imageSource ? (imageSource.startsWith('data:') ? 'data URL' : 'other') : 'none',
-      hasImageBase64State: !!imageBase64,
-      hasImageState: !!image
-    });
-    
-    // Only support web for now
-    if (Platform.OS !== 'web') {
-      Alert.alert(
-        'Coming Soon',
-        'Image download is coming soon for mobile. For now, take a screenshot.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-    
-    // Check if canvas is supported
-    if (!document.createElement('canvas').getContext) {
-      Alert.alert(
-        'Not Supported',
-        'Your browser doesn\'t support image generation. Please try a different browser.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-
-    try {
-      console.log('[Share Image] Starting image generation for:', result);
-      console.log('[Share Image] Current image:', image ? 'Available' : 'Not available');
-      
-      // Create canvas for share image (square format)
-      const canvas = document.createElement('canvas');
-      canvas.width = 1080;
-      canvas.height = 1080;
-      const ctx = canvas.getContext('2d');
-      
-      if (!ctx) {
-        throw new Error('Failed to get canvas context');
-      }
-
-      // White background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      // Item image - 75% of height for Whatnot
-      const drawItemImage = async () => {
-        const boxWidth = 1080;
-        const boxHeight = 810; // 75% of 1080
-        const boxX = 0;
-        const boxY = 0;
-        
-        // Draw border around image area
-        ctx.strokeStyle = '#e5e5e5';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(boxX, boxY, boxWidth, boxHeight);
-        
-        // Clear the area first
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-        
-        // Use the provided image source or fall back to state
-        let imageSrc = imageSource || imageBase64 || image;
-        
-        if (!imageSrc) {
-          console.error('[Share Image] No image source available');
-          ctx.fillStyle = '#a0a0a0';
-          ctx.font = '32px -apple-system, system-ui, sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('No image available', canvas.width / 2, boxY + boxHeight/2);
-          return;
-        }
-        
-        // Ensure image has proper data URL format
-        if (imageSrc && !imageSrc.startsWith('data:')) {
-          // If it's just base64, add the prefix
-          if (imageSrc.match(/^[A-Za-z0-9+/]+=*$/)) {
-            console.log('[Share Image] Adding data URL prefix to base64 string');
-            imageSrc = `data:image/jpeg;base64,${imageSrc}`;
-          }
-          // Check if it starts with /9j/ which is JPEG base64 signature
-          else if (imageSrc.startsWith('/9j/')) {
-            console.log('[Share Image] Detected JPEG base64 without prefix, adding it');
-            imageSrc = `data:image/jpeg;base64,${imageSrc}`;
-          }
-          // Check if it starts with iVBOR which is PNG base64 signature
-          else if (imageSrc.startsWith('iVBOR')) {
-            console.log('[Share Image] Detected PNG base64 without prefix, adding it');
-            imageSrc = `data:image/png;base64,${imageSrc}`;
-          }
-          // Otherwise assume it's a URI that needs to be converted
-          else if (imageSrc.startsWith('file://') || imageSrc.startsWith('http')) {
-            console.warn('[Share Image] Non-data URL detected:', imageSrc.substring(0, 50));
-            // For now, show placeholder as we can't convert URIs in browser
-            ctx.fillStyle = '#f5f5f5';
-            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-            ctx.fillStyle = '#a0a0a0';
-            ctx.font = '24px -apple-system, system-ui, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('Image preview unavailable', canvas.width / 2, boxY + boxHeight/2 - 20);
-            ctx.font = '18px -apple-system, system-ui, sans-serif';
-            ctx.fillText('(Original image was a file URI)', canvas.width / 2, boxY + boxHeight/2 + 10);
-            return;
-          }
-        }
-        
-        // Create image and set up handlers
-        const img = new Image();
-        img.crossOrigin = 'anonymous'; // Just in case
-        
-        // Create promise to handle async loading with timeout
-        await new Promise((resolve) => {
-          let imageLoaded = false;
-          
-          // Set a timeout to prevent hanging
-          const timeout = setTimeout(() => {
-            if (!imageLoaded) {
-              console.error('[Share Image] Image load timeout after 5 seconds');
-              
-              // Draw timeout placeholder
-              ctx.fillStyle = '#f5f5f5';
-              ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-              ctx.fillStyle = '#a0a0a0';
-              ctx.font = '28px -apple-system, system-ui, sans-serif';
-              ctx.textAlign = 'center';
-              ctx.fillText('Image load timeout', canvas.width / 2, boxY + boxHeight/2 - 15);
-              ctx.font = '20px -apple-system, system-ui, sans-serif';
-              ctx.fillText('Continuing without image', canvas.width / 2, boxY + boxHeight/2 + 15);
-              resolve();
-            }
-          }, 5000);
-          
-          img.onload = () => {
-            imageLoaded = true;
-            clearTimeout(timeout);
-            console.log('[Share Image] Image loaded successfully:', img.width, 'x', img.height);
-            
-            // Calculate scaling to fit within box
-            const scale = Math.min(boxWidth / img.width, boxHeight / img.height) * 0.9;
-            const width = img.width * scale;
-            const height = img.height * scale;
-            const x = boxX + (boxWidth - width) / 2;
-            const y = boxY + (boxHeight - height) / 2;
-            
-            // Draw the image
-            ctx.drawImage(img, x, y, width, height);
-            resolve();
-          };
-          
-          img.onerror = () => {
-            imageLoaded = true;
-            clearTimeout(timeout);
-            console.error('[Share Image] Failed to load image for share download');
-            console.error('[Share Image] Attempted source:', imageSrc.substring(0, 100));
-            
-            // Draw error placeholder
-            ctx.fillStyle = '#f5f5f5';
-            ctx.fillRect(boxX, boxY, boxWidth, boxHeight);
-            ctx.fillStyle = '#a0a0a0';
-            ctx.font = '32px -apple-system, system-ui, sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText('Image could not be loaded', canvas.width / 2, boxY + boxHeight/2);
-            resolve();
-          };
-          
-          // Set the source to trigger load
-          console.log('[Share Image] Loading image from:', imageSrc.substring(0, 100) + '...');
-          console.log('[Share Image] Image format check:');
-          console.log('  - Starts with data:?', imageSrc.startsWith('data:'));
-          console.log('  - Has base64 marker?', imageSrc.includes('base64,'));
-          console.log('  - Length:', imageSrc.length);
-          
-          img.src = imageSrc;
-        });
+    const files = e.dataTransfer.files;
+    if (files && files[0] && files[0].type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImageUri(event.target.result);
       };
-      
-      await drawItemImage();
-      
-      // Reset text alignment for subsequent text
-      ctx.textAlign = 'center';
-      
-      // Title (moved 0.5 inch lower = ~48px at 96dpi, then another 0.5 inch for Whatnot)
-      ctx.fillStyle = '#000000';
-      ctx.font = 'bold 36px -apple-system, system-ui, sans-serif';
-      const itemName = result.item_name || 'Unknown Item';
-      ctx.fillText(itemName, canvas.width / 2, 906); // 810 + 48 + 48 (moved additional 0.5" for Whatnot)
-      
-      // Brand (if available)
-      if (result.brand) {
-        ctx.font = '28px -apple-system, system-ui, sans-serif';
-        ctx.fillStyle = '#666666';
-        ctx.fillText(result.brand, canvas.width / 2, 936); // Adjusted for title move
-      }
-      
-      // Market Comps with green price band (condensed for space)
-      ctx.fillStyle = '#059669';
-      ctx.fillRect(0, 950, canvas.width, 45); // Reduced height from 60 to 45
-      ctx.fillStyle = '#FFFFFF';
-      ctx.font = 'bold 36px -apple-system, system-ui, sans-serif'; // Reduced from 42px
-      ctx.fillText(result.price_range || '$0-$0', canvas.width / 2, 980);
-      
-      // Sellability + Authenticity row (condensed)
-      let yPosition = 1005; // Moved up from 990
-      ctx.font = '20px -apple-system, system-ui, sans-serif'; // Reduced from 24px
-      
-      // Sellability with icon
-      ctx.fillStyle = '#333333';
-      const sellabilityText = `Sellability: ${result.trending_score || 0}/100`;
-      ctx.fillText(sellabilityText, canvas.width / 2 - 200, yPosition);
-      
-      // Authenticity with icon  
-      const realScoreText = `Authenticity: ${result.real_score || 'Unknown'}`;
-      ctx.fillText(realScoreText, canvas.width / 2 + 200, yPosition);
-      
-      // Market Info (condensed)
-      yPosition += 25; // Reduced from 35
-      ctx.font = '18px -apple-system, system-ui, sans-serif'; // Reduced from 20px
-      ctx.fillStyle = '#666666';
-      if (result.recommended_platform) {
-        ctx.fillText(`Best Platform: ${result.recommended_platform}`, canvas.width / 2, yPosition);
-      }
-      
-      // Eco Info (condensed)
-      yPosition += 20; // Reduced from 30
-      if (result.environmental_tag) {
-        ctx.fillStyle = '#059669';
-        ctx.font = '16px -apple-system, system-ui, sans-serif';
-        ctx.fillText(result.environmental_tag, canvas.width / 2, yPosition);
-      }
-      
-      // QR Code removed for Whatnot layout - need space for larger image
-      /*
-      // Add QR Code for Reddit valuation page
-      try {
-        // Generate a slug for this item
-        const itemSlug = generateValuationSlug(result);
-        const qrUrl = `https://flippi.ai/value/${itemSlug}`;
-        
-        // QR Code positioning
-        const qrSize = 120;
-        const qrX = 40; // Left side
-        const qrY = canvas.height - qrSize - 40; // Bottom left
-        
-        // White background for QR
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
-        
-        // Draw border
-        ctx.strokeStyle = '#E5E5E5';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
-        
-        // Try to dynamically import QRCode library for web
-        let qrDrawn = false;
-        if (Platform.OS === 'web') {
-          try {
-            // Check if qrcode module exists before importing
-            const QRCode = await import('qrcode').catch(() => null);
-            if (QRCode && QRCode.default && QRCode.default.toDataURL) {
-              const qrDataUrl = await QRCode.default.toDataURL(qrUrl, {
-                width: qrSize,
-                margin: 1,
-                color: {
-                  dark: '#000000',
-                  light: '#FFFFFF'
-                }
-              });
-              
-              // Draw QR code
-              const qrImg = new Image();
-              await new Promise((resolve) => {
-                qrImg.onload = () => {
-                  ctx.drawImage(qrImg, qrX, qrY, qrSize, qrSize);
-                  resolve();
-                };
-                qrImg.onerror = () => {
-                  // Fallback to placeholder if image fails
-                  drawQRPlaceholder(ctx, qrX, qrY, qrSize);
-                  resolve();
-                };
-                qrImg.src = qrDataUrl;
-              });
-              qrDrawn = true;
-            }
-          } catch (e) {
-            console.log('QRCode library not available:', e.message);
-          }
-        }
-        
-        if (!qrDrawn) {
-          // Fallback to placeholder
-          drawQRPlaceholder(ctx, qrX, qrY, qrSize);
-        }
-        
-        // QR Label
-        ctx.fillStyle = '#666666';
-        ctx.font = '12px -apple-system, system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Scan for details', qrX + qrSize/2, qrY + qrSize + 15);
-        
-      } catch (qrError) {
-        console.error('[Share Image] QR generation error:', qrError);
-        // Continue without QR if it fails
-      }
-      */
-      
-      // CTA - Bottom of image (prominent)
-      ctx.fillStyle = '#3478F6'; // Brand blue color
-      ctx.font = 'bold 24px -apple-system, system-ui, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillText('Get 20 free images at flippi.ai', canvas.width / 2, 1060);
-      
-      // Convert to blob and download
-      console.log('[Share Image] Converting canvas to blob...');
-      
-      canvas.toBlob((blob) => {
-        try {
-          if (!blob) {
-            console.error('[Share Image] Blob is null');
-            throw new Error('Failed to convert canvas to blob');
-          }
-          
-          console.log('[Share Image] Blob created, size:', blob.size);
-          
-          // Try multiple download methods for better browser compatibility
-          const url = URL.createObjectURL(blob);
-          console.log('[Share Image] Object URL created:', url);
-          
-          // Create and click anchor for download
-          const a = document.createElement('a');
-          a.href = url;
-          const timestamp = new Date().toISOString().split('T')[0];
-          const itemName = (result.item_name || 'item').toLowerCase().replace(/[^a-z0-9]/g, '-').slice(0, 30);
-          a.download = `flippi-${itemName}-${timestamp}.png`;
-          a.style.display = 'none';
-          
-          console.log('[Share Image] Attempting download...');
-          
-          // Try different click methods
-          try {
-            // Add to DOM
-            document.body.appendChild(a);
-            console.log('[Share Image] Anchor added to DOM');
-            
-            // Click the link
-            a.click();
-            console.log('[Share Image] Click triggered');
-            
-            // Clean up immediately
-            setTimeout(() => {
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-              console.log('[Share Image] Cleanup complete');
-            }, 100);
-          } catch (clickError) {
-            console.error('[Share Image] Click method failed:', clickError);
-            
-            // Fallback: Try alternative download method
-            try {
-              // Create a new window with the image
-              const newWindow = window.open(url, '_blank');
-              if (newWindow) {
-                setTimeout(() => newWindow.close(), 1000);
-              }
-            } catch (windowError) {
-              console.error('[Share Image] Window method failed:', windowError);
-              
-              // Last resort: Copy URL to clipboard
-              if (navigator.clipboard) {
-                navigator.clipboard.writeText(url).then(() => {
-                  Alert.alert(
-                    'Download Ready',
-                    'Image URL copied to clipboard. Right-click and save the image from your browser.',
-                    [{ text: 'OK' }]
-                  );
-                });
-              }
-            }
-          }
-          
-          // Cleanup
-          setTimeout(() => {
-            URL.revokeObjectURL(url);
-            console.log('[Share Image] Cleanup complete');
-          }, 100);
-          
-          Alert.alert(
-            'Image downloaded!',
-            'Check your Downloads folder',
-            [{ text: 'OK' }]
-          );
-        } catch (error) {
-          console.error('[Share Image] Download error:', error);
-          
-          // Fallback: Open image in new tab
-          try {
-            const dataUrl = canvas.toDataURL('image/png');
-            const newTab = window.open();
-            if (newTab) {
-              newTab.document.write(`<img src="${dataUrl}" alt="Flippi Share Image" />`);
-              Alert.alert(
-                'Image opened in new tab',
-                'Right-click to save the image',
-                [{ text: 'OK' }]
-              );
-            }
-          } catch (fallbackError) {
-            console.error('[Share Image] Fallback error:', fallbackError);
-            Alert.alert(
-              'Download not supported',
-              'Please take a screenshot instead',
-              [{ text: 'OK' }]
-            );
-          }
-        }
-      }, 'image/png', 0.95);
-    } catch (error) {
-      console.error('[Share Image] Error generating image:', error);
-      console.error('[Share Image] Error stack:', error.stack);
-      Alert.alert(
-        'Download Failed',
-        'Unable to download image. Please try again or use a screenshot instead.',
-        [{ text: 'OK' }]
-      );
+      reader.readAsDataURL(files[0]);
     }
-    
-    console.log('[Share Image] generateShareImage function completed');
   };
 
-  // Handle universal share image download
-  const handleDownloadShareImage = () => {
-    console.log('[Download Share] Starting download with:');
-    console.log('  - analysisResult:', !!analysisResult);
-    console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
-    console.log('  - image:', !!image, image?.substring(0, 50));
-    
-    // Check if we have analysis results
-    if (!analysisResult) {
-      Alert.alert(
-        'No Results Available',
-        'Please analyze an item first before downloading.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-    
-    // Debug: Check if images have proper format
-    if (imageBase64) {
-      console.log('[Download Share] imageBase64 format check:');
-      console.log('  - Starts with data:?', imageBase64.startsWith('data:'));
-      console.log('  - Has base64 marker?', imageBase64.includes('base64,'));
-      console.log('  - Length:', imageBase64.length);
-    }
-    
-    if (image) {
-      console.log('[Download Share] image format check:');
-      console.log('  - Starts with data:?', image.startsWith('data:'));
-      console.log('  - Has base64 marker?', image.includes('base64,'));
-      console.log('  - Length:', image.length);
-    }
-    
-    // Always prefer imageBase64 as it has the correct format after analysis
-    const imageToUse = imageBase64 || image;
-    
-    if (!imageToUse) {
-      Alert.alert(
-        'No Image Available',
-        'Please upload or capture an image first.',
-        [{ text: 'OK' }]
-      );
-      return;
-    }
-    
-    setIsLoading(true);
-    generateShareImage(analysisResult, imageToUse).finally(() => {
-      setIsLoading(false);
-    });
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
   };
-  
-  const handleExit = async () => {
+
+  const handleDragEnter = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current++;
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    dragCounter.current--;
+  };
+
+  const handlePaste = (e) => {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const blob = items[i].getAsFile();
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          setImageUri(event.target.result);
+        };
+        reader.readAsDataURL(blob);
+        break;
+      }
+    }
+  };
+
+  useEffect(() => {
     if (Platform.OS === 'web') {
-      try {
-        // Call backend to logout
-        await fetch(`${API_URL}/auth/exit`, {
-          method: 'GET',
-          credentials: 'include'
-        });
-      } catch (error) {
-        console.error('Exit error:', error);
-      }
-      
-      // Clear local auth
-      await AuthService.exit();
-      setIsAuthenticated(false);
-      setUser(null);
-      resetApp();
+      document.addEventListener('paste', handlePaste);
+      return () => {
+        document.removeEventListener('paste', handlePaste);
+      };
+    }
+  }, []);
+
+  const shareResults = async () => {
+    const shareText = `Check out what I found using Flippi AI!\n\n${analysisResult.item_name}\nEstimated Value: $${analysisResult.estimated_value || '0'}\nAuthenticity: ${analysisResult.authenticity || 'Unknown'}%`;
+    
+    try {
+      await Share.share({
+        message: shareText,
+        title: 'Flippi AI Analysis Result',
+      });
+    } catch (error) {
+      console.error('Error sharing:', error);
     }
   };
 
-  if (showCamera) {
-    return <WebCameraView onCapture={handleWebCameraCapture} onCancel={() => setShowCamera(false)} />;
-  }
-  
-  // Show loading while checking auth
-  if (authLoading && Platform.OS === 'web') {
+  const renderPriceRangeBar = () => {
+    if (!analysisResult?.price_range) return null;
+
+    const { min, max, estimated } = analysisResult.price_range;
+    const range = max - min;
+    const position = ((estimated - min) / range) * 100;
+
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <FlippiLogo size="large" style={{ marginBottom: 8 }} />
-        <ActivityIndicator size="large" color={brandColors.primary} />
-        <Text style={{ marginTop: 20, fontSize: 16, color: brandColors.textSecondary }}>
-          Loading flippi.ai
-        </Text>
-        <TouchableOpacity 
-          onPress={() => {
-            console.log('[Auth] Force clearing auth state');
-            setAuthLoading(false);
-            setIsAuthenticated(false);
-          }}
-          style={{ marginTop: 40, padding: 10 }}
-        >
-          <Text style={{ color: brandColors.textSecondary, fontSize: 12 }}>
-            Stuck? Click here to reset
+      <View style={styles.priceRangeContainer}>
+        <View style={styles.priceRangeBar}>
+          <View style={styles.priceRangeTrack} />
+          <View 
+            style={[styles.priceRangeIndicator, { left: `${position}%` }]} 
+          />
+        </View>
+        <View style={styles.priceRangeLabels}>
+          <Text style={styles.priceRangeLabel}>${min}</Text>
+          <Text style={[styles.priceRangeLabel, styles.priceRangeEstimated]}>
+            ${estimated}
           </Text>
-        </TouchableOpacity>
+          <Text style={styles.priceRangeLabel}>${max}</Text>
+        </View>
       </View>
     );
-  }
-  
-  // Show Enter screen if not authenticated (web only)
-  if (Platform.OS === 'web' && !isAuthenticated) {
-    return <EnterScreen />;
-  }
+  };
 
-  // Main Flip interface
+  const cameraRef = useRef(null);
+
   return (
-    <ScrollView 
-      ref={scrollViewRef}
-      style={[styles.container, { 
-        backgroundColor: isAuthenticated ? '#fafafa' : brandColors.background 
-      }]}
-      contentContainerStyle={styles.contentContainer}
-      onDragOver={handleDragOver}
-      onDragLeave={handleDragLeave}
-      onDrop={handleDrop}
-    >
-      {/* Environment Banner - Only show in non-production */}
-      {Platform.OS === 'web' && window.location.hostname === 'blue.flippi.ai' && (
-        <View style={styles.environmentBanner}>
-          <Text style={styles.environmentText}>DEVELOPMENT ENVIRONMENT</Text>
-        </View>
-      )}
-      {Platform.OS === 'web' && window.location.hostname === 'green.flippi.ai' && (
-        <View style={styles.environmentBannerStaging}>
-          <Text style={styles.environmentText}>STAGING ENVIRONMENT</Text>
-        </View>
-      )}
+    <SafeAreaView style={[styles.container, appleStyles.container]}>
+      <StatusBar barStyle="dark-content" />
       
-      {/* You section - Exit button only - Outside content for better positioning */}
-      {Platform.OS === 'web' && user && (
-        <View style={styles.userSection}>
-          {/* Show admin buttons for specific users */}
-          {(user.email === 'john@flippi.ai' || user.email === 'tarahusband@gmail.com' || user.email === 'teamflippi@gmail.com' || user.email === 'tara@edgy.co' || user.email === 'john@husband.llc') && (
-            <>
-              <TouchableOpacity onPress={() => setShowAdminDashboard(true)} style={styles.adminButton}>
-                <Text style={styles.adminText}>Admin</Text>
-              </TouchableOpacity>
-              <TouchableOpacity onPress={() => setShowGrowthDashboard(true)} style={styles.adminButton}>
-                <Text style={styles.adminText}>Growth</Text>
-              </TouchableOpacity>
-            </>
-          )}
-          <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
-            <Text style={styles.exitText}>Exit</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      
-      <PageContainer>
-        <View style={[styles.content, isAuthenticated && styles.contentLoggedIn]}>
-          
-          <FlippiLogo 
-            size={isAuthenticated ? "small" : "large"} 
-            responsive={true} 
-            style={isAuthenticated ? { marginBottom: 8 } : {}}
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.header}>
+          <Image 
+            source={require('./assets/flippiapp2.png')} 
+            style={styles.logo}
+            resizeMode="contain"
           />
-          {!isAuthenticated && (
-            <>
-              <Text style={[styles.title, { color: brandColors.text }]}>
-                Never Over Pay
+          <View style={styles.headerButtons}>
+            <TouchableOpacity 
+              style={styles.historyButton}
+              onPress={() => setShowHistory(true)}
+            >
+              <Feather name="clock" size={24} color={brandColors.text} />
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.content}
+        >
+          {!analysisResult ? (
+            <View style={styles.uploadSection}>
+              <Text style={[styles.title, appleStyles.title]}>
+                What's it worth?
               </Text>
-              <Text style={styles.subtitle}>
-                Know the price. Own the profit.
+              <Text style={[styles.subtitle, appleStyles.subtitle]}>
+                Get instant AI valuations for your items
               </Text>
-            </>
-          )}
-          {isAuthenticated && !image && !analysisResult && renderEncouragementMessage()}
-        
-        <View style={[
-          styles.uploadContainer,
-          isDragOver && styles.dragOver
-        ]}>
-          {/* Text input only visible when no image */}
-          {!image && (
-            <TextInput
-              style={[styles.descriptionInput, { 
-                backgroundColor: '#FFFFFF',
-                color: brandColors.text,
-                borderColor: brandColors.border,
-                marginBottom: 20,
-                boxShadow: '0 1px 4px rgba(0, 0, 0, 0.05)'
-              }]}
-              placeholder="Brand, source, or serial number?"
-              placeholderTextColor={brandColors.disabledText}
-              value={productDescription}
-              onChangeText={setProductDescription}
-              multiline
-              numberOfLines={3}
-            />
-          )}
-          
-        {console.log('[DEBUG] Current image state:', image ? 'Image exists' : 'No image')}
-        {!image ? (
-            <>
-              {hasCamera && (
-                <BrandButton
-                  title="Take Photo"
-                  onPress={takePhoto}
-                  style={[styles.actionButton, styles.primaryActionButton]}
-                  variant="primary"
-                  icon={<Feather name="camera" size={20} color="#FFFFFF" />}
-                />
+
+              {scansRemaining !== null && !isPremiumUser && (
+                <View style={styles.scanLimitBadge}>
+                  <Text style={styles.scanLimitText}>
+                    {scansRemaining} free scans remaining today
+                  </Text>
+                </View>
               )}
-              
-              <BrandButton
-                title="Upload Photo"
-                onPress={pickImage}
-                style={styles.actionButton}
-                variant="outline"
-                icon={<Feather name="upload" size={20} color={brandColors.text} />}
-              />
-              
-              {Platform.OS === 'web' && (
-                <>
-                  <View style={[styles.dropZone, isDragOver && styles.dropZoneActive]}>
-                    <Text style={[styles.dropZoneText, { color: brandColors.textSecondary }]}>
-                      {isDragOver ? 'Drop image here' : 'Or drag and drop an image here'}
+
+              <View 
+                style={[
+                  styles.imageUploadArea,
+                  appleStyles.card,
+                  { borderStyle: imageUri ? 'solid' : 'dashed' }
+                ]}
+                onDrop={Platform.OS === 'web' ? handleDrop : undefined}
+                onDragOver={Platform.OS === 'web' ? handleDragOver : undefined}
+                onDragEnter={Platform.OS === 'web' ? handleDragEnter : undefined}
+                onDragLeave={Platform.OS === 'web' ? handleDragLeave : undefined}
+              >
+                {imageUri ? (
+                  <View style={styles.imagePreviewContainer}>
+                    <Image source={{ uri: imageUri }} style={styles.imagePreview} />
+                    <TouchableOpacity 
+                      style={styles.removeImageButton}
+                      onPress={() => setImageUri(null)}
+                    >
+                      <Feather name="x-circle" size={24} color="#FFFFFF" />
+                    </TouchableOpacity>
+                  </View>
+                ) : (
+                  <View style={styles.uploadPrompt}>
+                    <Feather name="image" size={48} color={brandColors.textSecondary} />
+                    <Text style={styles.uploadText}>
+                      Drag & drop an image here
+                    </Text>
+                    <Text style={styles.uploadSubtext}>
+                      or use the options below
                     </Text>
                   </View>
-                </>
-              )}
-            </>
-          ) : (
-            <View style={styles.resultContainer}>
-              {image ? (
-                <View style={styles.imagePreviewContainer}>
-                  {console.log('[DEBUG] Rendering image with URI length:', image.length)}
-                  <Image 
-                    source={{ uri: image }} 
-                    style={styles.imagePreview}
-                    onError={(e) => console.error('[DEBUG] Image load error:', e.nativeEvent.error)}
-                    onLoad={() => console.log('[DEBUG] Image loaded successfully')}
-                  />
-                </View>
-              ) : (
-                <Text style={{ color: brandColors.textSecondary, marginBottom: 8 }}>No image uploaded</Text>
-              )}
-              
-              {!analysisResult && !isLoading && (
-                <>
-                  <TextInput
-                    style={[styles.descriptionInput, { 
-                      backgroundColor: brandColors.surface,
-                      color: brandColors.text,
-                      borderColor: brandColors.border || '#ddd',
-                      marginBottom: 8,
-                      marginTop: 0
-                    }]}
-                    placeholder="Brand, source, or serial number?"
-                    placeholderTextColor={brandColors.textSecondary}
-                    value={productDescription}
-                    onChangeText={setProductDescription}
-                    multiline
-                    numberOfLines={3}
-                  />
-                  <View>
-                    {flipStatus && !flipStatus.is_pro && (
-                      <Text style={styles.flipCountText}>
-                        {flipStatus.flips_remaining === 0 
-                          ? 'No free flips left' 
-                          : `${flipStatus.flips_remaining} free flip${flipStatus.flips_remaining === 1 ? '' : 's'} remaining`}
-                      </Text>
-                    )}
-                    <BrandButton
-                      title="Go"
-                      onPress={analyzeImage}
-                      style={styles.goButton}
-                      variant="accent"
-                      isHighImpact={true}
-                    />
-                  </View>
-                </>
-              )}
-            
-            {isLoading && (
-              <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color={brandColors.primary} />
-                <Text style={[styles.loadingText, { color: brandColors.text }]}>
-                  Analyzing image
-                </Text>
+                )}
               </View>
-            )}
-            
-            {analysisResult ? (
-              <View 
-                ref={(ref) => {
-                  resultsRef.current = ref;
-                  // For web, we need the actual DOM node
-                  if (Platform.OS === 'web' && ref) {
-                    resultsRef.current = ref._nativeTag || ref;
-                  }
-                }}
-                style={[styles.analysisResult, { backgroundColor: '#FFFFFF' }]}>
-                <Text style={[styles.resultTitle, { color: brandColors.text }]}>Analysis Results</Text>
-                
-                {/* Top price container with Buy At, Estimated Resale Value, and Item */}
-                <View style={[styles.topPriceContainer, { backgroundColor: '#F9FAFB' }]}>
-                  <View style={styles.priceRow}>
-                    {analysisResult.buy_price && (
-                      <View style={styles.priceColumn}>
-                        <Text style={styles.priceLabel}>Buy At</Text>
-                        <Text style={[styles.priceValueLarge, styles.numericalEmphasis]}>
-                          {analysisResult.buy_price}
-                        </Text>
-                      </View>
-                    )}
-                    
-                    {analysisResult.price_range && (
-                      <View style={styles.priceColumn}>
-                        <Text style={styles.priceLabel}>Estimated Resale Value</Text>
-                        <Text style={[styles.priceValueLarge, styles.numericalEmphasis]}>
-                          {analysisResult.price_range}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-                  
-                  {/* Item description in same box */}
-                  <View style={styles.itemInPriceBox}>
-                    <Text style={styles.itemLabel}>Item</Text>
-                    <Text style={styles.itemValue}>{analysisResult.item_name}</Text>
-                  </View>
-                </View>
-                
-                {/* Check if potentially dupe and show friendly warning */}
-                {(() => {
-                  const score = analysisResult.real_score || analysisResult.authenticity_score || 0;
-                  const description = productDescription?.toLowerCase() || '';
-                  const insights = analysisResult.market_insights?.toLowerCase() || '';
-                  const penalties = analysisResult.score_penalties?.toLowerCase() || '';
-                  
-                  const isPotentialDupe = 
-                    score <= 40 ||
-                    description.includes('fake') ||
-                    description.includes('replica') ||
-                    description.includes('inspired') ||
-                    description.includes('dupe') ||
-                    insights.includes('replica') ||
-                    penalties.includes('replica') ||
-                    analysisResult.platform_recommendation === 'Craft Fair' ||
-                    analysisResult.platform_recommendation === 'Personal Use';
-                  
-                  if (isPotentialDupe) {
-                    return (
-                      <View style={styles.dupeAlert}>
-                        <View style={styles.dupeAlertContent}>
-                          <Feather name="alert-triangle" size={16} color="#EAB308" style={{ marginRight: 8 }} />
-                          <Text style={styles.dupeAlertText}>
-                            This item may be a dupe. Check brand details before buying or listing.
-                          </Text>
-                        </View>
-                      </View>
-                    );
-                  }
-                  return null;
-                })()}
-                
-                {/* PRIMARY INFO - Always show all data */}
-                <View style={[styles.primaryInfoSection, { backgroundColor: '#F9FAFB', borderRadius: 12, padding: 16, marginVertical: 10 }]}>
-                  
-                  {(analysisResult.real_score !== undefined || analysisResult.authenticity_score !== undefined) && (
-                    <View style={styles.resultItem}>
-                      <View style={styles.labelWithIcon}>
-                        <Text style={[styles.resultLabel]}>Real Score</Text>
-                        <TouchableOpacity
-                          onPress={() => setShowMissionModal(true)}
-                          accessibilityLabel="Learn about Real Score"
-                          accessibilityRole="button"
-                          style={styles.infoIconButton}
-                        >
-                          <Feather name="info" size={16} color={brandColors.textSecondary} />
-                        </TouchableOpacity>
-                      </View>
-                      <View>
-                        <Text style={[styles.resultValue, styles.realScoreEmphasis, { fontSize: 20 }]}>
-                          {analysisResult.real_score || analysisResult.authenticity_score}%
-                        </Text>
-                        <Text style={[styles.realScoreExplanation]}>
-                          {(() => {
-                            const score = analysisResult.real_score || analysisResult.authenticity_score;
-                            let explanation = "";
-                            let details = "";
-                            
-                            if (score >= 80) {
-                              explanation = "Strong authenticity signals detected. Clear branding and quality markers.";
-                              details = "Logo placement, stitching, and materials appear consistent with authentic pieces.";
-                            } else if (score >= 60) {
-                              explanation = "Good visual indicators. Brand elements appear consistent.";
-                              details = "Most authenticity markers present, but verify interior tags and serial numbers.";
-                            } else if (score >= 40) {
-                              explanation = "Mixed signals detected. Check brand details and authentication carefully.";
-                              // Check for specific penalties mentioned
-                              if (analysisResult.score_penalties) {
-                                const penalties = analysisResult.score_penalties.toLowerCase();
-                                if (penalties.includes("colorway")) {
-                                  details = "Unusual color combination not typical for this brand. Research this specific style.";
-                                } else if (penalties.includes("logo")) {
-                                  details = "Logo density or placement differs from standard. Compare with official images.";
-                                } else if (penalties.includes("single photo")) {
-                                  details = "Limited view provided. Request photos of tags, serial numbers, and interior.";
-                                } else {
-                                  details = "Some elements don't match typical authentic patterns. Get professional authentication.";
-                                }
-                              } else {
-                                details = "Inconsistent quality markers detected. Compare carefully with authentic examples.";
-                              }
-                            } else {
-                              explanation = "Multiple red flags detected. Verify authenticity before purchasing.";
-                              // Check market insights for specific issues
-                              if (analysisResult.market_insights && analysisResult.market_insights.toLowerCase().includes("replica")) {
-                                details = "Design elements strongly suggest replica. Proceed with extreme caution.";
-                              } else if (analysisResult.score_penalties && analysisResult.score_penalties.includes("source")) {
-                                details = "Source marketplace known for replicas. Request proof of authenticity.";
-                              } else {
-                                details = "Multiple authenticity concerns including branding, construction, or materials.";
-                              }
-                            }
-                            
-                            return `${explanation} ${details}`;
-                          })()}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-                  
-                </View>
-                
-                {/* TOGGLE BUTTON */}
-                <TouchableOpacity
-                  style={[styles.viewMoreButton, { 
-                    backgroundColor: 'transparent',
-                    borderWidth: 1,
-                    borderColor: brandColors.border,
-                  }]}
-                  onPress={() => setShowMoreDetails(!showMoreDetails)}
+
+              <View style={styles.uploadButtons}>
+                <TouchableOpacity 
+                  style={[styles.uploadButton, appleStyles.button]}
+                  onPress={pickImage}
                 >
-                  <Text style={[styles.viewMoreText, { color: brandColors.text }]}>
-                    {showMoreDetails ? '− Hide Details' : '+ View Details'}
+                  <Feather name="folder" size={20} color="#FFFFFF" />
+                  <Text style={[styles.uploadButtonText, appleStyles.buttonText]}>
+                    Choose Photo
                   </Text>
                 </TouchableOpacity>
                 
-                {/* SECONDARY INFO - Hidden by default */}
-                {showMoreDetails && (
-                  <View style={styles.secondaryInfoSection}>
-                    <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Condition</Text>
-                      <Text style={[styles.resultValue, { color: brandColors.text }]}>{analysisResult.condition}</Text>
-                    </View>
-                    
-                    <View style={styles.resultItem}>
-                      <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Style Tier</Text>
-                      <Text style={[styles.resultValue, { 
-                        color: brandColors.text,
-                        fontWeight: typography.weights.semibold,
-                        textTransform: 'capitalize'
-                      }]}>
-                        {analysisResult.style_tier}
-                      </Text>
-                    </View>
-                    
-                    {analysisResult.recommended_platform && (
-                      <View style={styles.resultItem}>
-                        <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Best Platforms</Text>
-                        <Text style={[styles.resultValue, { color: brandColors.text }]}>
-                          {(() => {
-                            const platforms = [];
-                            if (analysisResult.recommended_live_platform && analysisResult.recommended_live_platform !== 'uknown') {
-                              platforms.push(analysisResult.recommended_live_platform === 'uknown' ? 'Personal Use' : analysisResult.recommended_live_platform);
-                            }
-                            if (analysisResult.recommended_platform && analysisResult.recommended_platform !== 'uknown') {
-                              platforms.push(analysisResult.recommended_platform === 'uknown' ? 'Craft Fair' : analysisResult.recommended_platform);
-                            }
-                            return platforms.join(', ') || 'Craft Fair, Personal Use';
-                          })()}
-                        </Text>
-                      </View>
-                    )}
-                    
-                
-                {analysisResult.trending_score !== undefined && (
-                  <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Sellability</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>
-                      {analysisResult.trending_score}/100 {(() => {
-                        const score = parseInt(analysisResult.trending_score);
-                        if (score >= 80) return '▲▲▲'; // Three up arrows for hot
-                        if (score >= 50) return '▲▲';   // Two up arrows for warm
-                        return '▲';                      // One up arrow for cool
-                      })()} - {analysisResult.trending_label || 'N/A'}
-                    </Text>
-                  </View>
-                )}
-                
-                {analysisResult.legacy_brand && (
-                  <View style={[styles.legacyBrandBadge, { backgroundColor: brandColors.border }]}>
-                    <Text style={[styles.legacyBrandText, { color: brandColors.text }]}>
-                      ⭐ Legacy Brand — Premium Hold
-                    </Text>
-                  </View>
-                )}
-                
-                {analysisResult.price_adjusted && (
-                  <Text style={[styles.priceAdjustmentNote, { color: brandColors.textSecondary }]}>
-                    {analysisResult.adjustment_reason}
+                <TouchableOpacity 
+                  style={[styles.uploadButton, appleStyles.button]}
+                  onPress={openCamera}
+                >
+                  <Feather name="camera" size={20} color="#FFFFFF" />
+                  <Text style={[styles.uploadButtonText, appleStyles.buttonText]}>
+                    Take Photo
                   </Text>
-                )}
-                
-                {analysisResult.market_insights && (
-                  <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Market</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text }]}>
-                      {analysisResult.market_insights.replace(/Note:.*?Low authenticity.*?verify carefully\.?\s*/gi, '').trim()}
-                    </Text>
-                  </View>
-                )}
-                
-                {analysisResult.selling_tips && (
-                  <View style={styles.resultItem}>
-                    <Text style={[styles.resultLabel, { color: brandColors.textSecondary }]}>Selling Tips</Text>
-                    <Text style={[styles.resultValue, { color: brandColors.text, lineHeight: 22 }]}>
-                      {analysisResult.selling_tips.replace(/Note:.*?Low authenticity.*?verify carefully\.?\s*/gi, '').trim()}
-                    </Text>
-                  </View>
-                )}
-                
-                {analysisResult.environmental_tag && (
-                  <View style={[styles.environmentalContainer, { backgroundColor: '#E8F5E9' }]}>
-                    <View style={styles.environmentalContent}>
-                      <Text style={[styles.environmentalTag, { color: '#2E7D32' }]}>
-                        {analysisResult.environmental_tag}
-                      </Text>
-                      <TouchableOpacity
-                        onPress={() => setShowMissionModal(true)}
-                        accessibilityLabel="Learn about our mission"
-                        accessibilityRole="button"
-                        style={styles.missionLink}
-                      >
-                        <Feather name="info" size={14} color="#2E7D32" style={{ opacity: 0.8 }} />
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                )}
-                  </View>
-                )}
+                </TouchableOpacity>
               </View>
-            ) : (!isLoading && !analysisResult && image) ? (
-              <Text style={{ color: brandColors.text, marginTop: 20 }}>No results yet. Press Go to analyze.</Text>
-            ) : null}
-            
-            
-            {analysisResult && showFeedback && (
-              <FeedbackSystem
-                scanData={analysisResult}
-                userDescription={productDescription}
-                imageData={imageBase64}
-                onComplete={() => setShowFeedback(false)}
-              />
-            )}
-            
-            {analysisResult && (
-              <View style={styles.postAnalysisActions}>
-                <BrandButton
-                  title="Share on X"
-                  onPress={handleShareOnX}
-                  style={[styles.shareButton, { backgroundColor: '#18181b' }]}
-                  variant="primary"
-                  icon={<Feather name="share-2" size={20} color="#FFFFFF" />}
+
+              {Platform.OS === 'web' && (
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const file = e.target.files[0];
+                    if (file) {
+                      const reader = new FileReader();
+                      reader.onload = (event) => {
+                        setImageUri(event.target.result);
+                      };
+                      reader.readAsDataURL(file);
+                    }
+                  }}
                 />
-                {Platform.OS !== 'web' && (
+              )}
+
+              <TextInput
+                style={[styles.descriptionInput, appleStyles.input]}
+                placeholder="Add details (brand, condition, etc.)"
+                placeholderTextColor={brandColors.textSecondary}
+                value={description}
+                onChangeText={setDescription}
+                multiline
+                numberOfLines={3}
+              />
+
+              <TouchableOpacity 
+                style={[
+                  styles.analyzeButton, 
+                  appleStyles.primaryButton,
+                  (!imageUri || loading) && styles.analyzeButtonDisabled
+                ]}
+                onPress={analyzeImage}
+                disabled={!imageUri || loading}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#FFFFFF" />
+                ) : (
                   <>
-                    <BrandButton
-                      title="Share to Instagram Story"
-                      onPress={handleInstagramStoryShare}
-                      style={[styles.shareButton, { backgroundColor: '#E1306C' }]}
-                      variant="primary"
-                      disabled={isLoading}
-                      icon={<Feather name="camera" size={20} color="#FFFFFF" />}
-                    />
-                    <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
-                      Downloads story image to share
+                    <Feather name="search" size={20} color="#FFFFFF" />
+                    <Text style={[styles.analyzeButtonText, appleStyles.buttonText]}>
+                      Get Valuation
                     </Text>
                   </>
                 )}
-                <BrandButton
-                  title="Download Image"
-                  onPress={handleDownloadShareImage}
-                  style={[styles.shareButton, { backgroundColor: '#52525b' }]}
-                  variant="primary"
-                  disabled={isLoading}
-                  icon={<Feather name="download" size={20} color="#FFFFFF" />}
-                />
-                {Platform.OS === 'web' && (
-                  <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
-                    Save to share anywhere
-                  </Text>
-                )}
-                <BrandButton
-                  title="Scan Another Item"
-                  onPress={resetApp}
-                  style={[styles.resetButton, { backgroundColor: brandColors.accent }]}
-                  variant="primary"
-                />
-              </View>
-            )}
+              </TouchableOpacity>
             </View>
+          ) : (
+            <Animated.View 
+              style={[
+                styles.resultsSection,
+                {
+                  opacity: fadeAnim,
+                  transform: [{ scale: scaleAnim }]
+                }
+              ]}
+            >
+              <View style={[styles.resultCard, appleStyles.card]}>
+                <View style={styles.resultHeader}>
+                  <Text style={[styles.itemName, appleStyles.title]}>
+                    {analysisResult.item_name || 'Unknown Item'}
+                  </Text>
+                  <TouchableOpacity
+                    style={styles.shareButton}
+                    onPress={() => setShowShareModal(true)}
+                  >
+                    <Feather name="share-2" size={20} color={brandColors.primary} />
+                  </TouchableOpacity>
+                </View>
+
+                <View style={styles.priceSection}>
+                  <Text style={styles.priceLabel}>Estimated Value</Text>
+                  <Text style={[styles.priceValue, appleStyles.largeTitle]}>
+                    ${analysisResult.estimated_value || '0'}
+                  </Text>
+                  {renderPriceRangeBar()}
+                </View>
+
+                <View style={styles.metricsGrid}>
+                  <View style={styles.metricCard}>
+                    <View style={styles.metricHeader}>
+                      <Feather name="shield" size={16} color={brandColors.primary} />
+                      <Text style={styles.metricLabel}>Authenticity</Text>
+                    </View>
+                    <Text style={styles.metricValue}>
+                      {analysisResult.real_score || analysisResult.authenticity || 'Unknown'}
+                      {analysisResult.real_score && '%'}
+                    </Text>
+                  </View>
+
+                  <View style={styles.metricCard}>
+                    <View style={styles.metricHeader}>
+                      <Feather name="trending-up" size={16} color={brandColors.primary} />
+                      <Text style={styles.metricLabel}>Market Trend</Text>
+                    </View>
+                    <Text style={styles.metricValue}>
+                      {analysisResult.market_trend || analysisResult.trending_score || 'Stable'}
+                      {analysisResult.trending_score && '/100'}
+                    </Text>
+                  </View>
+                </View>
+
+                {analysisResult.key_points && (
+                  <View style={styles.keyPointsSection}>
+                    <Text style={styles.sectionTitle}>Key Insights</Text>
+                    {analysisResult.key_points.map((point, index) => (
+                      <View key={index} style={styles.keyPoint}>
+                        <Feather name="check-circle" size={16} color={brandColors.success} />
+                        <Text style={styles.keyPointText}>{point}</Text>
+                      </View>
+                    ))}
+                  </View>
+                )}
+
+                {analysisResult.platforms && analysisResult.platforms.length > 0 && (
+                  <View style={styles.platformsSection}>
+                    <Text style={styles.sectionTitle}>Best Places to Sell</Text>
+                    <View style={styles.platformsGrid}>
+                      {analysisResult.platforms.map((platform, index) => (
+                        <View key={index} style={styles.platformBadge}>
+                          <Text style={styles.platformName}>{platform}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                )}
+
+                <View style={styles.actionButtons}>
+                  <TouchableOpacity 
+                    style={[styles.actionButton, appleStyles.secondaryButton]}
+                    onPress={resetAnalysis}
+                  >
+                    <Feather name="refresh-cw" size={18} color={brandColors.primary} />
+                    <Text style={[styles.actionButtonText, { color: brandColors.primary }]}>
+                      Scan Another Item
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity 
+                    style={[styles.actionButton, appleStyles.primaryButton]}
+                    onPress={shareResults}
+                  >
+                    <Feather name="share" size={18} color="#FFFFFF" />
+                    <Text style={[styles.actionButtonText, appleStyles.buttonText]}>
+                      Share Results
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </Animated.View>
+          )}
+        </KeyboardAvoidingView>
+      </ScrollView>
+
+      {/* Camera Modal */}
+      <Modal
+        visible={showCamera}
+        animationType="slide"
+        onRequestClose={() => setShowCamera(false)}
+      >
+        <View style={styles.cameraContainer}>
+          {Platform.OS === 'web' ? (
+            <View style={styles.webCameraContainer}>
+              <video
+                ref={cameraRef}
+                style={styles.webCamera}
+                autoPlay
+                playsInline
+              />
+              <View style={styles.cameraControls}>
+                <TouchableOpacity
+                  style={styles.captureButton}
+                  onPress={() => {
+                    if (cameraRef.current) {
+                      const canvas = document.createElement('canvas');
+                      canvas.width = cameraRef.current.videoWidth;
+                      canvas.height = cameraRef.current.videoHeight;
+                      canvas.getContext('2d').drawImage(cameraRef.current, 0, 0);
+                      canvas.toBlob((blob) => {
+                        const reader = new FileReader();
+                        reader.onloadend = () => {
+                          setImageUri(reader.result);
+                          setShowCamera(false);
+                        };
+                        reader.readAsDataURL(blob);
+                      });
+                    }
+                  }}
+                >
+                  <View style={styles.captureButtonInner} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.closeCameraButton}
+                  onPress={() => setShowCamera(false)}
+                >
+                  <Feather name="x" size={30} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            </View>
+          ) : (
+            <Camera
+              style={styles.camera}
+              type={cameraType}
+              ref={cameraRef}
+            >
+              <View style={styles.cameraControls}>
+                <TouchableOpacity
+                  style={styles.flipButton}
+                  onPress={() => {
+                    setCameraType(
+                      cameraType === Camera.Constants.Type.back
+                        ? Camera.Constants.Type.front
+                        : Camera.Constants.Type.back
+                    );
+                  }}
+                >
+                  <Feather name="rotate-cw" size={24} color="#FFFFFF" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.captureButton}
+                  onPress={takePicture}
+                >
+                  <View style={styles.captureButtonInner} />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.closeCameraButton}
+                  onPress={() => setShowCamera(false)}
+                >
+                  <Feather name="x" size={30} color="#FFFFFF" />
+                </TouchableOpacity>
+              </View>
+            </Camera>
           )}
         </View>
-      </View>
-      </PageContainer>
-      
-      {/* Legal Footer */}
-      <View style={styles.legalFooter}>
-        <View style={styles.footerLinks}>
-          <TouchableOpacity
-            onPress={() => setShowPricingPage(true)}
-            style={styles.footerLink}
-          >
-            <Text style={styles.footerLinkText}>Pricing</Text>
-          </TouchableOpacity>
-          <Text style={styles.footerDivider}>•</Text>
-          <TouchableOpacity
-            onPress={() => setShowMissionModal(true)}
-            style={styles.footerLink}
-          >
-            <Text style={styles.footerLinkText}>Mission</Text>
-          </TouchableOpacity>
-        </View>
-        <Text style={[styles.legalText, { marginBottom: 4 }]}>
-          ai makes mistakes. check important info
-        </Text>
-        <Text style={styles.legalText}>
-          Flippi™ and Flippi.ai™ are trademarks of Boca Belle. All rights reserved.
-        </Text>
-      </View>
-      
-      <MissionModal 
-        visible={showMissionModal} 
-        onClose={() => setShowMissionModal(false)} 
+      </Modal>
+
+      {/* History Modal */}
+      <Modal
+        visible={showHistory}
+        animationType="slide"
+        onRequestClose={() => setShowHistory(false)}
+      >
+        <SafeAreaView style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={[styles.modalTitle, appleStyles.title]}>History</Text>
+            <View style={styles.modalHeaderButtons}>
+              {analysisHistory.length > 0 && (
+                <TouchableOpacity
+                  style={styles.clearButton}
+                  onPress={clearHistory}
+                >
+                  <Feather name="trash-2" size={20} color={brandColors.danger} />
+                </TouchableOpacity>
+              )}
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={() => setShowHistory(false)}
+              >
+                <Feather name="x" size={24} color={brandColors.text} />
+              </TouchableOpacity>
+            </View>
+          </View>
+          
+          <ScrollView style={styles.historyList}>
+            {analysisHistory.length === 0 ? (
+              <View style={styles.emptyState}>
+                <Feather name="inbox" size={48} color={brandColors.textSecondary} />
+                <Text style={styles.emptyStateText}>No history yet</Text>
+              </View>
+            ) : (
+              analysisHistory.map((item) => (
+                <TouchableOpacity
+                  key={item.id}
+                  style={[styles.historyItem, appleStyles.card]}
+                  onPress={() => {
+                    setSelectedHistoryItem(item);
+                    setShowHistory(false);
+                    setAnalysisResult(item.result);
+                    setImageUri(item.imageUri);
+                    setDescription(item.description);
+                  }}
+                >
+                  <Image 
+                    source={{ uri: item.imageUri }} 
+                    style={styles.historyThumbnail} 
+                  />
+                  <View style={styles.historyInfo}>
+                    <Text style={styles.historyItemName}>
+                      {item.result.item_name || 'Unknown Item'}
+                    </Text>
+                    <Text style={styles.historyItemValue}>
+                      ${item.result.estimated_value || '0'}
+                    </Text>
+                    <Text style={styles.historyItemDate}>
+                      {new Date(item.timestamp).toLocaleDateString()}
+                    </Text>
+                  </View>
+                  <Feather name="chevron-right" size={20} color={brandColors.textSecondary} />
+                </TouchableOpacity>
+              ))
+            )}
+          </ScrollView>
+        </SafeAreaView>
+      </Modal>
+
+      {/* Feedback Modal */}
+      {showFeedbackModal && (
+        <FlippiBot
+          isVisible={showFeedbackModal}
+          onClose={() => setShowFeedbackModal(false)}
+          initialDecision={feedbackDecision}
+          analysisId={currentAnalysisId}
+          analysisResult={analysisResult}
+        />
+      )}
+
+      {/* Share Modal */}
+      {showShareModal && analysisResult && (
+        <ShareModal
+          isVisible={showShareModal}
+          onClose={() => setShowShareModal(false)}
+          result={analysisResult}
+          imageUri={imageUri}
+          pricePaid={pricePaid}
+          onPricePaidChange={setPricePaid}
+        />
+      )}
+
+      {/* Hidden canvas for image generation */}
+      <canvas
+        ref={canvasRef}
+        style={{ display: 'none' }}
+        width={1080}
+        height={1080}
       />
-      
-      <AdminDashboard
-        isVisible={showAdminDashboard}
-        onClose={() => setShowAdminDashboard(false)}
-      />
-      
-      <GrowthDashboard
-        isVisible={showGrowthDashboard}
-        onClose={() => setShowGrowthDashboard(false)}
-      />
-      
-      <PricingModal
-        visible={showPricingPage}
-        onClose={() => setShowPricingPage(false)}
-        onSelectPlan={handlePaymentSelect}
-      />
-      
-      <UpgradeModal
-        isVisible={showUpgradeModal}
-        onClose={() => setShowUpgradeModal(false)}
-        onSelectPayment={handlePaymentSelect}
-        onLearnMore={() => {
-          setShowUpgradeModal(false);
-          setShowPricingPage(true);
-        }}
-        currentFlipCount={flipStatus?.flips_used || 0}
-      />
-    </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    width: '100%', // Ensure full width
-    backgroundColor: brandColors.background, // Ensure white background
+    backgroundColor: brandColors.background,
   },
-  contentContainer: {
+  scrollContent: {
     flexGrow: 1,
-    alignItems: 'center', // Center the content column horizontally
-    justifyContent: 'flex-start', // Start from top, not center
-    paddingTop: 0, // No top padding
-    width: '100%', // Full width
   },
-  environmentBanner: {
-    backgroundColor: '#2196F3',
-    padding: 8,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+    paddingBottom: 10,
   },
-  environmentBannerStaging: {
-    backgroundColor: '#4CAF50',
-    padding: 8,
-    alignItems: 'center',
+  logo: {
+    width: 120,
+    height: 40,
   },
-  environmentText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: typography.weights.bold,
-    letterSpacing: 1,
+  headerButtons: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  historyButton: {
+    padding: 10,
   },
   content: {
     flex: 1,
-    alignItems: 'center',
-    padding: isMobile ? 16 : 20, // Restore proper padding
-    paddingTop: isMobile ? 40 : 60, // Restore top padding for proper spacing
+    paddingHorizontal: 20,
   },
-  contentLoggedIn: {
-    paddingTop: isMobile ? 16 : 20, // Proper spacing when logged in
+  uploadSection: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 40,
   },
   title: {
-    fontSize: isMobile ? 24 : 28,
-    fontWeight: typography.weights.bold,
-    fontFamily: typography.bodyFont,
+    fontSize: 32,
+    fontWeight: '700',
     color: brandColors.text,
-    marginTop: 20,
-    marginBottom: 12,
-    lineHeight: isMobile ? 28.8 : 33.6, // 1.2 line height
+    marginBottom: 8,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: isMobile ? 16 : 18,
-    fontWeight: typography.weights.regular,
-    fontFamily: typography.bodyFont,
-    color: brandColors.aiGray, // Same gray as .ai
-    marginBottom: 8,
-    textAlign: 'center',
-    maxWidth: isMobile ? '100%' : '80%',
-    alignSelf: 'center',
-  },
-  uploadContainer: {
-    flex: 1, // Allow container to grow
-    width: '100%', // Full width within PageContainer
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-    marginBottom: 20,
-    padding: 20,
-  },
-  resultContainer: {
-    width: '100%',
-    paddingHorizontal: 16, // px-4
-    paddingTop: 16, // pt-4
-    backgroundColor: brandColors.background, // Ensure white background
-  },
-  actionButton: {
-    marginVertical: 8,
-    width: '100%',
-    maxWidth: 400, // Prevent buttons from being too wide on desktop
-  },
-  primaryActionButton: {
-    // Warmer styling for primary actions
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
-  },
-  welcomeText: {
-    fontSize: 14,
-    fontWeight: typography.weights.regular,
-    color: brandColors.textSecondary,
-    textAlign: 'center',
-  },
-  welcomeContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 16,
-    marginBottom: 24,
-  },
-  helperText: {
-    fontSize: 13,
-    color: brandColors.textSecondary,
-    textAlign: 'center',
-    fontStyle: 'italic',
-  },
-  dropZone: {
-    width: '100%',
-    minHeight: 150,
-    borderWidth: 2,
-    borderColor: brandColors.border,
-    borderStyle: 'dashed',
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 20,
-    padding: 20,
-    // Shadow removed for Chrome compatibility
-  },
-  dropZoneActive: {
-    borderColor: '#4CAF50',
-    backgroundColor: 'rgba(76, 175, 80, 0.1)',
-  },
-  dropZoneText: {
-    fontSize: 16,
-  },
-  dragOver: {
-    opacity: 0.8,
-  },
-  imagePreviewContainer: {
-    width: '100%',
-    backgroundColor: 'transparent', // No background
-    marginBottom: 12, // mb-3
-  },
-  imagePreview: {
-    width: '100%',
-    height: 300, // Fixed height to ensure visibility
-    minHeight: 200, // Minimum height
-    resizeMode: 'contain',
-    borderRadius: 8, // rounded-md
-  },
-  image: {
-    width: '100%',
-    height: 300,
-    resizeMode: 'contain',
-    marginBottom: 20,
-    borderRadius: 10,
-  },
-  loadingContainer: {
-    alignItems: 'center',
-    marginVertical: 20,
-  },
-  loadingText: {
-    marginTop: 10,
-    fontSize: 16,
-  },
-  analysisResult: {
-    width: isMobile ? '100%' : '80%', // Responsive width based on screen size
-    maxWidth: isMobile ? '100%' : 800, // Full width on mobile, constrained on desktop
-    padding: isMobile ? 16 : 24, // More padding for better touch targets
-    paddingVertical: isMobile ? 20 : 28, // Extra vertical padding
-    borderRadius: isMobile ? 0 : 14, // More rounded corners
-    marginBottom: isMobile ? 0 : 20, // No margin on mobile
-    alignSelf: 'center',
-    backgroundColor: brandColors.surface,
-    // Shadow removed for Chrome compatibility
-  },
-  resultTitle: {
-    fontSize: 20,
-    fontWeight: typography.weights.bold,
-    marginBottom: 15,
-    textAlign: 'center',
-  },
-  resultItem: {
-    marginBottom: 12,
-    width: '100%',
-    ...(isDesktop && {
-      width: 'auto',
-      flex: '1 1 45%',
-      minWidth: 200,
-    }),
-  },
-  resultLabel: {
-    fontSize: 16,
-    fontFamily: typography.bodyFont,
-    fontWeight: typography.weights.regular,
-    color: brandColors.textSecondary,
-    marginBottom: 4,
-  },
-  resultValue: {
     fontSize: 18,
-    fontFamily: typography.bodyFont,
-    fontWeight: typography.weights.medium,
-    color: brandColors.text,
-    flexShrink: 1,
-    flexWrap: 'wrap',
+    color: brandColors.textSecondary,
+    marginBottom: 30,
+    textAlign: 'center',
   },
-  priceValue: {
-    fontSize: 20,
-    fontWeight: typography.weights.bold,
-  },
-  suggestedPriceContainer: {
-    padding: 15,
-    borderRadius: 8,
-    marginTop: 10,
-    marginBottom: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: brandColors.softTaupeBeige,
-    width: '100%',
-  },
-  suggestedPriceLabel: {
-    fontSize: 14,
-    marginBottom: 5,
-  },
-  suggestedPriceValue: {
-    fontSize: 24,
-    fontWeight: typography.weights.bold,
-  },
-  legacyBrandBadge: {
+  scanLimitBadge: {
+    backgroundColor: brandColors.warning + '20',
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    alignSelf: 'center',
-    marginTop: 10,
-    marginBottom: 5,
+    marginBottom: 20,
   },
-  legacyBrandText: {
+  scanLimitText: {
+    color: brandColors.warning,
     fontSize: 14,
-    fontWeight: typography.weights.semiBold,
+    fontWeight: '600',
   },
-  priceAdjustmentNote: {
-    fontSize: 12,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    marginTop: 5,
-    marginBottom: 10,
+  imageUploadArea: {
+    width: '100%',
+    maxWidth: 400,
+    height: 300,
+    borderWidth: 2,
+    borderColor: brandColors.border,
+    borderRadius: 20,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    overflow: 'hidden',
   },
-  styleTierBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20, // More rounded for badge look
-    alignSelf: 'flex-start',
-    borderWidth: 1.5,
-    borderColor: 'transparent',
+  uploadPrompt: {
+    alignItems: 'center',
   },
-  styleTierBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 11,
-    fontWeight: typography.weights.medium,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+  uploadText: {
+    fontSize: 18,
+    color: brandColors.text,
+    marginTop: 16,
+    fontWeight: '600',
   },
-  warningText: {
-    fontSize: 12,
-    fontStyle: 'italic',
+  uploadSubtext: {
+    fontSize: 14,
+    color: brandColors.textSecondary,
     marginTop: 4,
   },
-  disclaimer: {
-    backgroundColor: '#FFF3E0',
-    padding: 12,
-    marginBottom: 15,
-    borderRadius: 8,
+  imagePreviewContainer: {
+    width: '100%',
+    height: '100%',
+    position: 'relative',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'contain',
+  },
+  removeImageButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 20,
+    padding: 8,
+  },
+  uploadButtons: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 20,
+  },
+  uploadButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    backgroundColor: brandColors.primary,
+    borderRadius: 12,
+  },
+  uploadButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  descriptionInput: {
+    width: '100%',
+    maxWidth: 400,
+    minHeight: 80,
     borderWidth: 1,
-    borderColor: '#FFE0B2',
+    borderColor: brandColors.border,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    marginBottom: 20,
+    textAlignVertical: 'top',
   },
-  disclaimerText: {
-    fontSize: 14,
-    fontStyle: 'italic',
-    textAlign: 'center',
+  analyzeButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 32,
+    paddingVertical: 16,
+    backgroundColor: brandColors.primary,
+    borderRadius: 12,
+    minWidth: 200,
   },
-  resetButton: {
-    marginTop: 10,
-    width: '100%',
+  analyzeButtonDisabled: {
+    opacity: 0.5,
   },
-  postAnalysisActions: {
-    width: '100%',
-    marginTop: 20,
-    gap: 12,
+  analyzeButtonText: {
+    color: '#FFFFFF',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  resultsSection: {
+    flex: 1,
+    paddingVertical: 20,
+  },
+  resultCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  resultHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  itemName: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: brandColors.text,
+    flex: 1,
   },
   shareButton: {
-    marginBottom: 8,
+    padding: 8,
+  },
+  priceSection: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  priceLabel: {
+    fontSize: 16,
+    color: brandColors.textSecondary,
+    marginBottom: 4,
+  },
+  priceValue: {
+    fontSize: 48,
+    fontWeight: '700',
+    color: brandColors.primary,
+  },
+  priceRangeContainer: {
     width: '100%',
+    marginTop: 16,
+  },
+  priceRangeBar: {
+    height: 8,
+    backgroundColor: brandColors.background,
+    borderRadius: 4,
+    position: 'relative',
+    marginBottom: 8,
+  },
+  priceRangeTrack: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: '100%',
+    backgroundColor: brandColors.primary + '30',
+    borderRadius: 4,
+  },
+  priceRangeIndicator: {
+    position: 'absolute',
+    width: 16,
+    height: 16,
+    backgroundColor: brandColors.primary,
+    borderRadius: 8,
+    top: -4,
+    marginLeft: -8,
+  },
+  priceRangeLabels: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  priceRangeLabel: {
+    fontSize: 12,
+    color: brandColors.textSecondary,
+  },
+  priceRangeEstimated: {
+    fontWeight: '600',
+    color: brandColors.primary,
+  },
+  metricsGrid: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 24,
+  },
+  metricCard: {
+    flex: 1,
+    backgroundColor: brandColors.background,
+    padding: 16,
+    borderRadius: 12,
+  },
+  metricHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  metricLabel: {
+    fontSize: 14,
+    color: brandColors.textSecondary,
+  },
+  metricValue: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: brandColors.text,
+  },
+  keyPointsSection: {
+    marginBottom: 24,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: brandColors.text,
+    marginBottom: 12,
+  },
+  keyPoint: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  keyPointText: {
+    flex: 1,
+    fontSize: 16,
+    color: brandColors.text,
+    lineHeight: 22,
+  },
+  platformsSection: {
+    marginBottom: 24,
+  },
+  platformsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  platformBadge: {
+    backgroundColor: brandColors.primary + '20',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  platformName: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: brandColors.primary,
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 16,
+  },
+  actionButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+  },
+  actionButtonText: {
+    fontSize: 16,
+    fontWeight: '600',
   },
   // Camera styles
   cameraContainer: {
     flex: 1,
+    backgroundColor: '#000',
+  },
+  camera: {
+    flex: 1,
+  },
+  webCameraContainer: {
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
-  cameraPreview: {
+  webCamera: {
     width: '100%',
     maxWidth: 600,
-    height: 400,
-    backgroundColor: 'black',
+    height: 'auto',
   },
-  cameraText: {
-    fontSize: 16,
-    marginVertical: 10,
-  },
-  cameraButtonContainer: {
-    flexDirection: 'row',
-    marginTop: 20,
-    gap: 20,
-  },
-  // Analysis controls
-  analysisControls: {
-    width: '100%',
-    marginVertical: 20,
-  },
-  descriptionInput: {
-    width: '100%',
-    padding: 16,
-    borderWidth: 1,
-    borderRadius: 14,
-    fontSize: 16,
-    marginBottom: 15,
-    minHeight: 80,
-    textAlignVertical: 'top',
-  },
-  goButton: {
-    width: '100%',
-  },
-  flipCountText: {
-    textAlign: 'center',
-    color: brandColors.textSecondary,
-    fontSize: 14,
-    marginBottom: 8,
-  },
-  // User section styles
-  userSection: {
+  cameraControls: {
     position: 'absolute',
-    top: isMobile ? 20 : 40, // Responsive top spacing
-    right: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'transparent', // Remove background
-    paddingVertical: 4,
-    paddingHorizontal: 0,
-    shadowColor: 'transparent', // Remove shadow
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-    elevation: 2,
-    zIndex: 1000,
-    maxWidth: 280,
-  },
-  userInfo: {
-    marginRight: 8,
-    maxWidth: 200, // Limit width to prevent overflow
-  },
-  userName: {
-    fontSize: 13,
-    fontWeight: typography.weights.semiBold,
-    color: brandColors.text,
-  },
-  userGreeting: {
-    fontSize: 13,
-    fontWeight: typography.weights.semiBold,
-    color: brandColors.text,
-  },
-  userEmail: {
-    fontSize: 12,
-    color: brandColors.text,
-    fontWeight: typography.weights.medium,
-  },
-  exitButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    backgroundColor: 'transparent',
-    borderRadius: 8,
-    marginLeft: 8,
-    borderWidth: 1,
-    borderColor: brandColors.border,
-  },
-  exitText: {
-    fontSize: 12,
-    color: brandColors.text,
-    fontWeight: typography.weights.medium,
-  },
-  pricingButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  pricingText: {
-    fontSize: 12,
-    color: brandColors.primary,
-    fontWeight: typography.weights.medium,
-  },
-  adminButton: {
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    backgroundColor: brandColors.primary,
-    borderRadius: 8,
-    marginRight: 8,
-  },
-  adminText: {
-    fontSize: 12,
-    color: '#FFFFFF',
-    fontWeight: typography.weights.medium,
-  },
-  legalFooter: {
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    borderTopWidth: 1,
-    borderTopColor: brandColors.border,
-    alignItems: 'center',
-  },
-  footerLinks: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  footerLink: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-  },
-  footerLinkText: {
-    fontSize: 14,
-    color: brandColors.primary,
-    fontFamily: typography.fontFamily,
-    textDecorationLine: 'underline',
-  },
-  footerDivider: {
-    fontSize: 14,
-    color: brandColors.textSecondary,
-    marginHorizontal: 8,
-  },
-  legalText: {
-    fontSize: 12,
-    color: brandColors.textSecondary,
-    fontFamily: typography.fontFamily,
-    textAlign: 'center',
-    fontWeight: typography.weights.medium,
-    textDecorationLine: 'underline',
-  },
-  footerSeparator: {
-    fontSize: 14,
-    color: brandColors.textSecondary,
-    marginHorizontal: 12,
-  },
-  environmentalContainer: {
-    marginTop: 12,
-    marginHorizontal: 16,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  environmentalContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  environmentalTag: {
-    fontSize: 14,
-    fontFamily: typography.fontFamily,
-    fontWeight: typography.weights.medium,
-    textAlign: 'center',
-  },
-  missionLink: {
-    marginLeft: 6,
-    padding: 2,
-  },
-  primaryInfoSection: {
-    marginVertical: 10,
-    ...(isDesktop && {
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-      gap: 16,
-    }),
-  },
-  secondaryInfoSection: {
-    marginTop: 10,
-    ...(isDesktop && {
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      justifyContent: 'space-between',
-      gap: 16,
-    }),
-  },
-  viewMoreButton: {
-    paddingVertical: 12,
-    paddingHorizontal: 20,
-    borderRadius: 14,
-    alignItems: 'center',
-    marginVertical: 10,
-  },
-  viewMoreText: {
-    fontSize: 16,
-    fontWeight: typography.weights.semiBold,
-  },
-  numericalEmphasis: {
-    color: '#F59E0B', // Amber for numerical values
-    fontWeight: typography.weights.semiBold,
-    fontSize: 24,
-  },
-  realScoreEmphasis: {
-    color: '#10B981', // Emerald green for Real Score
-    fontWeight: typography.weights.semiBold,
-    fontSize: 24,
-  },
-  trendingLabel: {
-    color: brandColors.textSecondary,
-    fontStyle: 'italic',
-    fontSize: 14,
-  },
-  labelWithIcon: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  infoIconButton: {
-    marginLeft: 6,
-    padding: 4,
-    minWidth: 24,
-    minHeight: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  realScoreExplanation: {
-    fontSize: 14,
-    fontFamily: typography.bodyFont,
-    color: brandColors.textSecondary,
-    fontStyle: 'italic',
-    marginTop: 4,
-    lineHeight: 20,
-  },
-  dupeAlert: {
-    backgroundColor: '#FEF3C7',
-    borderColor: '#FDE68A',
-    borderWidth: 1,
-    borderRadius: 8,
-    padding: 12,
-    marginVertical: 12,
-    marginHorizontal: 0,
-  },
-  dupeAlertContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dupeAlertText: {
-    fontSize: 14,
-    fontFamily: typography.bodyFont,
-    color: '#92400E',
-    lineHeight: 20,
-    flex: 1,
-  },
-  topPriceContainer: {
-    backgroundColor: '#F9FAFB',
-    borderRadius: 12,
-    padding: 16,
-    marginVertical: 10,
-  },
-  priceRow: {
+    bottom: 40,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     justifyContent: 'space-around',
-    marginBottom: 16,
-  },
-  priceColumn: {
-    flex: 1,
     alignItems: 'center',
   },
-  priceLabel: {
-    fontSize: 16,
-    fontFamily: typography.bodyFont,
-    fontWeight: typography.weights.regular,
-    color: brandColors.textSecondary,
-    marginBottom: 4,
+  flipButton: {
+    padding: 20,
   },
-  priceValueLarge: {
+  captureButton: {
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#FFFFFF',
+    padding: 5,
+  },
+  captureButtonInner: {
+    flex: 1,
+    borderRadius: 30,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: '#000',
+  },
+  closeCameraButton: {
+    padding: 20,
+  },
+  // Modal styles
+  modalContainer: {
+    flex: 1,
+    backgroundColor: brandColors.background,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: brandColors.border,
+  },
+  modalTitle: {
     fontSize: 24,
-    fontFamily: typography.bodyFont,
-    fontWeight: typography.weights.bold,
-    color: brandColors.accent,
+    fontWeight: '700',
+    color: brandColors.text,
   },
-  itemInPriceBox: {
-    borderTopWidth: 1,
-    borderTopColor: brandColors.border,
-    paddingTop: 12,
+  modalHeaderButtons: {
+    flexDirection: 'row',
+    gap: 16,
   },
-  itemLabel: {
-    fontSize: 14,
-    fontFamily: typography.bodyFont,
+  clearButton: {
+    padding: 8,
+  },
+  closeButton: {
+    padding: 8,
+  },
+  historyList: {
+    flex: 1,
+  },
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 100,
+  },
+  emptyStateText: {
+    fontSize: 18,
     color: brandColors.textSecondary,
+    marginTop: 16,
+  },
+  historyItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    marginHorizontal: 20,
+    marginVertical: 8,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+  },
+  historyThumbnail: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    marginRight: 16,
+  },
+  historyInfo: {
+    flex: 1,
+  },
+  historyItemName: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: brandColors.text,
     marginBottom: 4,
   },
-  itemValue: {
+  historyItemValue: {
     fontSize: 18,
-    fontFamily: typography.bodyFont,
-    fontWeight: typography.weights.medium,
-    color: brandColors.text,
+    fontWeight: '700',
+    color: brandColors.primary,
+    marginBottom: 4,
+  },
+  historyItemDate: {
+    fontSize: 14,
+    color: brandColors.textSecondary,
   },
 });
