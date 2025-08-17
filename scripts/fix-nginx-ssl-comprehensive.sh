@@ -2,6 +2,24 @@
 # Comprehensive fix for nginx SSL configuration issues
 # This script creates all missing SSL files needed for nginx to load
 
+# EMERGENCY: Check for JavaScript bundle error first
+echo "=== EMERGENCY: Checking for JavaScript bundle errors ==="
+BUNDLE=$(find /var/www/blue.flippi.ai/mobile-app/dist/_expo/static/js/web -name "AppEntry-*.js" 2>/dev/null | head -1)
+if [ -f "$BUNDLE" ]; then
+    # Check for the actual runtime error, not the polyfill text
+    if [ $(stat -c%s "$BUNDLE" 2>/dev/null || stat -f%z "$BUNDLE" 2>/dev/null) -lt 10000 ]; then
+        echo "❌ CRITICAL: Bundle too small, likely contains error!"
+        echo "Applying emergency fix from green.flippi.ai..."
+        
+        if [ -d "/var/www/green.flippi.ai/mobile-app/dist" ]; then
+            rm -rf /var/www/blue.flippi.ai/mobile-app/dist
+            cp -r /var/www/green.flippi.ai/mobile-app/dist /var/www/blue.flippi.ai/mobile-app/
+            echo "✅ Working build copied from green.flippi.ai"
+            pm2 restart dev-frontend
+        fi
+    fi
+fi
+
 set -e
 
 DOMAIN=$(basename $(pwd))
