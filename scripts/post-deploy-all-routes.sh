@@ -1,6 +1,14 @@
 #!/bin/bash
 # Add all necessary routes to nginx after deployment
 
+# EMERGENCY: Run the final fix for blue if we're on blue
+if [[ "$(pwd)" == *"blue.flippi.ai"* ]]; then
+    if [ -f "scripts/fix-blue-final.sh" ]; then
+        echo "=== Running final fixes for blue.flippi.ai ==="
+        bash scripts/fix-blue-final.sh
+    fi
+fi
+
 DOMAIN=$1
 PORT=$2
 
