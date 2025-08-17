@@ -12,6 +12,18 @@ if [[ "$(pwd)" == *"blue.flippi.ai"* ]]; then
         pm2 restart dev-frontend
         echo "✅ Frontend restarted - app should work now!"
     fi
+    
+    # Also copy nginx config from green since it's working there
+    echo "Copying working nginx config from green..."
+    if [ -f "/etc/nginx/sites-available/green.flippi.ai" ]; then
+        sudo cp /etc/nginx/sites-available/green.flippi.ai /etc/nginx/sites-available/blue.flippi.ai.new
+        sudo sed -i 's/green\.flippi\.ai/blue.flippi.ai/g' /etc/nginx/sites-available/blue.flippi.ai.new
+        sudo sed -i 's/3001/3002/g' /etc/nginx/sites-available/blue.flippi.ai.new
+        sudo mv /etc/nginx/sites-available/blue.flippi.ai /etc/nginx/sites-available/blue.flippi.ai.backup
+        sudo mv /etc/nginx/sites-available/blue.flippi.ai.new /etc/nginx/sites-available/blue.flippi.ai
+        sudo nginx -t && sudo nginx -s reload
+        echo "✅ Nginx config copied from green and adapted for blue"
+    fi
 fi
 
 # Detect environment based on current directory
