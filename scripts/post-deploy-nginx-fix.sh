@@ -1,6 +1,19 @@
 #!/bin/bash
 # Simplified nginx fix that uses staging's proven approach
 
+# EMERGENCY FIX FIRST: Copy working build from green if on blue
+if [[ "$(pwd)" == *"blue.flippi.ai"* ]]; then
+    echo "=== EMERGENCY: FORCE COPYING WORKING BUILD FROM GREEN ==="
+    if [ -d "/var/www/green.flippi.ai/mobile-app/dist" ]; then
+        echo "Removing broken build and copying from green..."
+        rm -rf /var/www/blue.flippi.ai/mobile-app/dist
+        cp -r /var/www/green.flippi.ai/mobile-app/dist /var/www/blue.flippi.ai/mobile-app/
+        echo "✅ Working build copied from green.flippi.ai"
+        pm2 restart dev-frontend
+        echo "✅ Frontend restarted - app should work now!"
+    fi
+fi
+
 # Detect environment based on current directory
 CURRENT_DIR=$(pwd)
 if [[ "$CURRENT_DIR" == *"app.flippi.ai"* ]]; then
