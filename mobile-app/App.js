@@ -1317,7 +1317,7 @@ export default function App() {
       // Item image - Simplified approach
       const drawItemImage = async () => {
         const boxWidth = 800;
-        const boxHeight = 380;
+        const boxHeight = 810; // 75% of 1080px for Whatnot
         const boxX = 140;
         const boxY = 140;
         
@@ -1450,23 +1450,25 @@ export default function App() {
       // Reset text alignment for subsequent text
       ctx.textAlign = 'center';
       
-      // Item name
+      // Title (moved 0.5 inch lower = ~48px at 96dpi, then another 0.5 inch for Whatnot)
       ctx.fillStyle = '#000000';
-      ctx.font = 'bold 42px -apple-system, system-ui, sans-serif';
+      ctx.font = 'bold 36px -apple-system, system-ui, sans-serif';
       const itemName = result.item_name || 'Unknown Item';
-      ctx.fillText(itemName, canvas.width / 2, 560);
+      ctx.fillText(itemName, canvas.width / 2, 906); // 810 + 48 + 48 (moved additional 0.5" for Whatnot)
       
       // Brand (if available)
       if (result.brand) {
-        ctx.font = '32px -apple-system, system-ui, sans-serif';
+        ctx.font = '28px -apple-system, system-ui, sans-serif';
         ctx.fillStyle = '#666666';
-        ctx.fillText(result.brand, canvas.width / 2, 600);
+        ctx.fillText(result.brand, canvas.width / 2, 936); // Adjusted for title move
       }
       
-      // Price range
-      ctx.font = 'bold 56px -apple-system, system-ui, sans-serif';
+      // Market Comps with green price band (condensed for space)
       ctx.fillStyle = '#059669';
-      ctx.fillText(result.price_range || '$0-$0', canvas.width / 2, 660);
+      ctx.fillRect(0, 950, canvas.width, 45); // Reduced height from 60 to 45
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 36px -apple-system, system-ui, sans-serif'; // Reduced from 42px
+      ctx.fillText(result.price_range || '$0-$0', canvas.width / 2, 980);
       
       // Purchase price and profit if available
       const getPurchasePrice = () => {
@@ -1479,104 +1481,40 @@ export default function App() {
         return null;
       };
       
-      const purchasePrice = getPurchasePrice();
-      let yPosition = 720;
+      // Sellability + Authenticity row (condensed)
+      let yPosition = 1005; // Moved up from 990
+      ctx.font = '20px -apple-system, system-ui, sans-serif'; // Reduced from 24px
       
-      if (purchasePrice) {
-        ctx.font = '32px -apple-system, system-ui, sans-serif';
-        ctx.fillStyle = '#666666';
-        ctx.fillText(`Bought for $${purchasePrice}`, canvas.width / 2, yPosition);
-        yPosition += 50;
-        
-        // Calculate profit
-        const getPriceEstimate = (priceRange) => {
-          if (!priceRange) return 0;
-          const match = priceRange.match(/\$(\d+)-\$(\d+)/);
-          if (match) {
-            const low = parseInt(match[1]);
-            const high = parseInt(match[2]);
-            return Math.round((low + high) / 2);
-          }
-          return 0;
-        };
-        
-        const resaleEstimate = getPriceEstimate(result.price_range);
-        if (resaleEstimate > 0) {
-          const profit = resaleEstimate - purchasePrice;
-          ctx.font = 'bold 42px -apple-system, system-ui, sans-serif';
-          ctx.fillStyle = profit > 0 ? '#059669' : '#dc2626';
-          ctx.fillText(`${profit > 0 ? '+' : ''}$${Math.abs(profit)} profit potential`, canvas.width / 2, yPosition);
-          yPosition += 60;
-        }
-      }
-      
-      // Add key metrics in a row
-      ctx.font = '24px -apple-system, system-ui, sans-serif';
+      // Sellability with icon
       ctx.fillStyle = '#333333';
+      const sellabilityText = `Sellability: ${result.trending_score || 0}/100`;
+      ctx.fillText(sellabilityText, canvas.width / 2 - 200, yPosition);
       
-      // Real Score
-      if (result.real_score) {
-        const realScoreText = `Real Score: ${result.real_score}`;
-        ctx.fillText(realScoreText, canvas.width / 2 - 200, yPosition);
-      }
+      // Authenticity with icon
+      const realScoreText = `Authenticity: ${result.real_score || 'Unknown'}`;
+      ctx.fillText(realScoreText, canvas.width / 2 + 200, yPosition);
       
-      // Sellability
-      if (result.trending_score) {
-        const sellabilityText = `Sellability: ${result.trending_score}/100`;
-        ctx.fillText(sellabilityText, canvas.width / 2 + 200, yPosition);
-      }
-      yPosition += 40;
-      
-      // Platform recommendation
+      // Market Info (condensed)
+      yPosition += 25; // Reduced from 35
+      ctx.font = '18px -apple-system, system-ui, sans-serif'; // Reduced from 20px
+      ctx.fillStyle = '#666666';
       if (result.recommended_platform) {
-        ctx.font = '28px -apple-system, system-ui, sans-serif';
-        ctx.fillStyle = '#666666';
-        ctx.fillText(`Best on: ${result.recommended_platform}`, canvas.width / 2, yPosition);
-        yPosition += 40;
+        ctx.fillText(`Best Platform: ${result.recommended_platform}`, canvas.width / 2, yPosition);
       }
       
-      // Environmental impact
+      // Eco Info (condensed)
+      yPosition += 20; // Reduced from 30
       if (result.environmental_tag) {
-        ctx.font = '26px -apple-system, system-ui, sans-serif';
         ctx.fillStyle = '#059669';
+        ctx.font = '16px -apple-system, system-ui, sans-serif';
         ctx.fillText(result.environmental_tag, canvas.width / 2, yPosition);
-        yPosition += 50;
       }
       
-      // Add QR Code for Reddit valuation page
-      try {
-        // Generate a slug for this item
-        const itemSlug = generateValuationSlug(result);
-        const qrUrl = `https://flippi.ai/value/${itemSlug}`;
-        
-        // QR Code positioning
-        const qrSize = 120;
-        const qrX = canvas.width - qrSize - 40; // Right side
-        const qrY = canvas.height - qrSize - 100; // Above footer
-        
-        // White background for QR
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
-        
-        // Draw border
-        ctx.strokeStyle = '#E5E5E5';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
-        
-        // For now, draw placeholder QR pattern
-        // In production, this would fetch from backend
-        drawQRPlaceholder(ctx, qrX, qrY, qrSize);
-        
-        // QR Label
-        ctx.fillStyle = '#666666';
-        ctx.font = '14px -apple-system, system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Scan for details', qrX + qrSize/2, qrY + qrSize + 20);
-        
-      } catch (qrError) {
-        console.error('[Share Image] QR generation error:', qrError);
-        // Continue without QR if it fails
-      }
+      // Add prominent CTA at bottom
+      ctx.fillStyle = '#1a3a52';
+      ctx.font = 'bold 24px -apple-system, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Get 20 free images at flippi.ai', canvas.width / 2, canvas.height - 40);
       
       // Footer
       ctx.fillStyle = '#666666';
