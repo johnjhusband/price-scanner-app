@@ -1,0 +1,133 @@
+name: Aggressive Nginx Fix
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/aggressive-nginx-fix.yml'
+
+jobs:
+  force-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Aggressively fix nginx
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== AGGRESSIVE NGINX FIX ==="
+            set -x  # Show all commands
+            
+            # 1. Find ALL nginx configs mentioning blue.flippi.ai
+            echo "Finding all configs..."
+            CONFIGS=$(grep -l "blue.flippi.ai" /etc/nginx/sites-*/* 2>/dev/null || true)
+            
+            # 2. Force the growth location into EVERY matching config
+            GROWTH_BLOCK='
+    # Growth backend endpoints - FORCED
+    location ^~ /growth {
+        proxy_pass http://127.0.0.1:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Nginx-Fix "aggressive";
+    }'
+            
+            # 3. Process each config
+            for CONFIG in $CONFIGS; do
+                echo ""
+                echo "Processing: $CONFIG"
+                
+                # Skip if already has growth routes
+                if grep -q "location.*growth" "$CONFIG"; then
+                    echo "Removing existing growth routes..."
+                    sudo sed -i '/# Growth backend endpoints/,/^[[:space:]]*}/d' "$CONFIG"
+                    sudo sed -i '/location.*growth.*{/,/^[[:space:]]*}/d' "$CONFIG"
+                fi
+                
+                # Find insertion point - after legal routes
+                INSERT_AFTER=$(grep -n "location = /contact {" "$CONFIG" | tail -1 | cut -d: -f1 || echo "")
+                
+                if [ -z "$INSERT_AFTER" ]; then
+                    # Try after terms
+                    INSERT_AFTER=$(grep -n "location = /terms {" "$CONFIG" | tail -1 | cut -d: -f1 || echo "")
+                fi
+                
+                if [ -z "$INSERT_AFTER" ]; then
+                    # Try before catch-all
+                    INSERT_AFTER=$(grep -n "location / {" "$CONFIG" | head -1 | cut -d: -f1 || echo "")
+                    if [ -n "$INSERT_AFTER" ]; then
+                        INSERT_AFTER=$((INSERT_AFTER - 1))
+                    fi
+                fi
+                
+                if [ -n "$INSERT_AFTER" ]; then
+                    # Create temp file
+                    TEMP="/tmp/nginx_$$.tmp"
+                    
+                    # Split file and insert
+                    head -n "$INSERT_AFTER" "$CONFIG" > "$TEMP"
+                    
+                    # Skip to end of current location block
+                    SKIP_TO=$(tail -n +$((INSERT_AFTER + 1)) "$CONFIG" | grep -n "^[[:space:]]*}" | head -1 | cut -d: -f1 || echo "5")
+                    SKIP_TO=$((INSERT_AFTER + SKIP_TO))
+                    
+                    # Add content
+                    head -n "$SKIP_TO" "$CONFIG" >> "$TEMP"
+                    echo "$GROWTH_BLOCK" >> "$TEMP"
+                    tail -n +$((SKIP_TO + 1)) "$CONFIG" >> "$TEMP"
+                    
+                    # Replace original
+                    sudo cp "$TEMP" "$CONFIG"
+                    rm -f "$TEMP"
+                    echo "✅ Growth routes added to $CONFIG"
+                fi
+            done
+            
+            # 4. Also check symlinks
+            echo ""
+            echo "Checking symlinks..."
+            for LINK in /etc/nginx/sites-enabled/*; do
+                if [ -L "$LINK" ]; then
+                    TARGET=$(readlink -f "$LINK")
+                    echo "$LINK -> $TARGET"
+                fi
+            done
+            
+            # 5. Force reload nginx multiple ways
+            echo ""
+            echo "Force reloading nginx..."
+            sudo nginx -t || true
+            sudo systemctl reload nginx || true
+            sudo nginx -s reload || true
+            sudo service nginx reload || true
+            
+            # 6. Clear any caches
+            echo "Clearing caches..."
+            sudo sync && echo 3 > /proc/sys/vm/drop_caches || true
+            
+            # 7. Test multiple times
+            echo ""
+            echo "Testing (attempt 1)..."
+            sleep 2
+            curl -s https://blue.flippi.ai/growth/questions | grep -o "<title>.*</title>" | head -1
+            
+            echo "Testing (attempt 2)..."
+            sleep 2
+            curl -s -H "Cache-Control: no-cache" https://blue.flippi.ai/growth/questions | grep -o "<title>.*</title>" | head -1
+            
+            echo "Testing (attempt 3 with full response)..."
+            sleep 1
+            RESPONSE=$(curl -s https://blue.flippi.ai/growth/questions)
+            if echo "$RESPONSE" | grep -q "Questions Found"; then
+                echo "✅ SUCCESS! Growth routes are working!"
+            else
+                echo "❌ Still showing React app"
+                echo ""
+                echo "Active nginx config sections with 'growth':"
+                sudo nginx -T 2>/dev/null | grep -A3 -B3 "growth" | head -20 || true
+            fi
