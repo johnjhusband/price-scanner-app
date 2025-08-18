@@ -1,4 +1,4 @@
-name: Fix Nginx Only
+name: Fix Nginx Only - Direct
 on:
   workflow_dispatch:
   push:
