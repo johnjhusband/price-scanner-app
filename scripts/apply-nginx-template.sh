@@ -23,20 +23,27 @@ fi
 # Backup current config
 if [ -f "$TARGET_FILE" ]; then
     BACKUP_FILE="${TARGET_FILE}.backup.$(date +%Y%m%d_%H%M%S)"
-    cp "$TARGET_FILE" "$BACKUP_FILE"
+    sudo cp "$TARGET_FILE" "$BACKUP_FILE"
     echo "✅ Backed up current config to $BACKUP_FILE"
 fi
 
 # Copy template to nginx sites-available
-cp "$TEMPLATE_FILE" "$TARGET_FILE"
+sudo cp "$TEMPLATE_FILE" "$TARGET_FILE"
 echo "✅ Applied template from repository"
 
+# Verify growth routes are in the config
+if grep -q "location /growth" "$TARGET_FILE"; then
+    echo "✅ Growth routes found in nginx config"
+else
+    echo "❌ WARNING: Growth routes NOT found in nginx config!"
+fi
+
 # Test configuration
-if nginx -t 2>&1; then
+if sudo nginx -t 2>&1; then
     echo "✅ Nginx configuration is valid"
     
     # Reload nginx
-    nginx -s reload
+    sudo nginx -s reload
     echo "✅ Nginx reloaded"
     
     # Test critical endpoints
@@ -59,8 +66,8 @@ else
     
     # Restore backup if it exists
     if [ -n "$BACKUP_FILE" ] && [ -f "$BACKUP_FILE" ]; then
-        cp "$BACKUP_FILE" "$TARGET_FILE"
-        nginx -s reload
+        sudo cp "$BACKUP_FILE" "$TARGET_FILE"
+        sudo nginx -s reload
         echo "⚠️  Restored previous configuration"
     fi
     
