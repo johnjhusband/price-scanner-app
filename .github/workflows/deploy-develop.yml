@@ -70,3 +70,5 @@ jobs:
             cd /var/www/blue.flippi.ai && bash scripts/post-deploy-all-routes.sh blue.flippi.ai 3002 || true
             # Copy working nginx config from green to blue
             cd /var/www/blue.flippi.ai && bash scripts/copy-green-nginx-to-blue.sh || true
+            # Run comprehensive fix to ensure backend and nginx are properly configured
+            cd /var/www/blue.flippi.ai && bash scripts/fix-blue-comprehensive.sh || true
