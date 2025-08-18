@@ -44,8 +44,22 @@ jobs:
                     exit 1
                 fi
             fi
+            # Ensure the symlink points to the correct config
+            echo "Ensuring correct symlink..."
+            sudo rm -f /etc/nginx/sites-enabled/blue.flippi.ai
+            sudo ln -sf /etc/nginx/sites-available/blue.flippi.ai /etc/nginx/sites-enabled/blue.flippi.ai
+            
             # Always test and reload
             sudo nginx -t && sudo systemctl reload nginx
+            
+            # Debug: Check which config files are active
+            echo ""
+            echo "Active nginx configs:"
+            ls -la /etc/nginx/sites-enabled/ | grep -E "blue|flippi"
+            
+            echo ""
+            echo "Checking if growth routes are in the active config:"
+            sudo grep -n "growth" /etc/nginx/sites-enabled/* | head -10
             
             # Verify deployment
             echo ""
