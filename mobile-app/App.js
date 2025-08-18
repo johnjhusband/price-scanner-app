@@ -1534,15 +1534,21 @@ export default function App() {
         // Use toDataURL for synchronous download
         const dataUrl = canvas.toDataURL('image/png');
         
-        // Create and click download link immediately
+        // Create download link
         const a = document.createElement('a');
         a.href = dataUrl;
         a.download = `flippi-share-image-${Date.now()}.png`;
         a.style.display = 'none';
         
         document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        
+        // Small delay to ensure element is in DOM
+        setTimeout(() => {
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+          }, 100);
+        }, 10);
         
         console.log('[Share Image] Download triggered');
         
