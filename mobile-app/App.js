@@ -1613,42 +1613,56 @@ export default function App() {
 
   // Handle universal share image download
   const handleDownloadShareImage = () => {
-    console.log('[Download Share] Starting download with:');
-    console.log('  - analysisResult:', !!analysisResult);
-    console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
-    console.log('  - image:', !!image, image?.substring(0, 50));
+    // Test if function is being called at all
+    alert('Download button clicked!');
     
-    // Debug: Check if images have proper format
-    if (imageBase64) {
-      console.log('[Download Share] imageBase64 format check:');
-      console.log('  - Starts with data:?', imageBase64.startsWith('data:'));
-      console.log('  - Has base64 marker?', imageBase64.includes('base64,'));
-      console.log('  - Length:', imageBase64.length);
-    }
-    
-    if (image) {
-      console.log('[Download Share] image format check:');
-      console.log('  - Starts with data:?', image.startsWith('data:'));
-      console.log('  - Has base64 marker?', image.includes('base64,'));
-      console.log('  - Length:', image.length);
-    }
-    
-    // Always prefer imageBase64 as it has the correct format after analysis
-    const imageToUse = imageBase64 || image;
-    
-    if (!imageToUse) {
+    try {
+      console.log('[Download Share] Starting download');
+      
+      // Check what we have
+      const hasAnalysisResult = !!analysisResult;
+      const hasImageBase64 = !!imageBase64;
+      const hasImage = !!image;
+      
+      console.log('[Download Share] Data available:', {
+        hasAnalysisResult,
+        hasImageBase64,
+        hasImage
+      });
+      
+      // Always prefer imageBase64 as it has the correct format after analysis
+      const imageToUse = imageBase64 || image;
+      
+      if (!imageToUse) {
+        Alert.alert(
+          'No Image Available',
+          'Please analyze an image first before downloading.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      if (!analysisResult) {
+        Alert.alert(
+          'No Analysis Available',
+          'Please analyze an image first before downloading.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      setIsLoading(true);
+      generateShareImage(analysisResult, imageToUse).finally(() => {
+        setIsLoading(false);
+      });
+    } catch (error) {
+      console.error('[Download Share] Error:', error);
       Alert.alert(
-        'No Image Available',
-        'Please analyze an image first before downloading.',
+        'Download Error',
+        'An error occurred while preparing the download. Please try again.',
         [{ text: 'OK' }]
       );
-      return;
     }
-    
-    setIsLoading(true);
-    generateShareImage(analysisResult, imageToUse).finally(() => {
-      setIsLoading(false);
-    });
   };
   
   const handleExit = async () => {
