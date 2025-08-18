@@ -2199,11 +2199,17 @@ export default function App() {
                   </>
                 )}
                 <BrandButton
-                  title="Download Image"
-                  onPress={handleDownloadShareImage}
+                  title={`Download Image ${isLoading ? '(Loading...)' : ''}`}
+                  onPress={() => {
+                    console.log('Download button pressed, isLoading:', isLoading);
+                    alert(`Button pressed! isLoading: ${isLoading}`);
+                    if (!isLoading) {
+                      handleDownloadShareImage();
+                    }
+                  }}
                   style={[styles.shareButton, { backgroundColor: '#52525b' }]}
                   variant="primary"
-                  disabled={isLoading}
+                  disabled={false}  // Force enable to test
                   icon={<Feather name="download" size={20} color="#FFFFFF" />}
                 />
                 {Platform.OS === 'web' && (
