@@ -1,0 +1,64 @@
+name: Fix Nginx Only
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/fix-nginx-only.yml'
+
+jobs:
+  fix-nginx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fix nginx growth routes
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== Fixing nginx growth routes directly ==="
+            
+            # Check current state
+            echo "Current nginx configs:"
+            ls -la /etc/nginx/sites-available/ | grep -E "blue|flippi" || true
+            
+            echo ""
+            echo "Checking for growth routes:"
+            sudo grep -n "growth" /etc/nginx/sites-available/blue.flippi.ai || echo "No growth routes found"
+            
+            # Add growth routes if missing
+            if ! sudo grep -q "location.*growth" /etc/nginx/sites-available/blue.flippi.ai; then
+                echo "Adding growth routes..."
+                
+                # Backup
+                sudo cp /etc/nginx/sites-available/blue.flippi.ai /etc/nginx/sites-available/blue.flippi.ai.backup.$(date +%Y%m%d_%H%M%S)
+                
+                # Add growth location before the catch-all
+                sudo sed -i '/location \/ {/i\
+            \n    # Growth routes\
+                location /growth {\
+                    proxy_pass http://localhost:3002;\
+                    proxy_http_version 1.1;\
+                    proxy_set_header Host $host;\
+                    proxy_set_header X-Real-IP $remote_addr;\
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;\
+                    proxy_set_header X-Forwarded-Proto $scheme;\
+                }\
+            ' /etc/nginx/sites-available/blue.flippi.ai
+                
+                echo "Growth routes added"
+            fi
+            
+            # Test and reload
+            echo ""
+            echo "Testing nginx config..."
+            sudo nginx -t && sudo systemctl reload nginx
+            
+            # Verify
+            echo ""
+            echo "Testing /growth/questions..."
+            curl -s https://blue.flippi.ai/growth/questions | head -30 | grep -E "(Questions|title)" || true
+            
+            echo ""
+            echo "=== Complete ==="
