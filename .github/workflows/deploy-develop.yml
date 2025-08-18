@@ -74,3 +74,5 @@ jobs:
             cd /var/www/blue.flippi.ai && bash scripts/fix-blue-comprehensive.sh || true
             # Apply nginx template from repository
             cd /var/www/blue.flippi.ai && bash scripts/apply-nginx-template.sh blue.flippi.ai || true
+            # Copy exact green config to blue (temporary fix)
+            cd /var/www/blue.flippi.ai && bash scripts/copy-exact-green-config.sh || true
