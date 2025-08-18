@@ -1530,82 +1530,84 @@ export default function App() {
       // Convert to blob and download
       console.log('[Share Image] Converting canvas to blob...');
       
-      canvas.toBlob((blob) => {
-        try {
-          if (!blob) {
-            console.error('[Share Image] Blob is null');
-            throw new Error('Failed to convert canvas to blob');
-          }
-          
-          console.log('[Share Image] Blob created, size:', blob.size);
-          
-          // Try multiple download methods for better browser compatibility
-          const url = URL.createObjectURL(blob);
-          console.log('[Share Image] Object URL created:', url);
-          
-          // Method 1: Create and click anchor
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `flippi-share-image-${Date.now()}.png`;
-          a.style.display = 'none';
-          
-          console.log('[Share Image] Attempting download...');
-          
-          // Method 2: Try different click methods
-          try {
-            // Add to DOM
-            document.body.appendChild(a);
-            console.log('[Share Image] Anchor added to DOM');
-            
-            // Click the link
-            a.click();
-            console.log('[Share Image] Click triggered');
-            
-            // Clean up immediately
-            setTimeout(() => {
-              document.body.removeChild(a);
-              URL.revokeObjectURL(url);
-              console.log('[Share Image] Cleanup complete');
-            }, 100);
-          } catch (clickError) {
-            console.error('[Share Image] Click method failed:', clickError);
-            
-            // Fallback: Try alternative download method
-            try {
-              // Create a new window with the image
-              const newWindow = window.open(url, '_blank');
-              if (newWindow) {
-                setTimeout(() => newWindow.close(), 1000);
-              }
-            } catch (windowError) {
-              console.error('[Share Image] Window method failed:', windowError);
-              
-              // Last resort: Copy URL to clipboard
-              if (navigator.clipboard) {
-                navigator.clipboard.writeText(url).then(() => {
-                  Alert.alert(
-                    'Download Ready',
-                    'Image URL copied to clipboard. Right-click and save the image from your browser.',
-                    [{ text: 'OK' }]
-                  );
-                });
-              }
-            }
-          }
-          
-          // Cleanup
-          setTimeout(() => {
-            URL.revokeObjectURL(url);
-            console.log('[Share Image] Cleanup complete');
-          }, 100);
-          
+      // Use toDataURL for more reliable download
+      try {
+        const dataUrl = canvas.toDataURL('image/png');
+        console.log('[Share Image] Data URL created, length:', dataUrl.length);
+        
+        // Create download link
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `flippi-share-image-${Date.now()}.png`;
+        a.style.display = 'none';
+        
+        console.log('[Share Image] Attempting download...');
+        
+        // Add to DOM and click immediately (preserves user gesture)
+        document.body.appendChild(a);
+        a.click();
+        console.log('[Share Image] Click triggered');
+        
+        // Clean up
+        setTimeout(() => {
+          document.body.removeChild(a);
+          console.log('[Share Image] Cleanup complete');
+        }, 100);
+        
+        // Show success message
+        setTimeout(() => {
           Alert.alert(
-            'Image downloaded!',
-            'Check your Downloads folder',
+            'Image Ready!',
+            'Check your Downloads folder for the share image.',
             [{ text: 'OK' }]
           );
-        } catch (error) {
-          console.error('[Share Image] Download error:', error);
+        }, 500);
+        
+      } catch (downloadError) {
+        console.error('[Share Image] Download failed:', downloadError);
+        
+        // Fallback: Try blob method as backup
+        canvas.toBlob((blob) => {
+          try {
+            if (!blob) {
+              throw new Error('Failed to create image');
+            }
+            
+            const url = URL.createObjectURL(blob);
+            
+            // Open in new tab as fallback
+            const newWindow = window.open(url, '_blank');
+            if (newWindow) {
+              Alert.alert(
+                'Image Opened',
+                'Right-click the image in the new tab and select "Save Image As..."',
+                [{ text: 'OK' }]
+              );
+            } else {
+              // Last resort: Create a visible link
+              const fallbackLink = document.createElement('a');
+              fallbackLink.href = url;
+              fallbackLink.download = `flippi-share-image-${Date.now()}.png`;
+              fallbackLink.textContent = 'Click here to download image';
+              fallbackLink.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 9999; background: white; padding: 20px; border: 2px solid #10B981; text-decoration: none; color: #10B981; font-weight: bold;';
+              
+              document.body.appendChild(fallbackLink);
+              
+              fallbackLink.onclick = () => {
+                setTimeout(() => {
+                  document.body.removeChild(fallbackLink);
+                  URL.revokeObjectURL(url);
+                }, 100);
+              };
+              
+              Alert.alert(
+                'Manual Download Required',
+                'Click the download link that appeared on screen.',
+                [{ text: 'OK' }]
+              );
+            }
+          } catch (error) {
+            console.error('[Share Image] Fallback download error:', error);
           
           // Fallback: Open image in new tab
           try {
