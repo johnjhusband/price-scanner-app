@@ -30,17 +30,22 @@ jobs:
             cd infra-nginx
             if [ -f "deploy-nginx.sh" ]; then
                 sudo bash deploy-nginx.sh blue
+                # The script deploys to flippi.conf, but blue uses blue.flippi.ai
+                # Copy to the correct location
+                echo "Copying to blue.flippi.ai config location..."
+                sudo cp /etc/nginx/sites-available/flippi.conf /etc/nginx/sites-available/blue.flippi.ai
             else
                 # Fallback: manually copy the config
                 echo "Deploy script not found, copying config manually..."
                 if [ -f "sites/flippi-blue.conf" ]; then
                     sudo cp sites/flippi-blue.conf /etc/nginx/sites-available/blue.flippi.ai
-                    sudo nginx -t && sudo systemctl reload nginx
                 else
                     echo "ERROR: Config file not found at sites/flippi-blue.conf"
                     exit 1
                 fi
             fi
+            # Always test and reload
+            sudo nginx -t && sudo systemctl reload nginx
             
             # Verify deployment
             echo ""
