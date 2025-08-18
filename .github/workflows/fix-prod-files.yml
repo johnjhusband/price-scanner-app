@@ -1,0 +1,64 @@
+name: Fix Production Files
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/fix-prod-files.yml'
+
+jobs:
+  fix-files:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fix production file paths
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== FIX PRODUCTION FILES ==="
+            
+            # The JS error suggests wrong build files
+            # Production might be serving dev/blue files
+            
+            # Check what's in production directory
+            echo "Production dist directory:"
+            ls -la /var/www/app.flippi.ai/mobile-app/dist/ | head -10 || echo "No dist directory"
+            
+            # Check if web-build exists (production uses this)
+            echo ""
+            echo "Web-build directory:"
+            ls -la /var/www/app.flippi.ai/mobile-app/web-build/ | head -10 || echo "No web-build"
+            
+            # Fix nginx to point to correct directory
+            echo ""
+            echo "Fixing nginx root directory..."
+            
+            # Update production nginx to use web-build if it exists
+            if [ -d /var/www/app.flippi.ai/mobile-app/web-build ]; then
+                sudo sed -i 's|root /var/www/app.flippi.ai/mobile-app/dist;|root /var/www/app.flippi.ai/mobile-app/web-build;|g' /etc/nginx/sites-available/app.flippi.ai
+                echo "Changed to web-build directory"
+            elif [ -d /var/www/flippi.ai/mobile-app/web-build ]; then
+                sudo sed -i 's|root .*;|root /var/www/flippi.ai/mobile-app/web-build;|g' /etc/nginx/sites-available/app.flippi.ai
+                echo "Changed to /var/www/flippi.ai path"
+            fi
+            
+            # Also fix the port - production uses 3000, not 3002
+            sudo sed -i 's|proxy_pass http://localhost:3002;|proxy_pass http://localhost:3000;|g' /etc/nginx/sites-available/app.flippi.ai
+            
+            # Reload nginx
+            sudo nginx -t && sudo systemctl reload nginx
+            
+            # Check PM2 for production
+            echo ""
+            echo "PM2 production processes:"
+            pm2 list | grep -E "(prod|production)" || echo "No production PM2 processes"
+            
+            # Start production if not running
+            pm2 start prod-backend --update-env || true
+            pm2 start prod-frontend --update-env || true
+            
+            echo ""
+            echo "Testing production site:"
+            curl -I https://app.flippi.ai 2>&1 | head -5
