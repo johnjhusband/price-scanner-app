@@ -68,3 +68,5 @@ jobs:
             cd /var/www/blue.flippi.ai && bash scripts/fix-ssl-and-legal.sh || true
             # Ensure all routes including growth are configured
             cd /var/www/blue.flippi.ai && bash scripts/post-deploy-all-routes.sh blue.flippi.ai 3002 || true
+            # Copy working nginx config from green to blue
+            cd /var/www/blue.flippi.ai && bash scripts/copy-green-nginx-to-blue.sh || true
