@@ -1,0 +1,160 @@
+name: Nuclear Nginx Fix
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/nuclear-nginx-fix.yml'
+
+jobs:
+  nuclear-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Nuclear option - rebuild nginx config
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== NUCLEAR NGINX FIX ==="
+            
+            # Create a completely new working config
+            cat > /tmp/blue.flippi.ai.new << 'NGINX_CONFIG'
+            server {
+                listen 80;
+                server_name blue.flippi.ai;
+                return 301 https://$server_name$request_uri;
+            }
+            
+            server {
+                listen 443 ssl http2;
+                server_name blue.flippi.ai;
+                
+                # SSL
+                ssl_certificate /etc/letsencrypt/live/blue.flippi.ai/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/blue.flippi.ai/privkey.pem;
+                
+                # Root directory
+                root /var/www/blue.flippi.ai/mobile-app/dist;
+                
+                # Legal pages
+                location = /terms {
+                    proxy_pass http://127.0.0.1:3002;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+                
+                location = /privacy {
+                    proxy_pass http://127.0.0.1:3002;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+                
+                location = /mission {
+                    proxy_pass http://127.0.0.1:3002;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+                
+                location = /contact {
+                    proxy_pass http://127.0.0.1:3002;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+                
+                # GROWTH ROUTES - NUCLEAR OPTION
+                location /growth {
+                    proxy_pass http://127.0.0.1:3002;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+                
+                # API routes
+                location /api {
+                    proxy_pass http://127.0.0.1:3002;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+                
+                # Auth routes
+                location /auth {
+                    proxy_pass http://127.0.0.1:3002;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+                
+                # Static assets
+                location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
+                    expires 1y;
+                    add_header Cache-Control "public, immutable";
+                }
+                
+                # Catch-all for React app
+                location / {
+                    try_files $uri $uri/ /index.html;
+                }
+            }
+            NGINX_CONFIG
+            
+            # Backup ALL existing configs
+            echo "Backing up existing configs..."
+            sudo mkdir -p /etc/nginx/backup-nuclear
+            sudo cp -r /etc/nginx/sites-* /etc/nginx/backup-nuclear/ || true
+            
+            # Force replace all possible config locations
+            echo "Replacing configs..."
+            sudo cp /tmp/blue.flippi.ai.new /etc/nginx/sites-available/blue.flippi.ai
+            sudo cp /tmp/blue.flippi.ai.new /etc/nginx/sites-available/flippi.conf
+            
+            # Fix symlinks
+            echo "Fixing symlinks..."
+            sudo rm -f /etc/nginx/sites-enabled/blue.flippi.ai
+            sudo rm -f /etc/nginx/sites-enabled/flippi.conf
+            sudo ln -sf /etc/nginx/sites-available/blue.flippi.ai /etc/nginx/sites-enabled/blue.flippi.ai
+            
+            # Test
+            echo "Testing config..."
+            sudo nginx -t
+            
+            # Force restart nginx completely
+            echo "Force restarting nginx..."
+            sudo systemctl stop nginx
+            sleep 2
+            sudo systemctl start nginx
+            
+            # Final test
+            echo ""
+            echo "Final test..."
+            sleep 3
+            for i in 1 2 3; do
+                echo "Attempt $i:"
+                curl -s https://blue.flippi.ai/growth/questions | grep -o "<title>.*</title>" | head -1
+                sleep 1
+            done
+            
+            # Check what nginx is actually serving
+            echo ""
+            echo "Checking nginx process:"
+            sudo nginx -T 2>/dev/null | grep -A10 "server_name blue.flippi.ai" | grep -E "(location|proxy_pass)" | head -20
