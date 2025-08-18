@@ -64,7 +64,5 @@ jobs:
             cd /var/www/blue.flippi.ai && bash scripts/test-nginx-routing.sh || true
             # Quick nginx check
             cd /var/www/blue.flippi.ai && bash scripts/quick-nginx-check.sh || true
-            # Apply nginx template from repository
-            cd /var/www/blue.flippi.ai && bash scripts/apply-nginx-template.sh blue.flippi.ai || true
-            # Test nginx configuration
-            nginx -t && nginx -s reload || echo "Nginx reload failed"
+            # Deploy nginx configuration
+            cd /var/www/blue.flippi.ai && bash scripts/deploy-nginx-config.sh
