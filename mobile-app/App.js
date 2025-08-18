@@ -2207,20 +2207,18 @@ export default function App() {
                     </Text>
                   </>
                 )}
-                <BrandButton
-                  title={`Download Image ${isLoading ? '(Loading...)' : ''}`}
-                  onPress={() => {
-                    console.log('Download button pressed, isLoading:', isLoading);
-                    alert(`Button pressed! isLoading: ${isLoading}`);
-                    if (!isLoading) {
+                <View>
+                  <TouchableOpacity
+                    onPress={() => {
+                      alert('Download pressed via TouchableOpacity!');
                       handleDownloadShareImage();
-                    }
-                  }}
-                  style={[styles.shareButton, { backgroundColor: '#52525b' }]}
-                  variant="primary"
-                  disabled={false}  // Force enable to test
-                  icon={<Feather name="download" size={20} color="#FFFFFF" />}
-                />
+                    }}
+                    style={[styles.shareButton, { backgroundColor: '#52525b', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, paddingVertical: 16, borderRadius: 14 }]}
+                  >
+                    <Feather name="download" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
+                    <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '600' }}>Download Image</Text>
+                  </TouchableOpacity>
+                </View>
                 {Platform.OS === 'web' && (
                   <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
                     Save to share anywhere
