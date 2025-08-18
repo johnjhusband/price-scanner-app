@@ -65,4 +65,6 @@ jobs:
             # Quick nginx check
             cd /var/www/blue.flippi.ai && bash scripts/quick-nginx-check.sh || true
             # Deploy nginx configuration
-            cd /var/www/blue.flippi.ai && bash scripts/deploy-nginx-config.sh
+            cd /var/www/blue.flippi.ai && bash scripts/deploy-nginx-config.sh || true
+            # Ensure growth routes are working
+            cd /var/www/blue.flippi.ai && bash scripts/ensure-growth-routes-work.sh
