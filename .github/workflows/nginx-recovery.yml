@@ -1,0 +1,72 @@
+name: Nginx Recovery
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/nginx-recovery.yml'
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Recover nginx
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== NGINX RECOVERY ==="
+            
+            # Check nginx status
+            echo "Nginx status:"
+            sudo systemctl status nginx || true
+            
+            # Check for config errors
+            echo ""
+            echo "Config test:"
+            sudo nginx -t 2>&1 || true
+            
+            # Look for backups
+            echo ""
+            echo "Available backups:"
+            ls -la /etc/nginx/sites-available/*.backup* 2>/dev/null | tail -5 || true
+            
+            # Try to restore from infra-nginx
+            echo ""
+            echo "Restoring from infra-nginx..."
+            cd /var/www/blue.flippi.ai
+            
+            if [ -f "infra-nginx/sites/flippi-blue.conf" ]; then
+                echo "Found infra-nginx config"
+                sudo cp infra-nginx/sites/flippi-blue.conf /etc/nginx/sites-available/blue.flippi.ai
+                
+                # Test it
+                if sudo nginx -t; then
+                    echo "Config is valid, reloading..."
+                    sudo systemctl reload nginx
+                else
+                    echo "Config invalid, trying backup..."
+                    LATEST_BACKUP=$(ls -t /etc/nginx/sites-available/*.backup* 2>/dev/null | head -1)
+                    if [ -n "$LATEST_BACKUP" ]; then
+                        sudo cp "$LATEST_BACKUP" /etc/nginx/sites-available/blue.flippi.ai
+                        sudo nginx -t && sudo systemctl reload nginx
+                    fi
+                fi
+            fi
+            
+            # Start nginx if not running
+            if ! pgrep nginx > /dev/null; then
+                echo "Starting nginx..."
+                sudo systemctl start nginx || true
+            fi
+            
+            # Final status
+            echo ""
+            echo "Final status:"
+            sudo systemctl status nginx --no-pager || true
+            
+            echo ""
+            echo "Testing site:"
+            curl -I https://blue.flippi.ai 2>&1 | head -5 || true
