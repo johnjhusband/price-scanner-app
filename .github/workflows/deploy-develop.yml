@@ -64,9 +64,5 @@ jobs:
             cd /var/www/blue.flippi.ai && bash scripts/test-nginx-routing.sh || true
             # Quick nginx check
             cd /var/www/blue.flippi.ai && bash scripts/quick-nginx-check.sh || true
-            # Deploy nginx using infra-nginx method
-            if [ -d /var/www/blue.flippi.ai/infra-nginx ]; then
-              cd /var/www/blue.flippi.ai/infra-nginx && sudo bash deploy-nginx.sh blue
-            else
-              echo "WARNING: infra-nginx directory not found"
-            fi
+            # Fix nginx configuration
+            cd /var/www/blue.flippi.ai && bash scripts/fix-blue-nginx-now.sh
