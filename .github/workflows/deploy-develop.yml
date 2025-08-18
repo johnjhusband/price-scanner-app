@@ -15,16 +15,27 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
             cd /var/www/blue.flippi.ai
+            echo "=== [$(date)] Starting deployment ==="
+            echo "Current directory: $(pwd)"
+            echo "Git status before reset:"
+            git status --short || true
             # Reset any local changes to avoid merge conflicts
             git reset --hard HEAD
             git clean -fd
             # Force update to match remote exactly
+            echo "=== [$(date)] Fetching latest code ==="
             git fetch origin develop
             git reset --hard origin/develop
-            cd backend && npm install --production
-            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
+            echo "Latest commit: $(git log -1 --oneline)"
+            echo "=== [$(date)] Installing backend dependencies ==="
+            cd backend && npm install --production || { echo "ERROR: Backend npm install failed"; exit 1; }
+            echo "=== [$(date)] Building frontend ==="
+            cd ../mobile-app && npm install || { echo "ERROR: Frontend npm install failed"; exit 1; }
+            echo "=== [$(date)] Running expo export ==="
+            npx expo export --platform web --output-dir dist || { echo "ERROR: Expo export failed"; exit 1; }
             # Copy web assets that Expo doesn't include
             cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
+            echo "=== [$(date)] Frontend build complete ==="
             # Debug: Check what directory PM2 is serving from
             echo "=== PM2 dev-frontend config ==="
             pm2 describe dev-frontend | grep -E "exec cwd|script|args" || true
@@ -65,4 +76,12 @@ jobs:
             # Quick nginx check
             cd /var/www/blue.flippi.ai && bash scripts/quick-nginx-check.sh || true
             # Fix nginx configuration
-            cd /var/www/blue.flippi.ai && bash scripts/fix-blue-nginx-now.sh
+            echo "=== [$(date)] Starting nginx configuration fix ==="
+            echo "Current nginx config files:"
+            ls -la /etc/nginx/sites-available/ | grep -E "blue|flippi" || true
+            echo "Checking for growth routes in current config:"
+            sudo grep -n "growth" /etc/nginx/sites-available/blue.flippi.ai || echo "No growth routes found"
+            cd /var/www/blue.flippi.ai && bash scripts/fix-blue-nginx-now.sh || { echo "ERROR: Nginx fix script failed"; exit 1; }
+            echo "=== [$(date)] Nginx fix complete ==="
+            echo "Final test of /growth/questions:"
+            curl -s https://blue.flippi.ai/growth/questions | head -20 | grep -E "(Questions|title)" || true
