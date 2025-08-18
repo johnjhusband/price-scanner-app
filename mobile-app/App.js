@@ -2207,16 +2207,14 @@ export default function App() {
                     </Text>
                   </>
                 )}
-                <View>
+                <View style={{ zIndex: 9999, elevation: 9999, backgroundColor: 'yellow', padding: 5, marginVertical: 10 }}>
                   <TouchableOpacity
                     onPress={() => {
-                      alert('Download pressed via TouchableOpacity!');
-                      handleDownloadShareImage();
+                      alert('Download pressed!');
                     }}
-                    style={[styles.shareButton, { backgroundColor: '#52525b', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 32, paddingVertical: 16, borderRadius: 14 }]}
+                    style={{ backgroundColor: 'red', padding: 20, borderWidth: 3, borderColor: 'black' }}
                   >
-                    <Feather name="download" size={20} color="#FFFFFF" style={{ marginRight: 8 }} />
-                    <Text style={{ color: '#FFFFFF', fontSize: 17, fontWeight: '600' }}>Download Image</Text>
+                    <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>DOWNLOAD TEST</Text>
                   </TouchableOpacity>
                 </View>
                 {Platform.OS === 'web' && (
