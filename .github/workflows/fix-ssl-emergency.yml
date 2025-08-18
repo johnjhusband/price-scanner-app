@@ -1,0 +1,43 @@
+name: Fix SSL Emergency
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/fix-ssl-emergency.yml'
+
+jobs:
+  fix-ssl:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fix SSL certificates
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== EMERGENCY SSL FIX ==="
+            
+            # Check what certificates exist
+            echo "Available certificates:"
+            ls -la /etc/letsencrypt/live/
+            
+            # Fix green.flippi.ai SSL
+            if [ -d /etc/letsencrypt/live/green.flippi.ai ]; then
+                echo "Fixing green.flippi.ai SSL..."
+                sudo sed -i "s|ssl_certificate .*|ssl_certificate /etc/letsencrypt/live/green.flippi.ai/fullchain.pem;|" /etc/nginx/sites-available/green.flippi.ai
+                sudo sed -i "s|ssl_certificate_key .*|ssl_certificate_key /etc/letsencrypt/live/green.flippi.ai/privkey.pem;|" /etc/nginx/sites-available/green.flippi.ai
+            fi
+            
+            # Fix app.flippi.ai SSL  
+            if [ -d /etc/letsencrypt/live/app.flippi.ai ]; then
+                echo "Fixing app.flippi.ai SSL..."
+                sudo sed -i "s|ssl_certificate .*|ssl_certificate /etc/letsencrypt/live/app.flippi.ai/fullchain.pem;|" /etc/nginx/sites-available/app.flippi.ai
+                sudo sed -i "s|ssl_certificate_key .*|ssl_certificate_key /etc/letsencrypt/live/app.flippi.ai/privkey.pem;|" /etc/nginx/sites-available/app.flippi.ai
+            fi
+            
+            # Test and reload
+            sudo nginx -t && sudo systemctl reload nginx
+            
+            echo "Sites should be back online now"
