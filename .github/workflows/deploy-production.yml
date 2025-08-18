@@ -53,9 +53,11 @@ jobs:
             sudo rm -rf /var/cache/nginx/*
             sudo nginx -s reload
             
-            # Run post-deploy fixes for growth routes
-            echo "=== Ensuring growth routes are configured ==="
-            if [ -f scripts/fix-growth-routes.sh ]; then
+            # Run post-deploy fixes for all routes including growth
+            echo "=== Ensuring all routes are configured ==="
+            if [ -f scripts/post-deploy-all-routes.sh ]; then
+              sudo bash scripts/post-deploy-all-routes.sh app.flippi.ai 3000
+            elif [ -f scripts/fix-growth-routes.sh ]; then
               sudo bash scripts/fix-growth-routes.sh
             fi
             
