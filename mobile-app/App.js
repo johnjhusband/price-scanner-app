@@ -2176,9 +2176,18 @@ export default function App() {
             
             {analysisResult && (
               <View style={styles.postAnalysisActions}>
+                <TouchableOpacity 
+                  onPress={() => alert('Test button works!')}
+                  style={{ padding: 10, backgroundColor: 'red', marginBottom: 10 }}
+                >
+                  <Text style={{ color: 'white' }}>TEST BUTTON</Text>
+                </TouchableOpacity>
                 <BrandButton
                   title="Share on X"
-                  onPress={handleShareOnX}
+                  onPress={() => {
+                    alert('Share on X pressed!');
+                    handleShareOnX();
+                  }}
                   style={[styles.shareButton, { backgroundColor: '#18181b' }]}
                   variant="primary"
                   icon={<Feather name="share-2" size={20} color="#FFFFFF" />}
