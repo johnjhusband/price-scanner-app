@@ -4,6 +4,11 @@ set -e  # Exit on any error
 
 DOMAIN="blue.flippi.ai"
 TEMPLATE="/var/www/blue.flippi.ai/nginx-templates/blue.flippi.ai.conf"
+
+# If template doesn't exist in nginx-templates, try nginx directory
+if [ ! -f "$TEMPLATE" ]; then
+    TEMPLATE="/var/www/blue.flippi.ai/nginx/blue.flippi.ai.conf"
+fi
 TARGET="/etc/nginx/sites-available/blue.flippi.ai"
 
 echo "=== Deploying nginx config for $DOMAIN ==="
@@ -11,6 +16,8 @@ echo "=== Deploying nginx config for $DOMAIN ==="
 # 1. Check template exists
 if [ ! -f "$TEMPLATE" ]; then
     echo "❌ ERROR: Template not found: $TEMPLATE"
+    echo "Looking for nginx config files..."
+    find /var/www/blue.flippi.ai -name "*.conf" -type f 2>/dev/null | head -10
     exit 1
 fi
 
