@@ -36,12 +36,16 @@ jobs:
             # Build frontend
             echo "=== [$(date)] Building frontend ==="
             cd ../mobile-app
-            # Clean ALL caches to fix build issues
-            rm -rf node_modules/.cache .expo dist web-build package-lock.json
-            rm -rf /tmp/metro-* /tmp/haste-map-*
-            # Clean install dependencies
+            # Clean ALL caches and node_modules to fix build issues
+            rm -rf node_modules .cache .expo dist web-build package-lock.json
+            rm -rf /tmp/metro-* /tmp/haste-map-* /tmp/react-*
+            # Clean npm and expo caches
             npm cache clean --force
+            # Fresh install of dependencies
             npm install || exit 1
+            # Verify the App.js has our changes
+            echo "Checking App.js first line:"
+            head -1 App.js
             # Build with clean cache
             echo "Starting expo export..."
             npx expo export --platform web --output-dir dist --clear || { echo "ERROR: Expo export failed"; exit 1; }

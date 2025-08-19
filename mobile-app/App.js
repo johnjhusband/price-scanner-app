@@ -88,6 +88,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
   
   // Cleanup effect
   useEffect(() => {
+    console.log('[FLIPPI] App version 2.2.1 - Build fix 2025-08-19 21:15');
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
