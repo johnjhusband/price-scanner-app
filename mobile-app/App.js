@@ -2196,6 +2196,7 @@ export default function App() {
                     </Text>
                   </>
                 )}
+                {/* TEMPORARILY REMOVED DOWNLOAD BUTTON
                 <BrandButton
                   title="Download Image"
                   onPress={handleDownloadShareImage}
@@ -2203,6 +2204,7 @@ export default function App() {
                   variant="primary"
                   icon={<Feather name="download" size={20} color="#FFFFFF" />}
                 />
+                */}
                 {Platform.OS === 'web' && (
                   <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
                     Save to share anywhere
