@@ -1,3 +1,4 @@
+// DEPLOYMENT TEST: 2024-08-19 14:45
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Linking, Dimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -1732,7 +1733,7 @@ export default function App() {
       {/* Environment Banner - Only show in non-production */}
       {Platform.OS === 'web' && window.location.hostname === 'blue.flippi.ai' && (
         <View style={styles.environmentBanner}>
-          <Text style={styles.environmentText}>DEVELOPMENT ENVIRONMENT</Text>
+          <Text style={styles.environmentText}>DEPLOYMENT BROKEN - DOWNLOAD BUTTON REMOVED</Text>
         </View>
       )}
       {Platform.OS === 'web' && window.location.hostname === 'green.flippi.ai' && (
