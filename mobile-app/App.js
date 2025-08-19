@@ -1733,7 +1733,7 @@ export default function App() {
       {/* Environment Banner - Only show in non-production */}
       {Platform.OS === 'web' && window.location.hostname === 'blue.flippi.ai' && (
         <View style={styles.environmentBanner}>
-          <Text style={styles.environmentText}>TEST: DEPLOYMENT FIXED - {new Date().toLocaleTimeString()}</Text>
+          <Text style={styles.environmentText}>SIMPLE DEPLOY TEST - {new Date().toISOString()}</Text>
         </View>
       )}
       {Platform.OS === 'web' && window.location.hostname === 'green.flippi.ai' && (
