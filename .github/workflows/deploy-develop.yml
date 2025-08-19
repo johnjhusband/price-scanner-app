@@ -16,102 +16,43 @@ jobs:
           script: |
             cd /var/www/blue.flippi.ai
             echo "=== [$(date)] Starting deployment ==="
-            echo "Current directory: $(pwd)"
-            echo "Git status before reset:"
-            git status --short || true
-            # Reset any local changes to avoid merge conflicts
+            
+            # Reset and pull latest code
             git reset --hard HEAD
             git clean -fd
-            # Force update to match remote exactly
-            echo "=== [$(date)] Fetching latest code ==="
             git fetch origin develop
             git reset --hard origin/develop
             echo "Latest commit: $(git log -1 --oneline)"
+            
+            # Install backend dependencies
             echo "=== [$(date)] Installing backend dependencies ==="
-            cd backend && npm install --production || { echo "ERROR: Backend npm install failed"; exit 1; }
+            cd backend && npm install --production || exit 1
+            
+            # Run database migrations
+            echo "=== [$(date)] Running database migrations ==="
+            export FEEDBACK_DB_PATH=/var/www/blue.flippi.ai/backend/flippi.db
+            node scripts/run-growth-analytics-migration.js || echo "Migration already applied or failed"
+            
+            # Build frontend
             echo "=== [$(date)] Building frontend ==="
             cd ../mobile-app
-            # Clean all caches to ensure fresh build
-            rm -rf node_modules/.cache
-            rm -rf .expo
-            rm -rf dist
-            npm install || { echo "ERROR: Frontend npm install failed"; exit 1; }
-            echo "=== [$(date)] Running expo export ==="
-            # Clear any existing dist directory
-            rm -rf dist
-            # Show current expo version
-            npx expo --version || echo "Expo not found"
-            # Run expo export with more verbose output
-            # Force metro to rebuild everything
-            watchman watch-del-all 2>/dev/null || true
-            npx expo export --platform web --output-dir dist --clear || { 
-              echo "ERROR: Expo export failed"
-              echo "Checking if dist was partially created:"
-              ls -la dist/ 2>/dev/null || echo "No dist directory"
-              echo "Falling back to expo build:web"
-              npx expo build:web || {
-                echo "ERROR: Expo build:web also failed"
-                echo "Trying webpack export"
-                npx expo export:web || echo "All build methods failed"
-              }
-            }
-            # Copy web assets that Expo doesn't include
+            rm -rf node_modules/.cache .expo dist
+            npm install || exit 1
+            npx expo export --platform web --output-dir dist --clear || exit 1
+            
+            # Copy web assets
             cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
-            echo "=== [$(date)] Frontend build complete ==="
-            # Verify the build actually updated
-            echo "=== Checking if build contains our changes ==="
-            echo "Looking for 'TEMPORARILY REMOVED DOWNLOAD BUTTON' in built files:"
-            grep -r "TEMPORARILY REMOVED DOWNLOAD BUTTON" dist/ | head -5 || echo "String not found in dist"
-            echo "Checking dist directory timestamp:"
-            ls -la dist/ | head -5
-            echo "Checking specific bundle files:"
-            ls -la dist/bundles/ 2>/dev/null | head -5 || echo "No bundles directory"
-            # Debug: Check what directory PM2 is serving from
-            echo "=== PM2 dev-frontend config ==="
-            pm2 describe dev-frontend | grep -E "exec cwd|script|args" || true
-            echo "=== Checking directories ==="
-            ls -la /var/www/blue.flippi.ai/mobile-app/ | grep -E "dist|web-build" || true
-            echo "=== Files in dist ==="
-            ls -la /var/www/blue.flippi.ai/mobile-app/dist/ | head -5 || true
-            # Reload PM2 with latest code
-            pm2 restart dev-backend
-            pm2 restart dev-frontend
-            # Wait for services to start
+            
+            # Deploy nginx configuration
+            echo "=== [$(date)] Deploying nginx configuration ==="
+            bash scripts/deploy-nginx-template.sh blue.flippi.ai || echo "Nginx deployment failed"
+            
+            # Restart services
+            echo "=== [$(date)] Restarting services ==="
+            pm2 restart dev-backend dev-frontend
             sleep 5
-            # Check if backend is running
-            pm2 show dev-backend || true
+            
+            # Verify deployment
+            echo "=== [$(date)] Verifying deployment ==="
             curl -s http://localhost:3002/health || echo "Backend not responding"
-            # Fix nginx SSL configuration comprehensively
-            cd /var/www/blue.flippi.ai && bash scripts/fix-nginx-ssl-comprehensive.sh || true
-            # Check nginx requirements first
-            cd /var/www/blue.flippi.ai && bash scripts/check-nginx-includes.sh || echo "Nginx include check failed, will attempt fix"
-            # Fix any duplicate nginx locations first
-            cd /var/www/blue.flippi.ai && bash scripts/post-deploy-nginx-fix.sh || true
-            # Force nginx reload with symlink update
-            cd /var/www/blue.flippi.ai && bash scripts/force-nginx-reload.sh || true
-            # Apply the known working nginx configuration
-            cd /var/www/blue.flippi.ai && bash scripts/apply-working-nginx-config.sh || true
-            # Verify which nginx config is actually active
-            cd /var/www/blue.flippi.ai && bash scripts/verify-active-nginx-config.sh || true
-            # Trace actual request flow
-            cd /var/www/blue.flippi.ai && bash scripts/trace-legal-request.sh || true
-            # Check if frontend is intercepting routes
-            cd /var/www/blue.flippi.ai && bash scripts/check-frontend-routing.sh || true
-            # Show the actual nginx config
-            cd /var/www/blue.flippi.ai && bash scripts/show-nginx-routes.sh || true
-            # Show simplified nginx routes
-            cd /var/www/blue.flippi.ai && bash scripts/show-nginx-routes-simple.sh || true
-            # Test nginx routing behavior
-            cd /var/www/blue.flippi.ai && bash scripts/test-nginx-routing.sh || true
-            # Quick nginx check
-            cd /var/www/blue.flippi.ai && bash scripts/quick-nginx-check.sh || true
-            # Fix nginx configuration
-            echo "=== [$(date)] Starting nginx configuration fix ==="
-            echo "Current nginx config files:"
-            ls -la /etc/nginx/sites-available/ | grep -E "blue|flippi" || true
-            echo "Checking for growth routes in current config:"
-            sudo grep -n "growth" /etc/nginx/sites-available/blue.flippi.ai || echo "No growth routes found"
-            cd /var/www/blue.flippi.ai && bash scripts/fix-blue-nginx-now.sh || { echo "ERROR: Nginx fix script failed"; exit 1; }
-            echo "=== [$(date)] Nginx fix complete ==="
-            echo "Final test of /growth/questions:"
-            curl -s https://blue.flippi.ai/growth/questions | head -20 | grep -E "(Questions|title)" || true
+            echo "Deployment complete"
