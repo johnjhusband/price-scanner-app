@@ -1,0 +1,38 @@
+name: Fix CSS Path
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/fix-css-path.yml'
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fix CSS path with nginx alias
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Find actual CSS file
+            CSS_FILE=$(find /var/www/blue.flippi.ai/mobile-app/dist/_expo/static/css -name "web-styles-*.css" | head -1)
+            
+            # Add nginx alias
+            cat > /tmp/css-fix.conf << EOF
+            location = /web-styles.css {
+              alias $CSS_FILE;
+              add_header Content-Type text/css;
+            }
+            EOF
+            
+            # Insert into nginx config
+            sed -i '/server_name blue.flippi.ai/a \    include /tmp/css-fix.conf;' /etc/nginx/sites-available/blue.flippi.ai
+            
+            # Test and reload
+            nginx -t && systemctl reload nginx
+            
+            # Verify
+            curl -I https://blue.flippi.ai/web-styles.css | grep -i content-type
