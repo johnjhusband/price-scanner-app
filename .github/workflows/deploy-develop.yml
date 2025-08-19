@@ -43,6 +43,11 @@ jobs:
             npm cache clean --force
             # Fresh install of dependencies
             npm install || exit 1
+            # Force clear expo cache one more time before build
+            npx expo start --clear --offline --no-dev --max-workers 1 &
+            EXPO_PID=$!
+            sleep 5
+            kill $EXPO_PID 2>/dev/null || true
             # Verify the App.js has our changes
             echo "Checking App.js first line:"
             head -1 App.js
