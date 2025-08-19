@@ -1818,7 +1818,7 @@ export default function App() {
       )}
       {Platform.OS === 'web' && window.location.hostname === 'green.flippi.ai' && (
         <View style={styles.environmentBannerStaging}>
-          <Text style={styles.environmentText}>STAGING ENVIRONMENT</Text>
+          <Text style={styles.environmentText}>STAGING ENVIRONMENT ❤️</Text>
         </View>
       )}
       
