@@ -36,8 +36,15 @@ jobs:
             # Build frontend
             echo "=== [$(date)] Building frontend ==="
             cd ../mobile-app
-            rm -rf node_modules/.cache .expo dist
+            # Clean ALL caches to fix build issues
+            rm -rf node_modules/.cache .expo dist web-build package-lock.json
+            rm -rf /tmp/metro-* /tmp/haste-map-*
+            # Clean install dependencies
+            npm cache clean --force
             npm install || exit 1
+            # Clear expo caches
+            npx expo start --clear || true
+            # Build with clean cache
             npx expo export --platform web --output-dir dist --clear || exit 1
             
             # Copy web assets

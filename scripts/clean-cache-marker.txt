@@ -1,0 +1,2 @@
+Clean cache trigger: 2025-08-19-20:15
+This file is used to force cache invalidation in the deployment workflow.
