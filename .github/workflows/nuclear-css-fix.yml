@@ -1,0 +1,35 @@
+name: Nuclear CSS Fix
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/nuclear-css-fix.yml'
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Nuclear option - copy working CSS from green to blue
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Copy ENTIRE working nginx config from green to blue
+            cp /etc/nginx/sites-available/green.flippi.ai /etc/nginx/sites-available/blue.flippi.ai
+            
+            # Just change the domain name
+            sed -i 's/green\.flippi\.ai/blue.flippi.ai/g' /etc/nginx/sites-available/blue.flippi.ai
+            sed -i 's/staging-backend/dev-backend/g' /etc/nginx/sites-available/blue.flippi.ai
+            sed -i 's/staging-frontend/dev-frontend/g' /etc/nginx/sites-available/blue.flippi.ai
+            sed -i 's/3001/3002/g' /etc/nginx/sites-available/blue.flippi.ai
+            sed -i 's/8081/8082/g' /etc/nginx/sites-available/blue.flippi.ai
+            
+            # Restart nginx completely
+            systemctl restart nginx
+            
+            # Final test
+            echo "Testing CSS:"
+            curl -I https://blue.flippi.ai/web-styles.css | head -10
