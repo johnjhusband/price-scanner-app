@@ -1,0 +1,73 @@
+name: Force Clean Rebuild - Blue
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/force-clean-rebuild.yml'
+
+jobs:
+  rebuild:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Force clean rebuild on blue.flippi.ai
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== FORCE CLEAN REBUILD ==="
+            cd /var/www/blue.flippi.ai
+            
+            # Ensure we have latest code
+            git fetch origin develop
+            git reset --hard origin/develop
+            echo "Latest commit: $(git log -1 --oneline)"
+            
+            # Clean EVERYTHING
+            cd mobile-app
+            echo "1. Removing all caches and build artifacts..."
+            rm -rf node_modules
+            rm -rf .expo
+            rm -rf .expo-shared
+            rm -rf dist
+            rm -rf web-build
+            rm -rf .cache
+            rm -rf *.log
+            
+            # Also clear npm cache
+            npm cache clean --force
+            
+            echo "2. Fresh install of dependencies..."
+            npm install
+            
+            echo "3. Clear Metro bundler cache..."
+            npx expo start --clear &
+            EXPO_PID=$!
+            sleep 5
+            kill $EXPO_PID || true
+            
+            echo "4. Build with --clear flag..."
+            npx expo export --platform web --output-dir dist --clear
+            
+            echo "5. Verify build contains our changes..."
+            echo "Checking for removed download button:"
+            if grep -q "Download Image" dist/bundles/*.js 2>/dev/null; then
+              echo "ERROR: Download button still in build!"
+            else
+              echo "SUCCESS: Download button not found in build"
+            fi
+            
+            echo "6. Copy web assets..."
+            cp web-styles.css dist/ || echo "No web-styles.css to copy"
+            
+            echo "7. Restart PM2..."
+            pm2 restart dev-frontend
+            pm2 restart dev-backend
+            
+            echo "8. Final verification..."
+            sleep 3
+            curl -s https://blue.flippi.ai | grep -q "Download Image" && echo "WARNING: Download button still visible!" || echo "SUCCESS: Download button removed!"
+            
+            echo "=== REBUILD COMPLETE ==="
