@@ -1376,6 +1376,7 @@ export default function App() {
         }
         
         // Create image and set up handlers
+        console.log('[Share Image] Creating image element using document.createElement');
         const img = document.createElement('img');
         img.crossOrigin = 'anonymous'; // Just in case
         
@@ -1614,7 +1615,7 @@ export default function App() {
   // Handle universal share image download
   const handleDownloadShareImage = () => {
     try {
-      console.log('[Download Share] Starting download');
+      console.log('[Download Share] Starting download - v2');
       
       // Check what we have
       const hasAnalysisResult = !!analysisResult;
