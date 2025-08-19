@@ -1,4 +1,7 @@
 // BUILD VERSION: 2025-08-19 19:08 - SSH keys fixed, deployment should work now
+// Import polyfills first to fix inheritance issues
+import './polyfills';
+
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Linking, Dimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
