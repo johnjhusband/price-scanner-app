@@ -32,10 +32,33 @@ jobs:
             echo "=== [$(date)] Building frontend ==="
             cd ../mobile-app && npm install || { echo "ERROR: Frontend npm install failed"; exit 1; }
             echo "=== [$(date)] Running expo export ==="
-            npx expo export --platform web --output-dir dist || { echo "ERROR: Expo export failed"; exit 1; }
+            # Clear any existing dist directory
+            rm -rf dist
+            # Show current expo version
+            npx expo --version || echo "Expo not found"
+            # Run expo export with more verbose output
+            npx expo export --platform web --output-dir dist --clear || { 
+              echo "ERROR: Expo export failed"
+              echo "Checking if dist was partially created:"
+              ls -la dist/ 2>/dev/null || echo "No dist directory"
+              echo "Falling back to expo build:web"
+              npx expo build:web || {
+                echo "ERROR: Expo build:web also failed"
+                echo "Trying webpack export"
+                npx expo export:web || echo "All build methods failed"
+              }
+            }
             # Copy web assets that Expo doesn't include
             cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
             echo "=== [$(date)] Frontend build complete ==="
+            # Verify the build actually updated
+            echo "=== Checking if build contains our changes ==="
+            echo "Looking for 'TEMPORARILY REMOVED DOWNLOAD BUTTON' in built files:"
+            grep -r "TEMPORARILY REMOVED DOWNLOAD BUTTON" dist/ | head -5 || echo "String not found in dist"
+            echo "Checking dist directory timestamp:"
+            ls -la dist/ | head -5
+            echo "Checking specific bundle files:"
+            ls -la dist/bundles/ 2>/dev/null | head -5 || echo "No bundles directory"
             # Debug: Check what directory PM2 is serving from
             echo "=== PM2 dev-frontend config ==="
             pm2 describe dev-frontend | grep -E "exec cwd|script|args" || true
