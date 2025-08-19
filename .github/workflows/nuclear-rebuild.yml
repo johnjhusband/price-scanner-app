@@ -1,0 +1,60 @@
+name: Nuclear Rebuild - Force Update
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/nuclear-rebuild.yml'
+
+jobs:
+  nuclear:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Nuclear rebuild on blue.flippi.ai
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== NUCLEAR REBUILD - FORCE UPDATE ==="
+            cd /var/www/blue.flippi.ai
+            
+            # Stop everything
+            pm2 stop all
+            
+            # Get latest code
+            git fetch origin develop
+            git reset --hard origin/develop
+            
+            # NUCLEAR OPTION - Delete EVERYTHING and rebuild
+            cd mobile-app
+            rm -rf node_modules
+            rm -rf .expo
+            rm -rf .expo-shared
+            rm -rf dist
+            rm -rf web-build
+            rm -rf .cache
+            rm -rf package-lock.json
+            
+            # Clear ALL npm caches
+            npm cache clean --force
+            
+            # Fresh install
+            npm install
+            
+            # Build with maximum verbosity
+            NODE_ENV=production npx expo export --platform web --output-dir dist --clear
+            
+            # Verify the download button is gone
+            echo "Checking build for download button:"
+            grep -c "Download Image" dist/bundles/*.js || echo "SUCCESS: Download button not found"
+            
+            # Restart everything
+            cd /var/www/blue.flippi.ai
+            pm2 restart all
+            
+            # Force nginx to reload
+            nginx -s reload
+            
+            echo "=== NUCLEAR REBUILD COMPLETE ===
