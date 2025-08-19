@@ -42,6 +42,8 @@ jobs:
             # Show current expo version
             npx expo --version || echo "Expo not found"
             # Run expo export with more verbose output
+            # Force metro to rebuild everything
+            watchman watch-del-all 2>/dev/null || true
             npx expo export --platform web --output-dir dist --clear || { 
               echo "ERROR: Expo export failed"
               echo "Checking if dist was partially created:"
