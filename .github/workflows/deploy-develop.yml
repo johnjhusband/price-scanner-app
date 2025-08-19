@@ -30,7 +30,12 @@ jobs:
             echo "=== [$(date)] Installing backend dependencies ==="
             cd backend && npm install --production || { echo "ERROR: Backend npm install failed"; exit 1; }
             echo "=== [$(date)] Building frontend ==="
-            cd ../mobile-app && npm install || { echo "ERROR: Frontend npm install failed"; exit 1; }
+            cd ../mobile-app
+            # Clean all caches to ensure fresh build
+            rm -rf node_modules/.cache
+            rm -rf .expo
+            rm -rf dist
+            npm install || { echo "ERROR: Frontend npm install failed"; exit 1; }
             echo "=== [$(date)] Running expo export ==="
             # Clear any existing dist directory
             rm -rf dist
