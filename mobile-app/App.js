@@ -2191,24 +2191,7 @@ export default function App() {
                       disabled={isLoading}
                       icon={<Feather name="camera" size={20} color="#FFFFFF" />}
                     />
-                    <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
-                      Downloads story image to share
-                    </Text>
                   </>
-                )}
-                {/* TEMPORARILY REMOVED DOWNLOAD BUTTON
-                <BrandButton
-                  title="Download Image"
-                  onPress={handleDownloadShareImage}
-                  style={[styles.shareButton, { backgroundColor: '#52525b' }]}
-                  variant="primary"
-                  icon={<Feather name="download" size={20} color="#FFFFFF" />}
-                />
-                */}
-                {Platform.OS === 'web' && (
-                  <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
-                    Save to share anywhere
-                  </Text>
                 )}
                 <BrandButton
                   title="Scan Another Item"
