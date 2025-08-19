@@ -43,7 +43,11 @@ jobs:
             npm cache clean --force
             npm install || exit 1
             # Build with clean cache
-            npx expo export --platform web --output-dir dist --clear || exit 1
+            echo "Starting expo export..."
+            npx expo export --platform web --output-dir dist --clear || { echo "ERROR: Expo export failed"; exit 1; }
+            echo "Expo export completed"
+            echo "Checking dist directory:"
+            ls -la dist/ | head -10 || echo "ERROR: dist directory not found"
             
             # Copy web assets
             cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
