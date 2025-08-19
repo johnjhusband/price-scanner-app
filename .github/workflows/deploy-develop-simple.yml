@@ -25,8 +25,13 @@ jobs:
             git reset --hard origin/develop
             cd backend && npm install --production
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
-            # Copy web assets
-            cp web-styles.css dist/ || true
+            # Copy web assets - make sure CSS is in dist
+            if [ -f web-styles.css ]; then
+              cp web-styles.css dist/
+              echo "✓ Copied web-styles.css to dist/"
+            else
+              echo "✗ web-styles.css not found"
+            fi
             # Restart PM2
             pm2 restart dev-backend dev-frontend
             # Simple nginx fix
