@@ -1376,7 +1376,7 @@ export default function App() {
         }
         
         // Create image and set up handlers
-        const img = new Image();
+        const img = document.createElement('img');
         img.crossOrigin = 'anonymous'; // Just in case
         
         // Create promise to handle async loading with timeout
@@ -1613,9 +1613,6 @@ export default function App() {
 
   // Handle universal share image download
   const handleDownloadShareImage = () => {
-    // Test if function is being called at all
-    alert('Download button clicked!');
-    
     try {
       console.log('[Download Share] Starting download');
       
@@ -2176,18 +2173,9 @@ export default function App() {
             
             {analysisResult && (
               <View style={styles.postAnalysisActions}>
-                <TouchableOpacity 
-                  onPress={() => alert('Test button works!')}
-                  style={{ padding: 10, backgroundColor: 'red', marginBottom: 10 }}
-                >
-                  <Text style={{ color: 'white' }}>TEST BUTTON</Text>
-                </TouchableOpacity>
                 <BrandButton
                   title="Share on X"
-                  onPress={() => {
-                    alert('Share on X pressed!');
-                    handleShareOnX();
-                  }}
+                  onPress={handleShareOnX}
                   style={[styles.shareButton, { backgroundColor: '#18181b' }]}
                   variant="primary"
                   icon={<Feather name="share-2" size={20} color="#FFFFFF" />}
@@ -2207,16 +2195,13 @@ export default function App() {
                     </Text>
                   </>
                 )}
-                <View style={{ zIndex: 9999, elevation: 9999, backgroundColor: 'yellow', padding: 5, marginVertical: 10 }}>
-                  <TouchableOpacity
-                    onPress={() => {
-                      alert('Download pressed!');
-                    }}
-                    style={{ backgroundColor: 'red', padding: 20, borderWidth: 3, borderColor: 'black' }}
-                  >
-                    <Text style={{ color: 'white', fontSize: 20, fontWeight: 'bold', textAlign: 'center' }}>DOWNLOAD TEST</Text>
-                  </TouchableOpacity>
-                </View>
+                <BrandButton
+                  title="Download Image"
+                  onPress={handleDownloadShareImage}
+                  style={[styles.shareButton, { backgroundColor: '#52525b' }]}
+                  variant="primary"
+                  icon={<Feather name="download" size={20} color="#FFFFFF" />}
+                />
                 {Platform.OS === 'web' && (
                   <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
                     Save to share anywhere
