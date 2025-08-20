@@ -1,0 +1,117 @@
+name: Deploy Development V2 (Clean Build)
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:  # Allow manual trigger for testing
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Step 1: Checkout code in clean environment
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      # Step 2: Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: mobile-app/package-lock.json
+      
+      # Step 3: Build frontend in GitHub's clean environment
+      - name: Build Frontend
+        run: |
+          cd mobile-app
+          npm ci  # Clean install from package-lock.json
+          
+          # Force clean all possible caches
+          rm -rf .expo .expo-shared
+          rm -rf ~/.expo
+          
+          # Build with explicit cache clear
+          npx expo export --platform web --output-dir dist --clear
+          
+          # Verify build created new files
+          echo "Build complete. Contents of dist:"
+          ls -la dist/
+          echo "Bundle hash:"
+          ls dist/_expo/static/js/web/ | grep AppEntry || echo "No AppEntry found"
+      
+      # Step 4: Deploy backend (still on server)
+      - name: Deploy Backend
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/blue.flippi.ai
+            
+            # Update backend code
+            git fetch origin develop
+            git reset --hard origin/develop
+            
+            # Install backend dependencies only
+            cd backend
+            npm install --production
+            
+            # Restart backend
+            pm2 restart dev-backend
+      
+      # Step 5: Prepare frontend directory
+      - name: Prepare Frontend Directory
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            # Stop frontend before changes
+            pm2 stop dev-frontend || true
+            
+            # Create clean frontend directory structure
+            rm -rf /var/www/blue.flippi.ai/frontend
+            mkdir -p /var/www/blue.flippi.ai/frontend
+      
+      # Step 6: Transfer built files
+      - name: Transfer Frontend Files
+        uses: appleboy/scp-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "mobile-app/dist/*"
+          target: "/var/www/blue.flippi.ai/frontend/"
+          strip_components: 2  # Removes mobile-app/dist/ prefix
+      
+      # Step 7: Update PM2 and verify
+      - name: Start Frontend Service
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/blue.flippi.ai/frontend
+            
+            # Verify files transferred
+            echo "Frontend files:"
+            ls -la
+            
+            # Check for new bundle (not the contaminated one)
+            echo "Checking bundle hash:"
+            ls _expo/static/js/web/ | grep AppEntry
+            
+            # Restart frontend with new location
+            pm2 delete dev-frontend || true
+            pm2 serve . 8080 --name dev-frontend --spa
+            pm2 save
+            
+            # Health check
+            sleep 5
+            curl -I http://localhost:8080 || echo "Frontend not responding"
+            
+            echo "Deployment complete!"
