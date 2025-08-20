@@ -1,0 +1,69 @@
+name: Emergency - Check Blue Status
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/emergency-check-blue.yml'
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Blue.flippi.ai actual state
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== EMERGENCY CHECK - What's actually on blue.flippi.ai ==="
+            echo "Date: $(date)"
+            
+            cd /var/www/blue.flippi.ai
+            
+            echo ""
+            echo "1. Current git commit:"
+            git log -1 --oneline
+            
+            echo ""
+            echo "2. Last 5 commits:"
+            git log -5 --oneline
+            
+            echo ""
+            echo "3. Git status:"
+            git status
+            
+            echo ""
+            echo "4. Download button in source?"
+            grep -n "Download Image" mobile-app/App.js | head -3 || echo "NOT FOUND in source"
+            
+            echo ""
+            echo "5. Deployment test banner in source?"
+            grep -n "DEPLOYMENT BROKEN" mobile-app/App.js || echo "NOT FOUND in source"
+            
+            echo ""
+            echo "6. When was dist/ last updated?"
+            ls -la mobile-app/dist/ | head -5
+            stat mobile-app/dist/index.html | grep Modify || echo "No dist/index.html"
+            
+            echo ""
+            echo "7. Is dist serving old code?"
+            grep -l "Download Image" mobile-app/dist/bundles/*.js 2>/dev/null | head -3 || echo "Not found in bundles"
+            
+            echo ""
+            echo "8. PM2 process info:"
+            pm2 list
+            pm2 describe dev-frontend | grep -E "status|uptime|restart|exec cwd" || true
+            
+            echo ""
+            echo "9. What's PM2 actually serving?"
+            ps aux | grep "serve -s" | grep -v grep || echo "No serve process found"
+            
+            echo ""
+            echo "10. Database tables:"
+            cd backend
+            sqlite3 flippi.db ".tables" | tr ' ' '\n' | grep -E "growth|content" || echo "No growth tables"
+            
+            echo ""
+            echo "=== END EMERGENCY CHECK ===

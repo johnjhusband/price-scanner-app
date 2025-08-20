@@ -1,5 +1,8 @@
 {
   "dependencies": {
     "form-data": "^4.0.4"
+  },
+  "scripts": {
+    "claude:hello": "bash scripts/claude-selfcheck.sh"
   }
 }

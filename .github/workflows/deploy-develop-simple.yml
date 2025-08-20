@@ -1,0 +1,38 @@
+name: Deploy Development - Simple
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/deploy-develop-simple.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to blue.flippi.ai
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/blue.flippi.ai
+            # Simple deployment like it used to work
+            git reset --hard HEAD
+            git clean -fd
+            git fetch origin develop
+            git reset --hard origin/develop
+            cd backend && npm install --production
+            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
+            # Copy web assets - make sure CSS is in dist
+            if [ -f web-styles.css ]; then
+              cp web-styles.css dist/
+              echo "✓ Copied web-styles.css to dist/"
+            else
+              echo "✗ web-styles.css not found"
+            fi
+            # Restart PM2
+            pm2 restart dev-backend dev-frontend
+            # Simple nginx fix
+            cd /var/www/blue.flippi.ai && bash scripts/fix-nginx-ssl-comprehensive.sh || true

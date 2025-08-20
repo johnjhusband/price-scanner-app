@@ -1,0 +1,67 @@
+name: EMERGENCY Fix All Sites
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/emergency-fix-all-sites.yml'
+
+jobs:
+  emergency-fix:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Emergency fix all sites
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== EMERGENCY FIX FOR ALL SITES ==="
+            
+            # Stop nginx first
+            sudo systemctl stop nginx
+            
+            # Fix green.flippi.ai
+            echo "Fixing green.flippi.ai..."
+            if [ -f /var/www/green.flippi.ai/infra-nginx/sites/flippi-green.conf ]; then
+                sudo cp /var/www/green.flippi.ai/infra-nginx/sites/flippi-green.conf /etc/nginx/sites-available/green.flippi.ai
+            else
+                # Use any backup
+                BACKUP=$(ls -t /etc/nginx/sites-available/green.flippi.ai.backup* 2>/dev/null | head -1)
+                if [ -n "$BACKUP" ]; then
+                    sudo cp "$BACKUP" /etc/nginx/sites-available/green.flippi.ai
+                fi
+            fi
+            
+            # Fix app.flippi.ai (production)
+            echo "Fixing app.flippi.ai..."
+            if [ -f /var/www/app.flippi.ai/infra-nginx/sites/flippi-prod.conf ]; then
+                sudo cp /var/www/app.flippi.ai/infra-nginx/sites/flippi-prod.conf /etc/nginx/sites-available/app.flippi.ai
+            else
+                # Use any backup
+                BACKUP=$(ls -t /etc/nginx/sites-available/app.flippi.ai.backup* 2>/dev/null | head -1)
+                if [ -n "$BACKUP" ]; then
+                    sudo cp "$BACKUP" /etc/nginx/sites-available/app.flippi.ai
+                fi
+            fi
+            
+            # Ensure symlinks
+            sudo rm -f /etc/nginx/sites-enabled/green.flippi.ai
+            sudo rm -f /etc/nginx/sites-enabled/app.flippi.ai
+            sudo ln -sf /etc/nginx/sites-available/green.flippi.ai /etc/nginx/sites-enabled/
+            sudo ln -sf /etc/nginx/sites-available/app.flippi.ai /etc/nginx/sites-enabled/
+            
+            # Test and start
+            sudo nginx -t
+            sudo systemctl start nginx
+            
+            # Verify all sites
+            echo ""
+            echo "Testing sites:"
+            echo -n "app.flippi.ai: "
+            curl -sI https://app.flippi.ai | head -1 || echo "DOWN"
+            echo -n "green.flippi.ai: "
+            curl -sI https://green.flippi.ai | head -1 || echo "DOWN"
+            echo -n "blue.flippi.ai: "
+            curl -sI https://blue.flippi.ai | head -1 || echo "DOWN"

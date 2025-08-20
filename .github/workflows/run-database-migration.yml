@@ -1,0 +1,84 @@
+name: Run Database Migration
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/run-database-migration.yml'
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run growth analytics migration
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== Running Database Migration ==="
+            cd /var/www/blue.flippi.ai/backend
+            
+            # First check current database state
+            echo ""
+            echo "1. Checking current database tables..."
+            sqlite3 flippi.db ".tables" | tr ' ' '\n' | sort
+            
+            # Check if content_generated table exists
+            echo ""
+            echo "2. Checking for content_generated table..."
+            if sqlite3 flippi.db ".tables" | grep -q "content_generated"; then
+                echo "✅ content_generated table exists"
+            else
+                echo "❌ content_generated table missing - creating it..."
+                sqlite3 flippi.db << 'SQL'
+            CREATE TABLE IF NOT EXISTS content_generated (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                valuation_id INTEGER,
+                title TEXT,
+                meta_description TEXT,
+                url_slug TEXT UNIQUE,
+                content TEXT,
+                seo_data TEXT,
+                status TEXT DEFAULT 'pending',
+                published_at DATETIME,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                FOREIGN KEY (valuation_id) REFERENCES valuations(id)
+            );
+            SQL
+                echo "✅ content_generated table created"
+            fi
+            
+            # Backup database before migration
+            echo ""
+            echo "3. Creating database backup..."
+            cp flippi.db flippi.db.backup.$(date +%Y%m%d_%H%M%S)
+            echo "✅ Backup created"
+            
+            # Run the migration
+            echo ""
+            echo "4. Running growth analytics migration..."
+            node scripts/run-growth-analytics-migration.js
+            
+            # Verify migration worked
+            echo ""
+            echo "5. Verifying migration..."
+            echo "Growth tables:"
+            sqlite3 flippi.db ".tables" | tr ' ' '\n' | grep growth | sort
+            
+            # Test a growth endpoint
+            echo ""
+            echo "6. Testing growth analytics endpoint..."
+            RESPONSE=$(curl -s https://blue.flippi.ai/api/growth/analytics/metrics/test)
+            echo "Response: $RESPONSE"
+            
+            # Check if login still works
+            echo ""
+            echo "7. Testing login functionality..."
+            LOGIN_TEST=$(curl -s -I https://blue.flippi.ai/ | grep -E "HTTP|Set-Cookie" | head -5)
+            echo "$LOGIN_TEST"
+            
+            echo ""
+            echo "=== Migration Complete ==="

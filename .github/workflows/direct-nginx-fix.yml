@@ -1,0 +1,35 @@
+name: Direct Nginx Fix
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/direct-nginx-fix.yml'
+
+jobs:
+  fix-nginx:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Apply nginx fix directly
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== Direct nginx fix for growth routes ==="
+            cd /var/www/blue.flippi.ai
+            
+            # Pull latest code to get the fix script
+            echo "Pulling latest code..."
+            git fetch origin develop
+            git reset --hard origin/develop
+            
+            # Run the manual fix script
+            if [ -f "scripts/manual-nginx-growth-fix.sh" ]; then
+                echo "Running manual nginx fix script..."
+                sudo bash scripts/manual-nginx-growth-fix.sh
+            else
+                echo "ERROR: Fix script not found"
+                exit 1
+            fi

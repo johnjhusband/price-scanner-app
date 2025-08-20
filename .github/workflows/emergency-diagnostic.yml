@@ -1,0 +1,79 @@
+name: Emergency Diagnostic
+on:
+  workflow_dispatch:
+  push:
+    branches: [develop]
+    paths:
+      - '.github/workflows/emergency-diagnostic.yml'
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Emergency diagnostics
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "=== EMERGENCY DIAGNOSTICS ==="
+            
+            # 1. Is nginx running?
+            echo "1. Nginx process check:"
+            ps aux | grep nginx | grep -v grep || echo "NO NGINX PROCESS FOUND"
+            
+            # 2. Nginx service status
+            echo ""
+            echo "2. Service status:"
+            sudo systemctl is-active nginx || echo "NGINX NOT ACTIVE"
+            
+            # 3. Check for errors
+            echo ""
+            echo "3. Last errors in nginx log:"
+            sudo tail -20 /var/log/nginx/error.log || echo "No error log"
+            
+            # 4. Check port 443
+            echo ""
+            echo "4. Port 443 status:"
+            sudo netstat -tlnp | grep :443 || echo "PORT 443 NOT LISTENING"
+            
+            # 5. Try to start nginx
+            echo ""
+            echo "5. Attempting to start nginx:"
+            sudo systemctl start nginx 2>&1 || echo "FAILED TO START"
+            
+            # 6. Check config syntax
+            echo ""
+            echo "6. Config syntax check:"
+            sudo nginx -t 2>&1
+            
+            # 7. Check SSL files
+            echo ""
+            echo "7. SSL certificate check:"
+            ls -la /etc/letsencrypt/live/blue.flippi.ai/ 2>&1 || echo "SSL DIR NOT FOUND"
+            
+            # 8. Check enabled sites
+            echo ""
+            echo "8. Enabled sites:"
+            ls -la /etc/nginx/sites-enabled/
+            
+            # 9. Backend status
+            echo ""
+            echo "9. Backend (PM2) status:"
+            pm2 list | grep dev-backend || echo "Backend not running"
+            
+            # 10. Try minimal fix
+            echo ""
+            echo "10. Attempting minimal fix..."
+            # Remove all configs and start fresh
+            sudo rm -f /etc/nginx/sites-enabled/*
+            # Copy from infra-nginx if available
+            if [ -f /var/www/blue.flippi.ai/infra-nginx/sites/flippi-blue.conf ]; then
+                sudo cp /var/www/blue.flippi.ai/infra-nginx/sites/flippi-blue.conf /etc/nginx/sites-available/blue.flippi.ai
+                sudo ln -s /etc/nginx/sites-available/blue.flippi.ai /etc/nginx/sites-enabled/
+                sudo nginx -t && sudo systemctl restart nginx
+                echo "Applied infra-nginx config"
+            else
+                echo "No infra-nginx config found"
+            fi

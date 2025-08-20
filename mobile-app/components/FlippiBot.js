@@ -32,7 +32,7 @@ const FlippiBot = ({ scanData, userDescription, imageData, onComplete, initialDe
       id: Date.now(),
       type: 'bot',
       text: initialDecision === true 
-        ? "Great to hear it helped! 🎉 Want to share what worked well?"
+        ? "Great to hear it helped! Want to share what worked well?"
         : initialDecision === false
         ? "Thanks for the feedback! Want to share what didn't work?"
         : "Thanks for checking out Flippi! Want to share your thoughts?",
@@ -182,7 +182,7 @@ const FlippiBot = ({ scanData, userDescription, imageData, onComplete, initialDe
       const result = await response.json();
 
       if (result.success) {
-        addMessage("Thanks! Your feedback has been submitted. 🎉", 'bot');
+        addMessage("Thanks! Your feedback has been submitted.", 'bot');
         setTimeout(() => {
           if (onComplete) onComplete();
         }, 2000);

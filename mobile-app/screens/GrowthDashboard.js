@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 import { brandColors, typography } from '../theme/brandColors';
+import analyticsTracker from '../utils/analyticsTracker';
+import AnalyticsDashboard from './AnalyticsDashboard';
 
 const GrowthDashboard = ({ isVisible, onClose }) => {
   const [loading, setLoading] = useState(true);
@@ -21,6 +23,9 @@ const GrowthDashboard = ({ isVisible, onClose }) => {
   const [content, setContent] = useState([]);
   const [activeTab, setActiveTab] = useState('overview');
   const [monitoring, setMonitoring] = useState(false);
+  const [analytics, setAnalytics] = useState({});
+  const [platformBreakdown, setPlatformBreakdown] = useState(null);
+  const [showAnalyticsDashboard, setShowAnalyticsDashboard] = useState(false);
 
   const API_URL = Platform.OS === 'web' ? '' : 'http://localhost:3000';
 
@@ -45,6 +50,22 @@ const GrowthDashboard = ({ isVisible, onClose }) => {
       const contentData = await contentResponse.json();
       if (contentData.success) {
         setContent(contentData.content);
+        
+        // Fetch analytics for each content item
+        const analyticsData = {};
+        for (const item of contentData.content) {
+          const metrics = await analyticsTracker.getContentMetrics(item.id);
+          if (metrics) {
+            analyticsData[item.id] = metrics;
+          }
+        }
+        setAnalytics(analyticsData);
+      }
+      
+      // Fetch platform breakdown
+      const platformData = await analyticsTracker.getPlatformBreakdown();
+      if (platformData) {
+        setPlatformBreakdown(platformData);
       }
     } catch (error) {
       console.error('Error fetching growth data:', error);
@@ -150,6 +171,14 @@ const GrowthDashboard = ({ isVisible, onClose }) => {
             Content
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab]}
+          onPress={() => setShowAnalyticsDashboard(true)}
+        >
+          <Text style={[styles.tabText]}>
+            Analytics
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -233,27 +262,67 @@ const GrowthDashboard = ({ isVisible, onClose }) => {
               {content.length === 0 ? (
                 <Text style={styles.emptyText}>No content generated yet.</Text>
               ) : (
-                content.map((c) => (
-                  <View key={c.id} style={styles.contentCard}>
-                    <Text style={styles.contentTitle}>{c.title}</Text>
-                    <View style={styles.contentMeta}>
-                      <Text style={styles.contentStatus}>
-                        {c.published ? '✅ Published' : '📝 Draft'}
+                content.map((c) => {
+                  const metrics = analytics[c.id] || {};
+                  return (
+                    <View key={c.id} style={styles.contentCard}>
+                      <Text style={styles.contentTitle}>{c.title}</Text>
+                      <View style={styles.contentMeta}>
+                        <Text style={styles.contentStatus}>
+                          {c.published ? '✅ Published' : '📝 Draft'}
+                        </Text>
+                      </View>
+                      
+                      {/* Analytics Row */}
+                      <View style={styles.analyticsRow}>
+                        <View style={styles.metricItem}>
+                          <Text style={styles.metricValue}>{metrics.total_views || 0}</Text>
+                          <Text style={styles.metricLabel}>Views</Text>
+                        </View>
+                        <View style={styles.metricItem}>
+                          <Text style={styles.metricValue}>{metrics.total_clicks || 0}</Text>
+                          <Text style={styles.metricLabel}>Clicks</Text>
+                        </View>
+                        <View style={styles.metricItem}>
+                          <Text style={styles.metricValue}>{metrics.total_shares || 0}</Text>
+                          <Text style={styles.metricLabel}>Shares</Text>
+                        </View>
+                        <View style={styles.metricItem}>
+                          <Text style={styles.metricValue}>{metrics.total_conversions || 0}</Text>
+                          <Text style={styles.metricLabel}>Conversions</Text>
+                        </View>
+                      </View>
+                      
+                      <Text style={styles.contentPreview} numberOfLines={2}>
+                        {c.content.replace(/<[^>]*>/g, '')}
                       </Text>
-                      {c.page_views > 0 && (
-                        <Text style={styles.contentViews}>👀 {c.page_views} views</Text>
-                      )}
+                      
+                      {/* Track view button */}
+                      <TouchableOpacity
+                        style={styles.trackButton}
+                        onPress={() => {
+                          // Navigate to content and track
+                          if (Platform.OS === 'web') {
+                            window.location.href = `/growth/questions`;
+                          }
+                          analyticsTracker.trackClick(c.id, 'view_content');
+                        }}
+                      >
+                        <Text style={styles.trackButtonText}>View Content</Text>
+                      </TouchableOpacity>
                     </View>
-                    <Text style={styles.contentPreview} numberOfLines={2}>
-                      {c.content.replace(/<[^>]*>/g, '')}
-                    </Text>
-                  </View>
-                ))
+                  );
+                })
               )}
             </View>
           )}
         </ScrollView>
       )}
+      
+      <AnalyticsDashboard 
+        isVisible={showAnalyticsDashboard}
+        onClose={() => setShowAnalyticsDashboard(false)}
+      />
     </View>
   );
 };
@@ -466,6 +535,43 @@ const styles = StyleSheet.create({
     color: brandColors.textSecondary,
     textAlign: 'center',
     marginTop: 40,
+  },
+  analyticsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    marginVertical: 12,
+    paddingVertical: 12,
+    borderTopWidth: 1,
+    borderTopColor: brandColors.border,
+    borderBottomWidth: 1,
+    borderBottomColor: brandColors.border,
+  },
+  metricItem: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  metricValue: {
+    fontSize: 18,
+    fontWeight: typography.weights.semiBold,
+    color: brandColors.primary,
+  },
+  metricLabel: {
+    fontSize: 12,
+    color: brandColors.textSecondary,
+    marginTop: 4,
+  },
+  trackButton: {
+    backgroundColor: brandColors.primary,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 6,
+    marginTop: 12,
+    alignSelf: 'flex-start',
+  },
+  trackButtonText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: typography.weights.medium,
   },
 });
 

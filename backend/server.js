@@ -203,9 +203,9 @@ For items scoring below 70:
 - Use "Craft Fair" or "Personal Use" only
 - Provide "Clean with care. Style it your way." as selling tip
 
-Round final score to nearest 5. This is signal-based guidance, not authentication.
+Provide precise scores without rounding. This is signal-based guidance, not authentication.
 
-Analyze this item and provide: 1) What the item is, 2) Estimated resale value range based on CURRENT 2025 market conditions, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best STANDARD platform to list it on (eBay, Poshmark, Facebook Marketplace, Mercari, The RealReal, Vestiaire Collective, Grailed, Depop, Etsy, Rebag, or Shopify - choose based on current platform trends and item type), 5) Best LIVE selling platform (Whatnot, Poshmark Live, TikTok Shop, Instagram Live, Facebook Live, YouTube Live, Amazon Live, eBay Live, or Shopify Live - consider current platform popularity and audience demographics), 6) Condition assessment, 7) Real Score (0-100 confidence rating rounded to nearest 5), 8) TRENDING SCORE: Calculate a score from 0-100 using this formula: (1.0 × Demand[0-25]) + (0.8 × Velocity[0-20]) + (0.6 × Platform[0-15]) + (0.5 × Recency[0-10]) + (0.5 × Scarcity[0-10]) - (1.0 × Penalty[0-20]). 
+Analyze this item and provide: 1) What the item is, 2) Estimated resale value range based on CURRENT 2025 market conditions, 3) Style tier (Entry, Designer, or Luxury based on brand/quality), 4) Best STANDARD platform to list it on (eBay, Poshmark, Facebook Marketplace, Mercari, The RealReal, Vestiaire Collective, Grailed, Depop, Etsy, Rebag, or Shopify - choose based on current platform trends and item type), 5) Best LIVE selling platform (Whatnot, Poshmark Live, TikTok Shop, Instagram Live, Facebook Live, YouTube Live, Amazon Live, eBay Live, or Shopify Live - consider current platform popularity and audience demographics), 6) Condition assessment, 7) Real Score (0-100 confidence rating as a precise whole number), 8) TRENDING SCORE: Calculate a score from 0-100 using this formula: (1.0 × Demand[0-25]) + (0.8 × Velocity[0-20]) + (0.6 × Platform[0-15]) + (0.5 × Recency[0-10]) + (0.5 × Scarcity[0-10]) - (1.0 × Penalty[0-20]). 
 
 MARKET ANALYSIS APPROACH:
 First, analyze the item thoroughly based on what you see. Then consider:
@@ -352,10 +352,12 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
     
     if (isLuxuryBrand) {
       // Start luxury items at 50-60 for single photo unless clear authentication signals
-      if (realScore > 60 && !descriptionLower.includes('authenticated') && 
+      if (realScore > 75 && !descriptionLower.includes('authenticated') && 
           !descriptionLower.includes('receipt') && !descriptionLower.includes('serial')) {
-        realScore = 60;
-        penalties.push("single photo luxury item");
+        // Allow scores up to 75% for luxury items without authentication docs
+        // This prevents clustering at 60-65%
+        realScore = Math.min(realScore, 75);
+        penalties.push("luxury item without authentication docs");
       }
       // Check for replica indicators in description
       if (hasReplicaIndicators) {
@@ -413,8 +415,10 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
         descriptionLower.includes(keyword)
       );
       
-      if (!mentionsInteriorDetails && realScore > 50) {
-        realScore = Math.min(realScore, 50);
+      if (!mentionsInteriorDetails && realScore > 65) {
+        // Allow up to 65% for items without interior tag details
+        // This gives more range instead of hard capping at 50%
+        realScore = Math.min(realScore, 65);
         penalties.push("no interior tag verification");
       }
       
@@ -560,7 +564,7 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
       analysis.recommended_live_platform = "Personal Use";
     }
 
-    // Calculate buy price (resale price / 5)
+    // Calculate buy price with tiered multipliers based on value
     let buy_price = null;
     if (analysis.price_range) {
       // Extract numbers from price range (e.g., "$50-$150" or "$900-$1,000" -> 50 and 150 or 900 and 1000)
@@ -571,12 +575,31 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
         const lowPrice = parseInt(priceMatch[1].replace(/,/g, ''));
         const highPrice = parseInt(priceMatch[2].replace(/,/g, ''));
         const avgPrice = (lowPrice + highPrice) / 2;
-        const buyPrice = Math.round(avgPrice / 5);
+        
+        // Tiered multiplier system for different price ranges
+        let multiplier = 5; // default multiplier
+        if (avgPrice >= 5000) {
+          multiplier = 2.5; // 40% margin for ultra high-end items ($2000+ buy price)
+        } else if (avgPrice >= 2000) {
+          multiplier = 3; // 33% margin for luxury items ($667+ buy price)
+        } else if (avgPrice >= 1000) {
+          multiplier = 3.5; // 28% margin for high-end items ($286+ buy price)
+        } else if (avgPrice >= 500) {
+          multiplier = 4; // 25% margin for mid-high items ($125+ buy price)
+        } else {
+          multiplier = 5; // 20% margin for regular items
+        }
+        
+        const buyPrice = Math.round(avgPrice / multiplier);
         buy_price = `$${buyPrice}`;
         
         // Add to analysis object
         analysis.buy_price = buy_price;
         analysis.resale_average = `$${Math.round(avgPrice)}`;
+        analysis.pricing_tier = avgPrice >= 5000 ? 'ultra-luxury' : 
+                               avgPrice >= 2000 ? 'luxury' :
+                               avgPrice >= 1000 ? 'high-end' :
+                               avgPrice >= 500 ? 'mid-high' : 'standard';
       }
     }
     
@@ -585,10 +608,19 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
       'Hermès',
       'Chanel',
       'Louis Vuitton',
+      'Louboutin',
+      'Christian Louboutin',
       'Cartier',
       'Gucci',
       'Fendi',
       'Goyard',
+      'Dior',
+      'Prada',
+      'Bottega Veneta',
+      'Balenciaga',
+      'Saint Laurent',
+      'Valentino',
+      'Givenchy',
       'Céline (Phoebe Philo era)',
       'Chloe Paddington (niche)',
       'Vintage Coach (Made in USA)'
@@ -618,7 +650,20 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
           const adjustedLowPrice = Math.ceil(lowPrice * adjustmentFactor);
           const adjustedHighPrice = Math.ceil(highPrice * adjustmentFactor);
           const adjustedAvgPrice = (adjustedLowPrice + adjustedHighPrice) / 2;
-          const adjustedBuyPrice = Math.ceil(adjustedAvgPrice / 5);
+          
+          // Use tiered multiplier system for adjusted prices too
+          let adjustedMultiplier = 5;
+          if (adjustedAvgPrice >= 5000) {
+            adjustedMultiplier = 2.5;
+          } else if (adjustedAvgPrice >= 2000) {
+            adjustedMultiplier = 3;
+          } else if (adjustedAvgPrice >= 1000) {
+            adjustedMultiplier = 3.5;
+          } else if (adjustedAvgPrice >= 500) {
+            adjustedMultiplier = 4;
+          }
+          
+          const adjustedBuyPrice = Math.ceil(adjustedAvgPrice / adjustedMultiplier);
           
           // Update analysis with adjusted values
           analysis.price_range = `$${adjustedLowPrice}-$${adjustedHighPrice}`;
@@ -700,8 +745,9 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
     
     // Format real score - no % symbol, just the number
     if (analysis.real_score !== undefined && typeof analysis.real_score === 'number') {
-      // Round to nearest 5
-      analysis.real_score = Math.round(analysis.real_score / 5) * 5;
+      // Keep the score as-is, no rounding to nearest 5
+      // This allows for more granular scoring instead of clustering at 65-70%
+      analysis.real_score = Math.round(analysis.real_score); // Just ensure it's a whole number
     }
     
     // Apply manual overrides
@@ -835,6 +881,10 @@ app.use('/api/growth', (req, res, next) => {
     });
   }
 });
+
+// Growth analytics routes
+const growthAnalyticsRoutes = require('./routes/growthAnalytics');
+app.use('/api/growth/analytics', growthAnalyticsRoutes);
 
 // Error handling middleware from v2.0 - ENHANCED
 app.use((error, req, res, next) => {

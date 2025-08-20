@@ -1,6 +1,6 @@
 {
   "name": "flippi-ai",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start",
@@ -12,15 +12,16 @@
   "dependencies": {
     "@expo/metro-runtime": "~3.1.3",
     "@expo/vector-icons": "^14.1.0",
+    "@react-native-async-storage/async-storage": "1.21.0",
     "expo": "~50.0.0",
     "expo-camera": "~14.1.3",
+    "expo-font": "~11.10.2",
     "expo-image-picker": "~14.7.0",
     "expo-status-bar": "~1.11.1",
-    "@react-native-async-storage/async-storage": "1.21.0",
     "react": "18.2.0",
     "react-dom": "18.2.0",
     "react-native": "0.73.6",
-    "react-native-web": "~0.19.6"
+    "react-native-web": "^0.19.6"
   },
   "devDependencies": {
     "@babel/core": "^7.20.0"

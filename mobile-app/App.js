@@ -1,3 +1,4 @@
+// BUILD VERSION: 2025-08-20 01:00 - Force rebuild after account migration cache fix
 import React, { useState, useRef, useEffect } from 'react';
 import { View, Text, Image, StyleSheet, Alert, Platform, ScrollView, TouchableOpacity, ActivityIndicator, TextInput, Linking, Dimensions } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
@@ -87,6 +88,7 @@ const WebCameraView = ({ onCapture, onCancel }) => {
   
   // Cleanup effect
   useEffect(() => {
+    console.log('[FLIPPI] App version 2.2.1 - Build fix 2025-08-19 21:15');
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
@@ -1317,7 +1319,7 @@ export default function App() {
       // Item image - Simplified approach
       const drawItemImage = async () => {
         const boxWidth = 800;
-        const boxHeight = 380;
+        const boxHeight = 810; // 75% of 1080px for Whatnot
         const boxX = 140;
         const boxY = 140;
         
@@ -1376,7 +1378,8 @@ export default function App() {
         }
         
         // Create image and set up handlers
-        const img = new Image();
+        console.log('[Share Image] Creating image element using document.createElement');
+        const img = document.createElement('img');
         img.crossOrigin = 'anonymous'; // Just in case
         
         // Create promise to handle async loading with timeout
@@ -1450,23 +1453,25 @@ export default function App() {
       // Reset text alignment for subsequent text
       ctx.textAlign = 'center';
       
-      // Item name
+      // Title (moved 0.5 inch lower = ~48px at 96dpi, then another 0.5 inch for Whatnot)
       ctx.fillStyle = '#000000';
-      ctx.font = 'bold 42px -apple-system, system-ui, sans-serif';
+      ctx.font = 'bold 36px -apple-system, system-ui, sans-serif';
       const itemName = result.item_name || 'Unknown Item';
-      ctx.fillText(itemName, canvas.width / 2, 560);
+      ctx.fillText(itemName, canvas.width / 2, 906); // 810 + 48 + 48 (moved additional 0.5" for Whatnot)
       
       // Brand (if available)
       if (result.brand) {
-        ctx.font = '32px -apple-system, system-ui, sans-serif';
+        ctx.font = '28px -apple-system, system-ui, sans-serif';
         ctx.fillStyle = '#666666';
-        ctx.fillText(result.brand, canvas.width / 2, 600);
+        ctx.fillText(result.brand, canvas.width / 2, 936); // Adjusted for title move
       }
       
-      // Price range
-      ctx.font = 'bold 56px -apple-system, system-ui, sans-serif';
+      // Market Comps with green price band (condensed for space)
       ctx.fillStyle = '#059669';
-      ctx.fillText(result.price_range || '$0-$0', canvas.width / 2, 660);
+      ctx.fillRect(0, 950, canvas.width, 45); // Reduced height from 60 to 45
+      ctx.fillStyle = '#FFFFFF';
+      ctx.font = 'bold 36px -apple-system, system-ui, sans-serif'; // Reduced from 42px
+      ctx.fillText(result.price_range || '$0-$0', canvas.width / 2, 980);
       
       // Purchase price and profit if available
       const getPurchasePrice = () => {
@@ -1479,104 +1484,40 @@ export default function App() {
         return null;
       };
       
-      const purchasePrice = getPurchasePrice();
-      let yPosition = 720;
+      // Sellability + Authenticity row (condensed)
+      let yPosition = 1005; // Moved up from 990
+      ctx.font = '20px -apple-system, system-ui, sans-serif'; // Reduced from 24px
       
-      if (purchasePrice) {
-        ctx.font = '32px -apple-system, system-ui, sans-serif';
-        ctx.fillStyle = '#666666';
-        ctx.fillText(`Bought for $${purchasePrice}`, canvas.width / 2, yPosition);
-        yPosition += 50;
-        
-        // Calculate profit
-        const getPriceEstimate = (priceRange) => {
-          if (!priceRange) return 0;
-          const match = priceRange.match(/\$(\d+)-\$(\d+)/);
-          if (match) {
-            const low = parseInt(match[1]);
-            const high = parseInt(match[2]);
-            return Math.round((low + high) / 2);
-          }
-          return 0;
-        };
-        
-        const resaleEstimate = getPriceEstimate(result.price_range);
-        if (resaleEstimate > 0) {
-          const profit = resaleEstimate - purchasePrice;
-          ctx.font = 'bold 42px -apple-system, system-ui, sans-serif';
-          ctx.fillStyle = profit > 0 ? '#059669' : '#dc2626';
-          ctx.fillText(`${profit > 0 ? '+' : ''}$${Math.abs(profit)} profit potential`, canvas.width / 2, yPosition);
-          yPosition += 60;
-        }
-      }
-      
-      // Add key metrics in a row
-      ctx.font = '24px -apple-system, system-ui, sans-serif';
+      // Sellability with icon
       ctx.fillStyle = '#333333';
+      const sellabilityText = `Sellability: ${result.trending_score || 0}/100`;
+      ctx.fillText(sellabilityText, canvas.width / 2 - 200, yPosition);
       
-      // Real Score
-      if (result.real_score) {
-        const realScoreText = `Real Score: ${result.real_score}`;
-        ctx.fillText(realScoreText, canvas.width / 2 - 200, yPosition);
-      }
+      // Authenticity with icon
+      const realScoreText = `Authenticity: ${result.real_score || 'Unknown'}`;
+      ctx.fillText(realScoreText, canvas.width / 2 + 200, yPosition);
       
-      // Sellability
-      if (result.trending_score) {
-        const sellabilityText = `Sellability: ${result.trending_score}/100`;
-        ctx.fillText(sellabilityText, canvas.width / 2 + 200, yPosition);
-      }
-      yPosition += 40;
-      
-      // Platform recommendation
+      // Market Info (condensed)
+      yPosition += 25; // Reduced from 35
+      ctx.font = '18px -apple-system, system-ui, sans-serif'; // Reduced from 20px
+      ctx.fillStyle = '#666666';
       if (result.recommended_platform) {
-        ctx.font = '28px -apple-system, system-ui, sans-serif';
-        ctx.fillStyle = '#666666';
-        ctx.fillText(`Best on: ${result.recommended_platform}`, canvas.width / 2, yPosition);
-        yPosition += 40;
+        ctx.fillText(`Best Platform: ${result.recommended_platform}`, canvas.width / 2, yPosition);
       }
       
-      // Environmental impact
+      // Eco Info (condensed)
+      yPosition += 20; // Reduced from 30
       if (result.environmental_tag) {
-        ctx.font = '26px -apple-system, system-ui, sans-serif';
         ctx.fillStyle = '#059669';
+        ctx.font = '16px -apple-system, system-ui, sans-serif';
         ctx.fillText(result.environmental_tag, canvas.width / 2, yPosition);
-        yPosition += 50;
       }
       
-      // Add QR Code for Reddit valuation page
-      try {
-        // Generate a slug for this item
-        const itemSlug = generateValuationSlug(result);
-        const qrUrl = `https://flippi.ai/value/${itemSlug}`;
-        
-        // QR Code positioning
-        const qrSize = 120;
-        const qrX = canvas.width - qrSize - 40; // Right side
-        const qrY = canvas.height - qrSize - 100; // Above footer
-        
-        // White background for QR
-        ctx.fillStyle = '#FFFFFF';
-        ctx.fillRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
-        
-        // Draw border
-        ctx.strokeStyle = '#E5E5E5';
-        ctx.lineWidth = 1;
-        ctx.strokeRect(qrX - 10, qrY - 10, qrSize + 20, qrSize + 20);
-        
-        // For now, draw placeholder QR pattern
-        // In production, this would fetch from backend
-        drawQRPlaceholder(ctx, qrX, qrY, qrSize);
-        
-        // QR Label
-        ctx.fillStyle = '#666666';
-        ctx.font = '14px -apple-system, system-ui, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Scan for details', qrX + qrSize/2, qrY + qrSize + 20);
-        
-      } catch (qrError) {
-        console.error('[Share Image] QR generation error:', qrError);
-        // Continue without QR if it fails
-      }
+      // Add prominent CTA at bottom
+      ctx.fillStyle = '#1a3a52';
+      ctx.font = 'bold 24px -apple-system, system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Get 20 free images at flippi.ai', canvas.width / 2, canvas.height - 40);
       
       // Footer
       ctx.fillStyle = '#666666';
@@ -1589,91 +1530,67 @@ export default function App() {
         ctx.fillText(`flippi.ai?ref=${user.referralCode}`, canvas.width / 2, 1000);
       }
       
-      // Convert to blob and download
-      console.log('[Share Image] Converting canvas to blob...');
+      // Convert to data URL for immediate download
+      console.log('[Share Image] Converting canvas for download...');
       
-      canvas.toBlob((blob) => {
-        try {
-          if (!blob) {
-            console.error('[Share Image] Blob is null');
-            throw new Error('Failed to convert canvas to blob');
-          }
-          
-          console.log('[Share Image] Blob created, size:', blob.size);
-          
-          // Try multiple download methods for better browser compatibility
-          const url = URL.createObjectURL(blob);
-          console.log('[Share Image] Object URL created:', url);
-          
-          // Method 1: Create and click anchor
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `flippi-share-image-${Date.now()}.png`;
-          a.style.display = 'none';
-          
-          console.log('[Share Image] Attempting download...');
-          
-          // Method 2: Try different click methods
+      try {
+        // Use toDataURL for synchronous download
+        const dataUrl = canvas.toDataURL('image/png');
+        
+        // Create download link
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = `flippi-share-image-${Date.now()}.png`;
+        a.style.display = 'none';
+        
+        document.body.appendChild(a);
+        
+        // Small delay to ensure element is in DOM
+        setTimeout(() => {
+          a.click();
+          setTimeout(() => {
+            document.body.removeChild(a);
+          }, 100);
+        }, 10);
+        
+        console.log('[Share Image] Download triggered');
+        
+        // Show success message
+        Alert.alert(
+          'Image Ready!',
+          'Check your Downloads folder for the share image.',
+          [{ text: 'OK' }]
+        );
+      } catch (downloadError) {
+        console.error('[Share Image] Download failed:', downloadError);
+        
+        // Fallback: Use blob method
+        canvas.toBlob((blob) => {
           try {
-            // Add to DOM
+            if (!blob) {
+              throw new Error('Failed to create image');
+            }
+            
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `flippi-share-image-${Date.now()}.png`;
+            
+            // Try to trigger download
             document.body.appendChild(a);
-            console.log('[Share Image] Anchor added to DOM');
-            
-            // Click the link
             a.click();
-            console.log('[Share Image] Click triggered');
             
-            // Clean up immediately
             setTimeout(() => {
               document.body.removeChild(a);
               URL.revokeObjectURL(url);
-              console.log('[Share Image] Cleanup complete');
             }, 100);
-          } catch (clickError) {
-            console.error('[Share Image] Click method failed:', clickError);
+          } catch (blobError) {
+            console.error('[Share Image] Blob download failed:', blobError);
             
-            // Fallback: Try alternative download method
-            try {
-              // Create a new window with the image
-              const newWindow = window.open(url, '_blank');
-              if (newWindow) {
-                setTimeout(() => newWindow.close(), 1000);
-              }
-            } catch (windowError) {
-              console.error('[Share Image] Window method failed:', windowError);
-              
-              // Last resort: Copy URL to clipboard
-              if (navigator.clipboard) {
-                navigator.clipboard.writeText(url).then(() => {
-                  Alert.alert(
-                    'Download Ready',
-                    'Image URL copied to clipboard. Right-click and save the image from your browser.',
-                    [{ text: 'OK' }]
-                  );
-                });
-              }
-            }
-          }
-          
-          // Cleanup
-          setTimeout(() => {
-            URL.revokeObjectURL(url);
-            console.log('[Share Image] Cleanup complete');
-          }, 100);
-          
-          Alert.alert(
-            'Image downloaded!',
-            'Check your Downloads folder',
-            [{ text: 'OK' }]
-          );
-        } catch (error) {
-          console.error('[Share Image] Download error:', error);
-          
-          // Fallback: Open image in new tab
-          try {
-            const dataUrl = canvas.toDataURL('image/png');
+            // Last resort: Open image in new tab
             const newTab = window.open();
             if (newTab) {
+              const dataUrl = canvas.toDataURL('image/png');
               newTab.document.write(`<img src="${dataUrl}" alt="Flippi Share Image" />`);
               Alert.alert(
                 'Image opened in new tab',
@@ -1681,16 +1598,9 @@ export default function App() {
                 [{ text: 'OK' }]
               );
             }
-          } catch (fallbackError) {
-            console.error('[Share Image] Fallback error:', fallbackError);
-            Alert.alert(
-              'Download not supported',
-              'Please take a screenshot instead',
-              [{ text: 'OK' }]
-            );
           }
-        }
-      }, 'image/png', 0.95);
+        }, 'image/png', 0.95);
+      }
     } catch (error) {
       console.error('[Share Image] Error generating image:', error);
       console.error('[Share Image] Error stack:', error.stack);
@@ -1706,42 +1616,53 @@ export default function App() {
 
   // Handle universal share image download
   const handleDownloadShareImage = () => {
-    console.log('[Download Share] Starting download with:');
-    console.log('  - analysisResult:', !!analysisResult);
-    console.log('  - imageBase64:', !!imageBase64, imageBase64?.substring(0, 50));
-    console.log('  - image:', !!image, image?.substring(0, 50));
-    
-    // Debug: Check if images have proper format
-    if (imageBase64) {
-      console.log('[Download Share] imageBase64 format check:');
-      console.log('  - Starts with data:?', imageBase64.startsWith('data:'));
-      console.log('  - Has base64 marker?', imageBase64.includes('base64,'));
-      console.log('  - Length:', imageBase64.length);
-    }
-    
-    if (image) {
-      console.log('[Download Share] image format check:');
-      console.log('  - Starts with data:?', image.startsWith('data:'));
-      console.log('  - Has base64 marker?', image.includes('base64,'));
-      console.log('  - Length:', image.length);
-    }
-    
-    // Always prefer imageBase64 as it has the correct format after analysis
-    const imageToUse = imageBase64 || image;
-    
-    if (!imageToUse) {
+    try {
+      console.log('[Download Share] Starting download - v2');
+      
+      // Check what we have
+      const hasAnalysisResult = !!analysisResult;
+      const hasImageBase64 = !!imageBase64;
+      const hasImage = !!image;
+      
+      console.log('[Download Share] Data available:', {
+        hasAnalysisResult,
+        hasImageBase64,
+        hasImage
+      });
+      
+      // Always prefer imageBase64 as it has the correct format after analysis
+      const imageToUse = imageBase64 || image;
+      
+      if (!imageToUse) {
+        Alert.alert(
+          'No Image Available',
+          'Please analyze an image first before downloading.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      if (!analysisResult) {
+        Alert.alert(
+          'No Analysis Available',
+          'Please analyze an image first before downloading.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+      
+      setIsLoading(true);
+      generateShareImage(analysisResult, imageToUse).finally(() => {
+        setIsLoading(false);
+      });
+    } catch (error) {
+      console.error('[Download Share] Error:', error);
       Alert.alert(
-        'No Image Available',
-        'Please analyze an image first before downloading.',
+        'Download Error',
+        'An error occurred while preparing the download. Please try again.',
         [{ text: 'OK' }]
       );
-      return;
     }
-    
-    setIsLoading(true);
-    generateShareImage(analysisResult, imageToUse).finally(() => {
-      setIsLoading(false);
-    });
   };
   
   const handleExit = async () => {
@@ -1813,7 +1734,7 @@ export default function App() {
       {/* Environment Banner - Only show in non-production */}
       {Platform.OS === 'web' && window.location.hostname === 'blue.flippi.ai' && (
         <View style={styles.environmentBanner}>
-          <Text style={styles.environmentText}>DEVELOPMENT ENVIRONMENT</Text>
+          <Text style={styles.environmentText}>SIMPLE DEPLOY TEST - {new Date().toISOString()}</Text>
         </View>
       )}
       {Platform.OS === 'web' && window.location.hostname === 'green.flippi.ai' && (
@@ -2272,23 +2193,7 @@ export default function App() {
                       disabled={isLoading}
                       icon={<Feather name="camera" size={20} color="#FFFFFF" />}
                     />
-                    <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
-                      Downloads story image to share
-                    </Text>
                   </>
-                )}
-                <BrandButton
-                  title="Download Image"
-                  onPress={handleDownloadShareImage}
-                  style={[styles.shareButton, { backgroundColor: '#52525b' }]}
-                  variant="primary"
-                  disabled={isLoading}
-                  icon={<Feather name="download" size={20} color="#FFFFFF" />}
-                />
-                {Platform.OS === 'web' && (
-                  <Text style={[styles.helperText, { marginTop: -8, marginBottom: 8 }]}>
-                    Save to share anywhere
-                  </Text>
                 )}
                 <BrandButton
                   title="Scan Another Item"
