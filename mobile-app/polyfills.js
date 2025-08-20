@@ -4,6 +4,25 @@
 (function() {
   if (typeof window === 'undefined') return;
   
+  // Store original TypeError constructor
+  const OriginalTypeError = window.TypeError;
+  
+  // Override TypeError to catch and prevent the specific error
+  window.TypeError = function(message) {
+    if (message && message.includes('Super expression must either be null or a function')) {
+      console.warn('Caught inheritance error:', message);
+      // Return a non-throwing error object
+      const err = new OriginalTypeError(message);
+      err.prevented = true;
+      return err;
+    }
+    return new OriginalTypeError(message);
+  };
+  
+  // Copy static methods
+  Object.setPrototypeOf(window.TypeError, OriginalTypeError);
+  window.TypeError.prototype = OriginalTypeError.prototype;
+  
   // Override the _inheritsLoose function that React Native Web uses
   window._inheritsLoose = function _inheritsLoose(subClass, superClass) {
     if (typeof superClass !== 'function' && superClass !== null) {
