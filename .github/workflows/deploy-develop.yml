@@ -53,6 +53,8 @@ jobs:
             head -1 App.js
             # Build with clean cache
             echo "Starting expo export..."
+            # Remove any existing dist directory first
+            rm -rf dist
             npx expo export --platform web --output-dir dist --clear || { echo "ERROR: Expo export failed"; exit 1; }
             echo "Expo export completed"
             echo "Checking dist directory:"
@@ -73,4 +75,9 @@ jobs:
             # Verify deployment
             echo "=== [$(date)] Verifying deployment ==="
             curl -s http://localhost:3002/health || echo "Backend not responding"
+            
+            # Check what bundle was created
+            echo "=== [$(date)] Checking deployed bundle ==="
+            ls -la dist/_expo/static/js/web/ | tail -5
+            
             echo "Deployment complete"
