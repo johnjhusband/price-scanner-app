@@ -264,7 +264,12 @@ GitHub Actions triggers on branch push:
 2. `staging` → green.flippi.ai
 3. `master` → app.flippi.ai
 
-### Deployment Process
+### Build Strategies (Updated August 2025)
+
+#### Current: Server-side Build
+**Workflows**: `deploy-develop.yml`, `deploy-staging.yml`, `deploy-production.yml`
+
+**Process**:
 1. GitHub Action connects via SSH
 2. Navigates to environment directory
 3. Git fetch and reset --hard to match remote
@@ -272,6 +277,28 @@ GitHub Actions triggers on branch push:
 5. Frontend: `npm install && npx expo export --platform web --output-dir dist`
 6. PM2 restart for both services
 7. Nginx reload
+
+**Key Fix (August 2025)**: Updated `expo-font` from `^13.3.2` to `~11.10.2` to fix Expo 50 compatibility issue that caused "Super expression must either be null or a function" errors.
+
+#### Available: GitHub Actions Build
+**Workflow**: `deploy-develop-v2.yml` (blue only)
+
+**Process**:
+1. GitHub builds frontend in clean environment
+2. Transfers only built files via SCP
+3. Server structure: `/frontend/dist/` (static files only)
+4. PM2 serves static files, no node_modules on server
+
+**Benefits**:
+- Completely clean build environment
+- No server cache contamination
+- Smaller server footprint
+- Predictable builds
+
+**Trade-offs**:
+- More complex workflow
+- File transfer dependency
+- Only implemented for development environment
 
 ### Manual Deployment
 If automation fails:

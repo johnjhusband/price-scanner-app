@@ -1,6 +1,39 @@
 # Deployment Troubleshooting Guide
 
-## 🚨 Most Common Issue: Legal Pages Not Working
+## 🚨 NEW: React Native Web Inheritance Error (August 2025)
+
+### Problem
+Site shows "Loading flippi.ai..." with JavaScript error: "Super expression must either be null or a function"
+
+### Root Cause
+Expo 50 compatibility issue with `expo-font` version `^13.3.2`. The caret allows minor version updates that are incompatible with Expo 50's babel transforms.
+
+### Solution
+Update expo-font to Expo 50 compatible version:
+```json
+// In mobile-app/package.json
+"expo-font": "~11.10.2"  // Changed from "^13.3.2"
+```
+
+### Build Strategy Update (August 2025)
+**Two deployment options now available:**
+
+#### Option 1: Server-side Build (Current)
+- Code deploys to server → Expo builds on server → PM2 serves built files
+- Uses: `deploy-develop.yml`, `deploy-staging.yml` workflows
+- **Fixed issue**: Updated expo-font version prevents inheritance errors
+
+#### Option 2: GitHub Actions Build (Available)
+- GitHub builds in clean environment → Transfers built files → Server serves static files
+- Uses: `deploy-develop-v2.yml` workflow  
+- **Benefits**: Completely clean build environment, no server cache issues
+- **Server structure**: `/frontend/dist/` (static files only, no node_modules)
+
+Both options now generate working bundles after the expo-font fix.
+
+---
+
+## 🚨 Legal Pages Not Working
 
 ### Problem
 Legal pages (/terms, /privacy, /mission, /contact) show "Loading flippi.ai..." or the React app instead of the actual legal content.
