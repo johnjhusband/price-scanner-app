@@ -51,6 +51,11 @@ jobs:
             # Verify the App.js has our changes
             echo "Checking App.js first line:"
             head -1 App.js
+            # Force clear expo cache one more time before build
+            npx expo start --clear --offline --no-dev --max-workers 1 &
+            EXPO_PID=$!
+            sleep 5
+            kill $EXPO_PID 2>/dev/null || true
             # Build with clean cache
             echo "Starting expo export..."
             # Remove any existing dist directory first
