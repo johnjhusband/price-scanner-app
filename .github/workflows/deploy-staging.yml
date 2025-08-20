@@ -44,6 +44,11 @@ jobs:
               bash scripts/fix-nginx-ssl-comprehensive.sh || true
             fi
             
+            # Fix production nginx port mapping bug
+            if [ -f scripts/fix-production-nginx-ports.sh ]; then
+              bash scripts/fix-production-nginx-ports.sh || true
+            fi
+            
             # Restart PM2 services
             pm2 restart staging-backend staging-frontend
             
