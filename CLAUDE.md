@@ -528,7 +528,49 @@ pm2 start all
 - Each deploy: add regression ticket before calling success.  
 - For Growth `/growth/questions`: verify backend route + Nginx order + UI mounts; add unit & E2E tests.
 
+## Project Integration Summary
+
+### FotoFlip Luxe Photo Feature (Issue #175) - ACTIVE DEVELOPMENT
+
+**Status**: Deployed to Blue environment, awaiting final configuration
+
+**What It Does**: 
+- Adds "Luxe Photo" button to Blue environment only (cream-colored, above Share on X)
+- Processes images through FotoFlip pipeline (bg removal + enhancement + watermark)
+- Returns professionally enhanced product photos
+
+**Technical Implementation**:
+1. **Backend**: `/backend/services/fotoflip/` - Complete image processing pipeline
+2. **API**: `POST /api/fotoflip/luxe-photo` - Main processing endpoint
+3. **Frontend**: Luxe Photo button in App.js (Blue env only)
+4. **Dependencies**: sharp, form-data, Python rembg (server needs: pip3 install rembg onnxruntime)
+
+**Environment Configuration** (in ecosystem.config.js):
+```javascript
+ENABLE_LUXE_PHOTO: 'true'
+FOTOFLIP_BG_COLOR: '#FAF6F1'
+FOTOFLIP_MODE: 'beautify'
+// Still needs in shared .env: IMGBB_API_KEY
+```
+
+**Critical Notes**:
+- Feature is environment-gated (Blue only)
+- Local FotoFlip/AutoFlip desktop apps remain untouched
+- Without ImgBB key, returns base64 instead of URL (still works)
+- Rollback: Set ENABLE_LUXE_PHOTO=false or use emergency-fotoflip-rollback.sh
+
+**Related Projects**:
+1. **Desktop FotoFlip**: `/Users/flippi/Desktop/fotoflip/` - Original photo processor
+2. **AutoFlip**: `/Users/flippi/Desktop/autoflip/` - CSV generator for Whatnot
+
 ## Rolling Timeline
+
+### 2025-08-29 - FotoFlip Luxe Photo Integration
+- Added FotoFlip image processing service to main app (Issue #175)
+- Created comprehensive rollback procedures and monitoring scripts
+- Deployed to Blue with feature flag protection
+- Waiting on: ImgBB API key in shared .env, Python dependencies on server
+- Key files: ecosystem.config.js (env vars), emergency-fotoflip-rollback.sh (safety)
 
 ### 2025-08-12
 - Fixed Reddit RSS parsing bug (was checking item.guid instead of item.id)
