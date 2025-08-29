@@ -961,6 +961,94 @@ export default function App() {
     }
   };
 
+  // Handle Luxe Photo processing
+  const handleLuxePhoto = async () => {
+    try {
+      setIsLoading(true);
+      console.log('[Luxe Photo] Starting processing...');
+
+      // Get the current image
+      const imageToProcess = image || imageBase64;
+      if (!imageToProcess) {
+        Alert.alert('No Image', 'Please select or capture an image first');
+        return;
+      }
+
+      // Prepare form data
+      const formData = new FormData();
+      
+      if (Platform.OS === 'web') {
+        // Convert base64 to blob for web
+        let blobData;
+        if (imageToProcess.startsWith('data:')) {
+          const base64 = imageToProcess.split(',')[1];
+          const byteCharacters = atob(base64);
+          const byteNumbers = new Array(byteCharacters.length);
+          for (let i = 0; i < byteCharacters.length; i++) {
+            byteNumbers[i] = byteCharacters.charCodeAt(i);
+          }
+          const byteArray = new Uint8Array(byteNumbers);
+          blobData = new Blob([byteArray], { type: 'image/jpeg' });
+        } else {
+          // Already a blob or file
+          blobData = imageToProcess;
+        }
+        formData.append('image', blobData, 'photo.jpg');
+      } else {
+        // Mobile - use URI
+        formData.append('image', {
+          uri: imageToProcess,
+          type: 'image/jpeg',
+          name: 'photo.jpg'
+        });
+      }
+
+      // Call the Luxe Photo API
+      const response = await fetch(`${API_URL}/api/fotoflip/luxe-photo`, {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+
+      const result = await response.json();
+
+      if (result.success && result.url) {
+        console.log('[Luxe Photo] Processing successful:', result.url);
+        
+        // Download the processed image
+        if (Platform.OS === 'web') {
+          // Create download link
+          const a = document.createElement('a');
+          a.href = result.url;
+          a.download = `flippi-luxe-photo-${Date.now()}.png`;
+          a.target = '_blank';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          
+          Alert.alert(
+            'Luxe Photo Ready!',
+            'Your enhanced photo has been downloaded. Check your Downloads folder.'
+          );
+        } else {
+          // Mobile - open in browser
+          Linking.openURL(result.url);
+        }
+      } else {
+        throw new Error(result.error || 'Processing failed');
+      }
+
+    } catch (error) {
+      console.error('[Luxe Photo] Error:', error);
+      Alert.alert(
+        'Processing Error',
+        'Unable to process your photo. Please try again.'
+      );
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Handle share on X
   const handleShareOnX = () => {
     const tweetText = generateTweetText(analysisResult);
@@ -2176,6 +2264,18 @@ export default function App() {
             
             {analysisResult && (
               <View style={styles.postAnalysisActions}>
+                {/* Luxe Photo Button - Blue Environment Only */}
+                {Platform.OS === 'web' && window.location.hostname === 'blue.flippi.ai' && (
+                  <BrandButton
+                    title="Luxe Photo"
+                    onPress={handleLuxePhoto}
+                    style={[styles.shareButton, { backgroundColor: '#FAF6F1', borderWidth: 1, borderColor: '#E5E5E5' }]}
+                    variant="primary"
+                    icon={<Feather name="star" size={20} color="#333333" />}
+                    textStyle={{ color: '#333333' }}
+                    disabled={isLoading || !image}
+                  />
+                )}
                 <BrandButton
                   title="Share on X"
                   onPress={handleShareOnX}

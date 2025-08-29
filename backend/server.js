@@ -886,6 +886,10 @@ app.use('/api/growth', (req, res, next) => {
 const growthAnalyticsRoutes = require('./routes/growthAnalytics');
 app.use('/api/growth/analytics', growthAnalyticsRoutes);
 
+// FotoFlip routes
+const fotoflipRoutes = require('./routes/fotoflip');
+app.use('/api/fotoflip', fotoflipRoutes);
+
 // Error handling middleware from v2.0 - ENHANCED
 app.use((error, req, res, next) => {
   console.error('\n=== EXPRESS ERROR HANDLER ===');
