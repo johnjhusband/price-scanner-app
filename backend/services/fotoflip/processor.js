@@ -1,6 +1,7 @@
 const sharp = require('sharp');
 const { spawn } = require('child_process');
-const fs = require('fs').promises;
+const fs = require('fs');
+const fsPromises = require('fs').promises;
 const path = require('path');
 const crypto = require('crypto');
 const os = require('os');
@@ -26,7 +27,7 @@ class FotoFlipProcessor {
     
     try {
       // Ensure temp directory exists
-      await fs.mkdir(this.tempDir, { recursive: true });
+      await fsPromises.mkdir(this.tempDir, { recursive: true });
       
       // Auto-rotate based on EXIF
       imageBuffer = await sharp(imageBuffer).rotate().toBuffer();
@@ -81,7 +82,7 @@ class FotoFlipProcessor {
     const tempMaskPath = path.join(this.tempDir, `${processId}_mask.png`);
     
     // Save input image
-    await fs.writeFile(tempImagePath, imageBuffer);
+    await fsPromises.writeFile(tempImagePath, imageBuffer);
     
     return new Promise((resolve, reject) => {
       const pythonScript = `
@@ -127,7 +128,7 @@ with open(output_path, 'wb') as o:
         
         try {
           // Read and process mask
-          let maskBuffer = await fs.readFile(tempMaskPath);
+          let maskBuffer = await fsPromises.readFile(tempMaskPath);
           
           // Apply feathering to mask
           maskBuffer = await sharp(maskBuffer)
@@ -382,11 +383,11 @@ with open(output_path, 'wb') as o:
    */
   async cleanupTempFiles(processId) {
     try {
-      const files = await fs.readdir(this.tempDir);
+      const files = await fsPromises.readdir(this.tempDir);
       const processFiles = files.filter(f => f.startsWith(processId));
       
       for (const file of processFiles) {
-        await fs.unlink(path.join(this.tempDir, file)).catch(() => {});
+        await fsPromises.unlink(path.join(this.tempDir, file)).catch(() => {});
       }
     } catch (error) {
       // Ignore cleanup errors
