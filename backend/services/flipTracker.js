@@ -1,6 +1,6 @@
 const { getDatabase } = require('../database');
 
-const FREE_FLIP_LIMIT = 20;
+const FREE_FLIP_LIMIT = 10000; // Temporarily increased until payments are ready
 
 /**
  * Get or create flip tracking record for a user/device
