@@ -28,6 +28,10 @@ jobs:
             echo "=== [$(date)] Installing backend dependencies ==="
             cd backend && npm install --production || exit 1
             
+            # Install Python dependencies for FotoFlip
+            echo "=== [$(date)] Installing Python dependencies for FotoFlip ==="
+            pip3 install rembg onnxruntime || echo "Python dependency installation failed"
+            
             # Run database migrations
             echo "=== [$(date)] Running database migrations ==="
             export FEEDBACK_DB_PATH=/var/www/blue.flippi.ai/backend/flippi.db
