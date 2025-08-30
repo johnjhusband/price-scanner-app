@@ -32,8 +32,8 @@ jobs:
             echo "=== [$(date)] Installing Python dependencies for FotoFlip ==="
             # Ensure Python3 and pip are installed
             which python3 || (apt-get update && apt-get install -y python3 python3-pip)
-            # Install globally with sudo to ensure PM2 can access
-            sudo pip3 install rembg onnxruntime || echo "Python dependency installation failed"
+            # Install rembg (no sudo needed - running as root, PM2 also runs as root)
+            pip3 install rembg onnxruntime || echo "Python dependency installation failed"
             # Verify installation
             python3 -c "import rembg; print('✅ rembg installed successfully')" || echo "❌ rembg import failed"
             
