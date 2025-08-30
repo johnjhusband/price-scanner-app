@@ -1012,6 +1012,18 @@ export default function App() {
 
       const result = await response.json();
 
+      if (!response.ok) {
+        // Handle specific HTTP error codes
+        if (response.status === 403) {
+          throw new Error('Luxe Photo is only available on the Blue environment');
+        } else if (response.status === 500) {
+          throw new Error(result.message || 'Server processing error. Our team has been notified.');
+        } else if (response.status === 400) {
+          throw new Error(result.error || 'Invalid image format. Please try a different photo.');
+        }
+        throw new Error(result.error || `Server error: ${response.status}`);
+      }
+
       if (result.success && result.url) {
         console.log('[Luxe Photo] Processing successful:', result.url);
         
@@ -1035,15 +1047,28 @@ export default function App() {
           Linking.openURL(result.url);
         }
       } else {
-        throw new Error(result.error || 'Processing failed');
+        // Handle server response errors
+        const errorMessage = result.error || result.message || 'Unable to process your photo';
+        throw new Error(errorMessage);
       }
 
     } catch (error) {
       console.error('[Luxe Photo] Error:', error);
-      Alert.alert(
-        'Processing Error',
-        'Unable to process your photo. Please try again.'
-      );
+      
+      // Provide more specific error messages
+      let errorTitle = 'Processing Error';
+      let errorMessage = error.message || 'Unable to process your photo. Please try again.';
+      
+      // Check for specific error types
+      if (error.message.includes('Python rembg not installed')) {
+        errorMessage = 'Background removal service is currently unavailable. Please try again later.';
+      } else if (error.message.includes('environment')) {
+        errorTitle = 'Feature Unavailable';
+      } else if (error.message.includes('Server processing error')) {
+        errorMessage = 'The image processing service encountered an error. Please try again in a moment.';
+      }
+      
+      Alert.alert(errorTitle, errorMessage);
     } finally {
       setIsLoading(false);
     }
