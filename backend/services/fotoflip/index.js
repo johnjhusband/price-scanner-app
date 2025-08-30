@@ -102,12 +102,9 @@ class FotoFlipService {
     // Check Python dependencies
     try {
       const { spawn } = require('child_process');
-      const fs = require('fs');
       
-      // Use virtual environment Python if available
-      const pythonPath = fs.existsSync('/var/www/blue.flippi.ai/.venv/bin/python') 
-        ? '/var/www/blue.flippi.ai/.venv/bin/python'
-        : 'python3';
+      // Use Python path from environment or default
+      const pythonPath = process.env.FOTOFLIP_PYTHON || 'python3';
       
       const pythonCheck = spawn(pythonPath, ['-c', 'import rembg; print("OK")']);
       

@@ -108,10 +108,8 @@ with open(output_path, 'wb') as o:
     o.write(output)
 `;
       
-      // Use virtual environment Python if available
-      const pythonPath = fs.existsSync('/var/www/blue.flippi.ai/.venv/bin/python') 
-        ? '/var/www/blue.flippi.ai/.venv/bin/python'
-        : 'python3';
+      // Use Python path from environment or default
+      const pythonPath = process.env.FOTOFLIP_PYTHON || 'python3';
       
       const pythonProcess = spawn(pythonPath, ['-c', pythonScript, tempImagePath, tempMaskPath]);
       
