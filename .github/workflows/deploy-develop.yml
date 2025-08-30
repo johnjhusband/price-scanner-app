@@ -81,10 +81,16 @@ jobs:
             echo "=== [$(date)] Deploying nginx configuration ==="
             bash scripts/deploy-nginx-template.sh blue.flippi.ai || echo "Nginx deployment failed"
             
-            # Restart services
-            echo "=== [$(date)] Restarting services ==="
-            pm2 restart dev-backend dev-frontend
+            # Restart services with ecosystem config
+            echo "=== [$(date)] Restarting services with ecosystem config ==="
+            cd /var/www/blue.flippi.ai
+            # Stop existing processes
+            pm2 stop dev-backend dev-frontend || true
+            # Start with ecosystem config to ensure env vars are loaded
+            pm2 start ecosystem.config.js
             sleep 5
+            # Show PM2 status
+            pm2 status
             
             # Verify deployment
             echo "=== [$(date)] Verifying deployment ==="
