@@ -107,7 +107,12 @@ with open(output_path, 'wb') as o:
     o.write(output)
 `;
       
-      const pythonProcess = spawn('python3', ['-c', pythonScript, tempImagePath, tempMaskPath]);
+      // Use virtual environment Python if available
+      const pythonPath = fs.existsSync('/var/www/blue.flippi.ai/.venv/bin/python') 
+        ? '/var/www/blue.flippi.ai/.venv/bin/python'
+        : 'python3';
+      
+      const pythonProcess = spawn(pythonPath, ['-c', pythonScript, tempImagePath, tempMaskPath]);
       
       let stderr = '';
       pythonProcess.stderr.on('data', (data) => {

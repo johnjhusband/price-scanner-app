@@ -28,14 +28,24 @@ jobs:
             echo "=== [$(date)] Installing backend dependencies ==="
             cd backend && npm install --production || exit 1
             
-            # Install Python dependencies for FotoFlip
+            # Install Python dependencies for FotoFlip in virtual environment
             echo "=== [$(date)] Installing Python dependencies for FotoFlip ==="
-            # Ensure Python3 and pip are installed
-            which python3 || (apt-get update && apt-get install -y python3 python3-pip)
-            # Install rembg (no sudo needed - running as root, PM2 also runs as root)
-            pip3 install rembg onnxruntime || echo "Python dependency installation failed"
+            cd /var/www/blue.flippi.ai
+            # Ensure Python3 and venv are installed
+            apt-get update && apt-get install -y python3 python3-pip python3-venv
+            # Create virtual environment if it doesn't exist
+            if [ ! -d ".venv" ]; then
+              python3 -m venv .venv
+            fi
+            # Activate virtual environment and install dependencies
+            . .venv/bin/activate
+            pip install --upgrade pip
+            pip install -r backend/requirements.txt
+            # Pre-download the rembg model
+            python -c "from rembg import new_session; new_session('u2net')" || echo "Model download failed"
             # Verify installation
-            python3 -c "import rembg; print('✅ rembg installed successfully')" || echo "❌ rembg import failed"
+            python -c "import rembg; print('✅ rembg installed successfully')" || echo "❌ rembg import failed"
+            deactivate
             
             # Run database migrations
             echo "=== [$(date)] Running database migrations ==="
