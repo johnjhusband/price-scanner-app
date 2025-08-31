@@ -92,13 +92,18 @@ PY
           pm2 set FOTOFLIP_PYTHON /var/www/blue.flippi.ai/.venv/bin/python
           # Start with ecosystem config to ensure env vars are loaded
           pm2 start ecosystem.config.js
+          # Restart backend to pick up new environment
+          pm2 restart dev-backend
           sleep 5
           # Show PM2 status
           pm2 status
           
           # Verify deployment
           echo "=== [$(date)] Verifying deployment ==="
-          curl -s http://localhost:3002/health || echo "Backend not responding"
+          if ! curl -fsS http://localhost:3002/health; then
+            echo "ERROR: Backend health check failed"
+            exit 1
+          fi
           
           # Check what bundle was created
           echo "=== [$(date)] Checking deployed bundle ==="
