@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "postinstall": "echo 'Backend dependencies installed' && node -e \"require('child_process').execSync('python3 -m pip install --user rembg==2.0.56 onnxruntime==1.18.0', {stdio:'inherit'})\""
+    "postinstall": "echo 'Backend dependencies installed' && node -e \"require('child_process').execSync('python3 -m pip install --user --break-system-packages rembg==2.0.56 onnxruntime==1.18.0', {stdio:'inherit'})\""
   },
   "keywords": [
     "thrifting",
