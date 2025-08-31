@@ -70,7 +70,7 @@ jobs:
             
             # Deploy nginx configuration
             echo "=== [$(date)] Deploying nginx configuration ==="
-            bash scripts/deploy-nginx-template.sh blue.flippi.ai || echo "Nginx deployment failed"
+            bash ../scripts/deploy-nginx-template.sh blue.flippi.ai || echo "Nginx deployment failed"
             
             # Restart services with ecosystem config
             echo "=== [$(date)] Restarting services with ecosystem config ==="
