@@ -23,22 +23,6 @@ jobs:
           echo "=== [$(date)] Installing backend dependencies ==="
           cd backend && npm install --production || exit 1
           
-          # Install Python dependencies for FotoFlip in virtual environment
-          echo "=== [$(date)] Installing Python dependencies for FotoFlip ==="
-          set -euo pipefail
-          export DEBIAN_FRONTEND=noninteractive
-          sudo apt-get update -yq
-          sudo apt-get install -yq python3 python3-pip python3-venv python3-dev
-          cd /var/www/blue.flippi.ai
-          python3 -m venv .venv || true
-          . .venv/bin/activate
-          pip install --upgrade pip
-          pip install -r backend/requirements.txt
-          python - <<'PY'
-from rembg import new_session; new_session('u2net'); print("MODEL_OK")
-PY
-          deactivate
-          
           # Run database migrations
           echo "=== [$(date)] Running database migrations ==="
           export FEEDBACK_DB_PATH=/var/www/blue.flippi.ai/backend/flippi.db
@@ -88,12 +72,8 @@ PY
           cd /var/www/blue.flippi.ai
           # Stop existing processes
           pm2 stop dev-backend dev-frontend || true
-          # Set FOTOFLIP_PYTHON environment variable for PM2
-          pm2 set FOTOFLIP_PYTHON /var/www/blue.flippi.ai/.venv/bin/python
           # Start with ecosystem config to ensure env vars are loaded
           pm2 start ecosystem.config.js
-          # Restart backend to pick up new environment
-          pm2 restart dev-backend
           sleep 5
           # Show PM2 status
           pm2 status

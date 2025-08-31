@@ -10,7 +10,6 @@ module.exports = {
         ENABLE_LUXE_PHOTO: 'true',
         FOTOFLIP_BG_COLOR: '#FAF6F1',
         FOTOFLIP_MODE: 'beautify',
-        FOTOFLIP_PYTHON: '/var/www/blue.flippi.ai/.venv/bin/python'
       },
       watch: false,
       instances: 1,
