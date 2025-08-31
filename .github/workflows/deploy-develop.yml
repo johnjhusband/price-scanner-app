@@ -5,11 +5,16 @@ on:
 
 jobs:
   deploy:
-    runs-on: [self-hosted, blue]
+    runs-on: ubuntu-latest
     steps:
       - name: Deploy to blue.flippi.ai
-        run: |
-          cd /var/www/blue.flippi.ai
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/blue.flippi.ai
           echo "=== [$(date)] Starting deployment ==="
           
           # Reset and pull latest code
