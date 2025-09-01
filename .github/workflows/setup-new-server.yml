@@ -52,7 +52,7 @@ jobs:
       
       - name: Save SSH key to GitHub Secrets
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_PAT }}
         run: |
           case "${{ github.event.inputs.environment }}" in
             "blue") SECRET_NAME="BLUE_SERVER_SSH_KEY" ;;
