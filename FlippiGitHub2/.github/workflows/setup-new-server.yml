@@ -1,0 +1,203 @@
+name: Setup New Server
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_server_ip:
+        description: 'IP address of the NEW server to setup'
+        required: true
+        type: string
+      environment:
+        description: 'Environment to setup (blue/green/production)'
+        required: true
+        type: choice
+        options:
+          - blue
+          - green
+          - production
+      root_password:
+        description: 'Root password for the new server'
+        required: true
+        type: string
+
+jobs:
+  setup-new-server:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      
+      - name: Install required tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y sshpass
+      
+      - name: Generate SSH keypair
+        run: |
+          ssh-keygen -t ed25519 -f ~/.ssh/flippi_key -N "" -C "github-actions@flippi.ai"
+          echo "Generated new SSH keypair"
+      
+      - name: Install SSH key on server
+        env:
+          SSHPASS: ${{ github.event.inputs.root_password }}
+        run: |
+          echo "::notice::Installing SSH key on server..."
+          ssh-keyscan -H ${{ github.event.inputs.target_server_ip }} >> ~/.ssh/known_hosts 2>/dev/null || true
+          
+          cat ~/.ssh/flippi_key.pub | sshpass -e ssh -o StrictHostKeyChecking=no root@${{ github.event.inputs.target_server_ip }} \
+            "mkdir -p ~/.ssh && chmod 700 ~/.ssh && cat >> ~/.ssh/authorized_keys && chmod 600 ~/.ssh/authorized_keys"
+          
+          ssh -i ~/.ssh/flippi_key root@${{ github.event.inputs.target_server_ip }} "echo 'SSH key authentication successful'"
+      
+      - name: Save SSH key to GitHub Secrets
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          case "${{ github.event.inputs.environment }}" in
+            "blue") SECRET_NAME="BLUE_SERVER_SSH_KEY" ;;
+            "green") SECRET_NAME="GREEN_SERVER_SSH_KEY" ;;
+            "production") SECRET_NAME="PROD_SERVER_SSH_KEY" ;;
+          esac
+          
+          gh secret set $SECRET_NAME < ~/.ssh/flippi_key
+          echo "✅ SSH key saved as GitHub secret: $SECRET_NAME"
+          
+          echo "${{ github.event.inputs.target_server_ip }}" | gh secret set ${SECRET_NAME%_SSH_KEY}_HOST
+          echo "✅ Server IP saved as GitHub secret: ${SECRET_NAME%_SSH_KEY}_HOST"
+      
+      - name: Copy setup script to target server
+        run: |
+          scp -i ~/.ssh/flippi_key -o StrictHostKeyChecking=no \
+            FlippiGitHub2/server-setup/setup-new-server-${{ github.event.inputs.environment }}.sh \
+            root@${{ github.event.inputs.target_server_ip }}:/tmp/
+      
+      - name: Execute setup script
+        run: |
+          echo "::notice::Starting server setup script (this takes 5-10 minutes)..."
+          ssh -i ~/.ssh/flippi_key -o StrictHostKeyChecking=no \
+            root@${{ github.event.inputs.target_server_ip }} \
+            "bash /tmp/setup-new-server-${{ github.event.inputs.environment }}.sh"
+      
+      - name: Clone repository
+        run: |
+          BRANCH_NAME=${{ github.event.inputs.environment == 'production' && 'master' || github.event.inputs.environment == 'green' && 'staging' || 'develop' }}
+          
+          ssh -i ~/.ssh/flippi_key -o StrictHostKeyChecking=no \
+            root@${{ github.event.inputs.target_server_ip }} \
+            "cd /var/www/${{ github.event.inputs.environment }}.flippi.ai && \
+             git clone https://github.com/${{ github.repository }}.git . && \
+             git checkout $BRANCH_NAME"
+      
+      - name: Configure environment
+        run: |
+          ssh -i ~/.ssh/flippi_key -o StrictHostKeyChecking=no \
+            root@${{ github.event.inputs.target_server_ip }} \
+            "echo 'OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}' > /var/www/shared/.env && \
+             echo 'SESSION_SECRET=${{ secrets.SESSION_SECRET }}' >> /var/www/shared/.env && \
+             echo 'GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}' >> /var/www/shared/.env && \
+             echo 'GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}' >> /var/www/shared/.env && \
+             chmod 600 /var/www/shared/.env"
+      
+      - name: Install dependencies and build
+        run: |
+          echo "::notice::Installing dependencies and building frontend (this takes 3-5 minutes)..."
+          ssh -i ~/.ssh/flippi_key -o StrictHostKeyChecking=no \
+            root@${{ github.event.inputs.target_server_ip }} \
+            "cd /var/www/${{ github.event.inputs.environment }}.flippi.ai && \
+             cd backend && npm install --production && \
+             cd ../mobile-app && npm install && \
+             npx expo install react-native-web react-dom @expo/metro-runtime && \
+             npx expo export --platform web --output-dir dist"
+      
+      - name: Start services
+        run: |
+          echo "::notice::Starting PM2 services..."
+          ssh -i ~/.ssh/flippi_key -o StrictHostKeyChecking=no \
+            root@${{ github.event.inputs.target_server_ip }} \
+            "cd /var/www/${{ github.event.inputs.environment }}.flippi.ai && \
+             pm2 start ecosystem.config.js && \
+             pm2 save && \
+             pm2 status"
+      
+      
+      - name: Verify deployment
+        run: |
+          echo "🔍 Verifying deployment..."
+          
+          # Check if services are running
+          PM2_STATUS=$(ssh -i ~/.ssh/flippi_key -o StrictHostKeyChecking=no \
+            root@${{ github.event.inputs.target_server_ip }} \
+            "pm2 status --no-color" || echo "PM2 check failed")
+          
+          # Check backend health
+          BACKEND_HEALTH=$(ssh -i ~/.ssh/flippi_key -o StrictHostKeyChecking=no \
+            root@${{ github.event.inputs.target_server_ip }} \
+            "curl -s http://localhost:3002/health || echo 'Backend not responding'")
+          
+          # Check nginx
+          NGINX_STATUS=$(ssh -i ~/.ssh/flippi_key -o StrictHostKeyChecking=no \
+            root@${{ github.event.inputs.target_server_ip }} \
+            "systemctl is-active nginx || echo 'inactive'")
+          
+          # Create summary
+          echo "## 📋 Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Server Details" >> $GITHUB_STEP_SUMMARY
+          echo "- **Environment**: ${{ github.event.inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Server IP**: ${{ github.event.inputs.target_server_ip }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Domain**: ${{ github.event.inputs.environment }}.flippi.ai" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Service Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Nginx**: $NGINX_STATUS" >> $GITHUB_STEP_SUMMARY
+          echo "- **PM2 Processes**:" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "$PM2_STATUS" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "1. **Update DNS on GoDaddy**:" >> $GITHUB_STEP_SUMMARY
+          echo "   - Set A record for \`${{ github.event.inputs.environment }}.flippi.ai\` to \`${{ github.event.inputs.target_server_ip }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "2. **Wait 5-10 minutes** for DNS propagation" >> $GITHUB_STEP_SUMMARY
+          echo "3. **Run SSL setup**:" >> $GITHUB_STEP_SUMMARY
+          echo '   ```bash' >> $GITHUB_STEP_SUMMARY
+          echo '   gh workflow run setup-ssl-certificate.yml \' >> $GITHUB_STEP_SUMMARY
+          echo '     -f environment="${{ github.event.inputs.environment }}" \' >> $GITHUB_STEP_SUMMARY
+          echo '     -f email="admin@flippi.ai"' >> $GITHUB_STEP_SUMMARY
+          echo '   ```' >> $GITHUB_STEP_SUMMARY
+          echo "4. **Monitor the SSL workflow**:" >> $GITHUB_STEP_SUMMARY
+          echo '   ```bash' >> $GITHUB_STEP_SUMMARY
+          echo '   gh run list --workflow=setup-ssl-certificate.yml --limit 1' >> $GITHUB_STEP_SUMMARY
+          echo '   gh run watch' >> $GITHUB_STEP_SUMMARY
+          echo '   ```' >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### GitHub Secrets Created" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ \`${{ github.event.inputs.environment == 'blue' && 'BLUE_SERVER_SSH_KEY' || github.event.inputs.environment == 'green' && 'GREEN_SERVER_SSH_KEY' || 'PROD_SERVER_SSH_KEY' }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ \`${{ github.event.inputs.environment == 'blue' && 'BLUE_SERVER_HOST' || github.event.inputs.environment == 'green' && 'GREEN_SERVER_HOST' || 'PROD_SERVER_HOST' }}\`" >> $GITHUB_STEP_SUMMARY
+          
+          # Console output for gh CLI capture
+          echo "::notice::FLIPPI_SETUP_COMPLETE"
+          echo "::notice::SERVER_IP=${{ github.event.inputs.target_server_ip }}"
+          echo "::notice::ENVIRONMENT=${{ github.event.inputs.environment }}"
+          echo "::notice::DOMAIN=${{ github.event.inputs.environment }}.flippi.ai"
+          echo "::notice::NGINX_STATUS=$NGINX_STATUS"
+          echo "::notice::SECRETS_CREATED=YES"
+          
+          # Output PM2 status for verification
+          echo "::group::PM2 Status"
+          echo "$PM2_STATUS"
+          echo "::endgroup::"
+          
+          # Critical info in structured format
+          echo "=================================="
+          echo "✅ SETUP COMPLETE"
+          echo "=================================="
+          echo "Server IP: ${{ github.event.inputs.target_server_ip }}"
+          echo "Environment: ${{ github.event.inputs.environment }}"
+          echo "Domain: ${{ github.event.inputs.environment }}.flippi.ai"
+          echo "Nginx: $NGINX_STATUS"
+          echo ""
+          echo "ACTION REQUIRED:"
+          echo "1. Update GoDaddy DNS: ${{ github.event.inputs.environment }}.flippi.ai → ${{ github.event.inputs.target_server_ip }}"
+          echo "2. Wait 5-10 minutes for propagation"
+          echo "3. Run SSL setup: gh workflow run setup-ssl-certificate.yml -f environment=${{ github.event.inputs.environment }} -f email=admin@flippi.ai"

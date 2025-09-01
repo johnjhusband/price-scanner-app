@@ -1,0 +1,55 @@
+name: Deploy to New Blue Server
+
+on:
+  push:
+    branches: [ develop-new-server ]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Deploy to Blue Environment
+      uses: appleboy/ssh-action@v0.1.5
+      with:
+        host: ${{ secrets.BLUE_SERVER_HOST }}
+        username: root
+        key: ${{ secrets.BLUE_SERVER_SSH_KEY }}
+        script: |
+          cd /var/www/blue.flippi.ai
+          git fetch origin develop
+          git reset --hard origin/develop
+          
+          # Backend setup
+          cd backend
+          npm install --production
+          
+          # Frontend setup
+          cd ../mobile-app
+          npm install
+          npx expo install react-native-web react-dom @expo/metro-runtime
+          npx expo export --platform web --output-dir dist
+          
+          # Restart services
+          pm2 restart dev-backend dev-frontend
+          pm2 status
+          
+          # Run post-deploy scripts
+          cd /var/www/blue.flippi.ai
+          if [ -f scripts/fix-nginx-ssl-comprehensive.sh ]; then
+            bash scripts/fix-nginx-ssl-comprehensive.sh
+          fi
+    
+    - name: Health Check
+      run: |
+        sleep 10
+        response=$(curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai/health || echo "Failed")
+        if [ "$response" = "200" ]; then
+          echo "✅ Deployment successful - Health check passed"
+        else
+          echo "❌ Health check failed with response: $response"
+          exit 1
+        fi
