@@ -89,7 +89,8 @@ apt install -y python3 python3-pip python3-venv
 
 # Install Python packages for FotoFlip (with specific numpy version)
 print_status "Installing Python packages for FotoFlip..."
-pip3 install numpy==1.26.4 rembg onnxruntime
+# Ubuntu 24.04+ requires --break-system-packages or use of venv
+pip3 install --break-system-packages numpy==1.26.4 rembg onnxruntime
 
 # Create directory structure
 print_status "Creating directory structure..."
