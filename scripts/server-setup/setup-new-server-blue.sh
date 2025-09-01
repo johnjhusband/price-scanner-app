@@ -6,9 +6,24 @@
 
 set -e  # Exit on any error
 
+# Create installation tracking file
+INSTALL_LOG="/var/log/flippi-blue-install-$(date +%Y%m%d-%H%M%S).log"
+INSTALL_MANIFEST="/var/log/flippi-blue-install-manifest.txt"
+echo "Installation started at $(date)" > "$INSTALL_LOG"
+echo "# Flippi Blue Environment Installation Manifest" > "$INSTALL_MANIFEST"
+echo "# Generated: $(date)" >> "$INSTALL_MANIFEST"
+echo "" >> "$INSTALL_MANIFEST"
+
+# Function to track installations
+track_install() {
+    echo "[$(date)] $1" >> "$INSTALL_LOG"
+    echo "$1" >> "$INSTALL_MANIFEST"
+}
+
 echo "========================================="
 echo "Flippi.ai Server Setup - Blue Environment"
 echo "========================================="
+echo "Tracking installation in: $INSTALL_MANIFEST"
 
 # Color codes for output
 RED='\033[0;31m'
@@ -41,6 +56,7 @@ apt update && apt upgrade -y
 
 # Install essential packages
 print_status "Installing essential packages..."
+track_install "PACKAGES: Starting essential package installation"
 apt install -y \
     curl \
     wget \
@@ -59,10 +75,13 @@ apt install -y \
     nano \
     vim \
     dos2unix
+track_install "PACKAGES: curl wget git build-essential software-properties-common apt-transport-https ca-certificates gnupg lsb-release htop nginx certbot python3-certbot-nginx ufw nano vim dos2unix"
 
 # Install Node.js 18.x
 print_status "Installing Node.js 18.x..."
+track_install "REPOSITORY: Adding NodeSource repository"
 curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+track_install "PACKAGES: nodejs"
 apt install -y nodejs
 
 # Verify Node.js installation
@@ -73,6 +92,7 @@ print_status "npm installed: $npm_version"
 
 # Install PM2 globally
 print_status "Installing PM2..."
+track_install "NPM_GLOBAL: pm2"
 npm install -g pm2
 
 # Install Expo CLI globally
@@ -85,16 +105,20 @@ npm install -g serve
 
 # Install Python and pip for FotoFlip feature
 print_status "Installing Python dependencies..."
+track_install "PACKAGES: python3 python3-pip python3-venv"
 apt install -y python3 python3-pip python3-venv
 
 # Install Python packages for FotoFlip (with specific numpy version)
 print_status "Installing Python packages for FotoFlip..."
 # Ubuntu 24.04+ requires --break-system-packages or use of venv
+track_install "PIP_PACKAGES: numpy==1.26.4 rembg onnxruntime"
 pip3 install --break-system-packages numpy==1.26.4 rembg onnxruntime
 
 # Create directory structure
 print_status "Creating directory structure..."
+track_install "DIRECTORY: /var/www/blue.flippi.ai"
 mkdir -p /var/www/blue.flippi.ai
+track_install "DIRECTORY: /var/www/shared"
 mkdir -p /var/www/shared
 mkdir -p /var/lib/flippi-dev
 mkdir -p /backup
@@ -119,6 +143,7 @@ print_status "Configuring Nginx..."
 rm -f /etc/nginx/sites-enabled/default
 
 # Create Nginx configuration for blue.flippi.ai
+track_install "CONFIG_FILE: /etc/nginx/sites-available/blue.flippi.ai"
 cat > /etc/nginx/sites-available/blue.flippi.ai << 'EOF'
 server {
     server_name blue.flippi.ai;
@@ -194,6 +219,7 @@ server {
 EOF
 
 # Enable the site
+track_install "SYMLINK: /etc/nginx/sites-enabled/blue.flippi.ai"
 ln -sf /etc/nginx/sites-available/blue.flippi.ai /etc/nginx/sites-enabled/
 
 # Test Nginx configuration
@@ -325,7 +351,9 @@ EOF
 chmod +x /usr/local/bin/setup-ssl-blue
 
 # Create scripts directory and the fix-nginx-ssl script
+track_install "DIRECTORY: /var/www/blue.flippi.ai/scripts"
 mkdir -p /var/www/blue.flippi.ai/scripts
+track_install "SCRIPT: /var/www/blue.flippi.ai/scripts/fix-nginx-ssl-comprehensive.sh"
 cat > /var/www/blue.flippi.ai/scripts/fix-nginx-ssl-comprehensive.sh << 'EOF'
 #!/bin/bash
 # Fix missing SSL configuration files
@@ -392,8 +420,22 @@ EOF
 
 chmod +x /usr/local/bin/check-flippi
 
+# Final tracking and summary
+track_install "INSTALLATION: Complete at $(date)"
+echo "" >> "$INSTALL_MANIFEST"
+echo "# Summary of tracked items:" >> "$INSTALL_MANIFEST"
+echo "# - Packages installed via apt" >> "$INSTALL_MANIFEST"
+echo "# - NPM global packages" >> "$INSTALL_MANIFEST"
+echo "# - Python packages via pip3" >> "$INSTALL_MANIFEST"
+echo "# - Directories created" >> "$INSTALL_MANIFEST"
+echo "# - Scripts installed" >> "$INSTALL_MANIFEST"
+echo "# - Configuration files" >> "$INSTALL_MANIFEST"
+echo "" >> "$INSTALL_MANIFEST"
+echo "# Use uninstall-server-blue.sh to remove everything" >> "$INSTALL_MANIFEST"
+
 # Final instructions
 print_status "Server setup complete!"
+print_warning "Installation tracked in: $INSTALL_MANIFEST"
 echo ""
 echo "========================================="
 echo "Next Steps:"
