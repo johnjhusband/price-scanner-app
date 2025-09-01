@@ -1,0 +1,429 @@
+#!/bin/bash
+
+# Flippi.ai Server Setup Script for Blue/Dev Environment
+# This script prepares a fresh Ubuntu server to host the development environment
+# Run as root or with sudo
+
+set -e  # Exit on any error
+
+echo "========================================="
+echo "Flippi.ai Server Setup - Blue Environment"
+echo "========================================="
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    echo -e "${GREEN}[✓]${NC} $1"
+}
+
+print_error() {
+    echo -e "${RED}[✗]${NC} $1"
+}
+
+print_warning() {
+    echo -e "${YELLOW}[!]${NC} $1"
+}
+
+# Check if running as root
+if [ "$EUID" -ne 0 ]; then 
+    print_error "Please run as root or with sudo"
+    exit 1
+fi
+
+# Update system packages
+print_status "Updating system packages..."
+apt update && apt upgrade -y
+
+# Install essential packages
+print_status "Installing essential packages..."
+apt install -y \
+    curl \
+    wget \
+    git \
+    build-essential \
+    software-properties-common \
+    apt-transport-https \
+    ca-certificates \
+    gnupg \
+    lsb-release \
+    htop \
+    nginx \
+    certbot \
+    python3-certbot-nginx \
+    ufw \
+    nano \
+    vim \
+    dos2unix
+
+# Install Node.js 18.x
+print_status "Installing Node.js 18.x..."
+curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+apt install -y nodejs
+
+# Verify Node.js installation
+node_version=$(node -v)
+npm_version=$(npm -v)
+print_status "Node.js installed: $node_version"
+print_status "npm installed: $npm_version"
+
+# Install PM2 globally
+print_status "Installing PM2..."
+npm install -g pm2
+
+# Install Expo CLI globally
+print_status "Installing Expo CLI..."
+npm install -g expo-cli
+
+# Install serve for static file serving
+print_status "Installing serve..."
+npm install -g serve
+
+# Install Python and pip for FotoFlip feature
+print_status "Installing Python dependencies..."
+apt install -y python3 python3-pip python3-venv
+
+# Install Python packages for FotoFlip (with specific numpy version)
+print_status "Installing Python packages for FotoFlip..."
+pip3 install numpy==1.26.4 rembg onnxruntime
+
+# Create directory structure
+print_status "Creating directory structure..."
+mkdir -p /var/www/blue.flippi.ai
+mkdir -p /var/www/shared
+mkdir -p /var/lib/flippi-dev
+mkdir -p /backup
+
+# Create shared .env file location
+print_status "Creating shared environment file..."
+touch /var/www/shared/.env
+chmod 600 /var/www/shared/.env
+
+# Set up firewall
+print_status "Configuring firewall..."
+ufw allow OpenSSH
+ufw allow 'Nginx Full'
+ufw allow 80/tcp
+ufw allow 443/tcp
+ufw allow 22/tcp
+ufw --force enable
+
+# Configure Nginx
+print_status "Configuring Nginx..."
+# Remove default site
+rm -f /etc/nginx/sites-enabled/default
+
+# Create Nginx configuration for blue.flippi.ai
+cat > /etc/nginx/sites-available/blue.flippi.ai << 'EOF'
+server {
+    server_name blue.flippi.ai;
+    
+    root /var/www/blue.flippi.ai/mobile-app/dist;
+    index index.html;
+    
+    # Client body size for image uploads
+    client_max_body_size 10M;
+    
+    # Backend API routes (MUST BE FIRST)
+    location ^~ /api {
+        proxy_pass http://127.0.0.1:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
+    }
+    
+    location ^~ /auth {
+        proxy_pass http://127.0.0.1:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    location ^~ /health {
+        proxy_pass http://127.0.0.1:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+    }
+    
+    location ^~ /growth {
+        proxy_pass http://127.0.0.1:3002;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+    
+    # Static assets (SECOND)
+    location ~* \.(css|js|mjs|map|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot)$ {
+        expires 1y;
+        add_header Cache-Control "public, immutable";
+        try_files $uri =404;
+    }
+    
+    # Frontend routes (SPA fallback - LAST)
+    location / {
+        try_files $uri $uri/ /index.html;
+    }
+    
+    # Legal pages
+    location = /terms { alias /var/www/blue.flippi.ai/legal/terms.html; }
+    location = /privacy { alias /var/www/blue.flippi.ai/legal/privacy.html; }
+    location = /contact { alias /var/www/blue.flippi.ai/legal/contact.html; }
+    location = /mission { alias /var/www/blue.flippi.ai/legal/mission.html; }
+    
+    # Security headers
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    
+    listen 80;
+}
+EOF
+
+# Enable the site
+ln -sf /etc/nginx/sites-available/blue.flippi.ai /etc/nginx/sites-enabled/
+
+# Test Nginx configuration
+nginx -t
+
+# Restart Nginx
+systemctl restart nginx
+systemctl enable nginx
+
+# Set up PM2 startup
+print_status "Setting up PM2 startup..."
+pm2 startup systemd -u root --hp /root
+pm2 save
+
+# Create deployment user (optional - for better security)
+print_status "Creating deployment user..."
+if ! id -u deploy >/dev/null 2>&1; then
+    useradd -m -s /bin/bash deploy
+    usermod -aG sudo deploy
+    print_warning "Remember to set password for deploy user: passwd deploy"
+fi
+
+# Set proper permissions
+print_status "Setting permissions..."
+chown -R www-data:www-data /var/www/blue.flippi.ai
+chown -R www-data:www-data /var/www/shared
+chmod -R 755 /var/www/blue.flippi.ai
+chmod -R 755 /var/www/shared
+
+# Create PM2 ecosystem config template
+print_status "Creating PM2 ecosystem config template..."
+cat > /var/www/blue.flippi.ai/ecosystem.config.js << 'EOF'
+module.exports = {
+  apps: [
+    {
+      name: 'dev-backend',
+      script: './backend/server.js',
+      cwd: '/var/www/blue.flippi.ai',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '300M',
+      env: {
+        NODE_ENV: 'development',
+        PORT: 3002,
+        ENABLE_LUXE_PHOTO: 'true',
+        FOTOFLIP_BG_COLOR: '#FAF6F1',
+        FOTOFLIP_MODE: 'beautify'
+      },
+      error_file: '/var/www/blue.flippi.ai/logs/dev-backend-error.log',
+      out_file: '/var/www/blue.flippi.ai/logs/dev-backend-out.log',
+      log_file: '/var/www/blue.flippi.ai/logs/dev-backend-combined.log',
+      time: true
+    },
+    {
+      name: 'dev-frontend',
+      script: 'serve',
+      args: '-s dist -l 8082',
+      cwd: '/var/www/blue.flippi.ai/mobile-app',
+      instances: 1,
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '200M',
+      env: {
+        NODE_ENV: 'development'
+      },
+      error_file: '/var/www/blue.flippi.ai/logs/dev-frontend-error.log',
+      out_file: '/var/www/blue.flippi.ai/logs/dev-frontend-out.log',
+      log_file: '/var/www/blue.flippi.ai/logs/dev-frontend-combined.log',
+      time: true
+    }
+  ]
+};
+EOF
+
+# Create log directory
+mkdir -p /var/www/blue.flippi.ai/logs
+chown -R www-data:www-data /var/www/blue.flippi.ai/logs
+
+# Install PM2 log rotation
+print_status "Setting up PM2 log rotation..."
+pm2 install pm2-logrotate
+pm2 set pm2-logrotate:max_size 10M
+pm2 set pm2-logrotate:retain 30
+pm2 set pm2-logrotate:compress true
+
+# Create deployment script
+print_status "Creating deployment helper script..."
+cat > /usr/local/bin/deploy-blue << 'EOF'
+#!/bin/bash
+# Helper script for blue environment deployment
+
+cd /var/www/blue.flippi.ai
+
+echo "Pulling latest changes..."
+git fetch origin develop
+git reset --hard origin/develop
+
+echo "Installing backend dependencies..."
+cd backend
+npm install --production
+
+echo "Installing frontend dependencies..."
+cd ../mobile-app
+npm install
+npx expo install react-native-web react-dom @expo/metro-runtime
+
+echo "Building frontend..."
+npx expo export --platform web --output-dir dist
+
+echo "Restarting PM2 processes..."
+pm2 restart dev-backend dev-frontend
+
+echo "Deployment complete!"
+pm2 status
+EOF
+
+chmod +x /usr/local/bin/deploy-blue
+
+# Create SSL helper scripts
+print_status "Creating SSL setup scripts..."
+cat > /usr/local/bin/setup-ssl-blue << 'EOF'
+#!/bin/bash
+# Setup SSL for blue.flippi.ai
+
+certbot --nginx -d blue.flippi.ai --non-interactive --agree-tos --email admin@flippi.ai --redirect
+EOF
+
+chmod +x /usr/local/bin/setup-ssl-blue
+
+# Create scripts directory and the fix-nginx-ssl script
+mkdir -p /var/www/blue.flippi.ai/scripts
+cat > /var/www/blue.flippi.ai/scripts/fix-nginx-ssl-comprehensive.sh << 'EOF'
+#!/bin/bash
+# Fix missing SSL configuration files
+
+mkdir -p /etc/letsencrypt
+
+# Create options-ssl-nginx.conf if missing
+if [ ! -f /etc/letsencrypt/options-ssl-nginx.conf ]; then
+    cat > /etc/letsencrypt/options-ssl-nginx.conf << 'SSL_OPTIONS'
+ssl_session_cache shared:le_nginx_SSL:10m;
+ssl_session_timeout 1440m;
+ssl_protocols TLSv1.2 TLSv1.3;
+ssl_prefer_server_ciphers off;
+ssl_ciphers "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384";
+SSL_OPTIONS
+fi
+
+# Create ssl-dhparams.pem if missing
+if [ ! -f /etc/letsencrypt/ssl-dhparams.pem ]; then
+    openssl dhparam -out /etc/letsencrypt/ssl-dhparams.pem 2048
+fi
+
+nginx -t && nginx -s reload
+echo "SSL configuration files created successfully"
+EOF
+
+chmod +x /var/www/blue.flippi.ai/scripts/fix-nginx-ssl-comprehensive.sh
+
+# Create system monitoring script
+print_status "Creating monitoring script..."
+cat > /usr/local/bin/check-flippi << 'EOF'
+#!/bin/bash
+# Quick health check for Flippi services
+
+echo "=== Flippi Blue Environment Status ==="
+echo ""
+echo "PM2 Processes:"
+pm2 status
+
+echo ""
+echo "Port Usage:"
+netstat -tlnp | grep -E ':(3002|8082)'
+
+echo ""
+echo "Nginx Status:"
+systemctl status nginx --no-pager | head -n 5
+
+echo ""
+echo "Disk Usage:"
+df -h | grep -E '^/|Filesystem'
+
+echo ""
+echo "Memory Usage:"
+free -h
+
+echo ""
+echo "Backend Health:"
+curl -s http://localhost:3002/health | jq '.' 2>/dev/null || echo "Backend not responding"
+
+echo ""
+echo "Recent Errors:"
+pm2 logs dev-backend --err --lines 5 --nostream
+EOF
+
+chmod +x /usr/local/bin/check-flippi
+
+# Final instructions
+print_status "Server setup complete!"
+echo ""
+echo "========================================="
+echo "Next Steps:"
+echo "========================================="
+echo "1. Add your SSH key to the server for the deploy user"
+echo "2. Clone the repository:"
+echo "   cd /var/www/blue.flippi.ai"
+echo "   git clone https://github.com/johnjhusband/price-scanner-app-coding.git ."
+echo "   git checkout develop"
+echo ""
+echo "3. Configure environment variables:"
+echo "   nano /var/www/shared/.env"
+echo "   Add: OPENAI_API_KEY=your-key-here"
+echo "   Add: SESSION_SECRET=your-secret-here"
+echo "   Add: GOOGLE_CLIENT_ID=your-client-id"
+echo "   Add: GOOGLE_CLIENT_SECRET=your-client-secret"
+echo ""
+echo "4. Run initial deployment:"
+echo "   deploy-blue"
+echo ""
+echo "5. Setup SSL certificate:"
+echo "   setup-ssl-blue"
+echo ""
+echo "6. Start PM2 processes:"
+echo "   cd /var/www/blue.flippi.ai"
+echo "   pm2 start ecosystem.config.js"
+echo "   pm2 save"
+echo ""
+echo "7. Check status:"
+echo "   check-flippi"
+echo ""
+echo "========================================="
+print_warning "Remember to update DNS to point blue.flippi.ai to this server's IP!"
+echo "========================================="
