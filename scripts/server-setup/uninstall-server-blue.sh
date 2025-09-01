@@ -90,6 +90,9 @@ rm -rf /etc/letsencrypt
 
 # Remove directories
 print_status "Removing directories..."
+# Remove infrastructure directories
+rm -rf /opt/flippi
+# Remove application directories
 rm -rf /var/www/blue.flippi.ai
 rm -rf /var/www/shared
 rm -rf /var/www/html

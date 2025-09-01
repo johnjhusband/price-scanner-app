@@ -116,10 +116,27 @@ pip3 install --break-system-packages numpy==1.26.4 rembg onnxruntime
 
 # Create directory structure
 print_status "Creating directory structure..."
+# Infrastructure directories
+track_install "DIRECTORY: /opt/flippi/shared/scripts"
+mkdir -p /opt/flippi/shared/scripts
+track_install "DIRECTORY: /opt/flippi/shared/templates"
+mkdir -p /opt/flippi/shared/templates
+track_install "DIRECTORY: /opt/flippi/blue/config"
+mkdir -p /opt/flippi/blue/config
+track_install "DIRECTORY: /opt/flippi/blue/logs"
+mkdir -p /opt/flippi/blue/logs
+
+# Application directory (empty for git clone)
 track_install "DIRECTORY: /var/www/blue.flippi.ai"
 mkdir -p /var/www/blue.flippi.ai
+chown -R www-data:www-data /var/www/blue.flippi.ai
+
+# Shared environment directory
 track_install "DIRECTORY: /var/www/shared"
 mkdir -p /var/www/shared
+chown -R www-data:www-data /var/www/shared
+
+# Other system directories
 mkdir -p /var/lib/flippi-dev
 mkdir -p /backup
 
@@ -251,7 +268,8 @@ chmod -R 755 /var/www/shared
 
 # Create PM2 ecosystem config template
 print_status "Creating PM2 ecosystem config template..."
-cat > /var/www/blue.flippi.ai/ecosystem.config.js << 'EOF'
+track_install "CONFIG_FILE: /opt/flippi/blue/config/ecosystem.config.js"
+cat > /opt/flippi/blue/config/ecosystem.config.js << 'EOF'
 module.exports = {
   apps: [
     {
@@ -269,9 +287,9 @@ module.exports = {
         FOTOFLIP_BG_COLOR: '#FAF6F1',
         FOTOFLIP_MODE: 'beautify'
       },
-      error_file: '/var/www/blue.flippi.ai/logs/dev-backend-error.log',
-      out_file: '/var/www/blue.flippi.ai/logs/dev-backend-out.log',
-      log_file: '/var/www/blue.flippi.ai/logs/dev-backend-combined.log',
+      error_file: '/opt/flippi/blue/logs/dev-backend-error.log',
+      out_file: '/opt/flippi/blue/logs/dev-backend-out.log',
+      log_file: '/opt/flippi/blue/logs/dev-backend-combined.log',
       time: true
     },
     {
@@ -286,18 +304,17 @@ module.exports = {
       env: {
         NODE_ENV: 'development'
       },
-      error_file: '/var/www/blue.flippi.ai/logs/dev-frontend-error.log',
-      out_file: '/var/www/blue.flippi.ai/logs/dev-frontend-out.log',
-      log_file: '/var/www/blue.flippi.ai/logs/dev-frontend-combined.log',
+      error_file: '/opt/flippi/blue/logs/dev-frontend-error.log',
+      out_file: '/opt/flippi/blue/logs/dev-frontend-out.log',
+      log_file: '/opt/flippi/blue/logs/dev-frontend-combined.log',
       time: true
     }
   ]
 };
 EOF
 
-# Create log directory
-mkdir -p /var/www/blue.flippi.ai/logs
-chown -R www-data:www-data /var/www/blue.flippi.ai/logs
+# Ensure log directory has correct permissions
+chown -R www-data:www-data /opt/flippi/blue/logs
 
 # Install PM2 log rotation
 print_status "Setting up PM2 log rotation..."
@@ -306,17 +323,48 @@ pm2 set pm2-logrotate:max_size 10M
 pm2 set pm2-logrotate:retain 30
 pm2 set pm2-logrotate:compress true
 
-# Create deployment script
-print_status "Creating deployment helper script..."
-cat > /usr/local/bin/deploy-blue << 'EOF'
+# Create shared deployment helper script
+print_status "Creating shared deployment helper script..."
+track_install "SCRIPT: /opt/flippi/shared/scripts/deploy-helper.sh"
+cat > /opt/flippi/shared/scripts/deploy-helper.sh << 'EOF'
 #!/bin/bash
-# Helper script for blue environment deployment
+# Shared deployment helper script
+# Usage: deploy-helper.sh [environment]
 
-cd /var/www/blue.flippi.ai
+ENV=$1
+if [ -z "$ENV" ]; then
+    echo "Usage: $0 [blue|green|production]"
+    exit 1
+fi
 
+case "$ENV" in
+    blue)
+        APP_DIR="/var/www/blue.flippi.ai"
+        BRANCH="develop"
+        PM2_CONFIG="/opt/flippi/blue/config/ecosystem.config.js"
+        ;;
+    green)
+        APP_DIR="/var/www/green.flippi.ai"
+        BRANCH="staging"
+        PM2_CONFIG="/opt/flippi/green/config/ecosystem.config.js"
+        ;;
+    production)
+        APP_DIR="/var/www/app.flippi.ai"
+        BRANCH="master"
+        PM2_CONFIG="/opt/flippi/production/config/ecosystem.config.js"
+        ;;
+    *)
+        echo "Invalid environment: $ENV"
+        exit 1
+        ;;
+esac
+
+cd $APP_DIR
+
+echo "Deploying $ENV environment from $BRANCH branch..."
 echo "Pulling latest changes..."
-git fetch origin develop
-git reset --hard origin/develop
+git fetch origin $BRANCH
+git reset --hard origin/$BRANCH
 
 echo "Installing backend dependencies..."
 cd backend
@@ -325,22 +373,35 @@ npm install --production
 echo "Installing frontend dependencies..."
 cd ../mobile-app
 npm install
-npx expo install react-native-web react-dom @expo/metro-runtime
 
 echo "Building frontend..."
 npx expo export --platform web --output-dir dist
 
 echo "Restarting PM2 processes..."
-pm2 restart dev-backend dev-frontend
+cd ..
+pm2 restart $PM2_CONFIG
+pm2 save
 
 echo "Deployment complete!"
 pm2 status
+EOF
+
+chmod +x /opt/flippi/shared/scripts/deploy-helper.sh
+
+# Create deployment script for blue environment
+print_status "Creating deployment script for blue environment..."
+track_install "SCRIPT: /usr/local/bin/deploy-blue"
+cat > /usr/local/bin/deploy-blue << 'EOF'
+#!/bin/bash
+# Wrapper script for blue environment deployment
+/opt/flippi/shared/scripts/deploy-helper.sh blue
 EOF
 
 chmod +x /usr/local/bin/deploy-blue
 
 # Create SSL helper scripts
 print_status "Creating SSL setup scripts..."
+track_install "SCRIPT: /usr/local/bin/setup-ssl-blue"
 cat > /usr/local/bin/setup-ssl-blue << 'EOF'
 #!/bin/bash
 # Setup SSL for blue.flippi.ai
@@ -350,11 +411,9 @@ EOF
 
 chmod +x /usr/local/bin/setup-ssl-blue
 
-# Create scripts directory and the fix-nginx-ssl script
-track_install "DIRECTORY: /var/www/blue.flippi.ai/scripts"
-mkdir -p /var/www/blue.flippi.ai/scripts
-track_install "SCRIPT: /var/www/blue.flippi.ai/scripts/fix-nginx-ssl-comprehensive.sh"
-cat > /var/www/blue.flippi.ai/scripts/fix-nginx-ssl-comprehensive.sh << 'EOF'
+# Create fix-nginx-ssl script in shared scripts
+track_install "SCRIPT: /opt/flippi/shared/scripts/fix-nginx-ssl.sh"
+cat > /opt/flippi/shared/scripts/fix-nginx-ssl.sh << 'EOF'
 #!/bin/bash
 # Fix missing SSL configuration files
 
@@ -380,7 +439,7 @@ nginx -t && nginx -s reload
 echo "SSL configuration files created successfully"
 EOF
 
-chmod +x /var/www/blue.flippi.ai/scripts/fix-nginx-ssl-comprehensive.sh
+chmod +x /opt/flippi/shared/scripts/fix-nginx-ssl.sh
 
 # Create system monitoring script
 print_status "Creating monitoring script..."
@@ -460,8 +519,7 @@ echo "5. Setup SSL certificate:"
 echo "   setup-ssl-blue"
 echo ""
 echo "6. Start PM2 processes:"
-echo "   cd /var/www/blue.flippi.ai"
-echo "   pm2 start ecosystem.config.js"
+echo "   pm2 start /opt/flippi/blue/config/ecosystem.config.js"
 echo "   pm2 save"
 echo ""
 echo "7. Check status:"
