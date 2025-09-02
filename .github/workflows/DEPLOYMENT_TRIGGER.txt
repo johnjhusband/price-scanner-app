@@ -1,2 +1,0 @@
-Deployment trigger: 2025-07-14 17:09:00
-This file is used to trigger GitHub Actions deployments.

@@ -950,6 +950,10 @@ app.use('/api/growth', (req, res, next) => {
 const growthAnalyticsRoutes = require('./routes/growthAnalytics');
 app.use('/api/growth/analytics', growthAnalyticsRoutes);
 
+// Analytics Export Routes
+const analyticsExportRoutes = require('./routes/analyticsExport');
+app.use('/api/growth/analytics/export', analyticsExportRoutes);
+
 // FotoFlip routes
 const fotoflipRoutes = require('./routes/fotoflip');
 app.use('/api/fotoflip', fotoflipRoutes);

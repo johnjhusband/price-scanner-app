@@ -259,6 +259,29 @@ const GrowthDashboard = ({ isVisible, onClose }) => {
           {activeTab === 'content' && (
             <View style={styles.contentContainer}>
               <Text style={styles.sectionTitle}>Generated Content</Text>
+              
+              {/* Content Type Legend */}
+              <View style={styles.contentTypesContainer}>
+                <Text style={styles.contentTypesTitle}>Content Types:</Text>
+                <View style={styles.contentTypes}>
+                  <View style={styles.contentTypeItem}>
+                    <Text style={styles.contentTypeIcon}>📝</Text>
+                    <Text style={styles.contentTypeText}>Blog Posts</Text>
+                  </View>
+                  <View style={styles.contentTypeItem}>
+                    <Text style={styles.contentTypeIcon}>📱</Text>
+                    <Text style={styles.contentTypeText}>Social Media</Text>
+                  </View>
+                  <View style={styles.contentTypeItem}>
+                    <Text style={styles.contentTypeIcon}>🛍️</Text>
+                    <Text style={styles.contentTypeText}>Marketplace Listings</Text>
+                  </View>
+                  <View style={styles.contentTypeItem}>
+                    <Text style={styles.contentTypeIcon}>✉️</Text>
+                    <Text style={styles.contentTypeText}>Email Campaigns</Text>
+                  </View>
+                </View>
+              </View>
               {content.length === 0 ? (
                 <Text style={styles.emptyText}>No content generated yet.</Text>
               ) : (
@@ -266,11 +289,26 @@ const GrowthDashboard = ({ isVisible, onClose }) => {
                   const metrics = analytics[c.id] || {};
                   return (
                     <View key={c.id} style={styles.contentCard}>
-                      <Text style={styles.contentTitle}>{c.title}</Text>
+                      <View style={styles.contentHeader}>
+                        <Text style={styles.contentTitle}>{c.title}</Text>
+                        <View style={styles.contentTypeBadge}>
+                          <Text style={styles.contentTypeBadgeText}>
+                            {c.type === 'blog_post' ? '📝 Blog' :
+                             c.type === 'social_post' ? '📱 Social' :
+                             c.type === 'marketplace_listing' ? '🛍️ Listing' :
+                             c.type === 'email_campaign' ? '✉️ Email' : '📄 Content'}
+                          </Text>
+                        </View>
+                      </View>
                       <View style={styles.contentMeta}>
                         <Text style={styles.contentStatus}>
                           {c.published ? '✅ Published' : '📝 Draft'}
                         </Text>
+                        {c.platform && (
+                          <Text style={styles.contentPlatform}>
+                            {c.platform}
+                          </Text>
+                        )}
                       </View>
                       
                       {/* Analytics Row */}
@@ -498,6 +536,41 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 20,
   },
+  contentTypesContainer: {
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: brandColors.border,
+  },
+  contentTypesTitle: {
+    fontSize: 14,
+    fontWeight: typography.weights.semiBold,
+    color: brandColors.text,
+    marginBottom: 12,
+  },
+  contentTypes: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+  },
+  contentTypeItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: brandColors.background,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  contentTypeIcon: {
+    fontSize: 16,
+    marginRight: 4,
+  },
+  contentTypeText: {
+    fontSize: 12,
+    color: brandColors.textSecondary,
+  },
   contentCard: {
     backgroundColor: '#FFFFFF',
     padding: 16,
@@ -506,11 +579,29 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: brandColors.border,
   },
+  contentHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 8,
+  },
   contentTitle: {
     fontSize: 16,
     fontWeight: typography.weights.semiBold,
     color: brandColors.text,
-    marginBottom: 8,
+    flex: 1,
+  },
+  contentTypeBadge: {
+    backgroundColor: brandColors.primary + '15',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginLeft: 8,
+  },
+  contentTypeBadgeText: {
+    fontSize: 11,
+    color: brandColors.primary,
+    fontWeight: typography.weights.medium,
   },
   contentMeta: {
     flexDirection: 'row',
@@ -520,6 +611,11 @@ const styles = StyleSheet.create({
   contentStatus: {
     fontSize: 14,
     color: brandColors.textSecondary,
+  },
+  contentPlatform: {
+    fontSize: 14,
+    color: brandColors.primary,
+    fontWeight: typography.weights.medium,
   },
   contentViews: {
     fontSize: 14,

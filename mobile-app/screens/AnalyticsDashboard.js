@@ -30,6 +30,60 @@ const AnalyticsDashboard = ({ isVisible, onClose }) => {
 
   const API_URL = Platform.OS === 'web' ? '' : 'http://localhost:3000';
 
+  const handleExport = async () => {
+    try {
+      // Calculate date range for export
+      const endDate = new Date();
+      const startDate = new Date();
+      
+      switch (timeRange) {
+        case '24h':
+          startDate.setDate(startDate.getDate() - 1);
+          break;
+        case '7d':
+          startDate.setDate(startDate.getDate() - 7);
+          break;
+        case '30d':
+          startDate.setDate(startDate.getDate() - 30);
+          break;
+        case 'all':
+          startDate.setFullYear(2020);
+          break;
+      }
+
+      // Format dates for API
+      const start = startDate.toISOString().split('T')[0];
+      const end = endDate.toISOString().split('T')[0];
+
+      // For web, trigger download
+      if (Platform.OS === 'web') {
+        // Show format selection dialog
+        const format = window.confirm('Export as Excel? (OK for Excel, Cancel for CSV)') ? 'excel' : 'csv';
+        
+        // Trigger download
+        const exportUrl = `${API_URL}/api/growth/analytics/export/${format}?start=${start}&end=${end}`;
+        window.open(exportUrl, '_blank');
+      } else {
+        // For mobile, show share sheet with export data
+        const response = await fetch(`${API_URL}/api/growth/analytics/export/json?start=${start}&end=${end}`);
+        const data = await response.json();
+        
+        // Convert to shareable text
+        const text = `Flippi Analytics Export (${start} to ${end})\n\n` +
+          `Total Views: ${data.summary.reduce((acc, day) => acc + day.total_views, 0)}\n` +
+          `Total Clicks: ${data.summary.reduce((acc, day) => acc + day.total_clicks, 0)}\n` +
+          `Total Shares: ${data.summary.reduce((acc, day) => acc + day.total_shares, 0)}\n` +
+          `Total Conversions: ${data.summary.reduce((acc, day) => acc + day.conversions, 0)}`;
+        
+        // Share the data (you can implement native sharing here)
+        alert(text);
+      }
+    } catch (error) {
+      console.error('Export error:', error);
+      alert('Failed to export analytics data');
+    }
+  };
+
   const fetchAnalytics = async () => {
     try {
       setLoading(true);
@@ -196,9 +250,15 @@ const AnalyticsDashboard = ({ isVisible, onClose }) => {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Analytics Dashboard</Text>
-        <TouchableOpacity onPress={onClose} style={styles.closeButton}>
-          <Feather name="x" size={24} color={brandColors.text} />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={handleExport} style={styles.exportButton}>
+            <Feather name="download" size={20} color={brandColors.primary} />
+            <Text style={styles.exportText}>Export</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onClose} style={styles.closeButton}>
+            <Feather name="x" size={24} color={brandColors.text} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <View style={styles.timeRangeContainer}>
@@ -277,6 +337,25 @@ const styles = StyleSheet.create({
   },
   closeButton: {
     padding: 8,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  exportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 6,
+    backgroundColor: brandColors.background,
+    marginRight: 12,
+  },
+  exportText: {
+    marginLeft: 4,
+    fontSize: 14,
+    color: brandColors.primary,
+    fontWeight: typography.weights.medium,
   },
   timeRangeContainer: {
     flexDirection: 'row',

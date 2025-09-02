@@ -362,6 +362,162 @@ class GrowthAnalyticsService {
             throw error;
         }
     }
+
+    /**
+     * Track a conversion event
+     * @param {number} contentId - Content ID that led to conversion
+     * @param {string} conversionType - Type of conversion (signup, purchase, etc.)
+     * @param {Object} metadata - Additional metadata
+     */
+    static async trackConversion(contentId, conversionType, metadata = {}) {
+        return this.trackEvent({
+            contentId,
+            eventType: 'conversion',
+            eventData: { 
+                type: conversionType,
+                value: metadata.value || null,
+                ...metadata.eventData
+            },
+            ...metadata
+        });
+    }
+
+    /**
+     * Get analytics summary for date range
+     * @param {Date} startDate - Start date
+     * @param {Date} endDate - End date
+     * @returns {Promise<Array>} Summary data by date
+     */
+    static async getAnalyticsSummary(startDate, endDate) {
+        try {
+            const db = getDatabase();
+            const stmt = db.prepare(`
+                SELECT 
+                    date,
+                    SUM(views) as total_views,
+                    SUM(clicks) as total_clicks,
+                    SUM(shares) as total_shares,
+                    SUM(conversions) as conversions,
+                    ROUND(CAST(SUM(clicks) AS FLOAT) / NULLIF(SUM(views), 0) * 100, 2) as click_through_rate
+                FROM growth_daily_metrics
+                WHERE date >= ? AND date <= ?
+                GROUP BY date
+                ORDER BY date ASC
+            `);
+
+            return stmt.all(
+                startDate.toISOString().split('T')[0],
+                endDate.toISOString().split('T')[0]
+            );
+        } catch (error) {
+            console.error('Error getting analytics summary:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get content performance data
+     * @param {Date} startDate - Start date
+     * @param {Date} endDate - End date
+     * @returns {Promise<Array>} Content performance metrics
+     */
+    static async getContentPerformance(startDate, endDate) {
+        try {
+            const db = getDatabase();
+            const stmt = db.prepare(`
+                SELECT 
+                    gc.id as content_id,
+                    gc.title,
+                    gc.type,
+                    gc.platform,
+                    SUM(gdm.views) as views,
+                    SUM(gdm.clicks) as clicks,
+                    SUM(gdm.shares) as shares,
+                    ROUND(CAST(SUM(gdm.clicks) AS FLOAT) / NULLIF(SUM(gdm.views), 0) * 100, 2) as ctr,
+                    gc.created_at
+                FROM growth_content gc
+                LEFT JOIN growth_daily_metrics gdm ON gc.id = gdm.content_id
+                WHERE gdm.date >= ? AND gdm.date <= ?
+                GROUP BY gc.id
+                ORDER BY views DESC
+            `);
+
+            return stmt.all(
+                startDate.toISOString().split('T')[0],
+                endDate.toISOString().split('T')[0]
+            );
+        } catch (error) {
+            console.error('Error getting content performance:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Get conversion funnel data
+     * @param {Date} startDate - Start date
+     * @param {Date} endDate - End date
+     * @returns {Promise<Array>} Conversion funnel stages
+     */
+    static async getConversionFunnel(startDate, endDate) {
+        try {
+            const db = getDatabase();
+            
+            // Get unique sessions that had views
+            const viewSessions = db.prepare(`
+                SELECT COUNT(DISTINCT session_id) as count
+                FROM growth_analytics_events
+                WHERE event_type = 'view' 
+                AND created_at >= ? AND created_at <= ?
+                AND session_id IS NOT NULL
+            `).get(startDate.toISOString(), endDate.toISOString());
+
+            // Get sessions that clicked
+            const clickSessions = db.prepare(`
+                SELECT COUNT(DISTINCT session_id) as count
+                FROM growth_analytics_events
+                WHERE event_type = 'click'
+                AND created_at >= ? AND created_at <= ?
+                AND session_id IS NOT NULL
+            `).get(startDate.toISOString(), endDate.toISOString());
+
+            // Get sessions that converted
+            const conversionSessions = db.prepare(`
+                SELECT COUNT(DISTINCT session_id) as count
+                FROM growth_analytics_events
+                WHERE event_type = 'conversion'
+                AND created_at >= ? AND created_at <= ?
+                AND session_id IS NOT NULL
+            `).get(startDate.toISOString(), endDate.toISOString());
+
+            const views = viewSessions.count || 0;
+            const clicks = clickSessions.count || 0;
+            const conversions = conversionSessions.count || 0;
+
+            return [
+                {
+                    stage: 'Page View',
+                    users: views,
+                    conversion_rate: 100,
+                    drop_off_rate: 0
+                },
+                {
+                    stage: 'Content Click',
+                    users: clicks,
+                    conversion_rate: views > 0 ? Math.round((clicks / views) * 100) : 0,
+                    drop_off_rate: views > 0 ? Math.round(((views - clicks) / views) * 100) : 0
+                },
+                {
+                    stage: 'Sign Up / Conversion',
+                    users: conversions,
+                    conversion_rate: views > 0 ? Math.round((conversions / views) * 100) : 0,
+                    drop_off_rate: clicks > 0 ? Math.round(((clicks - conversions) / clicks) * 100) : 0
+                }
+            ];
+        } catch (error) {
+            console.error('Error getting conversion funnel:', error);
+            throw error;
+        }
+    }
 }
 
 module.exports = GrowthAnalyticsService;
