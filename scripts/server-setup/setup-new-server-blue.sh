@@ -260,9 +260,9 @@ fi
 
 # Set proper permissions
 print_status "Setting permissions..."
-chown -R www-data:www-data /var/www/blue.flippi.ai
+# /var/www/blue.flippi.ai will be created by git clone later
+# Only set permissions on directories that exist now
 chown -R www-data:www-data /var/www/shared
-chmod -R 755 /var/www/blue.flippi.ai
 chmod -R 755 /var/www/shared
 
 # Create PM2 ecosystem config template
