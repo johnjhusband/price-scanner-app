@@ -86,6 +86,13 @@ jobs:
             # Show PM2 status
             pm2 status
             
+            # Run post-deployment fixes
+            echo "=== [$(date)] Running post-deployment fixes ==="
+            cd /var/www/blue.flippi.ai
+            if [ -f scripts/post-deploy-comprehensive.sh ]; then
+              bash scripts/post-deploy-comprehensive.sh blue.flippi.ai 3002 || echo "Post-deploy fixes attempted"
+            fi
+            
             # Verify deployment
             echo "=== [$(date)] Verifying deployment ==="
             if ! curl -fsS http://localhost:3002/health; then
