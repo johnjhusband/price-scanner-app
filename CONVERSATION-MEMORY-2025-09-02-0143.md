@@ -103,7 +103,7 @@ gh workflow run setup-new-server.yml \
 
 ## TODO List for Next Session
 
-1. **Run setup-new-server workflow** (ready to go - all issues fixed)
+1. **Run setup-new-server workflow** ✅ COMPLETED - Running now (17391403640)
 2. **Verify deployment** - Check that services are running:
    ```bash
    ssh -i ~/.ssh/flippi_blue_key root@137.184.24.201 "pm2 status"
@@ -118,6 +118,17 @@ gh workflow run setup-new-server.yml \
      -f email="admin@flippi.ai"
    ```
 6. **Test the deployment** - Verify blue.flippi.ai is accessible
+
+## Additional Fixes Applied (2025-09-02 02:00 AM)
+
+After the initial session, we discovered and fixed these issues:
+
+1. **Workflow Clone Issue**: Changed from `cd /var/www/blue.flippi.ai && git clone .` to `git clone [repo] /var/www/blue.flippi.ai`
+2. **Permissions Timing**: Moved chown to AFTER npm install/build to avoid permission conflicts
+3. **Legal Pages Path**: Fixed nginx config from `/legal/*.html` to `/mobile-app/*.html`
+4. **PM2 Frontend**: Removed unnecessary frontend process (nginx serves static files)
+5. **Shell Scripts**: Added `chmod +x` for all shell scripts after clone
+6. **Environment Variables**: Confirmed all required vars are set correctly
 
 ## Key Files and Locations
 

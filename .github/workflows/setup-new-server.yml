@@ -95,8 +95,7 @@ jobs:
             root@${{ github.event.inputs.target_server_ip }} \
             "echo 'OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}' > /var/www/shared/.env && \
              echo 'SESSION_SECRET=${{ secrets.SESSION_SECRET }}' >> /var/www/shared/.env && \
-             echo 'GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}' >> /var/www/shared/.env && \
-             echo 'GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}' >> /var/www/shared/.env && \
+             echo 'FEEDBACK_DB_PATH=/var/lib/flippi-dev/feedback.db' >> /var/www/shared/.env && \
              chmod 600 /var/www/shared/.env"
       
       - name: Install dependencies and build

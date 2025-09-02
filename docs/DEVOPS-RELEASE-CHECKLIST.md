@@ -188,7 +188,8 @@ For risky changes to blue environment:
 
 ### Post-Deployment Verification
 - [ ] Full functionality test on green.flippi.ai
-- [ ] Legal pages accessible (/terms, /privacy)
+- [ ] Legal pages accessible (/terms, /privacy, /mission, /contact)
+  - Note: Legal pages are served from `/mobile-app/*.html` NOT `/legal/*.html`
 - [ ] Performance check (load time < 3 seconds)
 - [ ] Mobile device testing
 - [ ] Cross-browser testing

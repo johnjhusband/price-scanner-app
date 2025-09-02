@@ -47,6 +47,14 @@ These scripts are designed to set up a fresh Ubuntu server for Flippi.ai environ
 
 The application directory `/var/www/blue.flippi.ai` is NOT created by the setup script. It will be created by the git clone operation in the workflow. This prevents ownership mismatch issues between the setup user and the git clone operation.
 
+## Key Changes Made (2025-09-02):
+
+1. **Directory Creation**: The setup script no longer creates `/var/www/blue.flippi.ai` - git clone creates it with proper permissions
+2. **Permissions**: Set AFTER build completes to avoid npm permission conflicts
+3. **Legal Pages**: Nginx config updated to serve from `/var/www/blue.flippi.ai/mobile-app/*.html` (not `/legal/`)
+4. **PM2 Config**: Removed unnecessary frontend process - nginx serves static files directly
+5. **Shell Scripts**: Made executable after clone with `chmod +x`
+
 ## How to Use:
 
 ### Via GitHub Actions (Recommended):

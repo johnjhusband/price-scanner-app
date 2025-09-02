@@ -537,6 +537,22 @@ Current setup handles ~100 concurrent users. To scale:
 
 ## Deployment Operations
 
+### New Server Setup
+For setting up a new server, use the GitHub Actions workflow:
+```bash
+gh workflow run setup-new-server.yml \
+  -f target_server_ip="YOUR_SERVER_IP" \
+  -f environment="blue|green|production" \
+  -f root_password="YOUR_ROOT_PASSWORD"
+```
+
+**Key implementation notes:**
+1. **Directory Creation**: The `/var/www/[env].flippi.ai` directory is created by git clone, NOT by the setup script
+2. **File Permissions**: Set AFTER npm install/build completes to avoid permission conflicts
+3. **Static Files**: Nginx serves frontend directly from `/mobile-app/dist/` - no PM2 frontend process needed
+4. **Legal Pages**: Located at `/mobile-app/*.html` NOT `/legal/*.html`
+5. **Shell Scripts**: Made executable after clone with `chmod +x`
+
 ### Automated Deployment
 Deployments trigger automatically on branch push:
 - `develop` → blue.flippi.ai

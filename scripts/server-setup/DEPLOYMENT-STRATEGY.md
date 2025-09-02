@@ -20,6 +20,18 @@ These scripts:
 
 Note: The application directory (/var/www/blue.flippi.ai) is created by git clone to avoid ownership issues.
 
+### Key Implementation Details
+
+1. **Directory Creation**: The setup script does NOT create `/var/www/[environment].flippi.ai`. This directory is created by git clone with proper permissions.
+
+2. **File Permissions**: Permissions are set AFTER npm install and build complete to avoid conflicts between root-owned npm operations and www-data web serving.
+
+3. **Static File Serving**: Nginx serves the frontend files directly from `/var/www/[environment].flippi.ai/mobile-app/dist`. No separate PM2 frontend process is needed.
+
+4. **Legal Pages**: Located at `/mobile-app/*.html` (not `/legal/*.html`). The nginx configuration has been updated accordingly.
+
+5. **Shell Scripts**: All shell scripts in the repository are made executable after cloning with `chmod +x`.
+
 ### 2. GitHub Actions Workflow
 
 The `.github/workflows/setup-new-server.yml` workflow:

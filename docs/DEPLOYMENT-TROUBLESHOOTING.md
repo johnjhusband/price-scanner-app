@@ -181,9 +181,15 @@ nginx -s reload
 - OAuth redirects may fail
 
 **Root Cause:**
-- Nginx configuration missing routes
-- Legal page files not in correct location
+- Nginx configuration pointing to wrong location
+- Legal page files are in `/mobile-app/*.html` NOT `/legal/*.html`
 - Post-deployment script didn't run
+
+**Important Note:** Legal pages are located at:
+- `/mobile-app/terms.html`
+- `/mobile-app/privacy.html`
+- `/mobile-app/mission.html`
+- `/mobile-app/contact.html`
 
 **Solution:**
 ```bash
@@ -196,13 +202,14 @@ cd /var/www/[environment].flippi.ai/backend
 ./scripts/post-deploy-legal-pages.sh [environment].flippi.ai
 
 # Manual fix if needed
-# 1. Verify files exist
+# 1. Verify files exist in correct location
 ls -la mobile-app/terms.html mobile-app/privacy.html
 
-# 2. Check nginx config
+# 2. Check nginx config has correct paths
 cat /etc/nginx/sites-available/[environment].flippi.ai | grep -A5 "location = /terms"
 
-# 3. If missing, add manually (see nginx templates)
+# 3. If pointing to /legal/, update to /mobile-app/
+# location = /terms { alias /var/www/[env].flippi.ai/mobile-app/terms.html; }
 ```
 
 ### 5. GitHub Actions Deployment Hangs

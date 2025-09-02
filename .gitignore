@@ -64,3 +64,6 @@ install_brew.sh
 
 # Sensitive documentation
 docs/DEPLOYMENT-CREDENTIALS.md
+
+# Shared configuration directory
+shared/
