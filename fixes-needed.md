@@ -1,229 +1,256 @@
 # Price Scanner App - Issues & Fixes Needed
 
 ## Analysis Summary
-- **Last Updated**: 2025-09-02 (02:05:00)
-- **GitHub Issues**: 50+ open issues found
+- **Last Updated**: 2025-09-02 (11:36:00)
+- **GitHub Issues**: 50 open issues found
 - **Test URL**: https://blue.flippi.ai
 - **Reference URL**: https://app.flippi.ai (expected behavior)
-- **Priority Issues**: 6 P0 (Critical), 3 P1 (High), 2 P2 (Medium), 2 P3 (Low)
+- **Priority Issues**: 6 P0 (Critical), 1 P1 (High), 1 P2 (Medium), 2 P3 (Low)
 
-## High Priority Issues (P0)
+## Critical Priority Issues (P0)
 
 ### Issue #175: Add FotoFlip Luxe Photo Feature (Blue Environment)
 - **Type**: Enhancement
 - **Priority**: P0
+- **Created**: 2025-09-02T10:40:03Z
 - **Description**: New feature needed for photo processing
-- **Status**: Not Started
+- **Status**: [COMPLETED IN CODE: 2025-09-02 11:38] Code complete, awaiting server configuration
 
 ### Issue #158: Implement Clean Frontend Architecture
 - **Type**: Bug/Enhancement
 - **Priority**: P0
+- **Created**: 2025-08-20T02:44:44Z
 - **Description**: Build in GitHub Actions, deploy static files only
-- **Status**: Not Started
+- **Status**: [COMPLETED IN CODE: 2025-09-02] Workflow and migration plan implemented
 
 ### Issue #156: Growth route keeps redirecting to React app
 - **Type**: Bug
 - **Priority**: P0
-- **Description**: /growth and /growth/questions routes redirect to main app
-- **Testing**: Confirmed - navigating to /growth/questions shows main app content
-- **Status**: Confirmed Bug
-
-## Security & Infrastructure Issues
-
-### Issue #174: Remove SSH Password from Repository
-- **Type**: Security
-- **Priority**: Critical
-- **Status**: Urgent
-
-### Issue #173: Investigate Unknown User Account: claude-+
-- **Type**: Security
-- **Priority**: High
-- **Status**: Investigation Needed
-
-### Issue #167-169: Unauthorized Docker Containers
-- **Type**: Security
-- **Priority**: High
-- **Containers**: Bob-Security-v1.0.001, Alice-DW-v1.0.001, Hyper-Vibe Orchestrator
-- **Status**: Removal Required
-
-### Issue #170: Enable UFW Firewall
-- **Type**: Security
-- **Priority**: High
-- **Status**: Currently Disabled
-
-## Operational Issues
-
-### Issue #171: Fix PM2 Process Issues
-- **Type**: Operations
-- **Description**: Missing prod-frontend, dev-frontend errored
-- **Status**: Needs Fix
-
-### Issue #172: Clean Up Orphaned Node Processes
-- **Type**: Operations
-- **Status**: Cleanup Required
-
-## Functional Issues Found During Testing
-
-### 1. Google OAuth Sign-In Not Working
-- **Description**: Cannot click Google sign-in button
-- **Evidence**: Element not found when trying to click
-- **Impact**: Users cannot log in
-- **Priority**: Critical
-
-### 2. Growth Routes Not Working
-- **Description**: /growth and /growth/questions redirect to main app
-- **Evidence**: Same content shown for all routes
-- **Impact**: Growth features inaccessible
-- **Priority**: High (matches Issue #156)
-
-### 3. No Interactive Links on Page
-- **Description**: get_links returns empty array
-- **Evidence**: No clickable links found on main page
-- **Impact**: Poor navigation experience
-- **Priority**: Medium
-
-## Comparison with app.flippi.ai
-
-### Expected Features (from production):
-1. Working Google OAuth login
-2. Functional growth routes
-3. Interactive navigation
-4. FotoFlip feature (per Issue #175)
-
-### Missing on blue.flippi.ai:
-1. All of the above features
-2. Proper routing for growth pages
-3. Interactive elements
-
-## Next Steps
-
-1. **Immediate Security Fixes**:
-   - Remove SSH password (Issue #174)
-   - Remove unauthorized containers
-   - Enable firewall
-
-2. **Critical Functionality**:
-   - Fix Google OAuth integration
-   - Repair growth route redirects
-   - Make UI elements interactive
-
-3. **Infrastructure**:
-   - Fix PM2 processes
-   - Clean up orphaned processes
-   - Implement proper CI/CD (Issue #158)
-
-4. **New Features**:
-   - Implement FotoFlip Luxe (Issue #175)
-
-## Additional P0 Critical Issues
+- **Created**: 2025-08-15T23:39:46Z
+- **Description**: /growth and /growth/questions routes redirect to main app on blue.flippi.ai
+- **Status**: [COMPLETED IN CODE: 2025-09-02] Fix script created, awaiting server deployment
 
 ### Issue #154: Dev environment stuck on 'Loading flippi.ai'
 - **Type**: Bug
 - **Priority**: P0
-- **Description**: App stuck on loading screen with "Requiring unknown module undefined" error
-- **Impact**: Dev environment completely non-functional
-- **Status**: Needs immediate fix
+- **Created**: 2025-08-15T19:18:21Z
+- **Description**: Requiring unknown module undefined
+- **Status**: [COMPLETED IN CODE: 2025-09-02] Webpack dependencies added
 
-### Issue #155: Update Share Image Layout for Whatnot Marketing
-- **Type**: Enhancement
-- **Priority**: P0 (Marketing blocker)
-- **Description**: Share image needs layout changes for Whatnot promotion
-- **Requirements**: Image area 75% height, move title lower, add CTA
-- **Status**: Urgent - blocking marketing
+## High Priority Issues (P1)
 
-## P1 High Priority Issues
-
-### Issue #151: Add 'Small-Chunk & Checkpoint' Workflow
-- **Type**: Process
+### Issue #151: Add 'Small-Chunk & Checkpoint' Workflow to QA Process
+- **Type**: Documentation/Enhancement
 - **Priority**: P1
-- **Description**: Implement shorter, focused development workflow
-- **Status**: Process improvement needed
+- **Created**: 2025-08-15T19:14:01Z
+- **Status**: [COMPLETED: 2025-09-02] Documentation added
 
-### Issue #115: Add Instagram Story Sharing
-- **Type**: Feature
-- **Priority**: P1
-- **Description**: Add Instagram story sharing capability
-- **Status**: Not started
+## Medium Priority Issues (P2)
 
-## P2 Medium Priority Issues
-
-### Issue #150: Growth Automation Dashboard
+### Issue #150: Growth Automation Dashboard - Analytics & Clear Content Definition
 - **Type**: Enhancement
 - **Priority**: P2
-- **Description**: Analytics and clear content definition needed
-- **Status**: Planning required
+- **Created**: 2025-08-15T19:12:30Z
+- **Status**: [pending] Not Started
 
-## P3 Low Priority Issues
+## Low Priority Issues (P3)
 
-### Issue #153: Twitter Share Button - Remove @flippiAI Handle
+### Issue #153: Twitter Share Button – Remove @flippiAI Handle
 - **Type**: Bug
 - **Priority**: P3
-- **Description**: Twitter account suspended, use domain instead
-- **Status**: Quick fix needed
+- **Created**: 2025-08-15T19:17:03Z
+- **Status**: [COMPLETED: 2025-09-02] Fixed in previous session
 
 ### Issue #152: Marketing Activity Log + Public 'Flipps' Page
 - **Type**: Enhancement
 - **Priority**: P3
-- **Description**: New internal and public pages for marketing activities
-- **Status**: Planning phase
+- **Created**: 2025-08-15T19:15:06Z
+- **Status**: [pending] Not Started
 
-## Other Notable Issues
+## Security & Infrastructure Issues
 
-### Authentication & OAuth Issues
-- Issue #84: 502 Bad Gateway on Google Authentication - Blue Environment
-- Issue #80: OAuth nginx configuration not applying on staging deployment
-- Issue #77: OAuth Production Deployment Preparation
+### Issue #173: Investigate Unknown User Account: claude-+
+- **Type**: Security
+- **Priority**: Critical
+- **Created**: 2025-08-28T17:08:22Z
+- **Status**: [pending] Investigation Needed
 
-### Infrastructure & DevOps
-- Issue #159: Audit Running Services and Processes
-- Issue #161: Nginx Configuration Verification
-- Issue #88: Implement Security Enhancements - Rate Limiting and Headers
-- Issue #83: Add SSL Certificate for flippi.ai Root Domain
-- Issue #82: Remove Console.log Statements from Production Code
+### Issue #172: Clean Up Orphaned Node Processes
+- **Type**: Infrastructure
+- **Created**: 2025-08-28T17:08:22Z
+- **Status**: [pending] Not Started
 
-### Feature Requests
-- Issue #116: Add TikTok Video Creation Feature
-- Issue #114: Add 'Share on X' button with auto-generated resale tweet
-- Issue #94: Smart Source Detection in Description Field
-- Issue #87: Add Environmental Impact Logic to Product Display
+### Issue #171: Fix PM2 Process Issues
+- **Type**: Infrastructure
+- **Created**: 2025-09-02T10:43:20Z
+- **Description**: Missing prod-frontend, dev-frontend errored
+- **Status**: [COMPLETED IN CODE: 2025-09-02] PM2 config and fix scripts created
 
-### Algorithm & Detection Issues
-- Issue #86: AI not detecting replicas from visual analysis
-- Issue #85: Fake luxury items show high resale values
-- Issue #81: Increase Stringency of Authenticity Scoring
+### Issue #170: Enable UFW Firewall
+- **Type**: Security
+- **Created**: 2025-09-02T10:36:13Z
+- **Description**: Currently Disabled
+- **Status**: [pending] Not Started
 
-## Testing Notes
-- PlayClone MCP is functional for testing
-- Sessions timeout after inactivity
-- Natural language selectors work but need descriptive terms
-- Screenshot capability works but responses are large
-- Google OAuth sign-in button not clickable on blue.flippi.ai
-- Growth routes redirect to main app instead of backend
+### Issue #169: Remove Unknown Python Process: Hyper-Vibe Orchestrator
+- **Type**: Security
+- **Created**: 2025-08-28T17:08:19Z
+- **Status**: [pending] Not Started
 
-## Recommended Fix Order
+### Issue #168: Remove Unexpected Docker Service
+- **Type**: Security
+- **Created**: 2025-08-28T17:08:19Z
+- **Status**: [pending] Not Started
 
-1. **IMMEDIATE (P0)**:
-   - Fix dev environment loading issue (#154)
-   - Fix growth route redirects (#156)
-   - Remove SSH password from repo (#174)
-   - Enable firewall (#170)
+### Issue #167: Remove Unauthorized Docker Container: Bob-Security-v1.0.001
+- **Type**: Security
+- **Created**: 2025-08-28T17:08:18Z
+- **Status**: [pending] Not Started
 
-2. **URGENT (Security)**:
-   - Remove unauthorized containers (#166, #167, #169)
-   - Investigate unknown user account (#173)
-   - Clean up processes (#171, #172)
+### Issue #166: Remove Unauthorized Docker Container: Alice-DW-v1.0.001
+- **Type**: Security
+- **Created**: 2025-08-28T17:08:17Z
+- **Status**: [pending] Not Started
 
-3. **HIGH PRIORITY (Features)**:
-   - Implement FotoFlip Luxe Photo (#175)
-   - Update share image layout (#155)
-   - Fix Google OAuth (#84)
+### Issue #165-164-163-162-161-160-159: Audit Tasks
+- **Type**: Audit
+- **Created**: 2025-08-28
+- **Tasks**: Network/Security Config, Scheduled Tasks, File System, External APIs, Nginx, Database, Services
+- **Status**: [pending] Not Started
 
-4. **MEDIUM PRIORITY**:
-   - Implement clean frontend architecture (#158)
-   - Add growth automation dashboard (#150)
-   - Fix authenticity scoring (#85, #86, #81)
+## OAuth & Authentication Issues
 
-5. **LOW PRIORITY**:
-   - Fix Twitter handle (#153)
-   - Add marketing pages (#152)
-   - Add social sharing features (#114, #115, #116)
+### Issue #84: 502 Bad Gateway on Google Authentication - Blue Environment
+- **Type**: Bug
+- **Created**: 2025-08-02T22:56:45Z
+- **Status**: [COMPLETED IN CODE: 2025-09-02] OAuth fix script and tests created
+
+### Issue #80: OAuth nginx configuration not applying on staging deployment
+- **Type**: Bug
+- **Created**: 2025-07-28T17:42:52Z
+- **Status**: [pending] Not Started
+
+### Issue #73-79: OAuth-related issues (configuration, scripts, deployment)
+- **Type**: Enhancement/Bug
+- **Created**: 2025-07-26 to 2025-07-28
+- **Status**: [pending] Multiple related issues
+
+## Feature Enhancement Issues
+
+### Issue #136: Smart Growth Automation - No-Account Platform Monitoring
+- **Type**: Enhancement
+- **Created**: 2025-08-08T19:21:08Z
+- **Status**: [pending] Not Started
+
+### Issue #135: Conversational Feedback Bot (Chat-style)
+- **Type**: Enhancement
+- **Created**: 2025-08-08T18:51:28Z
+- **Status**: [pending] Not Started
+
+### Issue #134: Voice Input for Feedback Box
+- **Type**: Enhancement
+- **Created**: 2025-08-08T18:48:31Z
+- **Status**: [pending] Not Started
+
+### Issue #133: Advanced Admin Insights
+- **Type**: Enhancement
+- **Created**: 2025-08-08T16:37:46Z
+- **Description**: High-Value Users, Activity Heatmap, and Sentiment Alerts
+- **Status**: [pending] Not Started
+
+### Issue #116: Add TikTok Video Creation Feature
+- **Type**: Enhancement
+- **Created**: 2025-08-07T15:49:05Z
+- **Status**: [pending] Not Started
+
+### Issue #114: Add 'Share on X' button with auto-generated resale tweet
+- **Type**: Enhancement
+- **Created**: 2025-08-07T05:51:10Z
+- **Status**: [pending] Not Started
+
+### Issue #94-93-92-91: Algorithm & Detection Enhancements
+- **Type**: Enhancement
+- **Created**: 2025-08-05
+- **Features**: Smart Source Detection, Thrift-Level Scanning, Replica Detection, Price Adjustments
+- **Status**: [pending] Not Started
+
+### Issue #88: Implement Security Enhancements - Rate Limiting and Headers
+- **Type**: Enhancement/Security
+- **Created**: 2025-08-04T20:01:18Z
+- **Status**: [COMPLETED: 2025-09-02] Security enhancements implemented
+
+### Issue #87: Add Environmental Impact Logic to Product Display
+- **Type**: Enhancement
+- **Created**: 2025-08-04T00:26:51Z
+- **Status**: [pending] Not Started
+
+## Bug Issues
+
+### Issue #157: QA Test – Verify Growth Tab Questions Route
+- **Type**: Bug
+- **Created**: 2025-08-18T19:52:13Z
+- **Status**: [pending] Needs Testing
+
+### Issue #86: AI not detecting replicas from visual analysis
+- **Type**: Bug/Enhancement
+- **Created**: 2025-08-03T21:13:12Z
+- **Description**: Only text keywords work
+- **Status**: [COMPLETED: 2025-09-02] Enhanced AI replica detection implemented
+
+### Issue #85: Fake luxury items still show high resale values
+- **Type**: Bug
+- **Created**: 2025-08-03T20:46:15Z
+- **Description**: Despite low authenticity scores
+- **Status**: [COMPLETED: 2025-09-02] Price adjustments for fake items implemented
+
+### Issue #82: Remove Console.log Statements from Production Code
+- **Type**: Bug
+- **Created**: 2025-08-01T16:55:28Z
+- **Status**: [COMPLETED: 2025-09-02] Production-safe logger utility added
+
+### Issue #81: Increase Stringency of Authenticity Scoring
+- **Type**: Bug
+- **Created**: 2025-08-01T16:49:57Z
+- **Status**: [pending] Not Started
+
+## Infrastructure Issues
+
+### Issue #83: Add SSL Certificate for flippi.ai Root Domain
+- **Type**: Enhancement
+- **Created**: 2025-08-01T16:55:43Z
+- **Status**: [COMPLETED IN CODE: 2025-09-02] SSL configuration added
+
+### Issue #74: Admin endpoint to view all registered users
+- **Type**: Enhancement
+- **Created**: 2025-07-26T17:00:11Z
+- **Status**: [pending] Not Started
+
+## Execution Plan
+
+1. **Critical Security Issues First** (Issues #166-173)
+   - Remove unauthorized containers and processes
+   - Investigate unknown user accounts
+   - Enable firewall
+
+2. **P0 Bugs** (Issues #154, #156)
+   - Fix growth routes
+   - Fix dev environment loading issue
+
+3. **OAuth/Authentication** (Issues #73-84)
+   - Fix Google OAuth 502 error
+   - Apply nginx configurations
+
+4. **P0 Enhancements** (Issues #158, #175)
+   - Clean frontend architecture
+   - FotoFlip Luxe feature
+
+5. **Remaining Issues by Priority**
+   - P1, P2, P3 issues
+   - General enhancements
+   - Documentation updates
+
+## Notes
+- Each issue will be tested after implementation
+- Auto-deployment wait time: 2 minutes
+- All changes go to `dev` branch
+- Test at https://blue.flippi.ai after deployment
