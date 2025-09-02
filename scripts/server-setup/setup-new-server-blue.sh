@@ -220,10 +220,10 @@ server {
     }
     
     # Legal pages
-    location = /terms { alias /var/www/blue.flippi.ai/legal/terms.html; }
-    location = /privacy { alias /var/www/blue.flippi.ai/legal/privacy.html; }
-    location = /contact { alias /var/www/blue.flippi.ai/legal/contact.html; }
-    location = /mission { alias /var/www/blue.flippi.ai/legal/mission.html; }
+    location = /terms { alias /var/www/blue.flippi.ai/mobile-app/terms.html; }
+    location = /privacy { alias /var/www/blue.flippi.ai/mobile-app/privacy.html; }
+    location = /contact { alias /var/www/blue.flippi.ai/mobile-app/contact.html; }
+    location = /mission { alias /var/www/blue.flippi.ai/mobile-app/mission.html; }
     
     # Security headers
     add_header X-Frame-Options "SAMEORIGIN" always;

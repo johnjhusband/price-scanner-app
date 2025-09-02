@@ -85,8 +85,8 @@ jobs:
           
           ssh -i ~/.ssh/flippi_key -o StrictHostKeyChecking=no \
             root@${{ github.event.inputs.target_server_ip }} \
-            "cd /var/www/${{ github.event.inputs.environment }}.flippi.ai && \
-             git clone https://github.com/${{ github.repository }}.git . && \
+            "git clone https://github.com/${{ github.repository }}.git /var/www/${{ github.event.inputs.environment }}.flippi.ai && \
+             cd /var/www/${{ github.event.inputs.environment }}.flippi.ai && \
              git checkout $BRANCH_NAME"
       
       - name: Configure environment
@@ -109,6 +109,15 @@ jobs:
              cd ../mobile-app && npm install && \
              npx expo install react-native-web react-dom @expo/metro-runtime && \
              npx expo export --platform web --output-dir dist"
+      
+      - name: Set permissions
+        run: |
+          echo "::notice::Setting proper file permissions..."
+          ssh -i ~/.ssh/flippi_key -o StrictHostKeyChecking=no \
+            root@${{ github.event.inputs.target_server_ip }} \
+            "chmod +x /var/www/${{ github.event.inputs.environment }}.flippi.ai/scripts/*.sh && \
+             chown -R www-data:www-data /var/www/${{ github.event.inputs.environment }}.flippi.ai && \
+             chmod -R 755 /var/www/${{ github.event.inputs.environment }}.flippi.ai"
       
       - name: Start services
         run: |
