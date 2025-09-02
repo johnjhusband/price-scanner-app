@@ -97,12 +97,14 @@ The deployment flow is automatic:
 
 ### 4. Testing Requirements
 
+- Follow the Small-Chunk & Checkpoint workflow (see `/docs/small-chunk-checkpoint-workflow.md`)
 - Test everything yourself as much as possible
 - Test the specific feature/bug thoroughly
 - Test the rest of the application for regressions
 - Only tag #OnHoldPendingTest after comprehensive testing
 - Run lint and typecheck commands if provided (npm run lint, npm run typecheck)
 - If unable to find the correct command, ask the user
+- Commit and tag checkpoints frequently to prevent lost work
 
 #### Testing Checklist
 When making changes, test:
@@ -235,6 +237,7 @@ Key documentation includes:
 - **Development Guide**: `/docs/DEVELOPMENT-GUIDE.md` - Setup, coding standards, workflows
 - **Operations Manual**: `/docs/OPERATIONS-MANUAL.md` - Monitoring, troubleshooting, maintenance
 - **DevOps Checklist**: `/docs/DEVOPS-RELEASE-CHECKLIST.md` - Comprehensive deployment procedures
+- **Small-Chunk Workflow**: `/docs/small-chunk-checkpoint-workflow.md` - Prevents timeouts, ensures progress tracking
 
 ## Key Quick Facts
 
