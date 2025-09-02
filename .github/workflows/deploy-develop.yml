@@ -10,7 +10,7 @@ jobs:
       - name: Deploy to blue.flippi.ai
         uses: appleboy/ssh-action@v0.1.5
         with:
-          host: 157.245.142.145
+          host: 137.184.24.201
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
