@@ -758,6 +758,26 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
       console.error('Error applying overrides:', overrideError);
       // Continue without overrides if there's an error
     }
+    
+    // Adjust prices for low authenticity scores (Issue #85)
+    if (analysis.real_score < 30 && analysis.style_tier === 'Luxury') {
+      // Adjust price to replica market values
+      analysis.price_range = '$20-$80';
+      analysis.recommended_platform = 'Facebook Marketplace';
+      analysis.recommended_live_platform = 'Facebook Live';
+      
+      // Update market insights to reflect replica status
+      analysis.market_insights = 'Item appears to be a replica. Price reflects replica market values.';
+      analysis.selling_tips = '⚠️ WARNING: Low authenticity score suggests this may be a replica. Price accordingly and be transparent with buyers about authenticity concerns.';
+      
+      // Add clear warning to brand context
+      if (!analysis.brand_context.includes('replica')) {
+        analysis.brand_context += ' ⚠️ AUTHENTICITY WARNING: This item scores very low on authenticity checks.';
+      }
+      
+      // Force the buy price to be very low
+      analysis.suggested_buy_price = '$10-$20';
+    }
 
     // Track the flip
     try {
