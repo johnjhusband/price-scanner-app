@@ -1,8 +1,13 @@
 #!/bin/bash
 
-echo "Please run this script and enter the password when prompted: Thisismynewpassword!"
-echo ""
+# SECURITY NOTE: Use SSH key authentication instead of passwords
+# To set up SSH keys:
+# 1. Generate a key pair: ssh-keygen -t ed25519 -f ~/.ssh/flippi_server_key
+# 2. Copy to server: ssh-copy-id -i ~/.ssh/flippi_server_key.pub root@157.245.142.145
+# 3. Use: ssh -i ~/.ssh/flippi_server_key root@157.245.142.145
+
 echo "Connecting to server..."
+echo "Note: This script requires SSH key authentication to be configured"
 ssh root@157.245.142.145 << 'EOF'
 echo "=== Checking /var/www/blue.flippi.ai/mobile-app/dist/_expo/static/js/web/ ==="
 ls -la /var/www/blue.flippi.ai/mobile-app/dist/_expo/static/js/web/
