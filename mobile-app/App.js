@@ -913,7 +913,7 @@ export default function App() {
     const pricePaid = getPurchasePrice();
     const refCode = user?.referralCode || ''; // TODO: Add referral code to user object
     
-    let tweetText = `Just used @flippiAI to check ${brand} ${itemType}! `;
+    let tweetText = `Just used flippi.ai to check ${brand} ${itemType}! `;
     
     if (resaleEstimate > 0) {
       tweetText += `Worth ~$${resaleEstimate} 👀 `;
