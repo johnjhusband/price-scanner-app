@@ -173,41 +173,54 @@ app.post('/api/scan', apiLimiter, upload.single('image'), async (req, res) => {
           content: [
             {
               type: "text",
-              text: `${userPrompt ? `User says: ${userPrompt}\n\n` : ''}You are an expert authentication specialist and resale value appraiser in 2025. 
+              text: `${userPrompt ? `User says: ${userPrompt}\n\n` : ''}You are an expert authentication specialist and resale value appraiser in 2025.
 
-REAL SCORE ASSESSMENT: Analyze visual signals to provide a confidence rating. For luxury brands, examine:
-- Logo placement and clarity
-- Stitching patterns and quality
-- Design elements and proportions
-- Material appearance
-- Overall craftsmanship
-- Interior tags and labels
+**CRITICAL: VISUAL-FIRST ANALYSIS REQUIRED**
+Perform a TWO-STAGE analysis:
 
-Adjust for real-world conditions:
-- Poor lighting: +10-15 points if key features visible
-- Cluttered background: +5-10 points if item is distinguishable
-- Off-angle photos: +5-10 points if brand markers present
+STAGE 1 - PURE VISUAL INSPECTION (Ignore any text/description):
+Examine ONLY what you see in the image for these REPLICA RED FLAGS:
 
-REPLICA PENALTIES (CRITICAL):
-- Excessive logo repetition/density: -30 to -40 points
-- Non-core brand colorways (bright/unusual): -20 to -30 points
-- No visible interior tags: CAP at 50 max
-- Loud/statement design (hype mimicking): -20 points
-- Perfect logos with generic construction: -30 points
-- DHGate/AliExpress style presentation: -40 points
-- Obscured/missing collar tags: -15 points
-- Aggressive pattern density: -20 points
+1. **Logo Analysis**:
+   - Uneven spacing between logo elements
+   - Blurry or pixelated logos (common in replicas)
+   - Logo size/proportion incorrect for the item
+   - Excessive logo repetition (e.g., LV monogram too dense)
+   - Logo orientation errors (upside down, misaligned)
+   - Font weight/thickness variations
 
-Base scoring approach:
-- Start at 50-60 for single photo luxury items
-- Add points ONLY with clear authentication signals
-- Subtract heavily for replica indicators
-- Default to 40 or below when multiple flags present
+2. **Material & Construction**:
+   - Plastic-like sheen on "leather" items
+   - Visible glue marks or messy edges
+   - Uneven or wavy stitching lines
+   - Wrong stitch count (e.g., Chanel should have 10-11 stitches per inch)
+   - Cheap hardware (dull, lightweight appearance)
+   - Fabric pattern misalignment at seams
 
-For items scoring below 70:
-- Do NOT suggest authentication platforms (The RealReal, Vestiaire)
-- Use "Craft Fair" or "Personal Use" only
-- Provide "Clean with care. Style it your way." as selling tip
+3. **Common Replica Patterns**:
+   - "Fantasy" colorways never made by the brand
+   - Wrong dust bag color/design visible
+   - Generic packaging (plain boxes, wrong tissue paper)
+   - Stock photo characteristics (white background, multiple angles)
+   - Wholesale presentation style
+
+4. **Authenticity Markers (ADD points only if clearly visible)**:
+   - Date codes/serial numbers in correct locations
+   - Proper brand stamps (depth, font, placement)
+   - Correct interior lining color/material
+   - Authentic hardware weight/finish
+
+STAGE 2 - CONTEXTUAL ANALYSIS:
+Only AFTER visual inspection, consider any text/description provided.
+
+VISUAL SCORING RULES:
+- Start at 40 for ANY luxury item
+- Add 5-10 points ONLY for each clear authenticity marker
+- Subtract 15-25 points for EACH visual red flag
+- If 3+ visual red flags: MAX score 25
+- If obvious replica packaging/presentation: MAX score 20
+
+**IMPORTANT**: Trust visual evidence over description claims. Real luxury items have unmistakable quality markers visible even in poor photos.
 
 Provide precise scores without rounding. This is signal-based guidance, not authentication.
 
@@ -355,6 +368,20 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
     // Apply replica penalties and adjustments
     let realScore = parseInt(analysis.real_score) || 50;
     let penalties = [];
+    
+    // Visual-first enforcement for Issue #86
+    // If visual analysis detected low authenticity, limit how much text can improve it
+    const visualScore = realScore;
+    const visuallyDetectedReplica = visualScore <= 25;
+    
+    // Log visual detection for debugging
+    if (visuallyDetectedReplica) {
+      logger.info('Visual analysis detected likely replica', { 
+        item: analysis.item_name, 
+        visual_score: visualScore 
+      });
+      penalties.push('visual indicators suggest replica');
+    }
     
     if (isLuxuryBrand) {
       // Start luxury items at 50-60 for single photo unless clear authentication signals
@@ -534,6 +561,17 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
     if (brandConfirmed && hasTrustedSource) {
       // Max boost is 15, not 20
       realScore = Math.min(realScore, analysis.real_score + 15);
+    }
+    
+    // Visual-first enforcement for Issue #86
+    // If visual analysis detected replica, cap the final score
+    if (visuallyDetectedReplica) {
+      // Visual analysis detected replica - limit final score to max 30
+      // This prevents text descriptions from overriding visual evidence
+      realScore = Math.min(realScore, 30);
+      if (!penalties.includes('visual indicators suggest replica')) {
+        penalties.push('capped due to visual replica indicators');
+      }
     }
     
     // Ensure score stays within bounds
