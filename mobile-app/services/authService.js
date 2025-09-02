@@ -1,6 +1,7 @@
 // Authentication service for managing user sessions
 
 import StorageService from './storage';
+import logger from '../utils/logger';
 
 const AUTH_TOKEN_KEY = 'flippi_auth_token';
 const USER_DATA_KEY = 'flippi_user_data';
@@ -37,19 +38,19 @@ class AuthService {
 
   // Parse token from URL (after OAuth redirect)
   static async parseTokenFromUrl() {
-    console.log('[AuthService] Parsing token from URL...');
-    console.log('[AuthService] Window location:', window.location.href);
+    logger.log('[AuthService] Parsing token from URL...');
+    logger.log('[AuthService] Window location:', window.location.href);
     
     const urlParams = new URLSearchParams(window.location.search);
     const token = urlParams.get('token');
     
-    console.log('[AuthService] Token found:', !!token);
+    logger.log('[AuthService] Token found:', !!token);
     
     if (token) {
       // Decode JWT to get user data
       try {
         const payload = JSON.parse(atob(token.split('.')[1]));
-        console.log('[AuthService] Decoded payload:', payload);
+        logger.log('[AuthService] Decoded payload:', payload);
         
         await this.setAuth(token, {
           id: payload.id,
@@ -57,11 +58,11 @@ class AuthService {
           name: payload.name
         });
         
-        console.log('[AuthService] Auth data saved successfully');
+        logger.log('[AuthService] Auth data saved successfully');
         
         // Clean URL
         window.history.replaceState({}, document.title, window.location.pathname);
-        console.log('[AuthService] URL cleaned');
+        logger.log('[AuthService] URL cleaned');
         
         return true;
       } catch (error) {
@@ -70,7 +71,7 @@ class AuthService {
       }
     }
     
-    console.log('[AuthService] No token in URL');
+    logger.log('[AuthService] No token in URL');
     return false;
   }
 }

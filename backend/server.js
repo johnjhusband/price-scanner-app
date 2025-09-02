@@ -9,6 +9,7 @@ const { initializeDatabase } = require('./database');
 const { getEnvironmentalTagByItemName } = require('./utils/environmentalImpact');
 const { applyOverrides } = require('./services/overrideManager');
 const { getFlipStatus, trackFlip, requiresPayment } = require('./services/flipTracker');
+const logger = require('./utils/logger');
 
 // Load .env from shared location outside git directories
 const envPath = path.join(__dirname, '../../shared/.env');
@@ -506,7 +507,7 @@ BE DECISIVE - use extreme values when justified. If you recognize genuine viral 
           forceReplicaPlatforms = true;
           
           // Log for future review (in production, this would go to a database)
-          console.log('Flagged potential replica source:', {
+          logger.log('Flagged potential replica source:', {
             user_input: descriptionLower,
             flagged_domain: domain,
             reason: hasSuspiciousTLD ? 'suspicious TLD' : 'replica trigger word'
