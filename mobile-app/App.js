@@ -2308,18 +2308,14 @@ export default function App() {
                   variant="primary"
                   icon={<Feather name="share-2" size={20} color="#FFFFFF" />}
                 />
-                {Platform.OS !== 'web' && (
-                  <>
-                    <BrandButton
-                      title="Share to Instagram Story"
-                      onPress={handleInstagramStoryShare}
-                      style={[styles.shareButton, { backgroundColor: '#E1306C' }]}
-                      variant="primary"
-                      disabled={isLoading}
-                      icon={<Feather name="camera" size={20} color="#FFFFFF" />}
-                    />
-                  </>
-                )}
+                <BrandButton
+                  title="Share to Instagram Story"
+                  onPress={handleInstagramStoryShare}
+                  style={[styles.shareButton, { backgroundColor: '#E1306C' }]}
+                  variant="primary"
+                  disabled={isLoading}
+                  icon={<Feather name="camera" size={20} color="#FFFFFF" />}
+                />
                 <BrandButton
                   title="Scan Another Item"
                   onPress={resetApp}
