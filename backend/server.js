@@ -10,6 +10,7 @@ const { getEnvironmentalTagByItemName } = require('./utils/environmentalImpact')
 const { applyOverrides } = require('./services/overrideManager');
 const { getFlipStatus, trackFlip, requiresPayment } = require('./services/flipTracker');
 const logger = require('./utils/logger');
+const { limiter, apiLimiter, securityHeaders } = require('./middleware/security');
 
 // Load .env from shared location outside git directories
 const envPath = path.join(__dirname, '../../shared/.env');
@@ -56,6 +57,10 @@ if (!process.env.OPENAI_API_KEY) {
   console.error('ERROR: OPENAI_API_KEY is not set in .env file');
   process.exit(1);
 }
+
+// Security middleware - Issue #88
+app.use(securityHeaders);
+app.use(limiter);
 
 // Middleware
 app.use(cors({
@@ -116,7 +121,7 @@ app.get('/health', (req, res) => {
 });
 
 // Enhanced image analysis endpoint
-app.post('/api/scan', upload.single('image'), async (req, res) => {
+app.post('/api/scan', apiLimiter, upload.single('image'), async (req, res) => {
   try {
     // Check flip limit before processing
     const userId = req.user?.id;
@@ -991,7 +996,7 @@ app.get('/health', (req, res) => {
 });
 
 // Version endpoint for deployment verification
-app.get('/api/version', (req, res) => {
+app.get('/api/version', apiLimiter, (req, res) => {
   const buildVersion = process.env.BUILD_VERSION || 'release-004';
   const commitSha = process.env.COMMIT_SHA || 'unknown';
   const buildTime = process.env.BUILD_TIME || new Date().toISOString();
