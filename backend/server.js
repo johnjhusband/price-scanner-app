@@ -881,10 +881,10 @@ process.on('uncaughtException', (error) => {
   console.error('Time:', new Date().toISOString());
   console.error('Error:', error);
   console.error('Stack:', error.stack);
-  // Don't exit in development to see more errors
-  if (process.env.NODE_ENV === 'production') {
-    process.exit(1);
-  }
+  // Always exit on uncaught exceptions so PM2 can restart
+  // This prevents the server from being in a broken state
+  console.error('Exiting process for restart...');
+  process.exit(1);
 });
 
 process.on('unhandledRejection', (reason, promise) => {
