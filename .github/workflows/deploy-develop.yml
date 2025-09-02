@@ -17,6 +17,9 @@ jobs:
             cd /var/www/blue.flippi.ai
             echo "=== [$(date)] Starting deployment ==="
             
+            # Fix git ownership issue
+            git config --global --add safe.directory /var/www/blue.flippi.ai
+            
             # Reset and pull latest code
             git reset --hard HEAD
             git clean -fd
