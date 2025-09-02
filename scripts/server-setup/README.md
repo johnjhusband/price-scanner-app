@@ -55,6 +55,33 @@ The application directory `/var/www/blue.flippi.ai` is NOT created by the setup 
 4. **PM2 Config**: Removed unnecessary frontend process - nginx serves static files directly
 5. **Shell Scripts**: Made executable after clone with `chmod +x`
 
+## GitHub Secrets Requirements
+
+Before running the setup workflow, ensure these secrets exist in the repository:
+
+### Required Secrets:
+- `OPENAI_API_KEY` - Your OpenAI API key for image analysis
+- `SESSION_SECRET` - A secure random string for session encryption
+- `GH_PAT` - GitHub Personal Access Token with repo permissions (for saving SSH keys)
+
+### Optional Secrets:
+- `GOOGLE_CLIENT_ID` - Only if using Google OAuth
+- `GOOGLE_CLIENT_SECRET` - Only if using Google OAuth
+
+### Setting Secrets via CLI:
+```bash
+gh secret set OPENAI_API_KEY --body "your-api-key-here"
+gh secret set SESSION_SECRET --body "$(openssl rand -base64 32)"
+```
+
+### Local Secret Storage:
+Keep a copy in `shared/.env` (gitignored) for backup:
+```
+OPENAI_API_KEY=your-key
+SESSION_SECRET=your-secret
+FEEDBACK_DB_PATH=/var/lib/flippi-dev/feedback.db
+```
+
 ## How to Use:
 
 ### Via GitHub Actions (Recommended):

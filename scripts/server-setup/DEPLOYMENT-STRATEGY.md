@@ -50,10 +50,11 @@ The workflow automatically creates and manages these secrets:
 - `BLUE_SERVER_HOST` / `GREEN_SERVER_HOST` / `PROD_SERVER_HOST` - Server IP addresses
 
 Application secrets used during setup:
-- `OPENAI_API_KEY` - OpenAI API key
-- `SESSION_SECRET` - Session secret for the app
-- `GOOGLE_CLIENT_ID` - Google OAuth client ID
-- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret
+- `OPENAI_API_KEY` - OpenAI API key (REQUIRED)
+- `SESSION_SECRET` - Session secret for the app (REQUIRED)
+- `GOOGLE_CLIENT_ID` - Google OAuth client ID (OPTIONAL)
+- `GOOGLE_CLIENT_SECRET` - Google OAuth client secret (OPTIONAL)
+- `GH_PAT` - GitHub Personal Access Token for saving SSH keys (REQUIRED)
 
 ### 4. Deployment Separation
 
