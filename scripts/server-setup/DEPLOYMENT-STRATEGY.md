@@ -14,9 +14,11 @@ This directory contains scripts for setting up NEW servers for Flippi.ai environ
 These scripts:
 - Install all prerequisites (Node.js, PM2, Nginx, Python, etc.)
 - Configure firewall rules
-- Create directory structures
+- Create infrastructure directories (/opt/flippi/)
 - Set up Nginx configurations
 - Create helper scripts
+
+Note: The application directory (/var/www/blue.flippi.ai) is created by git clone to avoid ownership issues.
 
 ### 2. GitHub Actions Workflow
 

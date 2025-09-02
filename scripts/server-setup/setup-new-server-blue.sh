@@ -126,10 +126,9 @@ mkdir -p /opt/flippi/blue/config
 track_install "DIRECTORY: /opt/flippi/blue/logs"
 mkdir -p /opt/flippi/blue/logs
 
-# Application directory (empty for git clone)
-track_install "DIRECTORY: /var/www/blue.flippi.ai"
-mkdir -p /var/www/blue.flippi.ai
-chown -R www-data:www-data /var/www/blue.flippi.ai
+# Application directory will be created by git clone
+# DO NOT create it here - causes ownership issues
+track_install "DIRECTORY: /var/www/blue.flippi.ai (to be created by git clone)"
 
 # Shared environment directory
 track_install "DIRECTORY: /var/www/shared"

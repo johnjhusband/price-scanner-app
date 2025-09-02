@@ -43,6 +43,10 @@ These scripts are designed to set up a fresh Ubuntu server for Flippi.ai environ
 - To "fix" issues on running servers
 - Manually via SSH (use GitHub Actions instead)
 
+## Important Note on Directory Creation:
+
+The application directory `/var/www/blue.flippi.ai` is NOT created by the setup script. It will be created by the git clone operation in the workflow. This prevents ownership mismatch issues between the setup user and the git clone operation.
+
 ## How to Use:
 
 ### Via GitHub Actions (Recommended):
