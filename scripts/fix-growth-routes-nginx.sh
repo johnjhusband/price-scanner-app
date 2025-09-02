@@ -1,3 +1,15 @@
+#!/bin/bash
+
+# Fix growth routes in nginx configuration for blue.flippi.ai
+# Issue #156: Growth routes redirecting to React app
+
+echo "Fixing growth routes in nginx configuration..."
+
+# Create backup
+sudo cp /etc/nginx/sites-available/blue.flippi.ai /etc/nginx/sites-available/blue.flippi.ai.backup.$(date +%Y%m%d_%H%M%S)
+
+# Create the updated configuration
+cat > /tmp/blue.flippi.ai.conf << 'EOF'
 server {
     server_name blue.flippi.ai;
     client_max_body_size 50M;
@@ -104,3 +116,29 @@ server {
     server_name blue.flippi.ai;
     return 404; # managed by Certbot
 }
+EOF
+
+# Copy the configuration
+sudo cp /tmp/blue.flippi.ai.conf /etc/nginx/sites-available/blue.flippi.ai
+
+# Test nginx configuration
+echo "Testing nginx configuration..."
+sudo nginx -t
+
+if [ $? -eq 0 ]; then
+    echo "Configuration test passed. Reloading nginx..."
+    sudo nginx -s reload
+    echo "Growth routes fix applied successfully!"
+    
+    # Test the routes
+    echo ""
+    echo "Testing growth routes..."
+    echo "Testing /growth/questions:"
+    curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai/growth/questions
+    echo ""
+else
+    echo "ERROR: nginx configuration test failed!"
+    echo "Restoring backup..."
+    sudo cp /etc/nginx/sites-available/blue.flippi.ai.backup.$(date +%Y%m%d_%H%M%S) /etc/nginx/sites-available/blue.flippi.ai
+    exit 1
+fi
