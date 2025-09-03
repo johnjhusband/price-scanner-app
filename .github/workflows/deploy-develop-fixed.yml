@@ -40,8 +40,8 @@ jobs:
               bash scripts/add-growth-routes-nginx.sh blue.flippi.ai 3002
             fi
             
-            # Fix nginx to proxy all routes to backend
-            bash scripts/fix-nginx-backend-proxy.sh || true
+            # Fix legal pages routing to backend
+            bash scripts/fix-legal-pages-final.sh || true
             
             # Restart PM2 services
             pm2 restart dev-backend dev-frontend
