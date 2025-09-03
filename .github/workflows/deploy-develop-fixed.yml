@@ -41,8 +41,8 @@ jobs:
             fi
             
             # Fix nginx SSL configuration
-            if [ -f scripts/fix-nginx-ssl-comprehensive.sh ]; then
-              bash scripts/fix-nginx-ssl-comprehensive.sh || true
+            if [ -f scripts/fix-blue-ssl-files.sh ]; then
+              bash scripts/fix-blue-ssl-files.sh || true
             fi
             
             # Restart PM2 services
