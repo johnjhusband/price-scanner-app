@@ -40,8 +40,8 @@ jobs:
               bash scripts/add-growth-routes-nginx.sh blue.flippi.ai 3002
             fi
             
-            # Fix legal pages routing to backend
-            bash scripts/fix-legal-pages-final.sh || true
+            # Serve legal pages as simple static files
+            bash scripts/serve-static-legal-pages.sh || true
             
             # Restart PM2 services
             pm2 restart dev-backend dev-frontend
