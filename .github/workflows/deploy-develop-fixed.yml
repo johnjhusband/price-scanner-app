@@ -40,8 +40,8 @@ jobs:
               bash scripts/add-growth-routes-nginx.sh blue.flippi.ai 3002
             fi
             
-            # Serve legal pages as simple static files
-            bash scripts/serve-static-legal-pages.sh || true
+            # Replace nginx config with clean version
+            bash scripts/replace-nginx-config.sh || true
             
             # Restart PM2 services
             pm2 restart dev-backend dev-frontend
