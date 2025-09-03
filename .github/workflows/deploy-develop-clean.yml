@@ -1,0 +1,141 @@
+name: Deploy Development (Clean Build)
+
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: mobile-app/package-lock.json
+          
+      # 3. Install and build frontend
+      - name: Build frontend
+        working-directory: mobile-app
+        run: |
+          echo "Installing dependencies..."
+          npm ci || npm install
+          
+          echo "Building for web..."
+          npx expo export --platform web --output-dir dist
+          
+          echo "Copying additional assets..."
+          cp web-styles.css dist/ || true
+          
+          echo "Build complete. Contents:"
+          ls -la dist/
+          
+      # 4. Create deployment package
+      - name: Create deployment package
+        run: |
+          # Create deployment structure
+          mkdir -p deploy-package/mobile-app
+          mkdir -p deploy-package/scripts
+          mkdir -p deploy-package/nginx
+          
+          # Copy built frontend
+          cp -r mobile-app/dist deploy-package/mobile-app/
+          cp -r mobile-app/assets deploy-package/mobile-app/ || true
+          cp mobile-app/*.html deploy-package/mobile-app/ || true
+          
+          # Copy necessary scripts
+          cp -r scripts/*.sh deploy-package/scripts/
+          cp -r nginx/*.conf deploy-package/nginx/
+          
+          # Create deployment info
+          echo "Deploy Info:" > deploy-package/DEPLOY_INFO.txt
+          echo "Commit: ${{ github.sha }}" >> deploy-package/DEPLOY_INFO.txt
+          echo "Time: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> deploy-package/DEPLOY_INFO.txt
+          echo "Branch: develop" >> deploy-package/DEPLOY_INFO.txt
+          
+          # Create tarball
+          tar -czf deployment.tar.gz deploy-package/
+          
+      # 5. Deploy to blue.flippi.ai
+      - name: Deploy to blue.flippi.ai
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: 137.184.24.201
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "deployment.tar.gz"
+          target: "/tmp/"
+          
+      # 6. Extract and activate deployment
+      - name: Activate deployment
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 137.184.24.201
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -e
+            echo "=== Activating deployment ==="
+            
+            # Extract deployment package
+            cd /tmp
+            tar -xzf deployment.tar.gz
+            
+            # Backup current frontend
+            if [ -d "/var/www/blue.flippi.ai/mobile-app/dist" ]; then
+              mv /var/www/blue.flippi.ai/mobile-app/dist /var/www/blue.flippi.ai/mobile-app/dist.backup.$(date +%s)
+            fi
+            
+            # Copy new frontend files
+            cp -r deploy-package/mobile-app/* /var/www/blue.flippi.ai/mobile-app/
+            
+            # Copy scripts (don't overwrite existing)
+            cp -n deploy-package/scripts/*.sh /var/www/blue.flippi.ai/scripts/ || true
+            
+            # Update nginx if needed
+            cp -n deploy-package/nginx/*.conf /var/www/blue.flippi.ai/nginx/ || true
+            
+            # Fix permissions
+            chown -R www-data:www-data /var/www/blue.flippi.ai/mobile-app/dist || true
+            
+            # Run SSL fix if needed
+            if [ -f "/var/www/blue.flippi.ai/scripts/fix-blue-ssl-files.sh" ]; then
+              cd /var/www/blue.flippi.ai && bash scripts/fix-blue-ssl-files.sh || true
+            fi
+            
+            # Reload nginx
+            nginx -t && nginx -s reload || true
+            
+            # Clean up
+            rm -rf /tmp/deployment.tar.gz /tmp/deploy-package
+            
+            echo "=== Deployment complete ==="
+            
+      # 7. Verify deployment
+      - name: Verify deployment
+        run: |
+          sleep 5
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai)
+          if [ "$response" = "200" ]; then
+            echo "✅ Site is responding correctly"
+          else
+            echo "⚠️ Site returned status code: $response"
+          fi
+          
+      # 8. Test legal pages with PlayClone
+      - name: Notify completion
+        run: |
+          echo "Deployment complete!"
+          echo "Commit: ${{ github.sha }}"
+          echo "Time: $(date -u)"
+          echo ""
+          echo "To test legal pages, run PlayClone locally:"
+          echo "cd playclone && node ralph-test-legal-pages.js"

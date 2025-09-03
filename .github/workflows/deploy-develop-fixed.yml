@@ -1,0 +1,59 @@
+name: Deploy Development
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to blue.flippi.ai
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/blue.flippi.ai
+            # Reset any local changes to avoid merge conflicts
+            git reset --hard HEAD
+            git clean -fd
+            # Force update to match remote exactly
+            git fetch origin develop
+            git reset --hard origin/develop
+            
+            # Install dependencies
+            cd backend && npm install --production
+            
+            # Build frontend (no timeout, like develop workflow)
+            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
+            
+            # Copy web assets that Expo doesn't include
+            cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
+            
+            # Apply growth routes configuration
+            cd /var/www/blue.flippi.ai
+            if [ -f scripts/post-deploy-all-routes.sh ]; then
+              bash scripts/post-deploy-all-routes.sh blue.flippi.ai 3002
+            elif [ -f scripts/add-growth-routes-nginx.sh ]; then
+              bash scripts/add-growth-routes-nginx.sh blue.flippi.ai 3002
+            fi
+            
+            # Fix nginx SSL configuration
+            if [ -f scripts/fix-nginx-ssl-comprehensive.sh ]; then
+              bash scripts/fix-nginx-ssl-comprehensive.sh || true
+            fi
+            
+            # Restart PM2 services
+            pm2 restart dev-backend dev-frontend
+            
+            # Wait for services to start
+            sleep 5
+            
+            # Check if backend is running
+            pm2 show dev-backend || true
+            curl -s http://localhost:3002/health || echo "Backend health check"
+            
+            # Reload nginx
+            nginx -s reload || systemctl reload nginx || echo "Nginx reload attempted"

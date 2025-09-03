@@ -1,0 +1,70 @@
+name: Deploy Development
+on:
+  push:
+    branches: [develop]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to blue.flippi.ai
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 157.245.142.145
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/blue.flippi.ai
+            # Reset any local changes to avoid merge conflicts
+            git reset --hard HEAD
+            git clean -fd
+            # Force update to match remote exactly
+            git fetch origin develop
+            git reset --hard origin/develop
+            cd backend && npm install --production
+            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
+            # Copy web assets that Expo doesn't include
+            cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
+            # Debug: Check what directory PM2 is serving from
+            echo "=== PM2 dev-frontend config ==="
+            pm2 describe dev-frontend | grep -E "exec cwd|script|args" || true
+            echo "=== Checking directories ==="
+            ls -la /var/www/blue.flippi.ai/mobile-app/ | grep -E "dist|web-build" || true
+            echo "=== Files in dist ==="
+            ls -la /var/www/blue.flippi.ai/mobile-app/dist/ | head -5 || true
+            # Reload PM2 with latest code
+            pm2 restart dev-backend
+            pm2 restart dev-frontend
+            # Wait for services to start
+            sleep 5
+            # Check if backend is running
+            pm2 show dev-backend || true
+            curl -s http://localhost:3002/health || echo "Backend not responding"
+            # Fix nginx SSL configuration comprehensively
+            cd /var/www/blue.flippi.ai && bash scripts/fix-nginx-ssl-comprehensive.sh || true
+            # Check nginx requirements first
+            cd /var/www/blue.flippi.ai && bash scripts/check-nginx-includes.sh || echo "Nginx include check failed, will attempt fix"
+            # Fix any duplicate nginx locations first
+            cd /var/www/blue.flippi.ai && bash scripts/post-deploy-nginx-fix.sh || true
+            # Force nginx reload with symlink update
+            cd /var/www/blue.flippi.ai && bash scripts/force-nginx-reload.sh || true
+            # Apply the known working nginx configuration
+            cd /var/www/blue.flippi.ai && bash scripts/apply-working-nginx-config.sh || true
+            # Verify which nginx config is actually active
+            cd /var/www/blue.flippi.ai && bash scripts/verify-active-nginx-config.sh || true
+            # Trace actual request flow
+            cd /var/www/blue.flippi.ai && bash scripts/trace-legal-request.sh || true
+            # Check if frontend is intercepting routes
+            cd /var/www/blue.flippi.ai && bash scripts/check-frontend-routing.sh || true
+            # Show the actual nginx config
+            cd /var/www/blue.flippi.ai && bash scripts/show-nginx-routes.sh || true
+            # Show simplified nginx routes
+            cd /var/www/blue.flippi.ai && bash scripts/show-nginx-routes-simple.sh || true
+            # Test nginx routing behavior
+            cd /var/www/blue.flippi.ai && bash scripts/test-nginx-routing.sh || true
+            # Quick nginx check
+            cd /var/www/blue.flippi.ai && bash scripts/quick-nginx-check.sh || true
+            # Fix SSL and legal pages
+            cd /var/www/blue.flippi.ai && bash scripts/fix-ssl-and-legal.sh || true
+            # Run specific SSL files fix for blue environment
+            cd /var/www/blue.flippi.ai && bash scripts/fix-blue-ssl-files.sh || true
