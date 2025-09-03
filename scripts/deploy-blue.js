@@ -5,7 +5,7 @@ const { execSync } = require('child_process');
 const WORKFLOW_ID = process.env.DEPLOY_WORKFLOW_ID || '174406331';
 const REF = process.env.DEPLOY_REF || 'develop';
 
-console.log(`✨ Deploying ${REF} to blue environment 💙`);
+console.log(`✨ Deploying ${REF} → blue environment 💙`);
 
 try {
   execSync(`gh workflow run ${WORKFLOW_ID} --ref ${REF}`, { stdio: 'inherit' });
