@@ -40,10 +40,8 @@ jobs:
               bash scripts/add-growth-routes-nginx.sh blue.flippi.ai 3002
             fi
             
-            # Fix nginx SSL configuration
-            if [ -f scripts/fix-blue-ssl-files.sh ]; then
-              bash scripts/fix-blue-ssl-files.sh || true
-            fi
+            # Fix nginx SSL configuration  
+            bash scripts/create-nginx-ssl-config.sh || true
             
             # Restart PM2 services
             pm2 restart dev-backend dev-frontend
