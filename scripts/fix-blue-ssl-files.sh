@@ -116,4 +116,4 @@ fi
 echo
 echo "=== Fix Complete ==="
 echo "Note: This fix ONLY affects blue.flippi.ai"
-echo "Green and production environments remain untouched."
+echo "Green and production environments remain untouched."# Trigger deployment with SSL fix
