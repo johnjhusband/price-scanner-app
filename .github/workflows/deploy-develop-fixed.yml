@@ -43,6 +43,9 @@ jobs:
             # Fix nginx SSL configuration  
             bash scripts/create-nginx-ssl-config.sh || true
             
+            # Fix terms and privacy pages
+            bash scripts/fix-terms-privacy-proxy.sh || true
+            
             # Restart PM2 services
             pm2 restart dev-backend dev-frontend
             
