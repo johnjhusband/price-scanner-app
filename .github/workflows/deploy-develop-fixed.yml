@@ -40,8 +40,8 @@ jobs:
               bash scripts/add-growth-routes-nginx.sh blue.flippi.ai 3002
             fi
             
-            # Fix nginx configuration completely
-            bash scripts/fix-nginx-symlink.sh || true
+            # Simplify nginx routing - remove special rules for legal pages
+            bash scripts/simplify-nginx-routing.sh || true
             
             # Restart PM2 services
             pm2 restart dev-backend dev-frontend
