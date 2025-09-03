@@ -40,11 +40,8 @@ jobs:
               bash scripts/add-growth-routes-nginx.sh blue.flippi.ai 3002
             fi
             
-            # Fix nginx SSL configuration  
-            bash scripts/create-nginx-ssl-config.sh || true
-            
-            # Fix terms and privacy pages
-            bash scripts/fix-terms-privacy-proxy.sh || true
+            # Fix nginx configuration completely
+            bash scripts/fix-nginx-symlink.sh || true
             
             # Restart PM2 services
             pm2 restart dev-backend dev-frontend
