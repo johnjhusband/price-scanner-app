@@ -27,6 +27,13 @@ const initUsersTable = () => {
         last_login DATETIME DEFAULT CURRENT_TIMESTAMP
       )
     `);
+    
+    // Add picture_url column if missing (for existing tables)
+    try {
+      db.exec('ALTER TABLE users ADD COLUMN picture_url TEXT');
+    } catch (e) {
+      // Column already exists, ignore
+    }
   } catch (error) {
     console.error('Error in initUsersTable:', error.message);
   }
