@@ -56,4 +56,4 @@ echo "Or view in browser:"
 echo "  https://github.com/johnjhusband/price-scanner-app/actions"
 echo
 echo "After deployment completes, test with:"
-echo "  cd ../playclone && node ralph-test-legal-pages.js"
+echo "  cd ../playclone && node test-legal-pages.js"
