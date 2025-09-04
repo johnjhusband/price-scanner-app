@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js",
-    "postinstall": "echo 'Backend dependencies installed' && node -e \"require('child_process').execSync('python3 -m pip install --user --break-system-packages numpy==1.26.4 rembg==2.0.56 onnxruntime==1.18.0', {stdio:'inherit'})\""
+    "postinstall": "node setup-oauth-env.js || true"
   },
   "keywords": [
     "thrifting",
