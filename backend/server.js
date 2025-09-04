@@ -31,6 +31,9 @@ try {
 
 const app = express();
 
+// Enable trust proxy for HTTPS detection behind nginx
+app.set('trust proxy', true);
+
 // Setup legal pages BEFORE other middleware to ensure they're served correctly
 const setupLegalPages = require('./setupLegalPages');
 setupLegalPages(app);
