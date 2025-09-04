@@ -9,7 +9,43 @@ This file provides behavior instructions for AI assistants working with the Flip
 - Follow the protocol exactly as specified
 - NEVER create files unless they're absolutely necessary
 - ALWAYS prefer editing an existing file to creating a new one
-- NEVER proactively create documentation files unless explicitly requested
+- Clean and update documentation as we go along
+
+## 🚀 Deployment Fix Script — Absolute Rules
+* Must run only from GitHub Actions.
+* Never SSH into servers for edits.
+* Never make assumptions or guesses — all actions must be research-verified.
+* Always include friendly success logs (✨💖⭐).
+* Never include auto-generated tags (e.g. "🤖 Generated with…", unwanted co-author lines).
+* Commit messages must be explicit and clear (e.g. fix: deployment script).
+* In the future we will be having multiple environments. Prepare all changes by updating scripts and using GitHub for deployment.
+
+## 🧼 Clean Code — Absolutes
+* Scripts must be short, single-purpose, and clearly named.
+* No hard-coded repos, IPs, or secrets — always use env vars.
+* Fail fast: set -euo pipefail (shell), proper try/catch (Node).
+* One workflow only: GitHub Actions is the single source of truth.
+* Dead code and outdated comments must be removed.
+* Logs must explain actions, but never be noisy or redundant.
+* Simplicity is mandatory — if one workflow works, do not add layers.
+* Do not create new files - edit and update current files
+
+## 🔍 Server Access — Absolutes
+* You may check servers.
+* You must not edit servers directly.
+
+## 📄 Claude.md — Update Rules
+* Remove outdated content immediately.
+* Run tests after every push.
+* Always include test logs in the workflow output.
+* Run PlayClone tests when applicable.
+* Do not promote or announce success unless logs confirm zero errors.
+* On verified success, log:
+
+✨ This release has been successfully deployed to <environment> and is clear of errors. Enjoy testing. ✨
+
+## Process for Workflow Changes
+1. Treat workflows as code: PR-only.
 
 ## Critical Rules
 
