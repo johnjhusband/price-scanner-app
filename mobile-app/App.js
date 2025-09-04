@@ -2825,7 +2825,6 @@ const styles = StyleSheet.create({
     fontFamily: typography.fontFamily,
     textAlign: 'center',
     fontWeight: typography.weights.medium,
-    textDecorationLine: 'underline',
   },
   footerSeparator: {
     fontSize: 14,
