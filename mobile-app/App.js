@@ -2348,9 +2348,9 @@ export default function App() {
           </TouchableOpacity>
         </View>
         <Text style={[styles.legalText, { marginBottom: 4 }]}>
-          ai makes mistakes. check important info
+          ai makes mistakes | check important info
         </Text>
-        <Text style={styles.legalText}>
+        <Text style={[styles.legalText, { textDecorationLine: 'none' }]}>
           Flippi™ and Flippi.ai™ are trademarks of Boca Belle. All rights reserved.
         </Text>
       </View>
