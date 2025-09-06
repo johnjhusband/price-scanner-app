@@ -1,0 +1,69 @@
+name: Deploy Development with OAuth Fix
+on:
+  push:
+    branches: [develop]
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to blue.flippi.ai
+        uses: appleboy/ssh-action@v0.1.5
+        with:
+          host: 137.184.24.201
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            cd /var/www/blue.flippi.ai
+            # Reset any local changes to avoid merge conflicts
+            git reset --hard HEAD
+            git clean -fd
+            # Force update to match remote exactly
+            git fetch origin develop
+            git reset --hard origin/develop
+            
+            # Apply OAuth credentials fix
+            echo "🔐 Applying OAuth credentials..."
+            if [ -f scripts/apply-oauth-credentials.sh ]; then
+              bash scripts/apply-oauth-credentials.sh
+            else
+              echo "Warning: OAuth credentials script not found"
+            fi
+            
+            # Install dependencies
+            cd backend && npm install --production
+            
+            # Build frontend (no timeout, like develop workflow)
+            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
+            
+            # Copy web assets that Expo doesn't include
+            cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
+            
+            # Apply growth routes configuration
+            cd /var/www/blue.flippi.ai
+            if [ -f scripts/post-deploy-all-routes.sh ]; then
+              bash scripts/post-deploy-all-routes.sh blue.flippi.ai 3002
+            elif [ -f scripts/add-growth-routes-nginx.sh ]; then
+              bash scripts/add-growth-routes-nginx.sh blue.flippi.ai 3002
+            fi
+            
+            # Setup simple static file serving (no PM2 frontend needed)
+            bash scripts/setup-simple-blue.sh || true
+            
+            # Restart backend only
+            pm2 restart dev-backend
+            
+            # Wait for services to start
+            sleep 5
+            
+            # Check if backend is running
+            pm2 show dev-backend || true
+            curl -s http://localhost:3002/health || echo "Backend health check"
+            
+            # Test OAuth endpoint
+            echo "🔍 Testing OAuth endpoint..."
+            curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai/auth/google || echo "OAuth test"
+            
+            # Reload nginx
+            nginx -s reload || systemctl reload nginx || echo "Nginx reload attempted"
