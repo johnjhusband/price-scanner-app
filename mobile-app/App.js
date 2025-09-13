@@ -1845,11 +1845,6 @@ export default function App() {
       onDrop={handleDrop}
     >
       {/* Environment Banner - Only show in non-production */}
-      {Platform.OS === 'web' && window.location.hostname === 'blue.flippi.ai' && (
-        <View style={styles.environmentBanner}>
-          <Text style={styles.environmentText}>SIMPLE DEPLOY TEST - {new Date().toISOString()}</Text>
-        </View>
-      )}
       {Platform.OS === 'web' && window.location.hostname === 'green.flippi.ai' && (
         <View style={styles.environmentBannerStaging}>
           <Text style={styles.environmentText}>STAGING ENVIRONMENT</Text>
