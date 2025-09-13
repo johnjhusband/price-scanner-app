@@ -60,15 +60,15 @@ async function fetchRedditPosts(subreddit, limit = 25) {
       }
     });
     
-    // Use RSS feed instead of JSON API
-    const url = `https://www.reddit.com/r/${subreddit}/new.rss?limit=${limit}`;
+    // Use RSS feed with correct format (.rss at the end)
+    const url = `https://www.reddit.com/r/${subreddit}/.rss?limit=${limit}`;
     
     console.log(`[Reddit] Fetching RSS feed from r/${subreddit}...`);
     
     const response = await fetch(url, {
       headers: {
-        'User-Agent': 'FlippiBot/1.0 (+https://flippi.ai)',
-        'Accept': 'application/rss+xml, application/xml, text/xml'
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 FlippiBot/1.0',
+        'Accept': 'application/rss+xml, application/atom+xml, application/xml, text/xml'
       }
     });
     
