@@ -1856,6 +1856,13 @@ export default function App() {
         </View>
       )}
       
+      {/* Building Blue Box - Show only on blue environment */}
+      {Platform.OS === 'web' && window.location.hostname === 'blue.flippi.ai' && (
+        <View style={styles.buildingBlueBox}>
+          <Text style={styles.buildingBlueText}>Building Blue! 💙</Text>
+        </View>
+      )}
+      
       {/* You section - Exit button only - Outside content for better positioning */}
       {Platform.OS === 'web' && user && (
         <View style={styles.userSection}>
@@ -2418,6 +2425,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: typography.weights.bold,
     letterSpacing: 1,
+  },
+  buildingBlueBox: {
+    backgroundColor: '#0096FF',
+    padding: 16,
+    alignItems: 'center',
+    marginTop: 8,
+    marginHorizontal: 16,
+    borderRadius: 8,
+  },
+  buildingBlueText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   content: {
     flex: 1,
