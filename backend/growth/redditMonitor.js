@@ -100,6 +100,9 @@ class RedditMonitor {
     const db = getDatabase();
     
     try {
+      // Extract image URL using the same logic as valuationNormalizer
+      const imageData = this.extractImage(post.data);
+      
       const stmt = db.prepare(`
         INSERT OR IGNORE INTO reddit_questions (
           post_id, subreddit, title, author, url, 
@@ -113,17 +116,27 @@ class RedditMonitor {
         post.data.subreddit,
         post.data.title,
         post.data.author,
-        post.data.url || '',  // This is the actual content URL (image/link)
+        imageData.url || post.data.url || '',  // Use extracted image URL or fallback to original URL
         post.data.selftext,
         post.data.created_utc,
         post.data.score,
         post.data.num_comments,
-        post.data.thumbnail || '',
+        imageData.thumbnail || post.data.thumbnail || '',
         `https://reddit.com${post.data.permalink}`
       );
       
       if (result.changes > 0) {
-        console.log(`[Reddit Monitor] New question saved: ${post.data.title}`);
+        // Check for images and log them
+        const hasImage = imageData.url && /\.(jpg|jpeg|png|gif|webp)$/i.test(imageData.url);
+        const hasPreview = post.data.preview && post.data.preview.images && post.data.preview.images.length > 0;
+        const hasMedia = post.data.media_metadata && Object.keys(post.data.media_metadata).length > 0;
+        
+        let imageInfo = '';
+        if (hasImage) imageInfo += ' [IMAGE: ' + imageData.url + ']';
+        if (hasPreview) imageInfo += ' [PREVIEW]';
+        if (hasMedia) imageInfo += ' [MEDIA]';
+        
+        console.log(`[Reddit Monitor] New question saved: ${post.data.title}${imageInfo}`);
         return true;
       }
     } catch (error) {
@@ -131,6 +144,64 @@ class RedditMonitor {
     }
     
     return false;
+  }
+
+  // Extract image from Reddit post (same logic as valuationNormalizer)
+  extractImage(post) {
+    // Check for direct image URL
+    if (post.url && this.isImageUrl(post.url)) {
+      return {
+        url: post.url,
+        thumbnail: post.thumbnail || null,
+        source: 'reddit'
+      };
+    }
+    
+    // Check preview images
+    if (post.preview && post.preview.images && post.preview.images.length > 0) {
+      const image = post.preview.images[0];
+      return {
+        url: this.decodeHtmlEntities(image.source.url),
+        thumbnail: image.resolutions?.[0]?.url ? this.decodeHtmlEntities(image.resolutions[0].url) : null,
+        source: 'reddit'
+      };
+    }
+    
+    // Check media metadata
+    if (post.media_metadata) {
+      const firstKey = Object.keys(post.media_metadata)[0];
+      if (firstKey && post.media_metadata[firstKey].s) {
+        return {
+          url: this.decodeHtmlEntities(post.media_metadata[firstKey].s.u),
+          thumbnail: post.media_metadata[firstKey].p?.[0]?.u || null,
+          source: 'reddit'
+        };
+      }
+    }
+    
+    // No image found
+    return {
+      url: null,
+      thumbnail: null,
+      source: 'none'
+    };
+  }
+
+  // Check if URL is an image
+  isImageUrl(url) {
+    return /\.(jpg|jpeg|png|gif|webp)$/i.test(url) || 
+           url.includes('i.redd.it') || 
+           url.includes('imgur.com');
+  }
+
+  // Decode HTML entities in URLs
+  decodeHtmlEntities(text) {
+    return text
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#039;/g, "'");
   }
 
   async monitorAll() {

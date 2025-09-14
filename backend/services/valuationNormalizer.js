@@ -34,6 +34,13 @@ const normalizeRedditPost = async (post) => {
   // Extract image if available
   const imageData = extractImage(post);
   
+  // Debug: Log image extraction
+  if (imageData.url) {
+    console.log(`[Image Extractor] Found image for "${title}": ${imageData.url}`);
+  } else {
+    console.log(`[Image Extractor] No image found for "${title}"`);
+  }
+  
   // Categorize item
   const category = categorizeItem(fullText, brand);
   
