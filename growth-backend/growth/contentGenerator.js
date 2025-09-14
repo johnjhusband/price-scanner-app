@@ -132,10 +132,12 @@ Write in a friendly, informative tone. Keep it practical and actionable.`;
       const result = stmt.run(
         content.title,
         content.content,
+
+
         content.source, // This maps to source_type
         content.source_id,
         content.tags ? content.tags.join(', ') : '', // This maps to seo_keywords
-        content.created_at.toISOString(),
+        content.created_at instanceof Date ? content.created_at.toISOString() : content.created_at,
         false, // published
         0, // page_views
         0  // conversions
