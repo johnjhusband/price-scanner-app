@@ -895,7 +895,7 @@ app.use('/api/payment', paymentRoutes);
 const feedbackRoutes = require('./routes/feedback');
 
 // Growth automation routes
-const growthRoutes = require('./routes/growth');
+// Growth routes moved to standalone service - archived in Growth-Archive/
 
 // Reddit valuation routes
 const valuationRoutes = require('./routes/valuations');
@@ -907,7 +907,7 @@ const automationRoutes = require('./routes/automation');
 const automationAdminRoutes = require('./routes/automationAdmin');
 const automationDashboardRoutes = require('./routes/automationDashboard');
 const valuationPagesRoutes = require('./routes/valuationPages');
-const growthAdminRoutes = require('./routes/growthAdmin');
+// Growth admin routes moved to standalone service - archived in Growth-Archive/
 const testValuationRoutes = require('./routes/testValuation');
 
 app.use('/', valuationRoutes);
@@ -919,7 +919,7 @@ app.use('/', automationRoutes);
 app.use('/', automationAdminRoutes);
 app.use('/', automationDashboardRoutes);
 app.use('/', valuationPagesRoutes);
-app.use('/', growthAdminRoutes);
+// Growth admin routes moved to standalone service - archived in Growth-Archive/
 app.use('/', testValuationRoutes);
 
 app.use('/api/feedback', (req, res, next) => {
@@ -937,25 +937,13 @@ app.use('/api/feedback', (req, res, next) => {
 });
 
 // Growth automation routes
-app.use('/api/growth', (req, res, next) => {
-  try {
-    growthRoutes(req, res, next);
-  } catch (error) {
-    console.error('ERROR in growth routes:', error);
-    res.status(500).json({
-      error: 'Internal server error',
-      message: error.message
-    });
-  }
-});
+// Growth API routes moved to standalone service - archived in Growth-Archive/
 
-// Growth analytics routes
-const growthAnalyticsRoutes = require('./routes/growthAnalytics');
-app.use('/api/growth/analytics', growthAnalyticsRoutes);
+// Growth analytics routes moved to standalone service - archived in Growth-Archive/
 
 // Analytics Export Routes
 const analyticsExportRoutes = require('./routes/analyticsExport');
-app.use('/api/growth/analytics/export', analyticsExportRoutes);
+// Analytics export routes moved to standalone service - archived in Growth-Archive/
 
 // FotoFlip routes
 const fotoflipRoutes = require('./routes/fotoflip');
