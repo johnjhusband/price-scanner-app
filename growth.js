@@ -4,15 +4,9 @@ const path = require('path');
 const { initializeDatabase } = require('./backend/database');
 const logger = require('./backend/utils/logger');
 
-// Load environment variables
-// Try to load from .env file first, then fall back to process.env
+// Load .env from shared location
 const envPath = path.join(__dirname, '../shared/.env');
 require('dotenv').config({ path: envPath });
-
-// Ensure OpenAI API key is available
-if (!process.env.OPENAI_API_KEY) {
-  logger.warn('[Growth Service] OPENAI_API_KEY not found in environment variables');
-}
 
 // Initialize database for growth features
 try {
@@ -67,14 +61,20 @@ app.get('/growth/', (req, res) => {
 });
 
 // Growth automation routes
-const growthRoutes = require('./growth-backend/routes/growth');
+const growthRoutes = require('./backend/routes/growth');
+const growthAdminRoutes = require('./backend/routes/growthAdmin');
+const growthAnalyticsRoutes = require('./backend/routes/growthAnalytics');
+const analyticsExportRoutes = require('./backend/routes/analyticsExport');
 
 // Mount routes
 app.use('/api/growth', growthRoutes);
+// Removed growthAdminRoutes - was conflicting with dashboard UI
+app.use('/api/growth/analytics', growthAnalyticsRoutes);
+app.use('/api/growth/analytics/export', analyticsExportRoutes);
 
 // Initialize growth automation modules
-const redditMonitor = require('./growth-backend/growth/redditMonitor');
-const { startAutomation } = require('./growth-backend/growth/redditAutomation');
+const redditMonitor = require('./backend/growth/redditMonitor');
+const { startAutomation } = require('./backend/growth/redditAutomation');
 
 // Start Reddit automation if enabled
 if (process.env.ENABLE_REDDIT_AUTOMATION === 'true') {

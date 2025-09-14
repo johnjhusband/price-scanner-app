@@ -1867,11 +1867,9 @@ export default function App() {
               <TouchableOpacity onPress={() => setShowAdminDashboard(true)} style={styles.adminButton}>
                 <Text style={styles.adminText}>Admin</Text>
               </TouchableOpacity>
-              {/* Growth dashboard hidden - development in progress
               <TouchableOpacity onPress={() => setShowGrowthDashboard(true)} style={styles.adminButton}>
                 <Text style={styles.adminText}>Growth</Text>
               </TouchableOpacity>
-              */}
             </>
           )}
           <TouchableOpacity onPress={handleExit} style={styles.exitButton}>

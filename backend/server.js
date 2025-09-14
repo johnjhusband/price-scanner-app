@@ -894,6 +894,8 @@ app.use('/api/payment', paymentRoutes);
 // Feedback route - wrap in try-catch
 const feedbackRoutes = require('./routes/feedback');
 
+// Growth automation routes
+const growthRoutes = require('./routes/growth');
 
 // Reddit valuation routes
 const valuationRoutes = require('./routes/valuations');
@@ -901,7 +903,11 @@ const qrRoutes = require('./routes/qr');
 const redditValuationRoutes = require('./routes/redditValuation');
 const migrationRoutes = require('./routes/migrations');
 const adminRedditRoutes = require('./routes/adminReddit');
+const automationRoutes = require('./routes/automation');
+const automationAdminRoutes = require('./routes/automationAdmin');
+const automationDashboardRoutes = require('./routes/automationDashboard');
 const valuationPagesRoutes = require('./routes/valuationPages');
+const growthAdminRoutes = require('./routes/growthAdmin');
 const testValuationRoutes = require('./routes/testValuation');
 
 app.use('/', valuationRoutes);
@@ -909,7 +915,11 @@ app.use('/', qrRoutes);
 app.use('/', redditValuationRoutes);
 app.use('/', migrationRoutes);
 app.use('/', adminRedditRoutes);
+app.use('/', automationRoutes);
+app.use('/', automationAdminRoutes);
+app.use('/', automationDashboardRoutes);
 app.use('/', valuationPagesRoutes);
+app.use('/', growthAdminRoutes);
 app.use('/', testValuationRoutes);
 
 app.use('/api/feedback', (req, res, next) => {
@@ -926,6 +936,26 @@ app.use('/api/feedback', (req, res, next) => {
   }
 });
 
+// Growth automation routes
+app.use('/api/growth', (req, res, next) => {
+  try {
+    growthRoutes(req, res, next);
+  } catch (error) {
+    console.error('ERROR in growth routes:', error);
+    res.status(500).json({
+      error: 'Internal server error',
+      message: error.message
+    });
+  }
+});
+
+// Growth analytics routes
+const growthAnalyticsRoutes = require('./routes/growthAnalytics');
+app.use('/api/growth/analytics', growthAnalyticsRoutes);
+
+// Analytics Export Routes
+const analyticsExportRoutes = require('./routes/analyticsExport');
+app.use('/api/growth/analytics/export', analyticsExportRoutes);
 
 // FotoFlip routes
 const fotoflipRoutes = require('./routes/fotoflip');
