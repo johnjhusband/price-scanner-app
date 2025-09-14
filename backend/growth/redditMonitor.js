@@ -34,11 +34,13 @@ class RedditMonitor {
         subreddit TEXT NOT NULL,
         title TEXT NOT NULL,
         author TEXT,
-        url TEXT NOT NULL,
+        url TEXT,
         selftext TEXT,
         created_utc INTEGER,
         score INTEGER DEFAULT 0,
         num_comments INTEGER DEFAULT 0,
+        thumbnail TEXT,
+        permalink TEXT,
         processed BOOLEAN DEFAULT FALSE,
         processed_at TIMESTAMP,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -101,8 +103,9 @@ class RedditMonitor {
       const stmt = db.prepare(`
         INSERT OR IGNORE INTO reddit_questions (
           post_id, subreddit, title, author, url, 
-          selftext, created_utc, score, num_comments
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+          selftext, created_utc, score, num_comments, 
+          thumbnail, permalink
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `);
       
       const result = stmt.run(
@@ -110,11 +113,13 @@ class RedditMonitor {
         post.data.subreddit,
         post.data.title,
         post.data.author,
-        `https://reddit.com${post.data.permalink}`,
+        post.data.url || '',  // This is the actual content URL (image/link)
         post.data.selftext,
         post.data.created_utc,
         post.data.score,
-        post.data.num_comments
+        post.data.num_comments,
+        post.data.thumbnail || '',
+        `https://reddit.com${post.data.permalink}`
       );
       
       if (result.changes > 0) {

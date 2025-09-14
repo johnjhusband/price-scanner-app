@@ -68,7 +68,7 @@ const analyticsExportRoutes = require('./backend/routes/analyticsExport');
 
 // Mount routes
 app.use('/api/growth', growthRoutes);
-app.use('/growth', growthAdminRoutes);
+// Removed growthAdminRoutes - was conflicting with dashboard UI
 app.use('/api/growth/analytics', growthAnalyticsRoutes);
 app.use('/api/growth/analytics/export', analyticsExportRoutes);
 

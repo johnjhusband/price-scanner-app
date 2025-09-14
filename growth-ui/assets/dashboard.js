@@ -90,6 +90,12 @@ async function loadData() {
     try {
         // Load status
         const statusResponse = await fetch(`${API_BASE}/status`);
+        
+        if (!statusResponse.ok) {
+            console.error('Status fetch failed:', statusResponse.status);
+            return;
+        }
+        
         const statusData = await statusResponse.json();
         
         if (statusData.success) {
@@ -115,6 +121,7 @@ async function loadData() {
         }
     } catch (error) {
         console.error('Error loading data:', error);
+        showNotification('Failed to load data: ' + error.message, 'error');
     }
 }
 
@@ -165,16 +172,36 @@ function renderQuestions() {
         return;
     }
     
-    container.innerHTML = state.questions.map(q => `
-        <div class="question-card">
-            <h3>${escapeHtml(q.title)}</h3>
-            <div class="question-meta">r/${q.subreddit} • u/${q.author} • ${formatDate(q.created_utc)}</div>
-            ${q.selftext ? `<div class="question-body">${escapeHtml(q.selftext.substring(0, 200))}...</div>` : ''}
-            <button class="generate-btn" onclick="generateContent('${q.post_id}')">
-                <span class="icon">✨</span> Generate Content
-            </button>
-        </div>
-    `).join('');
+    container.innerHTML = state.questions.map(q => {
+        // Extract image URL from the post
+        let imageUrl = null;
+        if (q.url && (q.url.includes('.jpg') || q.url.includes('.jpeg') || q.url.includes('.png') || q.url.includes('.gif'))) {
+            imageUrl = q.url;
+        } else if (q.url && q.url.includes('reddit.com/gallery/')) {
+            // Gallery post - we'll need to handle this differently
+            imageUrl = null; // For now
+        } else if (q.thumbnail && q.thumbnail !== 'self' && q.thumbnail !== 'default') {
+            imageUrl = q.thumbnail;
+        }
+        
+        return `
+            <div class="question-card">
+                ${imageUrl ? `
+                    <div class="question-image">
+                        <img src="${imageUrl}" alt="${escapeHtml(q.title)}" />
+                    </div>
+                ` : ''}
+                <div class="question-content">
+                    <h3>${escapeHtml(q.title)}</h3>
+                    <div class="question-meta">r/${q.subreddit} • u/${q.author} • ${formatDate(q.created_utc)}</div>
+                    ${q.selftext ? `<div class="question-body">${escapeHtml(q.selftext.substring(0, 200))}...</div>` : ''}
+                    <button class="generate-btn" onclick="generateContent('${q.post_id}')">
+                        <span class="icon">✨</span> Generate Content
+                    </button>
+                </div>
+            </div>
+        `;
+    }).join('');
 }
 
 function renderContent() {
