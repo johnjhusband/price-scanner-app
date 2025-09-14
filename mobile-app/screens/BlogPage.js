@@ -21,18 +21,19 @@ const BlogPage = ({ isVisible, onClose }) => {
   const [error, setError] = useState(null);
 
   const API_URL = Platform.OS === 'web' ? '' : 'http://localhost:3000';
+  const GROWTH_URL = Platform.OS === 'web' ? '' : 'http://localhost:3003';
 
   const fetchBlogPosts = async () => {
     try {
       setError(null);
-      const response = await fetch(`${API_URL}/api/valuations/published`);
+      const response = await fetch(`${GROWTH_URL}/api/growth/content?published=true`);
       if (!response.ok) {
         throw new Error('Failed to fetch blog posts');
       }
       
       const data = await response.json();
       if (data.success) {
-        setBlogPosts(data.valuations || []);
+        setBlogPosts(data.content || []);
       } else {
         throw new Error(data.error || 'Failed to load blog posts');
       }
@@ -51,10 +52,11 @@ const BlogPage = ({ isVisible, onClose }) => {
     }
   }, [isVisible]);
 
-  const openBlogPost = (slug) => {
+  const openBlogPost = (contentId) => {
+    // For now, open the growth dashboard to view content
     const url = Platform.OS === 'web' 
-      ? `/value/${slug}` 
-      : `${API_URL}/value/${slug}`;
+      ? `/growth/questions` 
+      : `${GROWTH_URL}/growth/questions`;
     
     if (Platform.OS === 'web') {
       window.open(url, '_blank');
@@ -72,16 +74,6 @@ const BlogPage = ({ isVisible, onClose }) => {
     });
   };
 
-  const formatValue = (low, high) => {
-    if (low && high) {
-      return `$${low} - $${high}`;
-    } else if (low) {
-      return `$${low}+`;
-    } else if (high) {
-      return `Up to $${high}`;
-    }
-    return 'Contact for pricing';
-  };
 
   if (!isVisible) return null;
 
@@ -131,35 +123,23 @@ const BlogPage = ({ isVisible, onClose }) => {
                 <TouchableOpacity
                   key={post.id}
                   style={styles.postCard}
-                  onPress={() => openBlogPost(post.slug)}
+                  onPress={() => openBlogPost(post.id)}
                   activeOpacity={0.8}
                 >
-                  {post.image_url && (
-                    <Image 
-                      source={{ uri: post.image_url }} 
-                      style={styles.postImage}
-                      resizeMode="cover"
-                    />
-                  )}
                   <View style={styles.postContent}>
                     <Text style={styles.postTitle} numberOfLines={2}>
                       {post.title}
                     </Text>
-                    <Text style={styles.postValue}>
-                      Estimated Value: {formatValue(post.value_low, post.value_high)}
+                    <Text style={styles.postDescription} numberOfLines={3}>
+                      {post.content ? post.content.replace(/<[^>]*>/g, '').substring(0, 150) + '...' : ''}
                     </Text>
-                    {post.meta_description && (
-                      <Text style={styles.postDescription} numberOfLines={3}>
-                        {post.meta_description}
-                      </Text>
-                    )}
                     <View style={styles.postMeta}>
                       <Text style={styles.postDate}>
                         {formatDate(post.created_at)}
                       </Text>
-                      {post.view_count > 0 && (
+                      {post.page_views > 0 && (
                         <Text style={styles.postViews}>
-                          <Feather name="eye" size={12} /> {post.view_count} views
+                          <Feather name="eye" size={12} /> {post.page_views} views
                         </Text>
                       )}
                     </View>
@@ -252,11 +232,6 @@ const styles = StyleSheet.create({
     elevation: 2,
     overflow: 'hidden',
   },
-  postImage: {
-    width: '100%',
-    height: 200,
-    backgroundColor: brandColors.background,
-  },
   postContent: {
     padding: 16,
   },
@@ -264,12 +239,6 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: typography.weights.semiBold,
     color: brandColors.text,
-    marginBottom: 8,
-  },
-  postValue: {
-    fontSize: 16,
-    fontWeight: typography.weights.medium,
-    color: brandColors.primary,
     marginBottom: 8,
   },
   postDescription: {

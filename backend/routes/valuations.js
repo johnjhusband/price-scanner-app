@@ -98,46 +98,6 @@ router.post('/value/:slug/click', async (req, res) => {
   }
 });
 
-// GET /api/valuations/published - Get all published valuations for blog page
-router.get('/api/valuations/published', async (req, res) => {
-  try {
-    const db = getDatabase();
-    const limit = parseInt(req.query.limit) || 50;
-    const offset = parseInt(req.query.offset) || 0;
-    
-    const valuations = db.prepare(`
-      SELECT 
-        id, title, slug, meta_description, 
-        value_low, value_high, 
-        image_url, image_thumbnail,
-        view_count, created_at
-      FROM valuations 
-      WHERE published = 1 AND removed = 0
-      ORDER BY created_at DESC
-      LIMIT ? OFFSET ?
-    `).all(limit, offset);
-    
-    const total = db.prepare(`
-      SELECT COUNT(*) as count 
-      FROM valuations 
-      WHERE published = 1 AND removed = 0
-    `).get();
-    
-    res.json({
-      success: true,
-      valuations,
-      total: total.count,
-      limit,
-      offset
-    });
-  } catch (error) {
-    console.error('[Valuations API] Error fetching published valuations:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to fetch valuations'
-    });
-  }
-});
 
 // Simple IP hashing for privacy
 function hashIP(ip) {
