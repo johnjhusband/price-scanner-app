@@ -28,7 +28,7 @@ jobs:
             # Copy nginx template
             cp nginx-templates/blue.flippi.ai.conf /etc/nginx/sites-available/blue.flippi.ai
             # Test and reload nginx
-            nginx -t && systemctl reload nginx
+            sudo nginx -t && sudo systemctl reload nginx
             # Restart main services
             pm2 restart dev-backend dev-frontend || echo "Warning: Could not restart PM2 services"
             
