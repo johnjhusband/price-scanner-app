@@ -15,7 +15,7 @@ import EnterScreen from './components/EnterScreen';
 import MissionModal from './components/MissionModal';
 import PageContainer from './components/PageContainer';
 import AdminDashboard from './screens/AdminDashboard';
-import GrowthDashboard from './screens/GrowthDashboard';
+import BlogPage from './screens/BlogPage';
 import PricingModal from './components/PricingModal';
 import UpgradeModal from './components/UpgradeModal';
 import AuthService from './services/authService';
@@ -277,7 +277,7 @@ export default function App() {
   const [showMissionModal, setShowMissionModal] = useState(false);
   const [flipCount, setFlipCount] = useState(0);
   const [showAdminDashboard, setShowAdminDashboard] = useState(false);
-  const [showGrowthDashboard, setShowGrowthDashboard] = useState(false);
+  const [showBlogPage, setShowBlogPage] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [showPricingPage, setShowPricingPage] = useState(false);
   const [flipStatus, setFlipStatus] = useState(null);
@@ -1867,8 +1867,8 @@ export default function App() {
               <TouchableOpacity onPress={() => setShowAdminDashboard(true)} style={styles.adminButton}>
                 <Text style={styles.adminText}>Admin</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setShowGrowthDashboard(true)} style={styles.adminButton}>
-                <Text style={styles.adminText}>Growth</Text>
+              <TouchableOpacity onPress={() => setShowBlogPage(true)} style={styles.adminButton}>
+                <Text style={styles.adminText}>Blog</Text>
               </TouchableOpacity>
             </>
           )}
@@ -2367,15 +2367,16 @@ export default function App() {
         onClose={() => setShowAdminDashboard(false)}
       />
       
-      <GrowthDashboard
-        isVisible={showGrowthDashboard}
-        onClose={() => setShowGrowthDashboard(false)}
-      />
       
       <PricingModal
         visible={showPricingPage}
         onClose={() => setShowPricingPage(false)}
         onSelectPlan={handlePaymentSelect}
+      />
+      
+      <BlogPage
+        isVisible={showBlogPage}
+        onClose={() => setShowBlogPage(false)}
       />
       
       <UpgradeModal
