@@ -25,6 +25,10 @@ jobs:
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
             # Copy web assets that Expo doesn't include
             cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
+            # Copy nginx template
+            cp nginx-templates/blue.flippi.ai.conf /etc/nginx/sites-available/blue.flippi.ai
+            # Test and reload nginx
+            nginx -t && systemctl reload nginx
             # Restart main services
             pm2 restart dev-backend dev-frontend || echo "Warning: Could not restart PM2 services"
             
