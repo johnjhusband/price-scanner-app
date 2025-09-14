@@ -150,6 +150,37 @@ router.get('/content', async (req, res) => {
   }
 });
 
+// GET /api/growth/content/:id - Get single content item
+router.get('/content/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const db = getDatabase();
+    
+    const content = db.prepare('SELECT * FROM content_generated WHERE id = ?').get(id);
+    
+    if (!content) {
+      return res.status(404).json({
+        success: false,
+        error: 'Content not found'
+      });
+    }
+    
+    // Track page view
+    db.prepare('UPDATE content_generated SET page_views = page_views + 1 WHERE id = ?').run(id);
+    
+    res.json({
+      success: true,
+      content
+    });
+  } catch (error) {
+    console.error('[Growth API] Error getting content item:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get content'
+    });
+  }
+});
+
 // POST /api/growth/content/:id/publish - Mark content as published
 router.post('/content/:id/publish', async (req, res) => {
   try {

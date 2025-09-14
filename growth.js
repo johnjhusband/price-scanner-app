@@ -23,8 +23,9 @@ const PORT = process.env.GROWTH_PORT || 3003;
 // Enable trust proxy for HTTPS detection behind nginx
 app.set('trust proxy', true);
 
-// Serve static files for Growth Dashboard UI
+// Serve static files for Growth Dashboard UI and public site
 app.use('/growth/assets', express.static(path.join(__dirname, 'growth-ui/assets')));
+app.use('/assets', express.static(path.join(__dirname, 'growth-ui/assets')));
 
 // Middleware
 app.use(cors({
@@ -50,7 +51,16 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Serve Growth Dashboard UI
+// Public marketing site routes
+app.get('/story', (req, res) => {
+  res.sendFile(path.join(__dirname, 'growth-ui/public/index.html'));
+});
+
+app.get('/story/:id', (req, res) => {
+  res.sendFile(path.join(__dirname, 'growth-ui/public/blog-post.html'));
+});
+
+// Admin Growth Dashboard UI (protected with /growth prefix)
 app.get('/growth', (req, res) => {
   res.sendFile(path.join(__dirname, 'growth-ui/index.html'));
 });

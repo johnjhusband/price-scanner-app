@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="page-title">Loading... - Flippi Blog</title>
+    <meta name="description" content="" id="page-description">
+    <link rel="stylesheet" href="/assets/public-style.css">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="nav-brand">
+                <a href="/story">Flippi Story</a>
+            </div>
+            <div class="nav-links">
+                <a href="/story">Home</a>
+                <a href="/story">All Posts</a>
+                <a href="https://app.flippi.ai" target="_blank">Try Flippi</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="blog-post">
+        <div id="post-content">
+            <div class="loading">Loading post...</div>
+        </div>
+    </main>
+
+    <section class="cta-section">
+        <div class="container">
+            <div class="cta-box">
+                <h2>Get Instant Valuations with Flippi</h2>
+                <p>Stop guessing. Start knowing. Flippi gives you instant resale values for any item.</p>
+                <a href="https://app.flippi.ai" class="cta-button">Try Flippi Free</a>
+                <p class="cta-note">No sign-up required • 20 free scans</p>
+            </div>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <div class="container">
+            <p>&copy; 2025 Flippi. All rights reserved.</p>
+            <div class="footer-links">
+                <a href="https://app.flippi.ai/terms">Terms</a>
+                <a href="https://app.flippi.ai/privacy">Privacy</a>
+                <a href="https://app.flippi.ai/contact">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Load individual blog post
+        async function loadPost() {
+            const postId = window.location.pathname.split('/').pop();
+            const contentDiv = document.getElementById('post-content');
+            
+            try {
+                const response = await fetch(`/api/growth/content/${postId}`);
+                const data = await response.json();
+                
+                if (data.success && data.content) {
+                    displayPost(data.content);
+                } else {
+                    contentDiv.innerHTML = '<h1>Post not found</h1><p>The post you\'re looking for doesn\'t exist.</p>';
+                }
+            } catch (error) {
+                console.error('Error loading post:', error);
+                contentDiv.innerHTML = '<h1>Error loading post</h1><p>Please try again later.</p>';
+            }
+        }
+        
+        function displayPost(post) {
+            document.getElementById('page-title').textContent = post.title + ' - Flippi Blog';
+            document.getElementById('page-description').content = post.content.replace(/<[^>]*>/g, '').substring(0, 160);
+            
+            const contentDiv = document.getElementById('post-content');
+            contentDiv.innerHTML = `
+                <h1>${escapeHtml(post.title)}</h1>
+                <div class="blog-post-meta">
+                    <span>📅 ${formatDate(post.created_at)}</span>
+                    ${post.page_views > 0 ? `<span> • 👁️ ${post.page_views} views</span>` : ''}
+                </div>
+                <div class="blog-post-content">
+                    ${post.content}
+                </div>
+            `;
+        }
+        
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // Load post on page load
+        loadPost();
+    </script>
+</body>
+</html>
