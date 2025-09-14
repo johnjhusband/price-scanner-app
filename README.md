@@ -1,4 +1,5 @@
 # Flippi.ai - Never Over Pay
+<!-- Deploy: 2025-09-14 20:36 -->
 
 A resale value estimation app that helps users make informed decisions when shopping for secondhand items.
 
