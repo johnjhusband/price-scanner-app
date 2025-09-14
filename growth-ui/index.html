@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flippi Growth Dashboard</title>
+    <link rel="stylesheet" href="/growth/assets/style.css">
+</head>
+<body>
+    <div id="growth-root">
+        <div class="growth-container">
+            <header class="growth-header">
+                <h1>Growth Automation Dashboard</h1>
+                <div class="header-actions">
+                    <button id="monitor-reddit" class="btn btn-primary">
+                        <span class="icon">🔍</span> Monitor Reddit
+                    </button>
+                    <button id="refresh" class="btn btn-secondary">
+                        <span class="icon">🔄</span> Refresh
+                    </button>
+                </div>
+            </header>
+
+            <nav class="growth-tabs">
+                <button class="tab active" data-tab="overview">Overview</button>
+                <button class="tab" data-tab="questions">Questions</button>
+                <button class="tab" data-tab="content">Content</button>
+                <button class="tab" data-tab="analytics">Analytics</button>
+            </nav>
+
+            <main class="growth-content">
+                <!-- Overview Tab -->
+                <div id="overview" class="tab-content active">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-value" id="total-questions">0</div>
+                            <div class="stat-label">Questions Found</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="processed">0</div>
+                            <div class="stat-label">Processed</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="content-created">0</div>
+                            <div class="stat-label">Content Created</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="conversions">0</div>
+                            <div class="stat-label">Conversions</div>
+                        </div>
+                    </div>
+                    
+                    <div class="recent-section">
+                        <h2>Recent Questions</h2>
+                        <div id="recent-questions" class="question-list">
+                            <!-- Dynamically populated -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Questions Tab -->
+                <div id="questions" class="tab-content">
+                    <h2>Unprocessed Questions</h2>
+                    <div id="questions-list" class="questions-container">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+
+                <!-- Content Tab -->
+                <div id="content" class="tab-content">
+                    <h2>Generated Content</h2>
+                    <div class="content-filters">
+                        <button class="filter-btn active" data-filter="all">All</button>
+                        <button class="filter-btn" data-filter="blog">Blog Posts</button>
+                        <button class="filter-btn" data-filter="social">Social Media</button>
+                        <button class="filter-btn" data-filter="email">Email</button>
+                    </div>
+                    <div id="content-list" class="content-container">
+                        <!-- Dynamically populated -->
+                    </div>
+                </div>
+
+                <!-- Analytics Tab -->
+                <div id="analytics" class="tab-content">
+                    <h2>Performance Analytics</h2>
+                    <div class="analytics-container">
+                        <div class="chart-container">
+                            <canvas id="performance-chart"></canvas>
+                        </div>
+                        <div class="metrics-grid">
+                            <div class="metric-card">
+                                <h3>Top Performing Content</h3>
+                                <div id="top-content">
+                                    <!-- Dynamically populated -->
+                                </div>
+                            </div>
+                            <div class="metric-card">
+                                <h3>Platform Breakdown</h3>
+                                <div id="platform-breakdown">
+                                    <!-- Dynamically populated -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/growth/assets/dashboard.js"></script>
+</body>
+</html>

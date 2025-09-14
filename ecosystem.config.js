@@ -14,6 +14,20 @@ module.exports = {
       watch: false,
       instances: 1,
       exec_mode: 'fork'
+    },
+    {
+      name: 'dev-growth',
+      script: './growth.js',
+      cwd: '/var/www/blue.flippi.ai',
+      env: {
+        NODE_ENV: 'development',
+        GROWTH_PORT: 3003,
+        ENABLE_REDDIT_AUTOMATION: 'true',
+        REDDIT_AUTOMATION_INTERVAL: '30'
+      },
+      watch: false,
+      instances: 1,
+      exec_mode: 'fork'
     }
   ]
 };
