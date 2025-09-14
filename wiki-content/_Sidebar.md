@@ -21,6 +21,7 @@
 - [[UX Patterns (Buttons)]]
 - [[Tech Stack]]
 - [[Growth-Platform]]
+- [[Growth-Service]] 🆕
 
 **🚀 Development**
 - [[Deployment-Guide]]
