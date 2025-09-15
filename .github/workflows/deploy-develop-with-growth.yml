@@ -39,10 +39,10 @@ jobs:
           envs: OPENAI_API_KEY
           script: |
             cd /var/www/blue.flippi.ai
-            # Make scripts executable
-            chmod +x scripts/deploy-growth-service-simple.sh
+            # Make script executable
+            chmod +x scripts/deploy-growth-service.sh
             # Run deployment script with environment variables
-            OPENAI_API_KEY="${OPENAI_API_KEY}" ./scripts/deploy-growth-service-simple.sh
+            OPENAI_API_KEY="${OPENAI_API_KEY}" ./scripts/deploy-growth-service.sh
             
       - name: Verify Deployment
         uses: appleboy/ssh-action@v0.1.5
