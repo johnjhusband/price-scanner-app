@@ -25,22 +25,18 @@ jobs:
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
             # Copy web assets that Expo doesn't include
             cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
-            # Copy nginx template
-            cp nginx-templates/blue.flippi.ai.conf /etc/nginx/sites-available/blue.flippi.ai
-            # Test and reload nginx
-            sudo nginx -t && sudo systemctl reload nginx
             # Restart main services
             pm2 restart dev-backend dev-frontend || echo "Warning: Could not restart PM2 services"
             
       - name: Deploy Growth Service
         uses: appleboy/ssh-action@v0.1.5
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         with:
           host: 137.184.24.201
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: OPENAI_API_KEY
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           script: |
             cd /var/www/blue.flippi.ai
             # Make script executable
