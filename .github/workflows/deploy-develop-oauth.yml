@@ -4,17 +4,15 @@ on:
     branches: [develop]
   workflow_dispatch:
 
-# Add concurrency control to prevent race conditions
-concurrency:
-  group: blue-deployment
-  cancel-in-progress: false
+permissions: {contents: read}
+concurrency: {group: blue-deployment-${{ github.ref }}, cancel-in-progress: false}
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
-      - name: Deploy to blue.flippi.ai
-        uses: appleboy/ssh-action@v0.1.5
+      - uses: appleboy/ssh-action@v0.1.7
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         with:
@@ -22,242 +20,80 @@ jobs:
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           envs: OPENAI_API_KEY
+          script_stop: true
           script: |
             set -euo pipefail
             cd /var/www/blue.flippi.ai
-            
-            # 1. CRITICAL: Fix SSL files first (prevents nginx from ignoring config)
-            echo "💫 Fixing SSL files..."
-            if [ -f scripts/fix-ssl-and-growth-routes.sh ]; then
-              bash scripts/fix-ssl-and-growth-routes.sh
-            elif [ -f scripts/fix-blue-ssl-files.sh ]; then
-              bash scripts/fix-blue-ssl-files.sh
-            fi
-            
-            # 2. Reset and update repository
-            echo "📥 Updating repository..."
-            git reset --hard HEAD
-            git clean -fd
-            git fetch origin develop
-            git reset --hard origin/develop
-            
-            # 3. Setup environment and credentials
-            echo "🌸 Setting up environment..."
-            
-            # Ensure shared directory exists
+
+            # SSL
+            if [ -f scripts/fix-ssl-and-growth-routes.sh ]; then bash scripts/fix-ssl-and-growth-routes.sh; fi
+            if [ -f scripts/fix-blue-ssl-files.sh ]; then bash scripts/fix-blue-ssl-files.sh; fi
+
+            # Git
+            git reset --hard HEAD && git clean -fd
+            git fetch origin develop && git reset --hard origin/develop
+
+            # Shared env
             mkdir -p /var/www/shared
-            
-            # Create/update shared .env with required variables
-            if [ ! -f /var/www/shared/.env ]; then
-              echo "🌺 Creating fresh /var/www/shared/.env..."
-              echo "# Environment variables for blue.flippi.ai" > /var/www/shared/.env
-              echo "NODE_ENV=development" >> /var/www/shared/.env
-              echo "PORT=3002" >> /var/www/shared/.env
-              echo "OPENAI_API_KEY=${OPENAI_API_KEY:-missing}" >> /var/www/shared/.env
-            fi
-            
-            # Apply OAuth credentials if script exists
-            if [ -f scripts/apply-oauth-credentials.sh ]; then
-              echo "🌻 Applying OAuth credentials..."
+            [ -f /var/www/shared/.env ] || {
+              printf "NODE_ENV=development\nPORT=3002\nOPENAI_API_KEY=${OPENAI_API_KEY:-missing}\n" > /var/www/shared/.env
+            }
+
+            # OAuth
+            if [ -f scripts/apply-oauth-credentials.sh ]; then 
               export OPENAI_API_KEY="${OPENAI_API_KEY}"
               bash scripts/apply-oauth-credentials.sh
-            else
-              echo "💔 WARNING: OAuth script not found, checking scripts directory:"
-              ls -la scripts/ | grep -E "oauth|auth" || echo "No auth scripts found"
+            else 
+              (ls -la scripts/ | grep -E "oauth|auth") || true
             fi
-            
-            # Verify shared .env has required keys
-            echo "🌟 Verifying shared .env contents..."
+
+            # Verify env (no crash if missing)
             if [ -f /var/www/shared/.env ]; then
-              grep -E "^(OPENAI_API_KEY|GOOGLE_CLIENT_ID)=" /var/www/shared/.env | sed 's/=.*/=***hidden***/'
-            else
-              echo "ERROR: /var/www/shared/.env not found!"
+              if grep -Eq "^(OPENAI_API_KEY|GOOGLE_CLIENT_ID)=" /var/www/shared/.env; then
+                grep -E "^(OPENAI_API_KEY|GOOGLE_CLIENT_ID)=" /var/www/shared/.env | sed 's/=.*/=***hidden***/'
+              else echo "WARN: required keys missing"; fi
             fi
-            
-            # 4. Install backend dependencies
-            echo "📦 Installing backend dependencies..."
-            cd backend && npm install
-            
-            # 5. Build frontend with all assets
-            echo "🏗️ Building frontend..."
-            cd ../mobile-app
-            
-            # 🌷 DIAGNOSTIC: Check mobile-app setup
-            echo "📋 Checking mobile-app directory:"
-            if [ -f package.json ]; then
-              echo "✅ package.json exists"
-            else
-              echo "💔 ERROR: package.json missing in mobile-app!"
-              pwd
-              ls -la
-            fi
-            
-            # Install dependencies with error checking
-            echo "📦 Installing frontend dependencies..."
-            if ! npm install; then
-              echo "💔 ERROR: npm install failed!"
-              echo "📋 npm error log:"
-              cat ~/.npm/_logs/*.log | tail -50 || true
-              exit 1
-            fi
-            
-            # Build with full output
-            echo "🌺 Running expo export..."
-            
-            # Clean any previous build
+
+            # Backend
+            cd backend && npm ci && cd ..
+
+            # Frontend
+            cd mobile-app
+            [ -f package.json ] || { echo "ERROR: mobile-app/package.json missing"; exit 1; }
+            npm ci || { tail -n 50 ~/.npm/_logs/*.log || true; exit 1; }
             rm -rf dist .expo
-            
-            # Set NODE_OPTIONS to increase memory if needed
             export NODE_OPTIONS="--max-old-space-size=4096"
-            
-            # Run expo export with explicit output
-            echo "📦 Starting build process..."
-            echo "Current directory: $(pwd)"
             npm run build:web || exit 1
-            echo "Build complete. Checking dist contents:"
-            ls -la dist/ | head -10 || echo "dist directory not found"
-            
-            
-            echo "✅ Build completed successfully!"
-            
-            # Copy essential web assets
-            if [ -f web-styles.css ]; then
-              cp web-styles.css dist/
-              echo "✅ web-styles.css copied"
-            else
-              echo "💔 web-styles.css not found!"
-              # Create minimal web-styles.css
-              echo "/* Minimal styles */" > dist/web-styles.css
-            fi
-            
-            if [ -d assets ]; then
-              cp -r assets dist/
-              echo "✅ assets directory copied"
-            else
-              echo "🌾 assets directory not found"
-            fi
-            
-            # 💝 DIAGNOSTIC: Verify frontend build output
-            echo "📋 Frontend build verification:"
-            if [ -f dist/index.html ]; then
-              echo "✅ index.html exists ($(ls -lh dist/index.html | awk '{print $5}'))"
-            else
-              echo "💔 ERROR: index.html missing! This causes loading screen!"
-            fi
-            
-            if [ -d dist/_expo ]; then
-              echo "✅ _expo directory exists"
-              echo "   Bundle files: $(find dist/_expo -name '*.js' | wc -l)"
-            else
-              echo "💔 ERROR: _expo directory missing! App won't load!"
-            fi
-            
-            echo "📊 Total files in dist: $(find dist -type f | wc -l)"
-            echo "📁 dist directory contents:"
-            ls -la dist/ | head -10
-            
-            # 6. Ensure PM2 processes are properly configured
-            echo "🌺 Setting up PM2 processes..."
-            # Note: staying in mobile-app directory to preserve dist/ path
-            
-            # Start/restart backend with proper environment
-            echo "🌻 Current PM2 status:"
-            pm2 status || echo "PM2 not running"
-            
+            [ -d dist ] || { echo "ERROR: dist missing"; exit 1; }
+            [ -f web-styles.css ] && cp web-styles.css dist/ || echo "/* minimal */" > dist/web-styles.css
+            [ -d assets ] && cp -r assets dist/ || true
+            [ -f dist/index.html ] || echo "WARN: index.html missing"
+            [ -d dist/_expo ] || echo "WARN: _expo missing"
+
+            # PM2
             pm2 delete dev-backend || true
             export OPENAI_API_KEY="${OPENAI_API_KEY}"
             pm2 start /var/www/blue.flippi.ai/ecosystem.config.js --only dev-backend
-            
-            # 💐 DIAGNOSTIC: Verify backend started
             sleep 5
-            if pm2 describe dev-backend | grep -q "online"; then
-              echo "✅ Backend started successfully ✨"
-            else
-              echo "💔 ERROR: Backend failed to start!"
-              echo "📋 PM2 logs (last 30 lines):"
-              pm2 logs dev-backend --lines 30 --nostream
-            fi
-            
-            # 7. Deploy Growth Service
-            echo "🌱 Deploying Growth Service..."
-            if [ -f scripts/deploy-growth-service.sh ]; then
-              bash scripts/deploy-growth-service.sh
-            else
-              echo "Warning: Growth service deployment script not found"
-            fi
-            
-            # 8. Apply nginx configuration
-            echo "💖 Configuring nginx..."
-            
-            # Use infra-nginx if available (preferred)
-            if [ -f infra-nginx/deploy-nginx.sh ]; then
-              echo "🌸 Using infra-nginx deployment..."
+            pm2 describe dev-backend | grep -q online || { pm2 logs dev-backend --lines 30 --nostream; exit 1; }
+
+            # Growth
+            [ -f scripts/deploy-growth-service.sh ] && bash scripts/deploy-growth-service.sh || echo "WARN: no growth deploy script"
+
+            # Nginx
+            if [ -f infra-nginx/deploy-nginx.sh ]; then 
               bash infra-nginx/deploy-nginx.sh blue
-            elif [ -f scripts/post-deploy-all-routes.sh ]; then
+            elif [ -f scripts/post-deploy-all-routes.sh ]; then 
               bash scripts/post-deploy-all-routes.sh blue.flippi.ai 3002
-            else
-              echo "🌾 WARNING: No nginx configuration script found"
             fi
-            
-            # 10. Save PM2 configuration
             pm2 save
-            
-            # 11. Reload nginx with new configuration
-            echo "🌼 Reloading nginx..."
             nginx -t && nginx -s reload
-            
-            # 12. Wait for services to stabilize
-            echo "🌻 Waiting for services to start..."
-            sleep 10
-            
-            # 13. Verify deployment
-            echo "✅ Verifying deployment..."
-            
-            # Check backend health
-            echo "Backend health check:"
-            if curl -f http://localhost:3002/health 2>/dev/null; then
-              echo "✅ Backend health check passed 💖"
-            else
-              echo "💔 ERROR: Backend not responding!"
-              echo "🔍 Checking if backend is running:"
-              pm2 status dev-backend
-            fi
-            
-            # Check OAuth endpoint
-            echo "OAuth endpoint check:"
-            OAUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/auth/google)
-            if [ "$OAUTH_STATUS" = "302" ] || [ "$OAUTH_STATUS" = "200" ]; then
-              echo "✅ OAuth endpoint responding correctly: $OAUTH_STATUS ⭐"
-            else
-              echo "💔 OAuth endpoint error: $OAUTH_STATUS"
-              echo "💕 Testing backend directly:"
-              curl -I http://localhost:3002/auth/google || true
-            fi
-            
-            # Check frontend
-            echo "Frontend check:"
-            if curl -f -s -o /dev/null https://blue.flippi.ai; then
-              echo "✅ Frontend accessible ✨"
-              # 🌷 DIAGNOSTIC: Check what's being served
-              echo "🌷 Checking for loading screen issue:"
-              CONTENT=$(curl -s https://blue.flippi.ai | head -50)
-              if echo "$CONTENT" | grep -q "Loading flippi"; then
-                echo "🌾 WARNING: Still showing loading screen!"
-                echo "🌹 Checking nginx root directory:"
-                ls -la /var/www/blue.flippi.ai/mobile-app/dist/ | head -5
-              else
-                echo "✅ App content served (not just loading screen) 🎉"
-              fi
-            else
-              echo "💔 Frontend not accessible"
-            fi
-            
-            # Check growth service
-            echo "Growth service check:"
-            curl -f -s -o /dev/null http://localhost:3003/story && echo "✅ Growth service running 🌻" || echo "🌾 Growth service not responding"
-            
-            # 🌈 DIAGNOSTIC: PM2 final status
-            echo "\n📊 Final PM2 status:"
-            pm2 status
-            
-            echo "\n🎉 Deployment complete!"
+
+            # Health checks (robust curl)
+            curl -fsS --retry 3 --retry-connrefused --max-time 5 http://localhost:3002/health || { pm2 status dev-backend; exit 1; }
+            code=$(curl -s -o /dev/null -w "%{http_code}" --retry 3 --retry-connrefused http://localhost:3002/auth/google)
+            [ "$code" = "302" ] || [ "$code" = "200" ] || exit 1
+            curl -fsS --retry 3 https://blue.flippi.ai >/dev/null || exit 1
+            curl -fsS --retry 3 http://localhost:3003/story >/dev/null || echo "WARN: growth service not responding"
+
+            echo "✅ Deployment complete"
