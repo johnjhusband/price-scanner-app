@@ -23,6 +23,14 @@ fi
 # Check if OAuth credentials are already configured correctly
 if grep -q "^GOOGLE_CLIENT_ID=54703081262" "$SHARED_ENV" 2>/dev/null; then
     echo "✅ OAuth credentials already configured correctly"
+    
+    # But still need to check/add OPENAI_API_KEY
+    if ! grep -q "^OPENAI_API_KEY=" "$SHARED_ENV" 2>/dev/null; then
+        echo "📝 Adding missing OPENAI_API_KEY..."
+        echo "" >> "$SHARED_ENV"
+        echo "# OpenAI API Key (Required for backend to start)" >> "$SHARED_ENV"
+        echo "OPENAI_API_KEY=${OPENAI_API_KEY}" >> "$SHARED_ENV"
+    fi
 else
     echo "📝 Updating OAuth credentials in shared .env..."
     
