@@ -50,13 +50,10 @@ jobs:
             # Create/update shared .env with required variables
             if [ ! -f /var/www/shared/.env ]; then
               echo "🌺 Creating fresh /var/www/shared/.env..."
-              cat > /var/www/shared/.env <<ENVEOF
-# Environment variables for blue.flippi.ai
-# Generated: $(date)
-NODE_ENV=development
-PORT=3002
-OPENAI_API_KEY=${OPENAI_API_KEY:-missing}
-ENVEOF
+              echo "# Environment variables for blue.flippi.ai" > /var/www/shared/.env
+              echo "NODE_ENV=development" >> /var/www/shared/.env
+              echo "PORT=3002" >> /var/www/shared/.env
+              echo "OPENAI_API_KEY=${OPENAI_API_KEY:-missing}" >> /var/www/shared/.env
             fi
             
             # Apply OAuth credentials if script exists
