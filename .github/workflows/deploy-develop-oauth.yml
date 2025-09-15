@@ -4,66 +4,123 @@ on:
     branches: [develop]
   workflow_dispatch:
 
+# Add concurrency control to prevent race conditions
+concurrency:
+  group: blue-deployment
+  cancel-in-progress: false
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Deploy to blue.flippi.ai
         uses: appleboy/ssh-action@v0.1.5
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         with:
           host: 137.184.24.201
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: OPENAI_API_KEY
           script: |
             cd /var/www/blue.flippi.ai
-            # Reset any local changes to avoid merge conflicts
+            
+            # 1. CRITICAL: Fix SSL files first (prevents nginx from ignoring config)
+            echo "🔧 Fixing SSL files..."
+            if [ -f scripts/fix-ssl-and-growth-routes.sh ]; then
+              bash scripts/fix-ssl-and-growth-routes.sh
+            elif [ -f scripts/fix-blue-ssl-files.sh ]; then
+              bash scripts/fix-blue-ssl-files.sh
+            fi
+            
+            # 2. Reset and update repository
+            echo "📥 Updating repository..."
             git reset --hard HEAD
             git clean -fd
-            # Force update to match remote exactly
             git fetch origin develop
             git reset --hard origin/develop
             
-            # Apply OAuth credentials fix
+            # 3. Apply OAuth credentials BEFORE installing dependencies
             echo "🔐 Applying OAuth credentials..."
             if [ -f scripts/apply-oauth-credentials.sh ]; then
               bash scripts/apply-oauth-credentials.sh
             else
-              echo "Warning: OAuth credentials script not found"
+              echo "ERROR: OAuth credentials script not found - OAuth will not work!"
             fi
             
-            # Install dependencies
+            # 4. Install backend dependencies
+            echo "📦 Installing backend dependencies..."
             cd backend && npm install --production
             
-            # Build frontend (no timeout, like develop workflow)
+            # 5. Build frontend with all assets
+            echo "🏗️ Building frontend..."
             cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
             
-            # Copy web assets that Expo doesn't include
+            # Copy essential web assets
             cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
+            cp -r assets dist/ || echo "Warning: Could not copy assets directory"
             
-            # Apply growth routes configuration
+            # 6. Ensure PM2 processes are properly configured
+            echo "🔄 Setting up PM2 processes..."
             cd /var/www/blue.flippi.ai
+            
+            # Start/restart backend with proper environment
+            pm2 delete dev-backend || true
+            pm2 start backend/server.js --name dev-backend --env-file /var/www/shared/.env
+            
+            # 7. Deploy Growth Service
+            echo "🌱 Deploying Growth Service..."
+            if [ -f scripts/deploy-growth-service.sh ]; then
+              bash scripts/deploy-growth-service.sh
+            else
+              echo "Warning: Growth service deployment script not found"
+            fi
+            
+            # 8. Apply nginx configuration with growth routes
+            echo "🔧 Configuring nginx..."
             if [ -f scripts/post-deploy-all-routes.sh ]; then
               bash scripts/post-deploy-all-routes.sh blue.flippi.ai 3002
             elif [ -f scripts/add-growth-routes-nginx.sh ]; then
               bash scripts/add-growth-routes-nginx.sh blue.flippi.ai 3002
             fi
             
-            # Setup simple static file serving (no PM2 frontend needed)
-            bash scripts/setup-simple-blue.sh || true
+            # 9. Ensure static file serving is configured
+            if [ -f scripts/setup-simple-blue.sh ]; then
+              bash scripts/setup-simple-blue.sh
+            fi
             
-            # Restart backend only
-            pm2 restart dev-backend
+            # 10. Save PM2 configuration
+            pm2 save
             
-            # Wait for services to start
-            sleep 5
+            # 11. Reload nginx with new configuration
+            echo "🔄 Reloading nginx..."
+            nginx -t && nginx -s reload
             
-            # Check if backend is running
-            pm2 show dev-backend || true
-            curl -s http://localhost:3002/health || echo "Backend health check"
+            # 12. Wait for services to stabilize
+            sleep 10
             
-            # Test OAuth endpoint
-            echo "🔍 Testing OAuth endpoint..."
-            curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai/auth/google || echo "OAuth test"
+            # 13. Verify deployment
+            echo "✅ Verifying deployment..."
             
-            # Reload nginx
-            nginx -s reload || systemctl reload nginx || echo "Nginx reload attempted"
+            # Check backend health
+            echo "Backend health check:"
+            curl -f http://localhost:3002/health || echo "ERROR: Backend not responding!"
+            
+            # Check OAuth endpoint
+            echo "OAuth endpoint check:"
+            OAUTH_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:3002/auth/google)
+            if [ "$OAUTH_STATUS" = "302" ] || [ "$OAUTH_STATUS" = "200" ]; then
+              echo "✅ OAuth endpoint responding correctly: $OAUTH_STATUS"
+            else
+              echo "❌ OAuth endpoint error: $OAUTH_STATUS"
+            fi
+            
+            # Check frontend
+            echo "Frontend check:"
+            curl -f -s -o /dev/null https://blue.flippi.ai && echo "✅ Frontend accessible" || echo "❌ Frontend not accessible"
+            
+            # Check growth service
+            echo "Growth service check:"
+            curl -f -s -o /dev/null http://localhost:3003/story && echo "✅ Growth service running" || echo "⚠️ Growth service not responding"
+            
+            echo "🎉 Deployment complete!"
