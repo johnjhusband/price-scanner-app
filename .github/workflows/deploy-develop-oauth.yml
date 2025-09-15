@@ -41,30 +41,32 @@ jobs:
             git fetch origin develop
             git reset --hard origin/develop
             
-            # 3. Apply OAuth credentials BEFORE installing dependencies
-            echo "🌸 Applying OAuth credentials..."
-            echo "Debug: OPENAI_API_KEY length is ${#OPENAI_API_KEY}"
+            # 3. Setup environment and credentials
+            echo "🌸 Setting up environment..."
             
-            # 🌺 DIAGNOSTIC: Check for OAuth script
-            echo "🌻 Looking for OAuth script:"
-            ls -la scripts/apply-oauth-credentials.sh 2>/dev/null || echo "💔 apply-oauth-credentials.sh not found!"
+            # Ensure shared directory exists
+            mkdir -p /var/www/shared
             
+            # Create/update shared .env with required variables
+            if [ ! -f /var/www/shared/.env ]; then
+              echo "🌺 Creating fresh /var/www/shared/.env..."
+              cat > /var/www/shared/.env << EOF
+# Environment variables for blue.flippi.ai
+# Generated: $(date)
+NODE_ENV=development
+PORT=3002
+OPENAI_API_KEY=${OPENAI_API_KEY:-missing}
+EOF
+            fi
+            
+            # Apply OAuth credentials if script exists
             if [ -f scripts/apply-oauth-credentials.sh ]; then
-              # Export OPENAI_API_KEY so the script can use it
+              echo "🌻 Applying OAuth credentials..."
               export OPENAI_API_KEY="${OPENAI_API_KEY}"
               bash scripts/apply-oauth-credentials.sh
             else
-              echo "💔 ERROR: OAuth credentials script not found - OAuth will not work!"
-              echo "📁 Contents of scripts directory:"
-              ls -la scripts/ | head -10
-            fi
-            
-            # 🌸 Ensure shared .env exists
-            if [ ! -f /var/www/shared/.env ]; then
-              echo "🌺 Creating /var/www/shared/.env..."
-              mkdir -p /var/www/shared
-              touch /var/www/shared/.env
-              echo "# Created by deployment $(date)" > /var/www/shared/.env
+              echo "💔 WARNING: OAuth script not found, checking scripts directory:"
+              ls -la scripts/ | grep -E "oauth|auth" || echo "No auth scripts found"
             fi
             
             # Verify shared .env has required keys
@@ -104,49 +106,39 @@ jobs:
             
             # Build with full output
             echo "🌺 Running expo export..."
-            if ! npx expo export --platform web --output-dir dist; then
-              echo "💔 ERROR: Expo export failed!"
-              echo "📋 Checking for common issues:"
+            
+            # Clean any previous build
+            rm -rf dist .expo
+            
+            # Set NODE_OPTIONS to increase memory if needed
+            export NODE_OPTIONS="--max-old-space-size=4096"
+            
+            # Run expo export with explicit output
+            echo "📦 Starting build process..."
+            npx expo export --platform web --output-dir dist 2>&1 | tee build.log
+            
+            # Check if build succeeded
+            if [ ! -f dist/index.html ]; then
+              echo "💔 ERROR: Build failed - no index.html generated!"
+              echo "📋 Last 50 lines of build output:"
+              tail -50 build.log
               
-              # Check if expo is installed
-              npx expo --version || echo "💔 Expo CLI not found!"
-              
-              # Check for build errors
-              if [ -f .expo/web/build/logs/*.log ]; then
-                echo "📋 Expo build logs:"
-                cat .expo/web/build/logs/*.log | tail -50
+              # Check for common issues
+              if grep -q "Cannot find module" build.log; then
+                echo "💔 Missing dependencies detected. Running npm install again..."
+                npm install
+                # Try build one more time
+                npx expo export --platform web --output-dir dist 2>&1 | tee build-retry.log
               fi
               
-              # Create minimal dist directory as fallback
-              echo "🌻 Creating minimal dist directory..."
-              mkdir -p dist
-              
-              # Create basic index.html
-              echo "🌸 Creating fallback index.html..."
-              cat > dist/index.html << 'EOF'
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Flippi - Build Error</title>
-  <style>
-    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
-    .error { color: #d32f2f; }
-  </style>
-</head>
-<body>
-  <h1>🌺 Flippi Build Error</h1>
-  <p class="error">The application failed to build properly.</p>
-  <p>Please check the deployment logs.</p>
-</body>
-</html>
-EOF
-              
-              # Create _expo directory structure
-              mkdir -p dist/_expo/static/js/web
-              echo "// Placeholder" > dist/_expo/static/js/web/app.js
+              # If still no index.html, exit
+              if [ ! -f dist/index.html ]; then
+                echo "💔 Build failed after retry. Stopping deployment."
+                exit 1
+              fi
             fi
+            
+            echo "✅ Build completed successfully!"
             
             # Copy essential web assets
             if [ -f web-styles.css ]; then
@@ -235,6 +227,7 @@ EOF
             nginx -t && nginx -s reload
             
             # 12. Wait for services to stabilize
+            echo "🌻 Waiting for services to start..."
             sleep 10
             
             # 13. Verify deployment
