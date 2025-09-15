@@ -4,8 +4,12 @@ on:
     branches: [develop]
   workflow_dispatch:
 
-permissions: {contents: read}
-concurrency: {group: blue-deployment-${{ github.ref }}, cancel-in-progress: false}
+permissions:
+  contents: read
+
+concurrency:
+  group: blue-deployment-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   deploy:
