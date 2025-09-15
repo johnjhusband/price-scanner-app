@@ -10,13 +10,14 @@ cd /var/www/blue.flippi.ai
 # Ensure data directory exists
 mkdir -p data
 
-# Start Growth Service with PM2
+# Start Growth Service with PM2 (restart if already running)
 echo "🚀 Starting Growth Service with PM2..."
 NODE_PATH=./backend/node_modules \
 OPENAI_API_KEY="${OPENAI_API_KEY}" \
 ENABLE_REDDIT_AUTOMATION="false" \
 GROWTH_PORT="3003" \
 FEEDBACK_DB_PATH="./data/feedback.db" \
+pm2 restart growth-service || \
 pm2 start growth.js --name "growth-service" --env production
 
 # Save PM2 configuration
