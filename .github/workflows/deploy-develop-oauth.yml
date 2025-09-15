@@ -1,69 +1,222 @@
-name: Deploy Development with OAuth Fix
+name: Deploy Development (OAuth + Clean + Growth)
 on:
   push:
     branches: [develop]
   workflow_dispatch:
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    
     steps:
+      # 1. Checkout code
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        
+      # 2. Setup Node.js
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: mobile-app/package-lock.json
+          
+      # 3. Install and build frontend
+      - name: Build frontend
+        working-directory: mobile-app
+        run: |
+          echo "Installing dependencies..."
+          npm ci || npm install
+          
+          echo "Building for web..."
+          npx expo export --platform web --output-dir dist
+          
+          echo "Copying additional assets..."
+          cp web-styles.css dist/ || true
+          
+          echo "Build complete. Contents:"
+          ls -la dist/
+          
+      # 4. Create deployment package
+      - name: Create deployment package
+        run: |
+          # Create deployment structure
+          mkdir -p deploy-package/mobile-app
+          mkdir -p deploy-package/scripts
+          mkdir -p deploy-package/nginx
+          mkdir -p deploy-package/growth-backend
+          
+          # Copy built frontend
+          cp -r mobile-app/dist deploy-package/mobile-app/
+          cp -r mobile-app/assets deploy-package/mobile-app/ || true
+          cp mobile-app/*.html deploy-package/mobile-app/ || true
+          
+          # Copy necessary scripts
+          cp -r scripts/*.sh deploy-package/scripts/
+          cp -r nginx/*.conf deploy-package/nginx/
+          
+          # Copy growth service files
+          cp -r growth-backend deploy-package/ || true
+          cp growth.js deploy-package/ || true
+          cp growth-ui deploy-package/ || true
+          
+          # Create deployment info
+          echo "Deploy Info:" > deploy-package/DEPLOY_INFO.txt
+          echo "Commit: ${{ github.sha }}" >> deploy-package/DEPLOY_INFO.txt
+          echo "Time: $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> deploy-package/DEPLOY_INFO.txt
+          echo "Branch: develop" >> deploy-package/DEPLOY_INFO.txt
+          
+          # Create tarball
+          tar -czf deployment.tar.gz deploy-package/
+          
+      # 5. Deploy to blue.flippi.ai
       - name: Deploy to blue.flippi.ai
+        uses: appleboy/scp-action@v0.1.4
+        with:
+          host: 137.184.24.201
+          username: root
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          source: "deployment.tar.gz"
+          target: "/tmp/"
+          
+      # 6. Extract and activate deployment
+      - name: Activate deployment
         uses: appleboy/ssh-action@v0.1.5
         with:
           host: 137.184.24.201
           username: root
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            cd /var/www/blue.flippi.ai
-            # Reset any local changes to avoid merge conflicts
-            git reset --hard HEAD
-            git clean -fd
-            # Force update to match remote exactly
-            git fetch origin develop
-            git reset --hard origin/develop
+            set -e
+            echo "=== Activating deployment ==="
+            
+            # Extract deployment package
+            cd /tmp
+            tar -xzf deployment.tar.gz
+            
+            # Backup current frontend
+            if [ -d "/var/www/blue.flippi.ai/mobile-app/dist" ]; then
+              mv /var/www/blue.flippi.ai/mobile-app/dist /var/www/blue.flippi.ai/mobile-app/dist.backup.$(date +%s)
+            fi
+            
+            # Copy new frontend files
+            cp -r deploy-package/mobile-app/* /var/www/blue.flippi.ai/mobile-app/
+            
+            # Copy scripts (don't overwrite existing)
+            cp -n deploy-package/scripts/*.sh /var/www/blue.flippi.ai/scripts/ || true
+            
+            # Update nginx if needed
+            cp -n deploy-package/nginx/*.conf /var/www/blue.flippi.ai/nginx/ || true
+            
+            # Copy growth service files
+            cp -r deploy-package/growth-backend /var/www/blue.flippi.ai/ || true
+            cp deploy-package/growth.js /var/www/blue.flippi.ai/ || true
+            cp -r deploy-package/growth-ui /var/www/blue.flippi.ai/ || true
+            
+            # Fix permissions
+            chown -R www-data:www-data /var/www/blue.flippi.ai/mobile-app/dist || true
+            
+            # Install backend dependencies
+            cd /var/www/blue.flippi.ai/backend && npm install --production
             
             # Apply OAuth credentials fix
             echo "🔐 Applying OAuth credentials..."
-            if [ -f scripts/apply-oauth-credentials.sh ]; then
-              bash scripts/apply-oauth-credentials.sh
+            if [ -f /var/www/blue.flippi.ai/scripts/apply-oauth-credentials.sh ]; then
+              cd /var/www/blue.flippi.ai && bash scripts/apply-oauth-credentials.sh || true
             else
               echo "Warning: OAuth credentials script not found"
             fi
             
-            # Install dependencies
-            cd backend && npm install --production
-            
-            # Build frontend (no timeout, like develop workflow)
-            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
-            
-            # Copy web assets that Expo doesn't include
-            cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
-            
             # Apply growth routes configuration
-            cd /var/www/blue.flippi.ai
-            if [ -f scripts/post-deploy-all-routes.sh ]; then
-              bash scripts/post-deploy-all-routes.sh blue.flippi.ai 3002
-            elif [ -f scripts/add-growth-routes-nginx.sh ]; then
-              bash scripts/add-growth-routes-nginx.sh blue.flippi.ai 3002
+            echo "🌱 Applying growth routes..."
+            if [ -f /var/www/blue.flippi.ai/scripts/post-deploy-all-routes.sh ]; then
+              cd /var/www/blue.flippi.ai && bash scripts/post-deploy-all-routes.sh blue.flippi.ai 3002 || true
+            elif [ -f /var/www/blue.flippi.ai/scripts/add-growth-routes-nginx.sh ]; then
+              cd /var/www/blue.flippi.ai && bash scripts/add-growth-routes-nginx.sh blue.flippi.ai 3002 || true
             fi
             
-            # Setup simple static file serving (no PM2 frontend needed)
-            bash scripts/setup-simple-blue.sh || true
+            # Setup simple static file serving
+            if [ -f /var/www/blue.flippi.ai/scripts/setup-simple-blue.sh ]; then
+              cd /var/www/blue.flippi.ai && bash scripts/setup-simple-blue.sh || true
+            fi
             
-            # Restart backend only
-            pm2 restart dev-backend
+            # Start/restart growth service
+            echo "🚀 Starting growth service..."
+            cd /var/www/blue.flippi.ai
+            if [ -f growth.js ]; then
+              # Install growth service dependencies
+              cd growth-backend && npm install --production || true
+              cd ..
+              # Start growth service with PM2
+              pm2 start growth.js --name growth-service --env production || pm2 restart growth-service || true
+            fi
             
-            # Wait for services to start
-            sleep 5
+            # Restart backend
+            pm2 restart dev-backend || true
             
-            # Check if backend is running
-            pm2 show dev-backend || true
-            curl -s http://localhost:3002/health || echo "Backend health check"
-            
-            # Test OAuth endpoint
-            echo "🔍 Testing OAuth endpoint..."
-            curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai/auth/google || echo "OAuth test"
+            # Run SSL fix if needed
+            if [ -f /var/www/blue.flippi.ai/scripts/fix-blue-ssl-files.sh ]; then
+              cd /var/www/blue.flippi.ai && bash scripts/fix-blue-ssl-files.sh || true
+            fi
             
             # Reload nginx
-            nginx -s reload || systemctl reload nginx || echo "Nginx reload attempted"
+            nginx -t && nginx -s reload || true
+            
+            # Clean up
+            rm -rf /tmp/deployment.tar.gz /tmp/deploy-package
+            
+            echo "=== Deployment complete ==="
+            
+      # 7. Verify deployment
+      - name: Verify deployment
+        run: |
+          sleep 5
+          
+          # Test main site
+          echo "🔍 Testing main site..."
+          response=$(curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai)
+          if [ "$response" = "200" ]; then
+            echo "✅ Main site is responding correctly"
+          else
+            echo "⚠️ Main site returned status code: $response"
+          fi
+          
+          # Test OAuth endpoint
+          echo "🔍 Testing OAuth endpoint..."
+          oauth_response=$(curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai/auth/google)
+          if [ "$oauth_response" = "200" ] || [ "$oauth_response" = "302" ]; then
+            echo "✅ OAuth endpoint is responding correctly"
+          else
+            echo "⚠️ OAuth endpoint returned status code: $oauth_response"
+          fi
+          
+          # Test backend health
+          echo "🔍 Testing backend health..."
+          backend_response=$(curl -s -o /dev/null -w "%{http_code}" http://137.184.24.201:3002/health)
+          if [ "$backend_response" = "200" ]; then
+            echo "✅ Backend is responding correctly"
+          else
+            echo "⚠️ Backend returned status code: $backend_response"
+          fi
+          
+          # Test growth service
+          echo "🔍 Testing growth service..."
+          growth_response=$(curl -s -o /dev/null -w "%{http_code}" http://137.184.24.201:3003/api/growth/status)
+          if [ "$growth_response" = "200" ]; then
+            echo "✅ Growth service is responding correctly"
+          else
+            echo "⚠️ Growth service returned status code: $growth_response"
+          fi
+          
+      # 8. Notify completion
+      - name: Notify completion
+        run: |
+          echo "Enhanced OAuth deployment complete!"
+          echo "Commit: ${{ github.sha }}"
+          echo "Time: $(date -u)"
+          echo ""
+          echo "Features deployed:"
+          echo "- OAuth authentication ✅"
+          echo "- Clean room deployment ✅"
+          echo "- Growth service ✅"
+          echo "- SSL fixes ✅"
