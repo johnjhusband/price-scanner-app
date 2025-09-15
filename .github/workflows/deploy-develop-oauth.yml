@@ -206,17 +206,17 @@ EOF
               echo "Warning: Growth service deployment script not found"
             fi
             
-            # 8. Apply nginx configuration with growth routes
+            # 8. Apply nginx configuration
             echo "💖 Configuring nginx..."
-            if [ -f scripts/post-deploy-all-routes.sh ]; then
-              bash scripts/post-deploy-all-routes.sh blue.flippi.ai 3002
-            elif [ -f scripts/add-growth-routes-nginx.sh ]; then
-              bash scripts/add-growth-routes-nginx.sh blue.flippi.ai 3002
-            fi
             
-            # 9. Ensure static file serving is configured
-            if [ -f scripts/setup-simple-blue.sh ]; then
-              bash scripts/setup-simple-blue.sh
+            # Use infra-nginx if available (preferred)
+            if [ -f infra-nginx/deploy-nginx.sh ]; then
+              echo "🌸 Using infra-nginx deployment..."
+              bash infra-nginx/deploy-nginx.sh blue
+            elif [ -f scripts/post-deploy-all-routes.sh ]; then
+              bash scripts/post-deploy-all-routes.sh blue.flippi.ai 3002
+            else
+              echo "🌾 WARNING: No nginx configuration script found"
             fi
             
             # 10. Save PM2 configuration
