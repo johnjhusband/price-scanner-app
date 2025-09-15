@@ -123,13 +123,6 @@ ENVEOF
               echo "📋 Last 50 lines of build output:"
               tail -50 build.log
               
-              # Check for common issues
-              if grep -q "Cannot find module" build.log; then
-                echo "💔 Missing dependencies detected. Running npm install again..."
-                npm install
-                # Try build one more time
-                npx expo export --platform web --output-dir dist 2>&1 | tee build-retry.log
-              fi
               
               # If still no index.html, exit
               if [ ! -f dist/index.html ]; then
