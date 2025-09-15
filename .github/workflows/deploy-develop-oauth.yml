@@ -51,6 +51,14 @@ jobs:
               echo "ERROR: OAuth credentials script not found - OAuth will not work!"
             fi
             
+            # Verify shared .env has required keys
+            echo "🔍 Verifying shared .env contents..."
+            if [ -f /var/www/shared/.env ]; then
+              grep -E "^(OPENAI_API_KEY|GOOGLE_CLIENT_ID)=" /var/www/shared/.env | sed 's/=.*/=***hidden***/'
+            else
+              echo "ERROR: /var/www/shared/.env not found!"
+            fi
+            
             # 4. Install backend dependencies
             echo "📦 Installing backend dependencies..."
             cd backend && npm install --production
