@@ -3,8 +3,9 @@ const cors = require('cors');
 const path = require('path');
 const { initializeDatabase, getDatabase } = require('./backend/database');
 
-// Load .env from current directory
-require('dotenv').config();
+// Load .env from shared location
+const envPath = path.join(__dirname, '../shared/.env');
+require('dotenv').config({ path: envPath });
 
 // Simple console logging since logger doesn't exist yet
 const logger = {

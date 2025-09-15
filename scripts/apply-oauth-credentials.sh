@@ -26,25 +26,28 @@ if grep -q "^GOOGLE_CLIENT_ID=54703081262" "$SHARED_ENV" 2>/dev/null; then
 else
     echo "📝 Updating OAuth credentials in shared .env..."
     
-    # Remove any existing OAuth entries
+    # Remove any existing OAuth entries and OPENAI_API_KEY
     if [ -f "$SHARED_ENV" ]; then
-        grep -v -E "^(GOOGLE_CLIENT_ID|GOOGLE_CLIENT_SECRET|JWT_SECRET)=" "$SHARED_ENV" > "$SHARED_ENV.tmp" || true
+        grep -v -E "^(GOOGLE_CLIENT_ID|GOOGLE_CLIENT_SECRET|JWT_SECRET|OPENAI_API_KEY)=" "$SHARED_ENV" > "$SHARED_ENV.tmp" || true
         mv "$SHARED_ENV.tmp" "$SHARED_ENV"
     fi
     
     # Append OAuth credentials
-    cat >> "$SHARED_ENV" << 'EOF'
+    cat >> "$SHARED_ENV" << EOF
 
 # Google OAuth Credentials (Created July 25, 2025)
 GOOGLE_CLIENT_ID=54703081262-jfcfm1h0jiljenmmrg59kjv0cfta2hdu.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=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
 JWT_SECRET=flippi-jwt-secret-2025-blue-environment
+
+# OpenAI API Key (Required for backend to start)
+OPENAI_API_KEY=${OPENAI_API_KEY}
 EOF
 fi
 
 echo "✅ OAuth credentials applied successfully"
 echo "📋 Current OAuth configuration:"
-grep -E "^(GOOGLE_CLIENT_ID|GOOGLE_CLIENT_SECRET|JWT_SECRET)=" "$SHARED_ENV" | sed 's/SECRET=.*/SECRET=***hidden***/'
+grep -E "^(GOOGLE_CLIENT_ID|GOOGLE_CLIENT_SECRET|JWT_SECRET|OPENAI_API_KEY)=" "$SHARED_ENV" | sed 's/SECRET=.*/SECRET=***hidden***/' | sed 's/API_KEY=.*/API_KEY=***hidden***/'
 
 # Restart backend to pick up new environment variables
 echo "🔄 Restarting backend to apply changes..."
