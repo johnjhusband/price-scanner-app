@@ -1,4 +1,4 @@
-name: Deploy Development with OAuth Fix
+name: Deploy Development (OAuth + Clean + Growth)
 on:
   push:
     branches: [develop]
