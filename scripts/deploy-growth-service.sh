@@ -7,6 +7,17 @@ echo "✨ Deploying Growth Service..."
 # Navigate to project directory
 cd /var/www/blue.flippi.ai
 
+# Install growth service dependencies
+echo "📦 Installing growth service dependencies..."
+if [ -f "package-growth.json" ]; then
+    cp package-growth.json package.json
+    npm install --production
+    echo "✅ Growth service dependencies installed"
+else
+    echo "⚠️  package-growth.json not found, installing express manually..."
+    npm install express path --save
+fi
+
 # Ensure data directory exists
 mkdir -p data
 

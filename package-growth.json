@@ -1,0 +1,13 @@
+{
+  "name": "growth-service",
+  "version": "1.0.0",
+  "description": "Standalone growth service for marketing site",
+  "main": "growth.js",
+  "scripts": {
+    "start": "node growth.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "path": "^0.12.7"
+  }
+}
