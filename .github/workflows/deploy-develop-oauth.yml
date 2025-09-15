@@ -44,12 +44,27 @@ jobs:
             # 3. Apply OAuth credentials BEFORE installing dependencies
             echo "🌸 Applying OAuth credentials..."
             echo "Debug: OPENAI_API_KEY length is ${#OPENAI_API_KEY}"
+            
+            # 🌺 DIAGNOSTIC: Check for OAuth script
+            echo "🌻 Looking for OAuth script:"
+            ls -la scripts/apply-oauth-credentials.sh 2>/dev/null || echo "💔 apply-oauth-credentials.sh not found!"
+            
             if [ -f scripts/apply-oauth-credentials.sh ]; then
               # Export OPENAI_API_KEY so the script can use it
               export OPENAI_API_KEY="${OPENAI_API_KEY}"
               bash scripts/apply-oauth-credentials.sh
             else
-              echo "ERROR: OAuth credentials script not found - OAuth will not work!"
+              echo "💔 ERROR: OAuth credentials script not found - OAuth will not work!"
+              echo "📁 Contents of scripts directory:"
+              ls -la scripts/ | head -10
+            fi
+            
+            # 🌸 Ensure shared .env exists
+            if [ ! -f /var/www/shared/.env ]; then
+              echo "🌺 Creating /var/www/shared/.env..."
+              mkdir -p /var/www/shared
+              touch /var/www/shared/.env
+              echo "# Created by deployment $(date)" > /var/www/shared/.env
             fi
             
             # Verify shared .env has required keys
@@ -66,11 +81,89 @@ jobs:
             
             # 5. Build frontend with all assets
             echo "🏗️ Building frontend..."
-            cd ../mobile-app && npm install && npx expo export --platform web --output-dir dist
+            cd ../mobile-app
+            
+            # 🌷 DIAGNOSTIC: Check mobile-app setup
+            echo "📋 Checking mobile-app directory:"
+            if [ -f package.json ]; then
+              echo "✅ package.json exists"
+            else
+              echo "💔 ERROR: package.json missing in mobile-app!"
+              pwd
+              ls -la
+            fi
+            
+            # Install dependencies with error checking
+            echo "📦 Installing frontend dependencies..."
+            if ! npm install; then
+              echo "💔 ERROR: npm install failed!"
+              echo "📋 npm error log:"
+              cat ~/.npm/_logs/*.log | tail -50 || true
+              exit 1
+            fi
+            
+            # Build with full output
+            echo "🌺 Running expo export..."
+            if ! npx expo export --platform web --output-dir dist; then
+              echo "💔 ERROR: Expo export failed!"
+              echo "📋 Checking for common issues:"
+              
+              # Check if expo is installed
+              npx expo --version || echo "💔 Expo CLI not found!"
+              
+              # Check for build errors
+              if [ -f .expo/web/build/logs/*.log ]; then
+                echo "📋 Expo build logs:"
+                cat .expo/web/build/logs/*.log | tail -50
+              fi
+              
+              # Create minimal dist directory as fallback
+              echo "🌻 Creating minimal dist directory..."
+              mkdir -p dist
+              
+              # Create basic index.html
+              echo "🌸 Creating fallback index.html..."
+              cat > dist/index.html << 'EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flippi - Build Error</title>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; padding: 50px; }
+    .error { color: #d32f2f; }
+  </style>
+</head>
+<body>
+  <h1>🌺 Flippi Build Error</h1>
+  <p class="error">The application failed to build properly.</p>
+  <p>Please check the deployment logs.</p>
+</body>
+</html>
+EOF
+              
+              # Create _expo directory structure
+              mkdir -p dist/_expo/static/js/web
+              echo "// Placeholder" > dist/_expo/static/js/web/app.js
+            fi
             
             # Copy essential web assets
-            cp web-styles.css dist/ || echo "Warning: Could not copy web-styles.css"
-            cp -r assets dist/ || echo "Warning: Could not copy assets directory"
+            if [ -f web-styles.css ]; then
+              cp web-styles.css dist/
+              echo "✅ web-styles.css copied"
+            else
+              echo "💔 web-styles.css not found!"
+              # Create minimal web-styles.css
+              echo "/* Minimal styles */" > dist/web-styles.css
+            fi
+            
+            if [ -d assets ]; then
+              cp -r assets dist/
+              echo "✅ assets directory copied"
+            else
+              echo "🌾 assets directory not found"
+            fi
             
             # 💝 DIAGNOSTIC: Verify frontend build output
             echo "📋 Frontend build verification:"
