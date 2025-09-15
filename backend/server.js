@@ -887,6 +887,10 @@ app.use('/auth', authRoutes);
 const adminRoutes = require('./routes/admin');
 app.use('/admin', adminRoutes);
 
+// Auth routes (Google OAuth)
+const authRoutes = require('./routes/auth');
+app.use('/', authRoutes);
+
 // Payment routes
 const paymentRoutes = require('./routes/payment');
 app.use('/api/payment', paymentRoutes);
