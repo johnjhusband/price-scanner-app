@@ -66,7 +66,7 @@ jobs:
             
             # Start/restart backend with proper environment
             pm2 delete dev-backend || true
-            pm2 start backend/server.js --name dev-backend --env-file /var/www/shared/.env
+            pm2 start backend/server.js --name dev-backend
             
             # 7. Deploy Growth Service
             echo "🌱 Deploying Growth Service..."
