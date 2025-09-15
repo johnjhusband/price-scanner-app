@@ -57,8 +57,8 @@ const upload = multer({
 
 // Environment validation
 if (!process.env.OPENAI_API_KEY) {
-  console.error('ERROR: OPENAI_API_KEY is not set in .env file');
-  process.exit(1);
+  console.error('🤖💔 WARNING: OPENAI_API_KEY is not set - AI features will not work');
+  // Don't exit - allow server to start without AI features
 }
 
 // Security middleware - Issue #88
