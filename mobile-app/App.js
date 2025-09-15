@@ -1867,9 +1867,6 @@ export default function App() {
               <TouchableOpacity onPress={() => setShowAdminDashboard(true)} style={styles.adminButton}>
                 <Text style={styles.adminText}>Admin</Text>
               </TouchableOpacity>
-              <TouchableOpacity onPress={() => setShowBlogPage(true)} style={styles.adminButton}>
-                <Text style={styles.adminText}>Blog</Text>
-              </TouchableOpacity>
             </>
           )}
           <TouchableOpacity onPress={handleExit} style={styles.exitButton}>
@@ -2347,6 +2344,20 @@ export default function App() {
             style={styles.footerLink}
           >
             <Text style={styles.footerLinkText}>Mission</Text>
+          </TouchableOpacity>
+          <Text style={styles.footerDivider}>•</Text>
+          <TouchableOpacity
+            onPress={() => {
+              if (Platform.OS === 'web') {
+                window.open('/story', '_blank');
+              } else {
+                // For mobile, you might want to open the growth service URL
+                Linking.openURL('http://localhost:3003/story');
+              }
+            }}
+            style={styles.footerLink}
+          >
+            <Text style={styles.footerLinkText}>Story</Text>
           </TouchableOpacity>
         </View>
         <Text style={[styles.legalText, { marginBottom: 4 }]}>

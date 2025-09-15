@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform, Image, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, Image, ScrollView, Dimensions, Linking } from 'react-native';
 import FlippiLogo from './FlippiLogo';
 import MissionModal from './MissionModal';
 import { brandColors, typography } from '../theme/brandColors';
@@ -213,6 +213,20 @@ const EnterScreen = () => {
             onPress={() => setShowMissionModal(true)}
           >
             Mission
+          </Text>
+          {' '}·{' '}
+          <Text 
+            style={styles.link}
+            onPress={() => {
+              if (Platform.OS === 'web') {
+                window.open('/story', '_blank');
+              } else {
+                // For mobile, you might want to open the growth service URL
+                Linking.openURL('http://localhost:3003/story');
+              }
+            }}
+          >
+            Story
           </Text>
         </Text>
       </View>
