@@ -955,7 +955,7 @@ app.use('/api/growth/analytics', growthAnalyticsRoutes);
 
 // Analytics Export Routes
 const analyticsExportRoutes = require('./routes/analyticsExport');
-// Analytics export routes moved to standalone service - archived in Growth-Archive/
+app.use('/api/growth/analytics/export', analyticsExportRoutes);
 
 // FotoFlip routes
 const fotoflipRoutes = require('./routes/fotoflip');

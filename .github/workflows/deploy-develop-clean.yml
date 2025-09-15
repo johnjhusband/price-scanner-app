@@ -106,6 +106,30 @@ jobs:
             # Fix permissions
             chown -R www-data:www-data /var/www/blue.flippi.ai/mobile-app/dist || true
             
+            # Apply OAuth credentials fix
+            echo "🔐 Applying OAuth credentials..."
+            if [ -f "/var/www/blue.flippi.ai/scripts/apply-oauth-credentials.sh" ]; then
+              cd /var/www/blue.flippi.ai && bash scripts/apply-oauth-credentials.sh || true
+            else
+              echo "Warning: OAuth credentials script not found"
+            fi
+            
+            # Apply growth routes configuration
+            echo "🌱 Applying growth routes..."
+            if [ -f "/var/www/blue.flippi.ai/scripts/post-deploy-all-routes.sh" ]; then
+              cd /var/www/blue.flippi.ai && bash scripts/post-deploy-all-routes.sh blue.flippi.ai 3002 || true
+            elif [ -f "/var/www/blue.flippi.ai/scripts/add-growth-routes-nginx.sh" ]; then
+              cd /var/www/blue.flippi.ai && bash scripts/add-growth-routes-nginx.sh blue.flippi.ai 3002 || true
+            fi
+            
+            # Setup simple static file serving
+            if [ -f "/var/www/blue.flippi.ai/scripts/setup-simple-blue.sh" ]; then
+              cd /var/www/blue.flippi.ai && bash scripts/setup-simple-blue.sh || true
+            fi
+            
+            # Restart backend only (clean workflow doesn't use PM2 frontend)
+            pm2 restart dev-backend || true
+            
             # Run SSL fix if needed
             if [ -f "/var/www/blue.flippi.ai/scripts/fix-blue-ssl-files.sh" ]; then
               cd /var/www/blue.flippi.ai && bash scripts/fix-blue-ssl-files.sh || true
@@ -123,11 +147,32 @@ jobs:
       - name: Verify deployment
         run: |
           sleep 5
+          
+          # Test main site
+          echo "🔍 Testing main site..."
           response=$(curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai)
           if [ "$response" = "200" ]; then
-            echo "✅ Site is responding correctly"
+            echo "✅ Main site is responding correctly"
           else
-            echo "⚠️ Site returned status code: $response"
+            echo "⚠️ Main site returned status code: $response"
+          fi
+          
+          # Test OAuth endpoint
+          echo "🔍 Testing OAuth endpoint..."
+          oauth_response=$(curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai/auth/google)
+          if [ "$oauth_response" = "200" ] || [ "$oauth_response" = "302" ]; then
+            echo "✅ OAuth endpoint is responding correctly"
+          else
+            echo "⚠️ OAuth endpoint returned status code: $oauth_response"
+          fi
+          
+          # Test backend health
+          echo "🔍 Testing backend health..."
+          backend_response=$(curl -s -o /dev/null -w "%{http_code}" http://137.184.24.201:3002/health)
+          if [ "$backend_response" = "200" ]; then
+            echo "✅ Backend is responding correctly"
+          else
+            echo "⚠️ Backend returned status code: $backend_response"
           fi
           
       # 8. Test legal pages with PlayClone
