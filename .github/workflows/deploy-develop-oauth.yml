@@ -77,7 +77,8 @@ jobs:
             
             # Start/restart backend with proper environment
             pm2 delete dev-backend || true
-            pm2 start backend/server.js --name dev-backend
+            export OPENAI_API_KEY="${OPENAI_API_KEY}"
+            pm2 start ecosystem.config.js --only dev-backend
             
             # 7. Deploy Growth Service
             echo "🌱 Deploying Growth Service..."

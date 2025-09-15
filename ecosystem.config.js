@@ -10,6 +10,7 @@ module.exports = {
         ENABLE_LUXE_PHOTO: 'true',
         FOTOFLIP_BG_COLOR: '#FAF6F1',
         FOTOFLIP_MODE: 'beautify',
+        OPENAI_API_KEY: process.env.OPENAI_API_KEY,
       },
       watch: false,
       instances: 1,
