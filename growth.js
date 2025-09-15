@@ -1,19 +1,24 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const { initializeDatabase } = require('./backend/database');
-const logger = require('./backend/utils/logger');
+const { initializeDatabase, getDatabase } = require('./backend/database');
 
-// Load .env from shared location
-const envPath = path.join(__dirname, '../shared/.env');
-require('dotenv').config({ path: envPath });
+// Load .env from current directory
+require('dotenv').config();
+
+// Simple console logging since logger doesn't exist yet
+const logger = {
+  info: (...args) => console.log('[Growth Service]', ...args),
+  error: (...args) => console.error('[Growth Service]', ...args)
+};
 
 // Initialize database for growth features
 try {
   initializeDatabase();
-  logger.info('[Growth Service] Database initialized');
+  const db = getDatabase();
+  logger.info('Database initialized');
 } catch (error) {
-  logger.error('[Growth Service] Database initialization failed:', error);
+  logger.error('Database initialization failed:', error);
   process.exit(1);
 }
 
@@ -72,26 +77,15 @@ app.get('/growth/', (req, res) => {
 
 // Growth automation routes
 const growthRoutes = require('./backend/routes/growth');
-const growthAdminRoutes = require('./backend/routes/growthAdmin');
-const growthAnalyticsRoutes = require('./backend/routes/growthAnalytics');
-const analyticsExportRoutes = require('./backend/routes/analyticsExport');
 
 // Mount routes
 app.use('/api/growth', growthRoutes);
-// Removed growthAdminRoutes - was conflicting with dashboard UI
-app.use('/api/growth/analytics', growthAnalyticsRoutes);
-app.use('/api/growth/analytics/export', analyticsExportRoutes);
 
 // Initialize growth automation modules
 const redditMonitor = require('./backend/growth/redditMonitor');
-const { startAutomation } = require('./backend/growth/redditAutomation');
 
-// Start Reddit automation if enabled
-if (process.env.ENABLE_REDDIT_AUTOMATION === 'true') {
-  const intervalMinutes = parseInt(process.env.REDDIT_AUTOMATION_INTERVAL) || 30;
-  logger.info(`[Growth Service] Starting Reddit automation with ${intervalMinutes} minute interval`);
-  startAutomation(intervalMinutes);
-}
+// Reddit automation disabled for now
+logger.info('Reddit automation disabled');
 
 // Error handling
 app.use((error, req, res, next) => {
