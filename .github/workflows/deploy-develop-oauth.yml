@@ -113,7 +113,7 @@ jobs:
             # Run expo export with explicit output
             echo "📦 Starting build process..."
             echo "Current directory: $(pwd)"
-            npm run build:web
+            npm run build:web || exit 1
             echo "Build complete. Checking dist contents:"
             ls -la dist/ | head -10 || echo "dist directory not found"
             
@@ -158,7 +158,7 @@ jobs:
             
             # 6. Ensure PM2 processes are properly configured
             echo "🌺 Setting up PM2 processes..."
-            cd /var/www/blue.flippi.ai
+            # Note: staying in mobile-app directory to preserve dist/ path
             
             # Start/restart backend with proper environment
             echo "🌻 Current PM2 status:"
@@ -166,7 +166,7 @@ jobs:
             
             pm2 delete dev-backend || true
             export OPENAI_API_KEY="${OPENAI_API_KEY}"
-            pm2 start ecosystem.config.js --only dev-backend
+            pm2 start /var/www/blue.flippi.ai/ecosystem.config.js --only dev-backend
             
             # 💐 DIAGNOSTIC: Verify backend started
             sleep 5
