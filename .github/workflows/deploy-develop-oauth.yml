@@ -1,14 +1,11 @@
-name: Deploy Development (OAuth + Clean + Growth)
+name: Deploy Blue
 on:
-  push:
-    branches: [develop]
+  push: { branches: [develop] }
   workflow_dispatch:
-
 permissions:
   contents: read
-
 concurrency:
-  group: blue-deployment-${{ github.ref }}
+  group: blue-deploy-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -16,88 +13,55 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
-      - uses: appleboy/ssh-action@v0.1.7
+      - name: Deploy to blue via SSH
+        uses: appleboy/ssh-action@v0.1.10
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GOOGLE_CLIENT_ID: ${{ secrets.BLUE_GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.BLUE_GOOGLE_CLIENT_SECRET }}
         with:
-          host: 137.184.24.201
-          username: root
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          envs: OPENAI_API_KEY
-          script_stop: true
+          host: ${{ secrets.BLUE_SSH_HOST }}
+          username: ${{ secrets.BLUE_SSH_USER }}
+          key: ${{ secrets.BLUE_SSH_KEY }}
           script: |
             set -euo pipefail
+            export DEBIAN_FRONTEND=noninteractive
+
             cd /var/www/blue.flippi.ai
+            echo "== Sync code =="
+            git fetch origin develop
+            git reset --hard origin/develop
+            echo "Server commit: $(git rev-parse --short HEAD)"
 
-            # SSL
-            if [ -f scripts/fix-ssl-and-growth-routes.sh ]; then bash scripts/fix-ssl-and-growth-routes.sh; fi
-            if [ -f scripts/fix-blue-ssl-files.sh ]; then bash scripts/fix-blue-ssl-files.sh; fi
+            echo "== Backend deps =="
+            cd backend && npm ci --production && cd ..
 
-            # Git
-            git reset --hard HEAD && git clean -fd
-            git fetch origin develop && git reset --hard origin/develop
+            echo "== Python/venv for FotoFlip =="
+            sudo apt-get update -yq
+            sudo apt-get install -yq python3 python3-venv python3-pip python3-dev
+            python3 -m venv .venv || true
+            . .venv/bin/activate
+            pip install -U pip
+            pip install -r backend/requirements.txt
+            python - <<'PY'
+from rembg import new_session; new_session('u2net'); print("MODEL_OK")
+PY
+            deactivate
 
-            # Shared env
-            mkdir -p /var/www/shared
-            [ -f /var/www/shared/.env ] || {
-              printf "NODE_ENV=development\nPORT=3002\nOPENAI_API_KEY=${OPENAI_API_KEY:-missing}\n" > /var/www/shared/.env
-            }
-
-            # OAuth
-            if [ -f scripts/apply-oauth-credentials.sh ]; then 
-              export OPENAI_API_KEY="${OPENAI_API_KEY}"
-              bash scripts/apply-oauth-credentials.sh
-            else 
-              (ls -la scripts/ | grep -E "oauth|auth") || true
-            fi
-
-            # Verify env (no crash if missing)
-            if [ -f /var/www/shared/.env ]; then
-              if grep -Eq "^(OPENAI_API_KEY|GOOGLE_CLIENT_ID)=" /var/www/shared/.env; then
-                grep -E "^(OPENAI_API_KEY|GOOGLE_CLIENT_ID)=" /var/www/shared/.env | sed 's/=.*/=***hidden***/'
-              else echo "WARN: required keys missing"; fi
-            fi
-
-            # Backend
-            cd backend && npm ci && cd ..
-
-            # Frontend
+            echo "== Frontend build =="
             cd mobile-app
-            [ -f package.json ] || { echo "ERROR: mobile-app/package.json missing"; exit 1; }
-            npm ci || { tail -n 50 ~/.npm/_logs/*.log || true; exit 1; }
-            rm -rf dist .expo
-            export NODE_OPTIONS="--max-old-space-size=4096"
-            npm run build:web || exit 1
-            [ -d dist ] || { echo "ERROR: dist missing"; exit 1; }
-            [ -f web-styles.css ] && cp web-styles.css dist/ || echo "/* minimal */" > dist/web-styles.css
-            [ -d assets ] && cp -r assets dist/ || true
-            [ -f dist/index.html ] || echo "WARN: index.html missing"
-            [ -d dist/_expo ] || echo "WARN: _expo missing"
+            npm ci
+            npx expo export --platform web --output-dir dist
+            cp ../web-styles.css dist/ || true
+            cd ..
 
-            # PM2
-            pm2 delete dev-backend || true
-            export OPENAI_API_KEY="${OPENAI_API_KEY}"
-            pm2 start /var/www/blue.flippi.ai/ecosystem.config.js --only dev-backend
-            sleep 5
-            pm2 describe dev-backend | grep -q online || { pm2 logs dev-backend --lines 30 --nostream; exit 1; }
+            echo "== Nginx & PM2 =="
+            sudo nginx -t && sudo nginx -s reload || true
+            pm2 set FOTOFLIP_PYTHON /var/www/blue.flippi.ai/.venv/bin/python
+            pm2 set GOOGLE_CLIENT_ID "${GOOGLE_CLIENT_ID}"
+            pm2 set GOOGLE_CLIENT_SECRET "${GOOGLE_CLIENT_SECRET}"
+            pm2 restart flippi-backend || pm2 start ecosystem.config.js --only flippi-backend
 
-            # Growth
-            [ -f scripts/deploy-growth-service.sh ] && bash scripts/deploy-growth-service.sh || echo "WARN: no growth deploy script"
-
-            # Nginx
-            if [ -f infra-nginx/deploy-nginx.sh ]; then 
-              bash infra-nginx/deploy-nginx.sh blue
-            elif [ -f scripts/post-deploy-all-routes.sh ]; then 
-              bash scripts/post-deploy-all-routes.sh blue.flippi.ai 3002
-            fi
-            pm2 save
-            nginx -t && nginx -s reload
-
-            # Health checks (robust curl)
-            curl -fsS --retry 3 --retry-connrefused --max-time 5 http://localhost:3002/health || { pm2 status dev-backend; exit 1; }
-            code=$(curl -s -o /dev/null -w "%{http_code}" --retry 3 --retry-connrefused http://localhost:3002/auth/google)
-            [ "$code" = "302" ] || [ "$code" = "200" ] || exit 1
-            curl -fsS --retry 3 https://blue.flippi.ai >/dev/null || exit 1
-            curl -fsS --retry 3 http://localhost:3003/story >/dev/null || echo "WARN: growth service not responding"
-
-            echo "✅ Deployment complete"
+            echo "== Healthchecks =="
+            test "$(curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai)" = "200"
+            test "$(curl -s -o /dev/null -w "%{http_code}" -L https://blue.flippi.ai/auth/google)" = "200" || true
+            test "$(curl -s -o /dev/null -w "%{http_code}" -X POST https://blue.flippi.ai/api/fotoflip/health)" = "200"
