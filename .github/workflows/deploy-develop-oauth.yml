@@ -58,7 +58,7 @@ jobs:
           # Copy growth service files
           cp -r growth-backend deploy-package/ || true
           cp growth.js deploy-package/ || true
-          cp growth-ui deploy-package/ || true
+          cp -r growth-ui deploy-package/ || true
           
           # Create deployment info
           echo "Deploy Info:" > deploy-package/DEPLOY_INFO.txt
@@ -144,10 +144,6 @@ jobs:
             echo "🚀 Starting growth service..."
             cd /var/www/blue.flippi.ai
             if [ -f growth.js ]; then
-              # Install growth service dependencies
-              cd growth-backend && npm install --production || true
-              cd ..
-              # Start growth service with PM2
               pm2 start growth.js --name growth-service --env production || pm2 restart growth-service || true
             fi
             

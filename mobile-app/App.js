@@ -300,6 +300,37 @@ export default function App() {
     }
   };
 
+  // Process image file for web upload
+  const processImageFile = (file) => {
+    console.log('[processImageFile] Processing file:', file.name, file.type, file.size);
+    
+    // Check file size
+    if (file.size > 10 * 1024 * 1024) {
+      Alert.alert('Error', 'Image file is too large. Please select an image under 10MB.');
+      return;
+    }
+    
+    // Read file as data URL
+    const reader = new FileReader();
+    
+    reader.onload = (e) => {
+      console.log('[processImageFile] File read successfully');
+      const dataUrl = e.target.result;
+      setImage(dataUrl);
+      
+      // Extract base64 for later use
+      const base64 = dataUrl.split(',')[1];
+      setImageBase64(base64);
+    };
+    
+    reader.onerror = (error) => {
+      console.error('[processImageFile] Error reading file:', error);
+      Alert.alert('Error', 'Failed to read image file. Please try again.');
+    };
+    
+    reader.readAsDataURL(file);
+  };
+
   // Helper function to check if a file is an image
   const isImageFile = (file) => {
     const imageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'image/heic', 'image/heif'];
@@ -625,22 +656,43 @@ export default function App() {
   }, [analysisResult]);
 
   const pickImage = async () => {
+    console.log('[pickImage] Function called');
+    
     if (Platform.OS === 'web') {
-      // Web file picker - no camera capture attribute (fixed from blue)
-      const input = document.createElement('input');
-      input.type = 'file';
-      input.accept = 'image/*';
-      // Don't set capture attribute - let user choose between camera and gallery
-      
-      input.onchange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          processImageFile(file);
-        }
-      };
-      
-      // Trigger file picker
-      input.click();
+      try {
+        console.log('[pickImage] Web platform detected, creating file input');
+        // Web file picker - no camera capture attribute (fixed from blue)
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        // Don't set capture attribute - let user choose between camera and gallery
+        
+        input.onchange = (e) => {
+          console.log('[pickImage] File input changed, files:', e.target.files);
+          const file = e.target.files[0];
+          if (file) {
+            console.log('[pickImage] File selected:', file.name, file.type, file.size);
+            processImageFile(file);
+          } else {
+            console.log('[pickImage] No file selected');
+          }
+        };
+        
+        // Add to DOM temporarily to ensure it works in all browsers
+        document.body.appendChild(input);
+        
+        // Trigger file picker
+        console.log('[pickImage] Triggering file picker click');
+        input.click();
+        
+        // Clean up after a delay
+        setTimeout(() => {
+          document.body.removeChild(input);
+        }, 1000);
+      } catch (error) {
+        console.error('[pickImage] Error in web file picker:', error);
+        Alert.alert('Error', 'Failed to open file picker. Please try again.');
+      }
     } else {
       // Mobile file picker
       let result = await ImagePicker.launchImageLibraryAsync({
