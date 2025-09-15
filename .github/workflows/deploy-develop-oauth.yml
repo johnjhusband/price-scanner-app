@@ -112,7 +112,10 @@ jobs:
             
             # Run expo export with explicit output
             echo "📦 Starting build process..."
+            echo "Current directory: $(pwd)"
             npm run build:web
+            echo "Build complete. Checking dist contents:"
+            ls -la dist/ | head -10 || echo "dist directory not found"
             
             
             echo "✅ Build completed successfully!"
