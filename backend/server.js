@@ -103,9 +103,9 @@ app.use((req, res, next) => {
 });
 
 // OpenAI setup
-const openai = new OpenAI({
+const openai = process.env.OPENAI_API_KEY ? new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
-});
+}) : null;
 
 // Enhanced health check from v2.0
 app.get('/health', (req, res) => {
