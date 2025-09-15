@@ -115,7 +115,7 @@ ENVEOF
             
             # Run expo export with explicit output
             echo "📦 Starting build process..."
-            npx expo export --platform web --output-dir dist 2>&1 | tee build.log
+            npm run build:web
             
             # Check if build succeeded
             if [ ! -f dist/index.html ]; then
