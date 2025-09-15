@@ -76,7 +76,7 @@ jobs:
             
             # 4. Install backend dependencies
             echo "📦 Installing backend dependencies..."
-            cd backend && npm install --production
+            cd backend && npm install
             
             # 5. Build frontend with all assets
             echo "🏗️ Building frontend..."
