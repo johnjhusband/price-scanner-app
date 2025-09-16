@@ -82,6 +82,15 @@ jobs:
             test "$(curl -s -o /dev/null -w "%{http_code}" -L https://blue.flippi.ai/auth/google)" = "200" || true
 
             echo "Checking FotoFlip health..."
-            FOTOFLIP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST https://blue.flippi.ai/api/fotoflip/health)
+            echo "Waiting 5 seconds for backend to stabilize..."
+            sleep 5
+            FOTOFLIP_RESPONSE=$(curl -s -w "\nHTTP_CODE:%{http_code}" -X POST https://blue.flippi.ai/api/fotoflip/health)
+            FOTOFLIP_STATUS=$(echo "$FOTOFLIP_RESPONSE" | grep "HTTP_CODE:" | cut -d: -f2)
+            FOTOFLIP_BODY=$(echo "$FOTOFLIP_RESPONSE" | sed '/HTTP_CODE:/d')
             echo "FotoFlip status code: $FOTOFLIP_STATUS"
+            if [ "$FOTOFLIP_STATUS" != "200" ]; then
+              echo "FotoFlip response body: $FOTOFLIP_BODY"
+              echo "Checking PM2 logs for errors..."
+              pm2 logs dev-backend --lines 20 --nostream || true
+            fi
             test "$FOTOFLIP_STATUS" = "200"
