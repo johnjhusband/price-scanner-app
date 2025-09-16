@@ -19,9 +19,9 @@ jobs:
           GOOGLE_CLIENT_ID: ${{ secrets.BLUE_GOOGLE_CLIENT_ID }}
           GOOGLE_CLIENT_SECRET: ${{ secrets.BLUE_GOOGLE_CLIENT_SECRET }}
         with:
-          host: ${{ secrets.BLUE_SSH_HOST }}
-          username: ${{ secrets.BLUE_SSH_USER }}
-          key: ${{ secrets.BLUE_SSH_KEY }}
+          host: ${{ secrets.BLUE_SERVER_HOST }}
+          username: root
+          key: ${{ secrets.BLUE_SERVER_SSH_KEY }}
           script: |
             set -euo pipefail
             export DEBIAN_FRONTEND=noninteractive
