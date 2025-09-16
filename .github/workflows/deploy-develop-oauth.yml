@@ -43,8 +43,8 @@ jobs:
             pip install -U pip
             pip install -r backend/requirements.txt
             python - <<'PY'
-from rembg import new_session; new_session('u2net'); print("MODEL_OK")
-PY
+            from rembg import new_session; new_session('u2net'); print("MODEL_OK")
+            PY
             deactivate
 
             echo "== Frontend build =="
