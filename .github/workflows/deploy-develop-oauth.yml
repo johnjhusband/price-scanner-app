@@ -82,4 +82,6 @@ jobs:
             test "$(curl -s -o /dev/null -w "%{http_code}" -L https://blue.flippi.ai/auth/google)" = "200" || true
 
             echo "Checking FotoFlip health..."
-            test "$(curl -s -o /dev/null -w "%{http_code}" -X POST https://blue.flippi.ai/api/fotoflip/health)" = "200"
+            FOTOFLIP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" -X POST https://blue.flippi.ai/api/fotoflip/health)
+            echo "FotoFlip status code: $FOTOFLIP_STATUS"
+            test "$FOTOFLIP_STATUS" = "200"
