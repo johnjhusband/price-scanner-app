@@ -73,6 +73,13 @@ jobs:
             pm2 restart dev-backend || pm2 start ecosystem.config.js --only dev-backend
 
             echo "== Healthchecks =="
-            test "$(curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai)" = "200"
+            echo "Checking https://blue.flippi.ai..."
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai)
+            echo "Status code: $STATUS"
+            test "$STATUS" = "200"
+
+            echo "Checking OAuth endpoint..."
             test "$(curl -s -o /dev/null -w "%{http_code}" -L https://blue.flippi.ai/auth/google)" = "200" || true
+
+            echo "Checking FotoFlip health..."
             test "$(curl -s -o /dev/null -w "%{http_code}" -X POST https://blue.flippi.ai/api/fotoflip/health)" = "200"
