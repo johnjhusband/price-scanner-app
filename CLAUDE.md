@@ -172,28 +172,6 @@ When code changes are not reflected after deployment:
 
 ### 6. Deployment Workflows
 
-#### CRITICAL: Workflow File Permissions
-**🚨 NEVER MODIFY .github/workflows/ FILES VIA OAUTH/API 🚨**
-
-GitHub blocks OAuth Apps from modifying workflow files for security reasons. This restriction cannot be bypassed even with "all permissions". 
-
-**What happens:**
-```
-refusing to allow an OAuth App to create or update workflow .github/workflows/deploy-*.yml
-```
-
-**The solution:**
-1. NEVER include workflow file changes in commits
-2. Make changes ONLY to application code, scripts, and docs
-3. If workflows need updates, they must be edited manually in GitHub UI
-4. Separate infrastructure changes from code changes
-
-**Failed approaches that DON'T work:**
-- Force push with workflow changes ❌
-- Cherry-pick including workflows ❌
-- Rebase that brings in workflow mods ❌
-- Any commit touching .github/workflows/ ❌
-
 #### Automated Deployment
 GitHub Actions workflows automatically deploy on push:
 - `.github/workflows/deploy-develop.yml` → blue.flippi.ai
