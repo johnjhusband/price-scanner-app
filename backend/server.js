@@ -888,7 +888,7 @@ const adminRoutes = require('./routes/admin');
 app.use('/admin', adminRoutes);
 
 // Auth routes (Google OAuth)
-const authRoutes = require('./routes/auth');
+// authRoutes already imported above on line 883
 app.use('/', authRoutes);
 
 // Payment routes
