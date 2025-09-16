@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eu
 
 # Direct deployment script for blue.flippi.ai
 # Run this locally when GitHub Actions workflow is broken

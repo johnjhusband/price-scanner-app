@@ -70,7 +70,7 @@ jobs:
             pm2 set FOTOFLIP_PYTHON /var/www/blue.flippi.ai/.venv/bin/python
             pm2 set GOOGLE_CLIENT_ID "${GOOGLE_CLIENT_ID}"
             pm2 set GOOGLE_CLIENT_SECRET "${GOOGLE_CLIENT_SECRET}"
-            pm2 restart flippi-backend || pm2 start ecosystem.config.js --only flippi-backend
+            pm2 restart dev-backend || pm2 start ecosystem.config.js --only dev-backend
 
             echo "== Healthchecks =="
             test "$(curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai)" = "200"
