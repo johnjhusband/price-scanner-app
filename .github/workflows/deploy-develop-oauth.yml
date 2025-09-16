@@ -1,0 +1,67 @@
+name: Deploy Blue
+on:
+  push: { branches: [develop] }
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: blue-deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Deploy to blue via SSH
+        uses: appleboy/ssh-action@v0.1.10
+        env:
+          GOOGLE_CLIENT_ID: ${{ secrets.BLUE_GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.BLUE_GOOGLE_CLIENT_SECRET }}
+        with:
+          host: ${{ secrets.BLUE_SSH_HOST }}
+          username: ${{ secrets.BLUE_SSH_USER }}
+          key: ${{ secrets.BLUE_SSH_KEY }}
+          script: |
+            set -euo pipefail
+            export DEBIAN_FRONTEND=noninteractive
+
+            cd /var/www/blue.flippi.ai
+            echo "== Sync code =="
+            git fetch origin develop
+            git reset --hard origin/develop
+            echo "Server commit: $(git rev-parse --short HEAD)"
+
+            echo "== Backend deps =="
+            cd backend && npm ci --production && cd ..
+
+            echo "== Python/venv for FotoFlip =="
+            sudo apt-get update -yq
+            sudo apt-get install -yq python3 python3-venv python3-pip python3-dev
+            python3 -m venv .venv || true
+            . .venv/bin/activate
+            pip install -U pip
+            pip install -r backend/requirements.txt
+            python - <<'PY'
+            from rembg import new_session; new_session('u2net'); print("MODEL_OK")
+            PY
+            deactivate
+
+            echo "== Frontend build =="
+            cd mobile-app
+            npm ci
+            npx expo export --platform web --output-dir dist
+            cp ../web-styles.css dist/ || true
+            cd ..
+
+            echo "== Nginx & PM2 =="
+            sudo nginx -t && sudo nginx -s reload || true
+            pm2 set FOTOFLIP_PYTHON /var/www/blue.flippi.ai/.venv/bin/python
+            pm2 set GOOGLE_CLIENT_ID "${GOOGLE_CLIENT_ID}"
+            pm2 set GOOGLE_CLIENT_SECRET "${GOOGLE_CLIENT_SECRET}"
+            pm2 restart flippi-backend || pm2 start ecosystem.config.js --only flippi-backend
+
+            echo "== Healthchecks =="
+            test "$(curl -s -o /dev/null -w "%{http_code}" https://blue.flippi.ai)" = "200"
+            test "$(curl -s -o /dev/null -w "%{http_code}" -L https://blue.flippi.ai/auth/google)" = "200" || true
+            test "$(curl -s -o /dev/null -w "%{http_code}" -X POST https://blue.flippi.ai/api/fotoflip/health)" = "200"
