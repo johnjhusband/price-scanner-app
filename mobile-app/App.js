@@ -431,32 +431,6 @@ export default function App() {
     }
   };
 
-  // Process image file from drag/drop or paste (v2.0 feature)
-  const processImageFile = (file) => {
-    if (!isImageFile(file)) {
-      Alert.alert('Error', 'Please select an image file (JPEG, PNG, GIF, WEBP, HEIC, or HEIF)');
-      return;
-    }
-
-    // Check file size
-    if (file.size > 10 * 1024 * 1024) {
-      Alert.alert('Error', 'Image file is too large. Please select an image under 10MB.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      console.log('[DEBUG] Setting image from file upload:', event.target.result ? 'Data URL created' : 'No data');
-      setImage(event.target.result);
-      // Don't auto-analyze, wait for Go button
-    };
-    reader.onerror = (error) => {
-      console.error('FileReader error:', error);
-      Alert.alert('Error', 'Failed to read file');
-    };
-    reader.readAsDataURL(file);
-  };
-
   // Enhanced drag and drop handlers for Mac
   const handleDragOver = (e) => {
     if (Platform.OS === 'web') {
